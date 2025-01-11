@@ -50,7 +50,12 @@ const Header = () => {
   return (
     <header className="bg-white shadow-sm">
       <div className="container mx-auto px-4 py-3 flex justify-between items-center">
-        <div className="text-xl font-bold text-primary">Resume Matcher</div>
+        <div 
+          onClick={() => navigate("/")} 
+          className="text-xl font-bold text-primary cursor-pointer hover:opacity-80 transition-opacity"
+        >
+          Resume Matcher
+        </div>
         <div className="flex items-center gap-4">
           {session ? (
             <>
