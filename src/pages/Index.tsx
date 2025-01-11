@@ -3,17 +3,27 @@ import ResumeUploader from "@/components/ResumeUploader";
 import JobUrlInput from "@/components/JobUrlInput";
 import ResumePreview from "@/components/ResumePreview";
 import Header from "@/components/Header";
+import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const { toast } = useToast();
 
   const handleFileUpload = (file: File) => {
     console.log("File uploaded:", file.name);
     setSelectedFile(file);
+    toast({
+      title: "Resume Uploaded",
+      description: `Successfully uploaded ${file.name}`,
+    });
   };
 
   const handleUrlSubmit = (url: string) => {
     console.log("Job URL submitted:", url);
+    toast({
+      title: "Job URL Submitted",
+      description: "Successfully submitted job URL for analysis",
+    });
     // Here we would implement the job analysis logic
   };
 
