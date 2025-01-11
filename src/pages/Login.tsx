@@ -57,7 +57,7 @@ const Login = () => {
                 },
               },
             }}
-            providers={["google"]}
+            providers={[]} // Remove all social providers
             redirectTo={window.location.origin}
           />
         </div>
