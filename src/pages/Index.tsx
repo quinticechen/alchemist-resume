@@ -4,8 +4,6 @@ import JobUrlInput from "@/components/JobUrlInput";
 import ResumePreview from "@/components/ResumePreview";
 import Header from "@/components/Header";
 import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 const Index = () => {
@@ -112,14 +110,12 @@ const Index = () => {
 
           <div className="grid gap-8">
             {selectedFile ? (
-              <div className="space-y-4">
-                <ResumePreview 
-                  file={selectedFile} 
-                  filePath={filePath}
-                  publicUrl={publicUrl}
-                  onCancel={handleCancelResume}
-                />
-              </div>
+              <ResumePreview 
+                file={selectedFile} 
+                filePath={filePath}
+                publicUrl={publicUrl}
+                onCancel={handleCancelResume}
+              />
             ) : (
               <ResumeUploader onFileUpload={handleFileUpload} />
             )}
