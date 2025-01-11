@@ -24,7 +24,7 @@ const Login = () => {
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("Auth state changed:", event, session);
       
       if (event === "SIGNED_IN" && session) {
@@ -35,24 +35,24 @@ const Login = () => {
         navigate("/");
       }
 
+      // Handle authentication errors
       if (event === "USER_UPDATED" && !session) {
-        setError("Invalid email or password. Please try again.");
+        const { error } = await supabase.auth.getSession();
+        if (error) {
+          console.error("Auth error:", error);
+          let errorMessage = "An error occurred during authentication. Please try again.";
+          
+          if (error.message.includes("Invalid login credentials")) {
+            errorMessage = "Invalid email or password. Please check your credentials.";
+          }
+          
+          setError(errorMessage);
+        }
       }
     });
 
     return () => subscription.unsubscribe();
   }, [navigate, toast]);
-
-  const handleAuthError = (error: AuthError) => {
-    console.error("Auth error:", error);
-    let errorMessage = "An error occurred during authentication. Please try again.";
-    
-    if (error.message.includes("Invalid login credentials")) {
-      errorMessage = "Invalid email or password. Please check your credentials.";
-    }
-    
-    setError(errorMessage);
-  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -91,7 +91,6 @@ const Login = () => {
             providers={[]}
             redirectTo={`${window.location.origin}/`}
             magicLink={false}
-            onError={handleAuthError}
           />
         </div>
       </div>
