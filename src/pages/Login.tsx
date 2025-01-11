@@ -77,8 +77,9 @@ const Login = () => {
                 input: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm",
               },
             }}
-            providers={[]} // Remove all social providers
-            redirectTo={window.location.origin}
+            providers={[]}
+            redirectTo={`${window.location.origin}/`}
+            magicLink={false}
           />
         </div>
       </div>
