@@ -3,12 +3,13 @@ import { Button } from "@/components/ui/button";
 import { LogIn, LogOut, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 
 const Header = () => {
   const [session, setSession] = useState<Session | null>(null);
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -66,19 +67,19 @@ const Header = () => {
                 className="flex items-center gap-2"
               >
                 <LogOut className="h-4 w-4" />
-                Logout
+                Sign Out
               </Button>
             </>
-          ) : (
+          ) : location.pathname !== "/login" ? (
             <Button
               onClick={() => navigate("/login")}
               size="sm"
               className="flex items-center gap-2"
             >
               <LogIn className="h-4 w-4" />
-              Login
+              Sign In
             </Button>
-          )}
+          ) : null}
         </div>
       </div>
     </header>

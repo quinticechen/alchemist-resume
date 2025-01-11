@@ -11,7 +11,6 @@ const Login = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [error, setError] = useState<string | null>(null);
-  const [view, setView] = useState<"sign_in" | "sign_up" | "forgotten_password">("sign_in");
 
   useEffect(() => {
     // Check if user is already logged in
@@ -39,31 +38,10 @@ const Login = () => {
       if (event === "USER_UPDATED" && !session) {
         setError("Invalid email or password. Please check your credentials or sign up if you don't have an account.");
       }
-
-      // Update view based on auth events
-      if (event === "PASSWORD_RECOVERY") {
-        setView("forgotten_password");
-      } else if (event === "USER_UPDATED" && session?.user.email_confirmed_at) {
-        // User has confirmed their email, switch to sign in view
-        setView("sign_in");
-      }
     });
 
     return () => subscription.unsubscribe();
   }, [navigate, toast]);
-
-  const getSubtitle = () => {
-    switch (view) {
-      case "sign_in":
-        return "Sign in to your account";
-      case "sign_up":
-        return "Create your account";
-      case "forgotten_password":
-        return "Reset your password";
-      default:
-        return "Sign in to your account";
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -72,7 +50,6 @@ const Login = () => {
         <div className="w-full max-w-md space-y-8 bg-white p-8 rounded-lg shadow-md">
           <div className="text-center">
             <h1 className="text-3xl font-bold text-primary">Resume Matcher</h1>
-            <p className="mt-2 text-gray-600">{getSubtitle()}</p>
           </div>
 
           {error && (
