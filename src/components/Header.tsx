@@ -3,9 +3,13 @@ import { Button } from "@/components/ui/button";
 import { LogIn, LogOut, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
+import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
 const Header = () => {
   const [session, setSession] = useState<Session | null>(null);
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
   useEffect(() => {
     // Get initial session
@@ -24,16 +28,22 @@ const Header = () => {
     return () => subscription.unsubscribe();
   }, []);
 
-  const handleLogin = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-    });
-    if (error) console.error("Error logging in:", error.message);
-  };
-
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
-    if (error) console.error("Error logging out:", error.message);
+    if (error) {
+      console.error("Error logging out:", error.message);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to log out. Please try again.",
+      });
+    } else {
+      toast({
+        title: "Logged out",
+        description: "You have been successfully logged out.",
+      });
+      navigate("/login");
+    }
   };
 
   return (
@@ -61,7 +71,7 @@ const Header = () => {
             </>
           ) : (
             <Button
-              onClick={handleLogin}
+              onClick={() => navigate("/login")}
               size="sm"
               className="flex items-center gap-2"
             >
