@@ -8,9 +8,31 @@ interface ResumeUploaderProps {
   onFileUpload: (file: File, filePath: string, publicUrl: string) => void;
 }
 
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
+
 const ResumeUploader = ({ onFileUpload }: ResumeUploaderProps) => {
   const { toast } = useToast();
   const [isUploading, setIsUploading] = useState(false);
+
+  const validateFile = (file: File): boolean => {
+    if (file.size > MAX_FILE_SIZE) {
+      toast({
+        title: "File too large",
+        description: "Please upload a PDF file smaller than 10MB",
+        variant: "destructive",
+      });
+      return false;
+    }
+    if (file.type !== "application/pdf") {
+      toast({
+        title: "Invalid file type",
+        description: "Please upload a PDF file",
+        variant: "destructive",
+      });
+      return false;
+    }
+    return true;
+  };
 
   const uploadFile = async (file: File) => {
     try {
@@ -26,7 +48,6 @@ const ResumeUploader = ({ onFileUpload }: ResumeUploaderProps) => {
         throw uploadError;
       }
 
-      // Get the public URL for the uploaded file
       const { data: publicUrlData } = supabase.storage
         .from('resumes')
         .getPublicUrl(filePath);
@@ -68,14 +89,8 @@ const ResumeUploader = ({ onFileUpload }: ResumeUploaderProps) => {
     (e: React.DragEvent<HTMLDivElement>) => {
       e.preventDefault();
       const file = e.dataTransfer.files[0];
-      if (file && file.type === "application/pdf") {
+      if (file && validateFile(file)) {
         uploadFile(file);
-      } else {
-        toast({
-          title: "Invalid file type",
-          description: "Please upload a PDF file",
-          variant: "destructive",
-        });
       }
     },
     [toast]
@@ -84,7 +99,7 @@ const ResumeUploader = ({ onFileUpload }: ResumeUploaderProps) => {
   const handleFileInput = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
-      if (file && file.type === "application/pdf") {
+      if (file && validateFile(file)) {
         uploadFile(file);
       }
     },
@@ -107,7 +122,7 @@ const ResumeUploader = ({ onFileUpload }: ResumeUploaderProps) => {
           <p className="mt-2 text-sm text-gray-600">
             {isUploading 
               ? "Uploading..."
-              : "Drag and drop your PDF resume here, or click to select a file"
+              : "Drag and drop your PDF resume here (max 10MB), or click to select a file"
             }
           </p>
           <input
