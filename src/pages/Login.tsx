@@ -6,7 +6,6 @@ import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/Header";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AuthError } from "@supabase/supabase-js";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -67,14 +66,21 @@ const Login = () => {
               variables: {
                 default: {
                   colors: {
-                    brand: "rgb(var(--color-primary))",
-                    brandAccent: "rgb(var(--color-primary))",
+                    brand: "#1a365d",
+                    brandAccent: "#1a365d",
                   },
                 },
+              },
+              className: {
+                button: "bg-primary text-white px-4 py-2 rounded hover:bg-primary/90 transition-colors",
+                container: "space-y-4",
+                label: "block text-sm font-medium text-gray-700",
+                input: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm",
               },
             }}
             providers={[]} // Remove all social providers
             redirectTo={window.location.origin}
+            showLinks={false} // Hide the sign up and forgot password links
           />
         </div>
       </div>
