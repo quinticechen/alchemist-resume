@@ -1,15 +1,16 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileText, Eye } from "lucide-react";
+import { FileText, Eye, X } from "lucide-react";
 
 interface ResumePreviewProps {
   file: File | null;
   filePath?: string;
   publicUrl?: string;
+  onCancel?: () => void;
 }
 
-const ResumePreview = ({ file, filePath, publicUrl }: ResumePreviewProps) => {
+const ResumePreview = ({ file, filePath, publicUrl, onCancel }: ResumePreviewProps) => {
   if (!file || !publicUrl) return null;
 
   return (
@@ -24,15 +25,27 @@ const ResumePreview = ({ file, filePath, publicUrl }: ResumePreviewProps) => {
             <p className="text-sm text-gray-600">{file.name}</p>
           </div>
           
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => window.open(publicUrl, '_blank')}
-            className="flex items-center gap-2"
-          >
-            <Eye className="h-4 w-4" />
-            Preview PDF
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => window.open(publicUrl, '_blank')}
+              className="flex items-center gap-2"
+            >
+              <Eye className="h-4 w-4" />
+              Preview PDF
+            </Button>
+            
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={onCancel}
+              className="flex items-center gap-2"
+            >
+              <X className="h-4 w-4" />
+              Cancel Resume
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>
