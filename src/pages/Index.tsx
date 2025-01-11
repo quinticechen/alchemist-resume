@@ -4,6 +4,9 @@ import JobUrlInput from "@/components/JobUrlInput";
 import ResumePreview from "@/components/ResumePreview";
 import Header from "@/components/Header";
 import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { X } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const Index = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -22,13 +25,42 @@ const Index = () => {
     });
   };
 
+  const handleCancelResume = async () => {
+    if (filePath) {
+      try {
+        // Delete the file from storage
+        const { error: storageError } = await supabase.storage
+          .from('resumes')
+          .remove([filePath]);
+
+        if (storageError) throw storageError;
+
+        // Reset all states
+        setSelectedFile(null);
+        setFilePath(undefined);
+        setPublicUrl(undefined);
+
+        toast({
+          title: "Resume Cancelled",
+          description: "Your resume has been removed",
+        });
+      } catch (error) {
+        console.error('Error removing resume:', error);
+        toast({
+          title: "Error",
+          description: "Failed to remove resume",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
   const handleUrlSubmit = (url: string) => {
     console.log("Job URL submitted:", url);
     toast({
       title: "Job URL Submitted",
       description: "Successfully submitted job URL for analysis",
     });
-    // Here we would implement the job analysis logic
   };
 
   return (
@@ -46,12 +78,28 @@ const Index = () => {
           </div>
 
           <div className="grid gap-8">
-            <ResumeUploader onFileUpload={handleFileUpload} />
-            <ResumePreview 
-              file={selectedFile} 
-              filePath={filePath}
-              publicUrl={publicUrl}
-            />
+            {selectedFile ? (
+              <div className="space-y-4">
+                <ResumePreview 
+                  file={selectedFile} 
+                  filePath={filePath}
+                  publicUrl={publicUrl}
+                />
+                <div className="flex justify-end">
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={handleCancelResume}
+                    className="flex items-center gap-2"
+                  >
+                    <X className="h-4 w-4" />
+                    Cancel Resume
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <ResumeUploader onFileUpload={handleFileUpload} />
+            )}
             <JobUrlInput onUrlSubmit={handleUrlSubmit} />
           </div>
         </div>
