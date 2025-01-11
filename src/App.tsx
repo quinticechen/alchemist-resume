@@ -14,6 +14,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log("Initial session check:", session);
       setSession(session);
       setLoading(false);
     });
@@ -22,6 +23,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
+      console.log("Auth state changed:", _event, session);
       setSession(session);
     });
 
@@ -29,10 +31,15 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-lg">Loading...</div>
+      </div>
+    );
   }
 
   if (!session) {
+    console.log("No session found, redirecting to login");
     return <Navigate to="/login" replace />;
   }
 
