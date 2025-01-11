@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/Header";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AuthError } from "@supabase/supabase-js";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -26,7 +27,7 @@ const Login = () => {
     } = supabase.auth.onAuthStateChange((event, session) => {
       console.log("Auth state changed:", event, session);
       
-      if (event === "SIGNED_IN") {
+      if (event === "SIGNED_IN" && session) {
         toast({
           title: "Welcome!",
           description: "You have successfully signed in.",
@@ -34,14 +35,24 @@ const Login = () => {
         navigate("/");
       }
 
-      // Handle authentication errors
       if (event === "USER_UPDATED" && !session) {
-        setError("Invalid email or password. Please check your credentials or sign up if you don't have an account.");
+        setError("Invalid email or password. Please try again.");
       }
     });
 
     return () => subscription.unsubscribe();
   }, [navigate, toast]);
+
+  const handleAuthError = (error: AuthError) => {
+    console.error("Auth error:", error);
+    let errorMessage = "An error occurred during authentication. Please try again.";
+    
+    if (error.message.includes("Invalid login credentials")) {
+      errorMessage = "Invalid email or password. Please check your credentials.";
+    }
+    
+    setError(errorMessage);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -80,6 +91,7 @@ const Login = () => {
             providers={[]}
             redirectTo={`${window.location.origin}/`}
             magicLink={false}
+            onError={handleAuthError}
           />
         </div>
       </div>
