@@ -12,13 +12,16 @@ const Index = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [filePath, setFilePath] = useState<string>();
   const [publicUrl, setPublicUrl] = useState<string>();
+  const [resumeId, setResumeId] = useState<string>();
+  const [isProcessing, setIsProcessing] = useState(false);
   const { toast } = useToast();
 
-  const handleFileUpload = (file: File, path: string, url: string) => {
-    console.log("File uploaded:", file.name, "Path:", path, "Public URL:", url);
+  const handleFileUpload = (file: File, path: string, url: string, id: string) => {
+    console.log("File uploaded:", file.name, "Path:", path, "Public URL:", url, "ID:", id);
     setSelectedFile(file);
     setFilePath(path);
     setPublicUrl(url);
+    setResumeId(id);
     toast({
       title: "Resume Uploaded",
       description: `Successfully uploaded ${file.name}`,
@@ -28,17 +31,16 @@ const Index = () => {
   const handleCancelResume = async () => {
     if (filePath) {
       try {
-        // Delete the file from storage
         const { error: storageError } = await supabase.storage
           .from('resumes')
           .remove([filePath]);
 
         if (storageError) throw storageError;
 
-        // Reset all states
         setSelectedFile(null);
         setFilePath(undefined);
         setPublicUrl(undefined);
+        setResumeId(undefined);
 
         toast({
           title: "Resume Cancelled",
@@ -55,12 +57,54 @@ const Index = () => {
     }
   };
 
-  const handleUrlSubmit = (url: string) => {
-    console.log("Job URL submitted:", url);
-    toast({
-      title: "Job URL Submitted",
-      description: "Successfully submitted job URL for analysis",
-    });
+  const handleUrlSubmit = async (url: string) => {
+    if (!resumeId) {
+      toast({
+        title: "Error",
+        description: "Please upload a resume first",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      const response = await fetch(
+        'https://vhofgqmmovjtcnakowlv.supabase.co/functions/v1/process-resume',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({
+            resumeId,
+            jobUrl: url,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to process resume');
+      }
+
+      const data = await response.json();
+      console.log('Processing started:', data);
+
+      toast({
+        title: "Analysis Started",
+        description: "Your resume is being analyzed. Results will be available soon.",
+      });
+    } catch (error) {
+      console.error('Error processing resume:', error);
+      toast({
+        title: "Error",
+        description: "Failed to process resume",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   return (
@@ -100,7 +144,7 @@ const Index = () => {
             ) : (
               <ResumeUploader onFileUpload={handleFileUpload} />
             )}
-            <JobUrlInput onUrlSubmit={handleUrlSubmit} />
+            <JobUrlInput onUrlSubmit={handleUrlSubmit} isProcessing={isProcessing} />
           </div>
         </div>
       </div>

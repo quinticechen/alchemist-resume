@@ -3,12 +3,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
+import { Loader2 } from "lucide-react";
 
 interface JobUrlInputProps {
   onUrlSubmit: (url: string) => void;
+  isProcessing?: boolean;
 }
 
-const JobUrlInput = ({ onUrlSubmit }: JobUrlInputProps) => {
+const JobUrlInput = ({ onUrlSubmit, isProcessing = false }: JobUrlInputProps) => {
   const [url, setUrl] = useState("");
   const { toast } = useToast();
 
@@ -39,8 +41,18 @@ const JobUrlInput = ({ onUrlSubmit }: JobUrlInputProps) => {
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             className="flex-1"
+            disabled={isProcessing}
           />
-          <Button type="submit">Analyze</Button>
+          <Button type="submit" disabled={isProcessing}>
+            {isProcessing ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Processing
+              </>
+            ) : (
+              'Analyze'
+            )}
+          </Button>
         </form>
       </CardContent>
     </Card>
