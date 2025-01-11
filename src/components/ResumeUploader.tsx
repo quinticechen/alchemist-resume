@@ -1,22 +1,67 @@
-import React, { useCallback } from "react";
-import { useToast } from "@/components/ui/use-toast";
+import React, { useCallback, useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Upload } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ResumeUploaderProps {
-  onFileUpload: (file: File) => void;
+  onFileUpload: (file: File, filePath: string) => void;
 }
 
 const ResumeUploader = ({ onFileUpload }: ResumeUploaderProps) => {
   const { toast } = useToast();
+  const [isUploading, setIsUploading] = useState(false);
+
+  const uploadFile = async (file: File) => {
+    try {
+      setIsUploading(true);
+      const fileExt = file.name.split('.').pop();
+      const filePath = `${crypto.randomUUID()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('resumes')
+        .upload(filePath, file);
+
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      const { data: resume } = await supabase
+        .from('resumes')
+        .insert({
+          file_path: filePath,
+          file_name: file.name,
+          mime_type: file.type,
+          file_size: file.size,
+        })
+        .select()
+        .single();
+
+      console.log('Resume uploaded successfully:', resume);
+      onFileUpload(file, filePath);
+      toast({
+        title: "Resume Uploaded",
+        description: "Your resume has been uploaded successfully",
+      });
+    } catch (error) {
+      console.error('Error uploading resume:', error);
+      toast({
+        title: "Upload Failed",
+        description: "There was an error uploading your resume",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   const handleFileDrop = useCallback(
     (e: React.DragEvent<HTMLDivElement>) => {
       e.preventDefault();
       const file = e.dataTransfer.files[0];
       if (file && file.type === "application/pdf") {
-        onFileUpload(file);
+        uploadFile(file);
       } else {
         toast({
           title: "Invalid file type",
@@ -25,17 +70,17 @@ const ResumeUploader = ({ onFileUpload }: ResumeUploaderProps) => {
         });
       }
     },
-    [onFileUpload, toast]
+    [toast]
   );
 
   const handleFileInput = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       if (file && file.type === "application/pdf") {
-        onFileUpload(file);
+        uploadFile(file);
       }
     },
-    [onFileUpload]
+    []
   );
 
   return (
@@ -52,7 +97,10 @@ const ResumeUploader = ({ onFileUpload }: ResumeUploaderProps) => {
         >
           <Upload className="mx-auto h-12 w-12 text-gray-400" />
           <p className="mt-2 text-sm text-gray-600">
-            Drag and drop your PDF resume here, or click to select a file
+            {isUploading 
+              ? "Uploading..."
+              : "Drag and drop your PDF resume here, or click to select a file"
+            }
           </p>
           <input
             id="fileInput"
@@ -60,6 +108,7 @@ const ResumeUploader = ({ onFileUpload }: ResumeUploaderProps) => {
             accept=".pdf"
             className="hidden"
             onChange={handleFileInput}
+            disabled={isUploading}
           />
         </div>
       </CardContent>

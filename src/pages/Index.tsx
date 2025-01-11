@@ -7,11 +7,13 @@ import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [filePath, setFilePath] = useState<string>();
   const { toast } = useToast();
 
-  const handleFileUpload = (file: File) => {
-    console.log("File uploaded:", file.name);
+  const handleFileUpload = (file: File, path: string) => {
+    console.log("File uploaded:", file.name, "Path:", path);
     setSelectedFile(file);
+    setFilePath(path);
     toast({
       title: "Resume Uploaded",
       description: `Successfully uploaded ${file.name}`,
@@ -43,7 +45,7 @@ const Index = () => {
 
           <div className="grid gap-8">
             <ResumeUploader onFileUpload={handleFileUpload} />
-            <ResumePreview file={selectedFile} />
+            <ResumePreview file={selectedFile} filePath={filePath} />
             <JobUrlInput onUrlSubmit={handleUrlSubmit} />
           </div>
         </div>
