@@ -6,7 +6,7 @@ import { Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface ResumeUploaderProps {
-  onFileUpload: (file: File, filePath: string) => void;
+  onFileUpload: (file: File, filePath: string, publicUrl: string) => void;
 }
 
 const ResumeUploader = ({ onFileUpload }: ResumeUploaderProps) => {
@@ -27,6 +27,13 @@ const ResumeUploader = ({ onFileUpload }: ResumeUploaderProps) => {
         throw uploadError;
       }
 
+      // Get the public URL for the uploaded file
+      const { data: publicUrlData } = supabase.storage
+        .from('resumes')
+        .getPublicUrl(filePath);
+
+      const publicUrl = publicUrlData.publicUrl;
+
       const { data: resume } = await supabase
         .from('resumes')
         .insert({
@@ -39,7 +46,9 @@ const ResumeUploader = ({ onFileUpload }: ResumeUploaderProps) => {
         .single();
 
       console.log('Resume uploaded successfully:', resume);
-      onFileUpload(file, filePath);
+      console.log('Public URL:', publicUrl);
+      
+      onFileUpload(file, filePath, publicUrl);
       toast({
         title: "Resume Uploaded",
         description: "Your resume has been uploaded successfully",
