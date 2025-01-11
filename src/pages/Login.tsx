@@ -37,23 +37,12 @@ const Login = () => {
 
       // Handle authentication errors
       if (event === "USER_UPDATED" && !session) {
-        setError("Invalid login credentials. Please try again.");
+        setError("Invalid email or password. Please check your credentials or sign up if you don't have an account.");
       }
     });
 
     return () => subscription.unsubscribe();
   }, [navigate, toast]);
-
-  const handleAuthError = (error: AuthError) => {
-    console.error("Auth error:", error);
-    let errorMessage = "An error occurred during authentication.";
-    
-    if (error.message.includes("Invalid login credentials")) {
-      errorMessage = "Invalid email or password. Please check your credentials or sign up if you don't have an account.";
-    }
-    
-    setError(errorMessage);
-  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -86,7 +75,6 @@ const Login = () => {
             }}
             providers={[]} // Remove all social providers
             redirectTo={window.location.origin}
-            onError={handleAuthError}
           />
         </div>
       </div>
