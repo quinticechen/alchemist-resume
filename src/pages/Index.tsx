@@ -69,26 +69,15 @@ const Index = () => {
 
     setIsProcessing(true);
     try {
-      const response = await fetch(
-        'https://vhofgqmmovjtcnakowlv.supabase.co/functions/v1/process-resume',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
-          },
-          body: JSON.stringify({
-            resumeId,
-            jobUrl: url,
-          }),
-        }
-      );
+      const { data, error } = await supabase.functions.invoke('process-resume', {
+        body: {
+          resumeId,
+          jobUrl: url,
+        },
+      });
 
-      if (!response.ok) {
-        throw new Error('Failed to process resume');
-      }
+      if (error) throw error;
 
-      const data = await response.json();
       console.log('Processing started:', data);
 
       toast({
@@ -128,18 +117,8 @@ const Index = () => {
                   file={selectedFile} 
                   filePath={filePath}
                   publicUrl={publicUrl}
+                  onCancel={handleCancelResume}
                 />
-                <div className="flex justify-end">
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={handleCancelResume}
-                    className="flex items-center gap-2"
-                  >
-                    <X className="h-4 w-4" />
-                    Cancel Resume
-                  </Button>
-                </div>
               </div>
             ) : (
               <ResumeUploader onFileUpload={handleFileUpload} />
