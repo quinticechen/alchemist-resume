@@ -6,12 +6,14 @@ const corsHeaders = {
 }
 
 Deno.serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
 
   try {
     const { resumeId, jobUrl } = await req.json()
+    console.log('Received request:', { resumeId, jobUrl })
 
     // Initialize Supabase client
     const supabaseClient = createClient(
