@@ -39,6 +39,13 @@ const Login = () => {
       if (event === "USER_UPDATED" && !session) {
         setError("Invalid email or password. Please check your credentials or sign up if you don't have an account.");
       }
+
+      // Update view based on auth events
+      if (event === "PASSWORD_RECOVERY") {
+        setView("forgotten_password");
+      } else if (event === "SIGNED_UP") {
+        setView("sign_in");
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -75,8 +82,6 @@ const Login = () => {
 
           <Auth
             supabaseClient={supabase}
-            view={view}
-            onViewChange={(newView) => setView(newView as "sign_in" | "sign_up" | "forgotten_password")}
             appearance={{
               theme: ThemeSupa,
               variables: {
