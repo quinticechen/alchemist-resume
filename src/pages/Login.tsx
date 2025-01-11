@@ -1,14 +1,17 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/Header";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AuthError } from "@supabase/supabase-js";
 
 const Login = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     // Check if user is already logged in
@@ -23,6 +26,7 @@ const Login = () => {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
       console.log("Auth state changed:", event, session);
+      
       if (event === "SIGNED_IN") {
         toast({
           title: "Welcome!",
@@ -30,10 +34,26 @@ const Login = () => {
         });
         navigate("/");
       }
+
+      // Handle authentication errors
+      if (event === "USER_UPDATED" && !session) {
+        setError("Invalid login credentials. Please try again.");
+      }
     });
 
     return () => subscription.unsubscribe();
   }, [navigate, toast]);
+
+  const handleAuthError = (error: AuthError) => {
+    console.error("Auth error:", error);
+    let errorMessage = "An error occurred during authentication.";
+    
+    if (error.message.includes("Invalid login credentials")) {
+      errorMessage = "Invalid email or password. Please check your credentials or sign up if you don't have an account.";
+    }
+    
+    setError(errorMessage);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -44,6 +64,13 @@ const Login = () => {
             <h1 className="text-3xl font-bold text-primary">Resume Matcher</h1>
             <p className="mt-2 text-gray-600">Sign in to your account</p>
           </div>
+
+          {error && (
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+
           <Auth
             supabaseClient={supabase}
             appearance={{
@@ -59,6 +86,7 @@ const Login = () => {
             }}
             providers={[]} // Remove all social providers
             redirectTo={window.location.origin}
+            onError={handleAuthError}
           />
         </div>
       </div>
