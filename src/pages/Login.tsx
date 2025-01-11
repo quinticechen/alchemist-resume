@@ -80,7 +80,6 @@ const Login = () => {
             }}
             providers={[]} // Remove all social providers
             redirectTo={window.location.origin}
-            showLinks={false} // Hide the sign up and forgot password links
           />
         </div>
       </div>
