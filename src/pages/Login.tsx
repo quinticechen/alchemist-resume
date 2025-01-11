@@ -43,7 +43,8 @@ const Login = () => {
       // Update view based on auth events
       if (event === "PASSWORD_RECOVERY") {
         setView("forgotten_password");
-      } else if (event === "SIGNED_UP") {
+      } else if (event === "USER_UPDATED" && session?.user.email_confirmed_at) {
+        // User has confirmed their email, switch to sign in view
         setView("sign_in");
       }
     });
