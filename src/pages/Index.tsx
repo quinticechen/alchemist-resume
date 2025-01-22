@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import ResumeUploader from "@/components/ResumeUploader";
 import JobUrlInput from "@/components/JobUrlInput";
 import ResumePreview from "@/components/ResumePreview";
+import ProcessingPreview from "@/components/ProcessingPreview";
 import Header from "@/components/Header";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -39,6 +40,7 @@ const Index = () => {
         setFilePath(undefined);
         setPublicUrl(undefined);
         setResumeId(undefined);
+        setIsProcessing(false);
 
         toast({
           title: "Resume Cancelled",
@@ -89,7 +91,6 @@ const Index = () => {
         description: "Failed to process resume",
         variant: "destructive",
       });
-    } finally {
       setIsProcessing(false);
     }
   };
@@ -120,6 +121,7 @@ const Index = () => {
               <ResumeUploader onFileUpload={handleFileUpload} />
             )}
             <JobUrlInput onUrlSubmit={handleUrlSubmit} isProcessing={isProcessing} />
+            {isProcessing && <ProcessingPreview />}
           </div>
         </div>
       </div>
