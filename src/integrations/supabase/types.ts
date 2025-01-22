@@ -13,6 +13,7 @@ export type Database = {
         Row: {
           analysis_data: Json | null
           created_at: string
+          google_doc_url: string | null
           id: string
           job_company: string | null
           job_title: string | null
@@ -25,6 +26,7 @@ export type Database = {
         Insert: {
           analysis_data?: Json | null
           created_at?: string
+          google_doc_url?: string | null
           id?: string
           job_company?: string | null
           job_title?: string | null
@@ -37,6 +39,7 @@ export type Database = {
         Update: {
           analysis_data?: Json | null
           created_at?: string
+          google_doc_url?: string | null
           id?: string
           job_company?: string | null
           job_title?: string | null

@@ -13,6 +13,7 @@ const Index = () => {
   const [publicUrl, setPublicUrl] = useState<string>();
   const [resumeId, setResumeId] = useState<string>();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [analysisId, setAnalysisId] = useState<string>();
   const { toast } = useToast();
 
   const handleFileUpload = (file: File, path: string, url: string, id: string) => {
@@ -41,6 +42,7 @@ const Index = () => {
         setPublicUrl(undefined);
         setResumeId(undefined);
         setIsProcessing(false);
+        setAnalysisId(undefined);
 
         toast({
           title: "Resume Cancelled",
@@ -79,6 +81,7 @@ const Index = () => {
       if (error) throw error;
 
       console.log('Processing started:', data);
+      setAnalysisId(data.analysisId);
 
       toast({
         title: "Analysis Started",
@@ -121,7 +124,7 @@ const Index = () => {
               <ResumeUploader onFileUpload={handleFileUpload} />
             )}
             <JobUrlInput onUrlSubmit={handleUrlSubmit} isProcessing={isProcessing} />
-            {isProcessing && <ProcessingPreview />}
+            {isProcessing && <ProcessingPreview analysisId={analysisId} />}
           </div>
         </div>
       </div>
