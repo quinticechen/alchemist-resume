@@ -3,6 +3,7 @@ import ResumeUploader from "@/components/ResumeUploader";
 import JobUrlInput from "@/components/JobUrlInput";
 import ResumePreview from "@/components/ResumePreview";
 import ProcessingPreview from "@/components/ProcessingPreview";
+import AlchemistSection from "@/components/AlchemistSection";
 import Header from "@/components/Header";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -125,6 +126,7 @@ const Index = () => {
             )}
             <JobUrlInput onUrlSubmit={handleUrlSubmit} isProcessing={isProcessing} />
             {isProcessing && <ProcessingPreview analysisId={analysisId} />}
+            {resumeId && !isProcessing && <AlchemistSection resumeId={resumeId} />}
           </div>
         </div>
       </div>
