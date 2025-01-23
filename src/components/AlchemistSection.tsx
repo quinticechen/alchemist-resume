@@ -68,7 +68,7 @@ const AlchemistSection = ({ resumeId }: AlchemistSectionProps) => {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <FileText className="h-5 w-5" />
-          Alchemist Results
+          ResumeAlchemist Results
         </CardTitle>
       </CardHeader>
       <CardContent>

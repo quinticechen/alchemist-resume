@@ -54,7 +54,7 @@ const Header = () => {
           onClick={() => navigate("/")} 
           className="text-xl font-bold text-primary cursor-pointer hover:opacity-80 transition-opacity"
         >
-          Resume Matcher
+          ResumeAlchemist
         </div>
         <div className="flex items-center gap-4">
           {session ? (

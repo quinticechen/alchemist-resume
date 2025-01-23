@@ -106,7 +106,7 @@ const Index = () => {
         <div className="container max-w-4xl mx-auto space-y-8 animate-fade-up">
           <div className="text-center">
             <h1 className="text-4xl font-bold text-primary mb-2">
-              Resume Matcher
+              ResumeAlchemist
             </h1>
             <p className="text-gray-600">
               Upload your resume and job posting to get a customized match
