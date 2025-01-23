@@ -1,7 +1,7 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Download, FileText } from "lucide-react";
+import { Download, FileText, ExternalLink } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -11,6 +11,36 @@ interface AlchemistSectionProps {
 
 const AlchemistSection = ({ resumeId }: AlchemistSectionProps) => {
   const { toast } = useToast();
+  const [googleDocUrl, setGoogleDocUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchAnalysis = async () => {
+      if (!resumeId) return;
+
+      try {
+        const { data, error } = await supabase
+          .from("resume_analyses")
+          .select("google_doc_url")
+          .eq("resume_id", resumeId)
+          .maybeSingle();
+
+        if (error) throw error;
+        
+        if (data?.google_doc_url) {
+          setGoogleDocUrl(data.google_doc_url);
+        }
+      } catch (error) {
+        console.error("Error fetching analysis:", error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch analysis results",
+          variant: "destructive",
+        });
+      }
+    };
+
+    fetchAnalysis();
+  }, [resumeId, toast]);
 
   const handleDownload = async () => {
     if (!resumeId) {
@@ -39,7 +69,6 @@ const AlchemistSection = ({ resumeId }: AlchemistSectionProps) => {
 
       if (error) throw error;
 
-      // Create a download link
       const url = window.URL.createObjectURL(data);
       const link = document.createElement("a");
       link.href = url;
@@ -74,16 +103,28 @@ const AlchemistSection = ({ resumeId }: AlchemistSectionProps) => {
       <CardContent>
         <div className="space-y-4">
           <p className="text-sm text-gray-600">
-            Your resume has been processed. You can download the results below.
+            Your resume has been processed. You can download the original file or view the enhanced version below.
           </p>
-          <Button
-            onClick={handleDownload}
-            className="w-full sm:w-auto"
-            variant="default"
-          >
-            <Download className="h-4 w-4" />
-            Download Results
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Button
+              onClick={handleDownload}
+              className="w-full sm:w-auto"
+              variant="default"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Download Original
+            </Button>
+            {googleDocUrl && (
+              <Button
+                onClick={() => window.open(googleDocUrl, '_blank')}
+                className="w-full sm:w-auto"
+                variant="outline"
+              >
+                <ExternalLink className="h-4 w-4 mr-2" />
+                View Enhanced Resume
+              </Button>
+            )}
+          </div>
         </div>
       </CardContent>
     </Card>
