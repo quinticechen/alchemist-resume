@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import ResumeUploader from "@/components/ResumeUploader";
 import JobUrlInput from "@/components/JobUrlInput";
 import ResumePreview from "@/components/ResumePreview";
-import ProcessingPreview from "@/components/ProcessingPreview";
+import AlchemistSection from "@/components/AlchemistSection";
 import Header from "@/components/Header";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,7 +13,6 @@ const Index = () => {
   const [publicUrl, setPublicUrl] = useState<string>();
   const [resumeId, setResumeId] = useState<string>();
   const [isProcessing, setIsProcessing] = useState(false);
-  const [analysisId, setAnalysisId] = useState<string>();
   const { toast } = useToast();
 
   const handleFileUpload = (file: File, path: string, url: string, id: string) => {
@@ -42,7 +41,6 @@ const Index = () => {
         setPublicUrl(undefined);
         setResumeId(undefined);
         setIsProcessing(false);
-        setAnalysisId(undefined);
 
         toast({
           title: "Resume Cancelled",
@@ -81,7 +79,6 @@ const Index = () => {
       if (error) throw error;
 
       console.log('Processing started:', data);
-      setAnalysisId(data.analysisId);
 
       toast({
         title: "Analysis Started",
@@ -124,7 +121,7 @@ const Index = () => {
               <ResumeUploader onFileUpload={handleFileUpload} />
             )}
             <JobUrlInput onUrlSubmit={handleUrlSubmit} isProcessing={isProcessing} />
-            {isProcessing && <ProcessingPreview analysisId={analysisId} />}
+            {resumeId && <AlchemistSection resumeId={resumeId} />}
           </div>
         </div>
       </div>
