@@ -17,6 +17,28 @@ const ProcessingPreview = ({ analysisId }: ProcessingPreviewProps) => {
   useEffect(() => {
     if (!analysisId) return;
 
+    // Initial fetch of the analysis
+    const fetchAnalysis = async () => {
+      const { data, error } = await supabase
+        .from("resume_analyses")
+        .select("google_doc_url")
+        .eq("id", analysisId)
+        .single();
+
+      if (error) {
+        console.error("Error fetching analysis:", error);
+        return;
+      }
+
+      if (data?.google_doc_url) {
+        setGoogleDocUrl(data.google_doc_url);
+        setProgress(100);
+      }
+    };
+
+    fetchAnalysis();
+
+    // Subscribe to real-time updates
     const channel = supabase
       .channel(`analysis-${analysisId}`)
       .on(
@@ -28,7 +50,7 @@ const ProcessingPreview = ({ analysisId }: ProcessingPreviewProps) => {
           filter: `id=eq.${analysisId}`,
         },
         (payload) => {
-          console.log('Received update:', payload);
+          console.log('Received real-time update:', payload);
           const newGoogleDocUrl = payload.new.google_doc_url;
           if (newGoogleDocUrl && !googleDocUrl) {
             setGoogleDocUrl(newGoogleDocUrl);
@@ -43,6 +65,7 @@ const ProcessingPreview = ({ analysisId }: ProcessingPreviewProps) => {
       .subscribe();
 
     return () => {
+      console.log('Cleaning up subscription');
       supabase.removeChannel(channel);
     };
   }, [analysisId, googleDocUrl, toast]);
