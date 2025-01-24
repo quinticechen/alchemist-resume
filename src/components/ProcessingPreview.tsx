@@ -45,8 +45,7 @@ const ProcessingPreview = ({ analysisId }: ProcessingPreviewProps) => {
 
     fetchAnalysis();
 
-    // Subscribe to real-time updates
-    console.log('Setting up real-time subscription...');
+    // 初始化訂閱
     const channel = supabase
       .channel(`analysis-${analysisId}`)
       .on(
@@ -59,29 +58,43 @@ const ProcessingPreview = ({ analysisId }: ProcessingPreviewProps) => {
         },
         (payload) => {
           console.log('Received real-time update:', payload);
+          
+          // 檢查 resume_id 的更新
           if (payload.eventType === 'UPDATE') {
-            const newGoogleDocUrl = payload.new.google_doc_url;
-            console.log('New Google Doc URL from update:', newGoogleDocUrl);
-            if (newGoogleDocUrl && !googleDocUrl) {
-              setGoogleDocUrl(newGoogleDocUrl);
+            const newData = payload.new;
+            console.log('Analysis update received:', newData);
+
+            // 檢查分析狀態
+            if (newData.google_doc_url && !googleDocUrl) {
+              setGoogleDocUrl(newData.google_doc_url);
               setProgress(100);
               toast({
-                title: "Resume Ready!",
-                description: "Your customized resume is now available in Google Docs",
+                title: "分析完成！",
+                description: "您的客製化簡歷已經準備就緒",
               });
+            }
+            
+            // 根據分析進度更新 UI
+            if (newData.analysis_data) {
+              setProgress(90);
+              console.log('Analysis data received:', newData.analysis_data);
             }
           }
         }
       )
       .subscribe((status) => {
         console.log('Subscription status:', status);
+        if (status === 'SUBSCRIBED') {
+          console.log('Successfully subscribed to updates');
+        }
       });
 
+    // 清理訂閱
     return () => {
-      console.log('Cleaning up subscription for analysis:', analysisId);
+      console.log('Cleaning up subscription');
       supabase.removeChannel(channel);
     };
-  }, [analysisId, toast]);
+  }, [analysisId, toast, googleDocUrl]);
 
   // Progress animation effect
   useEffect(() => {
