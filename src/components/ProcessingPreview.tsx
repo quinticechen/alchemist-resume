@@ -17,8 +17,11 @@ const ProcessingPreview = ({ analysisId }: ProcessingPreviewProps) => {
   useEffect(() => {
     if (!analysisId) return;
 
+    console.log('Setting up ProcessingPreview for analysis:', analysisId);
+
     // Initial fetch of the analysis
     const fetchAnalysis = async () => {
+      console.log('Fetching initial analysis data...');
       const { data, error } = await supabase
         .from("resume_analyses")
         .select("google_doc_url")
@@ -30,7 +33,9 @@ const ProcessingPreview = ({ analysisId }: ProcessingPreviewProps) => {
         return;
       }
 
+      console.log('Initial analysis data:', data);
       if (data?.google_doc_url) {
+        console.log('Found existing Google Doc URL:', data.google_doc_url);
         setGoogleDocUrl(data.google_doc_url);
         setProgress(100);
       }
@@ -39,45 +44,52 @@ const ProcessingPreview = ({ analysisId }: ProcessingPreviewProps) => {
     fetchAnalysis();
 
     // Subscribe to real-time updates
+    console.log('Setting up real-time subscription...');
     const channel = supabase
       .channel(`analysis-${analysisId}`)
       .on(
         'postgres_changes',
         {
-          event: 'UPDATE',
+          event: '*',
           schema: 'public',
           table: 'resume_analyses',
           filter: `id=eq.${analysisId}`,
         },
         (payload) => {
           console.log('Received real-time update:', payload);
-          const newGoogleDocUrl = payload.new.google_doc_url;
-          if (newGoogleDocUrl && !googleDocUrl) {
-            setGoogleDocUrl(newGoogleDocUrl);
-            setProgress(100);
-            toast({
-              title: "Resume Ready!",
-              description: "Your customized resume is now available in Google Docs",
-            });
+          if (payload.eventType === 'UPDATE') {
+            const newGoogleDocUrl = payload.new.google_doc_url;
+            console.log('New Google Doc URL from update:', newGoogleDocUrl);
+            if (newGoogleDocUrl && !googleDocUrl) {
+              setGoogleDocUrl(newGoogleDocUrl);
+              setProgress(100);
+              toast({
+                title: "Resume Ready!",
+                description: "Your customized resume is now available in Google Docs",
+              });
+            }
           }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Subscription status:', status);
+      });
 
     return () => {
-      console.log('Cleaning up subscription');
+      console.log('Cleaning up subscription for analysis:', analysisId);
       supabase.removeChannel(channel);
     };
-  }, [analysisId, googleDocUrl, toast]);
+  }, [analysisId, toast]);
 
+  // Progress animation effect
   useEffect(() => {
-    if (!googleDocUrl) {
+    if (!googleDocUrl && progress < 90) {
       const timer = setInterval(() => {
         setProgress((prev) => (prev >= 90 ? 90 : prev + 1));
       }, 1000);
       return () => clearInterval(timer);
     }
-  }, [googleDocUrl]);
+  }, [googleDocUrl, progress]);
 
   return (
     <Card className="w-full animate-fade-up">
