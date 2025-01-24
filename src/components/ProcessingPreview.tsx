@@ -9,6 +9,8 @@ interface ProcessingPreviewProps {
   analysisId?: string;
 }
 
+const TIMEOUT_DURATION = 300000; // 5 minutes in milliseconds
+
 const ProcessingPreview = ({ analysisId }: ProcessingPreviewProps) => {
   const [progress, setProgress] = useState(33);
   const [googleDocUrl, setGoogleDocUrl] = useState<string | null>(null);
