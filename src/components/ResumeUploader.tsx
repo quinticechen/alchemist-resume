@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Upload } from "lucide-react";
@@ -15,6 +15,34 @@ const RETRY_DELAY = 1000; // 1 second
 const ResumeUploader = ({ onFileUpload }: ResumeUploaderProps) => {
   const { toast } = useToast();
   const [isUploading, setIsUploading] = useState(false);
+
+  useEffect(() => {
+    // 設置實時訂閱
+    const channel = supabase
+      .channel('resume_updates')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'resume_analyses',
+        },
+        (payload) => {
+          if (payload.new && payload.new.analysis_data) {
+            toast({
+              title: "分析完成",
+              description: "您的簡歷分析已準備就緒！",
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    // 清理訂閱
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [toast]);
 
   const validateFile = (file: File): boolean => {
     if (file.size > MAX_FILE_SIZE) {
@@ -99,14 +127,14 @@ const ResumeUploader = ({ onFileUpload }: ResumeUploaderProps) => {
       
       onFileUpload(file, filePath, publicUrl, resume.id);
       toast({
-        title: "Resume Uploaded",
-        description: "Your resume has been uploaded successfully",
+        title: "簡歷上傳成功",
+        description: "您的簡歷已上傳，正在進行分析...",
       });
     } catch (error) {
       console.error('Error uploading resume:', error);
       toast({
-        title: "Upload Failed",
-        description: "There was an error uploading your resume. Please try again with a smaller file or try again later.",
+        title: "上傳失敗",
+        description: "上傳簡歷時發生錯誤，請稍後重試。",
         variant: "destructive",
       });
     } finally {
