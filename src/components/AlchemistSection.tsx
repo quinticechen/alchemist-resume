@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Download, FileText, ExternalLink } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -14,9 +14,13 @@ const AlchemistSection = ({ resumeId }: AlchemistSectionProps) => {
   const [googleDocUrl, setGoogleDocUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchAnalysis = async () => {
-      if (!resumeId) return;
+    if (!resumeId) return;
 
+    console.log('Setting up AlchemistSection for resume:', resumeId);
+
+    // Initial fetch of the analysis
+    const fetchAnalysis = async () => {
+      console.log('Fetching initial analysis data...');
       try {
         const { data, error } = await supabase
           .from("resume_analyses")
@@ -26,7 +30,9 @@ const AlchemistSection = ({ resumeId }: AlchemistSectionProps) => {
 
         if (error) throw error;
         
+        console.log('Initial analysis data:', data);
         if (data?.google_doc_url) {
+          console.log('Found existing Google Doc URL:', data.google_doc_url);
           setGoogleDocUrl(data.google_doc_url);
         }
       } catch (error) {
@@ -40,91 +46,68 @@ const AlchemistSection = ({ resumeId }: AlchemistSectionProps) => {
     };
 
     fetchAnalysis();
+
+    // Subscribe to real-time updates
+    console.log('Setting up real-time subscription...');
+    const channel = supabase
+      .channel(`resume-analysis-${resumeId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'resume_analyses',
+          filter: `resume_id=eq.${resumeId}`,
+        },
+        (payload) => {
+          console.log('Received real-time update:', payload);
+          if (payload.eventType === 'UPDATE' || payload.eventType === 'INSERT') {
+            const newGoogleDocUrl = payload.new.google_doc_url;
+            console.log('New Google Doc URL from update:', newGoogleDocUrl);
+            if (newGoogleDocUrl && newGoogleDocUrl !== googleDocUrl) {
+              setGoogleDocUrl(newGoogleDocUrl);
+              toast({
+                title: "Resume Ready!",
+                description: "Your customized resume is now available in Google Docs",
+              });
+            }
+          }
+        }
+      )
+      .subscribe((status) => {
+        console.log('Subscription status:', status);
+      });
+
+    return () => {
+      console.log('Cleaning up subscription for resume:', resumeId);
+      supabase.removeChannel(channel);
+    };
   }, [resumeId, toast]);
-
-  const handleDownload = async () => {
-    if (!resumeId) {
-      toast({
-        title: "Error",
-        description: "No resume found to download",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      const { data: resume } = await supabase
-        .from("resumes")
-        .select("file_path, file_name")
-        .eq("id", resumeId)
-        .single();
-
-      if (!resume) {
-        throw new Error("Resume not found");
-      }
-
-      const { data, error } = await supabase.storage
-        .from("resumes")
-        .download(resume.file_path);
-
-      if (error) throw error;
-
-      const url = window.URL.createObjectURL(data);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = resume.file_name;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-
-      toast({
-        title: "Success",
-        description: "Resume downloaded successfully",
-      });
-    } catch (error) {
-      console.error("Error downloading resume:", error);
-      toast({
-        title: "Error",
-        description: "Failed to download resume",
-        variant: "destructive",
-      });
-    }
-  };
 
   return (
     <Card className="w-full">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <FileText className="h-5 w-5" />
           ResumeAlchemist Results
         </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
           <p className="text-sm text-gray-600">
-            Your resume has been processed. You can download the original file or view the enhanced version below.
+            {googleDocUrl 
+              ? "Your enhanced resume is ready! Click below to view it in Google Docs."
+              : "Your resume is being processed. Please wait..."}
           </p>
-          <div className="flex flex-col sm:flex-row gap-3">
+          {googleDocUrl && (
             <Button
-              onClick={handleDownload}
+              onClick={() => window.open(googleDocUrl, '_blank')}
               className="w-full sm:w-auto"
-              variant="default"
+              variant="outline"
             >
-              <Download className="h-4 w-4 mr-2" />
-              Download Original
+              <ExternalLink className="h-4 w-4 mr-2" />
+              View Enhanced Resume
             </Button>
-            {googleDocUrl && (
-              <Button
-                onClick={() => window.open(googleDocUrl, '_blank')}
-                className="w-full sm:w-auto"
-                variant="outline"
-              >
-                <ExternalLink className="h-4 w-4 mr-2" />
-                View Enhanced Resume
-              </Button>
-            )}
-          </div>
+          )}
         </div>
       </CardContent>
     </Card>
