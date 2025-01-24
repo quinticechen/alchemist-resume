@@ -8,7 +8,9 @@ interface ResumeUploaderProps {
   onFileUpload: (file: File, filePath: string, publicUrl: string, id: string) => void;
 }
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB in bytes
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 1000; // 1 second
 
 const ResumeUploader = ({ onFileUpload }: ResumeUploaderProps) => {
   const { toast } = useToast();
@@ -18,7 +20,7 @@ const ResumeUploader = ({ onFileUpload }: ResumeUploaderProps) => {
     if (file.size > MAX_FILE_SIZE) {
       toast({
         title: "File too large",
-        description: "Please upload a PDF file smaller than 10MB",
+        description: "Please upload a PDF file smaller than 5MB",
         variant: "destructive",
       });
       return false;
@@ -34,19 +36,42 @@ const ResumeUploader = ({ onFileUpload }: ResumeUploaderProps) => {
     return true;
   };
 
+  const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+  const uploadWithRetry = async (filePath: string, file: File, retryCount = 0): Promise<boolean> => {
+    try {
+      console.log(`Attempting upload, retry count: ${retryCount}`);
+      const { error: uploadError } = await supabase.storage
+        .from('resumes')
+        .upload(filePath, file);
+
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        throw uploadError;
+      }
+
+      return true;
+    } catch (error) {
+      console.error(`Upload attempt ${retryCount + 1} failed:`, error);
+      
+      if (retryCount < MAX_RETRIES) {
+        console.log(`Retrying upload in ${RETRY_DELAY}ms...`);
+        await delay(RETRY_DELAY);
+        return uploadWithRetry(filePath, file, retryCount + 1);
+      }
+      
+      throw error;
+    }
+  };
+
   const uploadFile = async (file: File) => {
     try {
       setIsUploading(true);
       const fileExt = file.name.split('.').pop();
       const filePath = `${crypto.randomUUID()}.${fileExt}`;
 
-      const { error: uploadError } = await supabase.storage
-        .from('resumes')
-        .upload(filePath, file);
-
-      if (uploadError) {
-        throw uploadError;
-      }
+      console.log('Starting file upload with retry mechanism');
+      await uploadWithRetry(filePath, file);
 
       const { data: publicUrlData } = supabase.storage
         .from('resumes')
@@ -81,7 +106,7 @@ const ResumeUploader = ({ onFileUpload }: ResumeUploaderProps) => {
       console.error('Error uploading resume:', error);
       toast({
         title: "Upload Failed",
-        description: "There was an error uploading your resume",
+        description: "There was an error uploading your resume. Please try again with a smaller file or try again later.",
         variant: "destructive",
       });
     } finally {
@@ -126,7 +151,7 @@ const ResumeUploader = ({ onFileUpload }: ResumeUploaderProps) => {
           <p className="mt-2 text-sm text-gray-600">
             {isUploading 
               ? "Uploading..."
-              : "Drag and drop your PDF resume here (max 10MB), or click to select a file"
+              : "Drag and drop your PDF resume here (max 5MB), or click to select a file"
             }
           </p>
           <input
