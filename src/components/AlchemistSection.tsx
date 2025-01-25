@@ -15,14 +15,12 @@ const AlchemistSection = ({ resumeId }: AlchemistSectionProps) => {
   const { toast } = useToast();
   const [googleDocUrl, setGoogleDocUrl] = useState<string | null>(null);
   const [status, setStatus] = useState<ProcessingStatus>("idle");
-  const [processingStartTime, setProcessingStartTime] = useState<Date | null>(null);
 
   useEffect(() => {
     if (!resumeId) return;
 
     console.log('Setting up AlchemistSection for resume:', resumeId);
     setStatus("loading");
-    setProcessingStartTime(new Date());
 
     // Initial fetch of the analysis
     const fetchAnalysis = async () => {
@@ -71,7 +69,7 @@ const AlchemistSection = ({ resumeId }: AlchemistSectionProps) => {
     // Subscribe to real-time updates
     console.log('Setting up real-time subscription...');
     const channel = supabase
-      .channel(`resume-analysis-${resumeId}`)
+      .channel(`resume_analyses_${resumeId}`)
       .on(
         'postgres_changes',
         {
@@ -105,7 +103,7 @@ const AlchemistSection = ({ resumeId }: AlchemistSectionProps) => {
       clearTimeout(timeoutId);
       supabase.removeChannel(channel);
     };
-  }, [resumeId, toast, status]);
+  }, [resumeId, toast]);
 
   const getStatusMessage = () => {
     switch (status) {
