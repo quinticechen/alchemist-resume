@@ -3,10 +3,17 @@ import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
+import type { Database } from "@/integrations/supabase/types";
 
 interface ResumeUploaderProps {
   onFileUpload: (file: File, filePath: string, publicUrl: string, id: string) => void;
 }
+
+type ResumeAnalysisPayload = RealtimePostgresChangesPayload<{
+  [key: string]: any;
+  analysis_data: any;
+}>;
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB in bytes
 const MAX_RETRIES = 3;
@@ -27,7 +34,7 @@ const ResumeUploader = ({ onFileUpload }: ResumeUploaderProps) => {
           schema: 'public',
           table: 'resume_analyses',
         },
-        (payload) => {
+        (payload: ResumeAnalysisPayload) => {
           if (payload.new && payload.new.analysis_data) {
             toast({
               title: "分析完成",
