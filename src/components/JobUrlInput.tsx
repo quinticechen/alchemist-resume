@@ -10,16 +10,43 @@ interface JobUrlInputProps {
   isProcessing?: boolean;
 }
 
+const SUPPORTED_JOB_SITES = [
+  // Global Platforms
+  "linkedin.com",
+  "indeed.com",
+  "glassdoor.com",
+  "monster.com",
+  "ziprecruiter.com",
+  "careerbuilder.com",
+  "simplyhired.com",
+  // Asian Regional Platforms
+  "104.com.tw",
+  "1111.com.tw",
+  "jobsdb.com",
+  "next.rikunabi.com",
+  "51job.com",
+  "zhaopin.com"
+];
+
 const JobUrlInput = ({ onUrlSubmit, isProcessing = false }: JobUrlInputProps) => {
   const [url, setUrl] = useState("");
   const { toast } = useToast();
 
+  const isValidJobUrl = (url: string): boolean => {
+    try {
+      const urlObj = new URL(url);
+      return SUPPORTED_JOB_SITES.some(domain => urlObj.hostname.includes(domain));
+    } catch {
+      return false;
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!url.includes("104.com.tw")) {
+    if (!isValidJobUrl(url)) {
       toast({
         title: "Invalid URL",
-        description: "Please enter a valid 104 job posting URL",
+        description: "Please enter a valid job posting URL from one of our supported platforms",
         variant: "destructive",
       });
       return;
@@ -37,7 +64,7 @@ const JobUrlInput = ({ onUrlSubmit, isProcessing = false }: JobUrlInputProps) =>
         <form onSubmit={handleSubmit} className="flex gap-2">
           <Input
             type="url"
-            placeholder="Paste 104 job posting URL here"
+            placeholder="Paste job posting URL here"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             className="flex-1"
