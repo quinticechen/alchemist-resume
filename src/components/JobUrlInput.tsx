@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 
 interface JobUrlInputProps {
@@ -50,7 +50,7 @@ const JobUrlInput = ({ onUrlSubmit, isProcessing = false }: JobUrlInputProps) =>
                 Processing
               </>
             ) : (
-              'Analyze'
+              'Cast Alchemy'
             )}
           </Button>
         </form>
