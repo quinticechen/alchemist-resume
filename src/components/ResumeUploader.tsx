@@ -34,7 +34,8 @@ const ResumeUploader = ({ onFileUpload }: ResumeUploaderProps) => {
         },
         (payload: ResumeAnalysisPayload) => {
           console.log('Received realtime update:', payload);
-          if (payload.new && payload.new.analysis_data) {
+          // Check if payload.new exists and is of type ResumeAnalysis
+          if (payload.new && 'analysis_data' in payload.new && payload.new.analysis_data) {
             toast({
               title: "分析完成",
               description: "您的簡歷分析已準備就緒！",
