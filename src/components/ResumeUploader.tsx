@@ -10,10 +10,8 @@ interface ResumeUploaderProps {
   onFileUpload: (file: File, filePath: string, publicUrl: string, id: string) => void;
 }
 
-type ResumeAnalysisPayload = RealtimePostgresChangesPayload<{
-  [key: string]: any;
-  analysis_data: any;
-}>;
+type ResumeAnalysis = Database['public']['Tables']['resume_analyses']['Row'];
+type ResumeAnalysisPayload = RealtimePostgresChangesPayload<ResumeAnalysis>;
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB in bytes
 const MAX_RETRIES = 3;
@@ -24,7 +22,7 @@ const ResumeUploader = ({ onFileUpload }: ResumeUploaderProps) => {
   const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
-    // 設置實時訂閱
+    console.log('Setting up realtime subscription for resume analyses');
     const channel = supabase
       .channel('resume_updates')
       .on(
@@ -35,6 +33,7 @@ const ResumeUploader = ({ onFileUpload }: ResumeUploaderProps) => {
           table: 'resume_analyses',
         },
         (payload: ResumeAnalysisPayload) => {
+          console.log('Received realtime update:', payload);
           if (payload.new && payload.new.analysis_data) {
             toast({
               title: "分析完成",
@@ -45,8 +44,8 @@ const ResumeUploader = ({ onFileUpload }: ResumeUploaderProps) => {
       )
       .subscribe();
 
-    // 清理訂閱
     return () => {
+      console.log('Cleaning up realtime subscription');
       supabase.removeChannel(channel);
     };
   }, [toast]);
