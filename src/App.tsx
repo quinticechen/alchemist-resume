@@ -2,6 +2,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-d
 import { Toaster } from "@/components/ui/toaster";
 import Index from "@/pages/Index";
 import Login from "@/pages/Login";
+import Terms from "@/pages/Terms";
+import Privacy from "@/pages/Privacy";
 import { useEffect, useState } from "react";
 import { supabase } from "./integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
@@ -56,6 +58,8 @@ function App() {
             )
           } 
         />
+        <Route path="/terms" element={<Terms />} />
+        <Route path="/privacy" element={<Privacy />} />
       </Routes>
       <Toaster />
     </Router>
