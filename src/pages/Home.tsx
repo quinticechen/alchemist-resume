@@ -1,0 +1,161 @@
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { ArrowRight, Upload, Zap, CheckCircle } from "lucide-react";
+import Header from "@/components/Header";
+
+const companies = [
+  "Google", "Amazon", "Microsoft", "Apple", "Meta"
+];
+
+const features = [
+  {
+    title: "Upload Resume",
+    description: "Submit your existing PDF resume",
+    icon: Upload,
+  },
+  {
+    title: "Add Job Link",
+    description: "Paste the URL of your target job posting",
+    icon: ArrowRight,
+  },
+  {
+    title: "Get Optimized",
+    description: "Receive a perfectly matched resume",
+    icon: Zap,
+  },
+];
+
+const faqs = [
+  {
+    question: "How many free uses do I get?",
+    answer: "New users receive 3 free uses to try our service.",
+  },
+  {
+    question: "What file formats are supported?",
+    answer: "Currently, we support PDF format for resume uploads.",
+  },
+  {
+    question: "How long does the process take?",
+    answer: "The optimization process typically takes 2-3 minutes.",
+  },
+];
+
+const Home = () => {
+  const navigate = useNavigate();
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100">
+      <Header />
+      
+      {/* Hero Section */}
+      <section className="py-20 px-4">
+        <div className="max-w-6xl mx-auto text-center">
+          <h1 className="text-6xl font-bold bg-gradient-primary text-transparent bg-clip-text mb-6">
+            Transform Your Resume with AI Alchemy
+          </h1>
+          <p className="text-xl text-neutral-600 mb-8 max-w-3xl mx-auto">
+            Turn your ordinary resume into the perfect match for your dream job using our AI-powered optimization technology.
+          </p>
+          <div className="flex gap-4 justify-center">
+            <Button
+              onClick={() => navigate("/login")}
+              size="lg"
+              className="bg-gradient-primary hover:opacity-90 transition-opacity"
+            >
+              Start Free Trial
+            </Button>
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={() => {
+                const featuresSection = document.getElementById("features");
+                featuresSection?.scrollIntoView({ behavior: "smooth" });
+              }}
+            >
+              Learn More
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section id="features" className="py-20 bg-white">
+        <div className="max-w-6xl mx-auto px-4">
+          <h2 className="text-4xl font-bold text-center mb-12">How It Works</h2>
+          <div className="grid md:grid-cols-3 gap-8">
+            {features.map((feature, index) => (
+              <div
+                key={index}
+                className="p-6 rounded-xl border border-neutral-200 bg-white shadow-apple hover:shadow-apple-lg transition-shadow"
+              >
+                <feature.icon className="w-12 h-12 text-primary mb-4" />
+                <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
+                <p className="text-neutral-600">{feature.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Companies Section */}
+      <section className="py-16 bg-neutral-50">
+        <div className="max-w-6xl mx-auto px-4 text-center">
+          <h2 className="text-2xl font-semibold text-neutral-600 mb-8">
+            Optimize Your Resume for Top Companies
+          </h2>
+          <div className="flex flex-wrap justify-center gap-8 items-center">
+            {companies.map((company) => (
+              <span
+                key={company}
+                className="text-2xl font-bold bg-gradient-primary text-transparent bg-clip-text"
+              >
+                {company}
+              </span>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Free Trial Section */}
+      <section className="py-20 bg-gradient-primary text-white">
+        <div className="max-w-4xl mx-auto px-4 text-center">
+          <h2 className="text-4xl font-bold mb-6">Start with 3 Free Uses</h2>
+          <p className="text-xl mb-8 opacity-90">
+            Try our AI-powered resume optimization with no commitment.
+          </p>
+          <Button
+            onClick={() => navigate("/login")}
+            size="lg"
+            variant="secondary"
+            className="bg-secondary hover:bg-secondary/90 text-primary"
+          >
+            Start Free Trial
+          </Button>
+        </div>
+      </section>
+
+      {/* FAQ Section */}
+      <section className="py-20 bg-white">
+        <div className="max-w-4xl mx-auto px-4">
+          <h2 className="text-4xl font-bold text-center mb-12">
+            Frequently Asked Questions
+          </h2>
+          <div className="space-y-6">
+            {faqs.map((faq, index) => (
+              <div
+                key={index}
+                className="p-6 rounded-xl border border-neutral-200 bg-white"
+              >
+                <h3 className="text-xl font-semibold mb-2">{faq.question}</h3>
+                <p className="text-neutral-600">{faq.answer}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+export default Home;

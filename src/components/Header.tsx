@@ -41,9 +41,12 @@ const Header = () => {
         title: "Logged out",
         description: "You have been successfully logged out.",
       });
-      navigate("/login");
+      navigate("/");
     }
   };
+
+  const isHome = location.pathname === "/";
+  const isLogin = location.pathname === "/login";
 
   return (
     <header className="bg-white/80 backdrop-blur-md border-b border-neutral-200 sticky top-0 z-50">
@@ -57,6 +60,14 @@ const Header = () => {
               ResumeAlchemist
             </div>
             <nav className="hidden sm:flex items-center gap-4 text-sm text-neutral-600">
+              {session && (
+                <Link 
+                  to="/alchemy-station" 
+                  className="hover:text-neutral-900 transition-colors"
+                >
+                  Alchemy Station
+                </Link>
+              )}
               <Link to="/terms" className="hover:text-neutral-900 transition-colors">Terms</Link>
               <Link to="/privacy" className="hover:text-neutral-900 transition-colors">Privacy</Link>
             </nav>
@@ -80,16 +91,16 @@ const Header = () => {
                   <span className="hidden sm:inline">Sign Out</span>
                 </Button>
               </>
-            ) : location.pathname !== "/login" ? (
+            ) : !isLogin && (
               <Button
                 onClick={() => navigate("/login")}
                 size="sm"
                 className="flex items-center gap-2 bg-gradient-primary hover:opacity-90 transition-opacity"
               >
                 <LogIn className="h-4 w-4" />
-                Sign In
+                {isHome ? "Start Free Trial" : "Sign In"}
               </Button>
-            ) : null}
+            )}
           </div>
         </div>
       </div>

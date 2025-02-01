@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
-import Index from "@/pages/Index";
+import Home from "@/pages/Home";
+import AlchemyStation from "@/pages/AlchemyStation";
 import Login from "@/pages/Login";
 import Terms from "@/pages/Terms";
 import Privacy from "@/pages/Privacy";
@@ -12,7 +13,6 @@ function App() {
   const [session, setSession] = useState<Session | null>(null);
 
   useEffect(() => {
-    // Get initial session without blocking render
     const initializeAuth = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -24,7 +24,6 @@ function App() {
 
     initializeAuth();
 
-    // Listen for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -38,11 +37,12 @@ function App() {
   return (
     <Router>
       <Routes>
+        <Route path="/" element={<Home />} />
         <Route 
-          path="/" 
+          path="/alchemy-station" 
           element={
             session ? (
-              <Index />
+              <AlchemyStation />
             ) : (
               <Navigate to="/login" replace />
             )
@@ -52,7 +52,7 @@ function App() {
           path="/login" 
           element={
             session ? (
-              <Navigate to="/" replace />
+              <Navigate to="/alchemy-station" replace />
             ) : (
               <Login />
             )
