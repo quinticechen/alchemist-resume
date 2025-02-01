@@ -1,5 +1,5 @@
 import React, { useCallback } from "react";
-import { Upload } from "lucide-react";
+import { Upload, Loader2 } from "lucide-react";
 
 interface UploadZoneProps {
   isUploading: boolean;
@@ -30,17 +30,31 @@ const UploadZone = ({ isUploading, onFileSelect }: UploadZoneProps) => {
 
   return (
     <div
-      className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-primary transition-colors cursor-pointer"
+      className={`
+        border-2 border-dashed rounded-xl p-8 text-center
+        ${isUploading 
+          ? 'border-primary/30 bg-primary/5' 
+          : 'border-neutral-300 hover:border-primary/50 hover:bg-neutral-50'
+        }
+        transition-all duration-300 cursor-pointer
+      `}
       onDragOver={(e) => e.preventDefault()}
       onDrop={handleFileDrop}
       onClick={() => document.getElementById("fileInput")?.click()}
     >
-      <Upload className="mx-auto h-12 w-12 text-gray-400" />
-      <p className="mt-2 text-sm text-gray-600">
+      {isUploading ? (
+        <Loader2 className="mx-auto h-12 w-12 text-primary animate-spin" />
+      ) : (
+        <Upload className="mx-auto h-12 w-12 text-neutral-400" />
+      )}
+      <p className="mt-4 text-sm text-neutral-600">
         {isUploading 
           ? "Uploading..."
-          : "Drag and drop your PDF resume here (max 5MB), or click to select a file"
+          : "Drag and drop your PDF resume here, or click to select a file"
         }
+      </p>
+      <p className="mt-2 text-xs text-neutral-500">
+        Maximum file size: 5MB
       </p>
       <input
         id="fileInput"

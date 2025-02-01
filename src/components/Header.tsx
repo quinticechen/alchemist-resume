@@ -13,12 +13,10 @@ const Header = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
     });
 
-    // Listen for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -48,43 +46,45 @@ const Header = () => {
   };
 
   return (
-    <header className="bg-white shadow-sm">
-      <div className="container mx-auto px-4 py-3 flex justify-between items-center">
-        <div 
-          onClick={() => navigate("/")} 
-          className="text-xl font-bold text-primary cursor-pointer hover:opacity-80 transition-opacity"
-        >
-          ResumeAlchemist
-        </div>
-        <div className="flex items-center gap-4">
-          {session ? (
-            <>
-              <div className="flex items-center gap-2">
-                <User className="h-5 w-5" />
-                <span className="text-sm text-gray-600">
-                  {session.user.email}
-                </span>
-              </div>
+    <header className="bg-white/80 backdrop-blur-md border-b border-neutral-200 sticky top-0 z-50">
+      <div className="container mx-auto px-4 py-4">
+        <div className="flex justify-between items-center">
+          <div 
+            onClick={() => navigate("/")} 
+            className="text-xl font-semibold bg-gradient-primary text-transparent bg-clip-text cursor-pointer hover:opacity-80 transition-opacity"
+          >
+            ResumeAlchemist
+          </div>
+          <div className="flex items-center gap-6">
+            {session ? (
+              <>
+                <div className="flex items-center gap-3 text-neutral-600">
+                  <User className="h-5 w-5" />
+                  <span className="text-sm hidden sm:inline">
+                    {session.user.email}
+                  </span>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleLogout}
+                  className="flex items-center gap-2 border-neutral-200 hover:bg-neutral-100"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span className="hidden sm:inline">Sign Out</span>
+                </Button>
+              </>
+            ) : location.pathname !== "/login" ? (
               <Button
-                variant="secondary"
+                onClick={() => navigate("/login")}
                 size="sm"
-                onClick={handleLogout}
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 bg-gradient-primary hover:opacity-90 transition-opacity"
               >
-                <LogOut className="h-4 w-4" />
-                Sign Out
+                <LogIn className="h-4 w-4" />
+                Sign In
               </Button>
-            </>
-          ) : location.pathname !== "/login" ? (
-            <Button
-              onClick={() => navigate("/login")}
-              size="sm"
-              className="flex items-center gap-2"
-            >
-              <LogIn className="h-4 w-4" />
-              Sign In
-            </Button>
-          ) : null}
+            ) : null}
+          </div>
         </div>
       </div>
     </header>

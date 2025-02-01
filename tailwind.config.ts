@@ -23,31 +23,40 @@ export default {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         primary: {
-          DEFAULT: "#1a365d",
+          DEFAULT: "#1a1f2c", // Deep sapphire blue
+          light: "#2a3040",
+          dark: "#12151e",
           foreground: "#ffffff",
         },
         secondary: {
-          DEFAULT: "#e2e8f0",
-          foreground: "#1a365d",
+          DEFAULT: "#ffd700", // Gold accent
+          light: "#ffe033",
+          dark: "#ccac00",
+          foreground: "#1a1f2c",
+        },
+        neutral: {
+          50: "#f8f9fa",
+          100: "#f1f3f5",
+          200: "#e9ecef",
+          300: "#dee2e6",
+          400: "#ced4da",
+          500: "#adb5bd",
+          600: "#868e96",
+          700: "#495057",
+          800: "#343a40",
+          900: "#212529",
         },
       },
       fontFamily: {
-        sans: ["Inter", "sans-serif"],
+        sans: ["SF Pro Display", "Inter", "sans-serif"],
       },
-      keyframes: {
-        "fade-up": {
-          "0%": {
-            opacity: "0",
-            transform: "translateY(10px)",
-          },
-          "100%": {
-            opacity: "1",
-            transform: "translateY(0)",
-          },
-        },
+      boxShadow: {
+        'apple': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+        'apple-lg': '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
       },
-      animation: {
-        "fade-up": "fade-up 0.5s ease-out",
+      backgroundImage: {
+        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+        'gradient-primary': 'linear-gradient(135deg, #1a1f2c 0%, #2a3040 100%)',
       },
     },
   },

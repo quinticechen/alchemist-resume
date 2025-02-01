@@ -100,16 +100,16 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100">
       <Header />
-      <div className="py-8">
-        <div className="container max-w-4xl mx-auto space-y-8 animate-fade-up">
-          <div className="text-center">
-            <h1 className="text-4xl font-bold text-primary mb-2">
+      <div className="py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-4xl mx-auto space-y-10 animate-fade-up">
+          <div className="text-center space-y-4">
+            <h1 className="text-5xl font-bold bg-gradient-primary text-transparent bg-clip-text">
               ResumeAlchemist
             </h1>
-            <p className="text-gray-600">
-              Upload your resume and job posting to get a customized match
+            <p className="text-lg text-neutral-600 max-w-2xl mx-auto">
+              Transform your resume into a perfect match for your dream job using our AI-powered analysis
             </p>
           </div>
 
