@@ -36,7 +36,16 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Index />} />
+        <Route 
+          path="/" 
+          element={
+            session ? (
+              <Index />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          } 
+        />
         <Route 
           path="/login" 
           element={
