@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { Lock, Mail, AlertCircle } from "lucide-react";
+import { Lock, Mail, AlertCircle, Linkedin, LogIn } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
 
 const Login = () => {
   const [email, setEmail] = React.useState("");
@@ -31,7 +32,31 @@ const Login = () => {
     return null;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSocialLogin = async (provider: 'google' | 'linkedin') => {
+    try {
+      setIsLoading(true);
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: `${window.location.origin}/alchemy-station`,
+        },
+      });
+      
+      if (error) throw error;
+      
+    } catch (error: any) {
+      console.error('Social login error:', error);
+      toast({
+        title: "Authentication Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
@@ -78,7 +103,7 @@ const Login = () => {
           password,
         });
         if (error) throw error;
-        navigate("/");
+        navigate("/alchemy-station");
       }
     } catch (error: any) {
       toast({
@@ -103,58 +128,97 @@ const Login = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-1">
-              <div className="relative">
-                <Mail className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-                <Input
-                  type="email"
-                  placeholder="Email address"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10"
-                  required
+          <div className="space-y-4">
+            {/* Social Login Buttons */}
+            <div className="grid gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={() => handleSocialLogin('google')}
+                disabled={isLoading}
+              >
+                <img
+                  src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+                  alt="Google"
+                  className="w-5 h-5 mr-2"
                 />
-              </div>
-            </div>
-            <div className="space-y-1">
-              <div className="relative">
-                <Lock className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-                <Input
-                  type="password"
-                  placeholder="Password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10"
-                  required
-                />
-              </div>
-              {isSignUp && (
-                <div className="flex items-start mt-2">
-                  <AlertCircle className="h-5 w-5 text-gray-400 mr-2" />
-                  <p className="text-xs text-gray-500">
-                    Password must be at least 8 characters long and contain uppercase, lowercase letters and numbers
-                  </p>
-                </div>
-              )}
-            </div>
-            <div>
-              <Button className="w-full" type="submit" disabled={isLoading}>
-                {isLoading ? "Loading..." : isSignUp ? "Sign up" : "Sign in"}
+                Continue with Google
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={() => handleSocialLogin('linkedin')}
+                disabled={isLoading}
+              >
+                <Linkedin className="w-5 h-5 mr-2" />
+                Continue with LinkedIn
               </Button>
             </div>
-            <div className="text-center">
-              <button
-                type="button"
-                onClick={() => setIsSignUp(!isSignUp)}
-                className="text-sm text-blue-600 hover:text-blue-800"
-              >
-                {isSignUp
-                  ? "Already have an account? Sign in"
-                  : "Don't have an account? Sign up"}
-              </button>
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-gray-300" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-gray-500">Or continue with email</span>
+              </div>
             </div>
-          </form>
+
+            {/* Email Login Form */}
+            <form onSubmit={handleEmailLogin} className="space-y-4">
+              <div className="space-y-1">
+                <div className="relative">
+                  <Mail className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                  <Input
+                    type="email"
+                    placeholder="Email address"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="pl-10"
+                    required
+                  />
+                </div>
+              </div>
+              <div className="space-y-1">
+                <div className="relative">
+                  <Lock className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                  <Input
+                    type="password"
+                    placeholder="Password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="pl-10"
+                    required
+                  />
+                </div>
+                {isSignUp && (
+                  <div className="flex items-start mt-2">
+                    <AlertCircle className="h-5 w-5 text-gray-400 mr-2" />
+                    <p className="text-xs text-gray-500">
+                      Password must be at least 8 characters long and contain uppercase, lowercase letters and numbers
+                    </p>
+                  </div>
+                )}
+              </div>
+              <Button className="w-full" type="submit" disabled={isLoading}>
+                <LogIn className="w-5 h-5 mr-2" />
+                {isLoading ? "Loading..." : isSignUp ? "Sign up" : "Sign in"}
+              </Button>
+              <div className="text-center">
+                <button
+                  type="button"
+                  onClick={() => setIsSignUp(!isSignUp)}
+                  className="text-sm text-blue-600 hover:text-blue-800"
+                >
+                  {isSignUp
+                    ? "Already have an account? Sign in"
+                    : "Don't have an account? Sign up"}
+                </button>
+              </div>
+            </form>
+          </div>
         </CardContent>
       </Card>
     </div>
