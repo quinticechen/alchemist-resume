@@ -6,7 +6,6 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { Lock, Mail, AlertCircle, Linkedin, LogIn } from "lucide-react";
-import { Separator } from "@/components/ui/separator";
 
 const Login = () => {
   const [email, setEmail] = React.useState("");
@@ -32,7 +31,7 @@ const Login = () => {
     return null;
   };
 
-  const handleSocialLogin = async (provider: 'google' | 'linkedin') => {
+  const handleSocialLogin = async (provider: 'google' | 'linkedin_oidc') => {
     try {
       setIsLoading(true);
       const { error } = await supabase.auth.signInWithOAuth({
@@ -149,7 +148,7 @@ const Login = () => {
                 type="button"
                 variant="outline"
                 className="w-full"
-                onClick={() => handleSocialLogin('linkedin')}
+                onClick={() => handleSocialLogin('linkedin_oidc')}
                 disabled={isLoading}
               >
                 <Linkedin className="w-5 h-5 mr-2" />
