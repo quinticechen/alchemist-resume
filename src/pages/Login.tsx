@@ -1,11 +1,10 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { Lock, Mail, AlertCircle, Linkedin, LogIn } from "lucide-react";
+import SocialLogin from "@/components/auth/SocialLogin";
+import EmailForm from "@/components/auth/EmailForm";
 
 const Login = () => {
   const [email, setEmail] = React.useState("");
@@ -15,7 +14,6 @@ const Login = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  // Password strength validation
   const validatePassword = (password: string) => {
     const minLength = 8;
     const hasUpperCase = /[A-Z]/.test(password);
@@ -59,7 +57,6 @@ const Login = () => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       toast({
@@ -71,7 +68,6 @@ const Login = () => {
       return;
     }
 
-    // Validate password strength for signup
     if (isSignUp) {
       const passwordError = validatePassword(password);
       if (passwordError) {
@@ -128,33 +124,10 @@ const Login = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {/* Social Login Buttons */}
-            <div className="grid gap-3">
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full"
-                onClick={() => handleSocialLogin('google')}
-                disabled={isLoading}
-              >
-                <img
-                  src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
-                  alt="Google"
-                  className="w-5 h-5 mr-2"
-                />
-                Continue with Google
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full"
-                onClick={() => handleSocialLogin('linkedin_oidc')}
-                disabled={isLoading}
-              >
-                <Linkedin className="w-5 h-5 mr-2" />
-                Continue with LinkedIn
-              </Button>
-            </div>
+            <SocialLogin 
+              onSocialLogin={handleSocialLogin}
+              isLoading={isLoading}
+            />
 
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
@@ -165,58 +138,16 @@ const Login = () => {
               </div>
             </div>
 
-            {/* Email Login Form */}
-            <form onSubmit={handleEmailLogin} className="space-y-4">
-              <div className="space-y-1">
-                <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-                  <Input
-                    type="email"
-                    placeholder="Email address"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="pl-10"
-                    required
-                  />
-                </div>
-              </div>
-              <div className="space-y-1">
-                <div className="relative">
-                  <Lock className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-                  <Input
-                    type="password"
-                    placeholder="Password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10"
-                    required
-                  />
-                </div>
-                {isSignUp && (
-                  <div className="flex items-start mt-2">
-                    <AlertCircle className="h-5 w-5 text-gray-400 mr-2" />
-                    <p className="text-xs text-gray-500">
-                      Password must be at least 8 characters long and contain uppercase, lowercase letters and numbers
-                    </p>
-                  </div>
-                )}
-              </div>
-              <Button className="w-full" type="submit" disabled={isLoading}>
-                <LogIn className="w-5 h-5 mr-2" />
-                {isLoading ? "Loading..." : isSignUp ? "Sign up" : "Sign in"}
-              </Button>
-              <div className="text-center">
-                <button
-                  type="button"
-                  onClick={() => setIsSignUp(!isSignUp)}
-                  className="text-sm text-blue-600 hover:text-blue-800"
-                >
-                  {isSignUp
-                    ? "Already have an account? Sign in"
-                    : "Don't have an account? Sign up"}
-                </button>
-              </div>
-            </form>
+            <EmailForm 
+              email={email}
+              password={password}
+              isSignUp={isSignUp}
+              isLoading={isLoading}
+              onEmailChange={(e) => setEmail(e.target.value)}
+              onPasswordChange={(e) => setPassword(e.target.value)}
+              onSubmit={handleEmailLogin}
+              onToggleMode={() => setIsSignUp(!isSignUp)}
+            />
           </div>
         </CardContent>
       </Card>
