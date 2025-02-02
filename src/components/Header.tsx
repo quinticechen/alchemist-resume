@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 
 const Header = () => {
   const [session, setSession] = useState<Session | null>(null);
+  const [usageCount, setUsageCount] = useState<number>(0);
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
@@ -15,17 +16,38 @@ const Header = () => {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
+      if (session?.user) {
+        fetchUsageCount(session.user.id);
+      }
     });
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
+      if (session?.user) {
+        fetchUsageCount(session.user.id);
+      }
       console.log("Auth state changed:", _event, session);
     });
 
     return () => subscription.unsubscribe();
   }, []);
+
+  const fetchUsageCount = async (userId: string) => {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('usage_count')
+      .eq('id', userId)
+      .single();
+    
+    if (error) {
+      console.error('Error fetching usage count:', error);
+      return;
+    }
+    
+    setUsageCount(data?.usage_count || 0);
+  };
 
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
@@ -48,6 +70,15 @@ const Header = () => {
   const isHome = location.pathname === "/";
   const isLogin = location.pathname === "/login";
 
+  const scrollToSupportedWebsites = () => {
+    const element = document.getElementById('supported-websites');
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    } else if (!isHome) {
+      navigate('/#supported-websites');
+    }
+  };
+
   return (
     <header className="bg-white/80 backdrop-blur-md border-b border-neutral-200 sticky top-0 z-50">
       <div className="container mx-auto px-4 py-4">
@@ -69,8 +100,20 @@ const Header = () => {
                   Alchemist Workshop
                 </Link>
               )}
-              <Link to="/terms" className="hover:text-neutral-900 transition-colors">Terms</Link>
-              <Link to="/privacy" className="hover:text-neutral-900 transition-colors">Privacy</Link>
+              <Link 
+                to="/pricing" 
+                className="hover:text-neutral-900 transition-colors"
+              >
+                Pricing
+              </Link>
+              {isHome && (
+                <button
+                  onClick={scrollToSupportedWebsites}
+                  className="hover:text-neutral-900 transition-colors"
+                >
+                  Supported Websites
+                </button>
+              )}
             </nav>
           </div>
           <div className="flex items-center gap-6">
@@ -80,6 +123,9 @@ const Header = () => {
                   <User className="h-5 w-5" />
                   <span className="text-sm hidden sm:inline">
                     {session.user.email}
+                  </span>
+                  <span className="text-sm font-medium text-primary">
+                    ({3 - (usageCount || 0)} uses left)
                   </span>
                 </div>
                 <Button

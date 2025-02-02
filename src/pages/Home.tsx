@@ -1,8 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Upload, Zap, CheckCircle } from "lucide-react";
-import Header from "@/components/Header";
+import { ArrowRight, Upload, Zap, CheckCircle, Globe, MapPin } from "lucide-react";
 
 const companies = [
   "Google", "Amazon", "Microsoft", "Apple", "Meta"
@@ -26,6 +25,25 @@ const features = [
   },
 ];
 
+const globalPlatforms = [
+  { name: "LinkedIn", url: "linkedin.com" },
+  { name: "Indeed", url: "indeed.com" },
+  { name: "Glassdoor", url: "glassdoor.com" },
+  { name: "Monster", url: "monster.com" },
+  { name: "ZipRecruiter", url: "ziprecruiter.com" },
+  { name: "CareerBuilder", url: "careerbuilder.com" },
+  { name: "SimplyHired", url: "simplyhired.com" },
+];
+
+const asianPlatforms = [
+  { name: "104 Job Bank", url: "104.com.tw" },
+  { name: "1111 Job Bank", url: "1111.com.tw" },
+  { name: "JobsDB", url: "jobsdb.com" },
+  { name: "Rikunabi NEXT", url: "next.rikunabi.com" },
+  { name: "51job", url: "51job.com" },
+  { name: "Zhaopin", url: "zhaopin.com" },
+];
+
 const faqs = [
   {
     question: "How many free uses do I get?",
@@ -46,8 +64,6 @@ const Home = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100">
-      <Header />
-      
       {/* Hero Section */}
       <section className="py-20 px-4">
         <div className="max-w-6xl mx-auto text-center">
@@ -135,8 +151,51 @@ const Home = () => {
         </div>
       </section>
 
+      {/* Supported Websites Section */}
+      <section id="supported-websites" className="py-20 bg-white">
+        <div className="max-w-6xl mx-auto px-4">
+          <h2 className="text-4xl font-bold text-center mb-12">Supported Job Platforms</h2>
+          
+          <div className="grid md:grid-cols-2 gap-12">
+            {/* Global Platforms */}
+            <div className="space-y-6">
+              <div className="flex items-center gap-3 mb-6">
+                <Globe className="h-6 w-6 text-primary" />
+                <h3 className="text-2xl font-semibold">Global Platforms</h3>
+              </div>
+              <ul className="space-y-4">
+                {globalPlatforms.map((platform) => (
+                  <li key={platform.url} className="flex items-center gap-2">
+                    <CheckCircle className="h-5 w-5 text-success" />
+                    <span className="font-medium">{platform.name}</span>
+                    <span className="text-neutral-500">({platform.url})</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Asian Regional Platforms */}
+            <div className="space-y-6">
+              <div className="flex items-center gap-3 mb-6">
+                <MapPin className="h-6 w-6 text-primary" />
+                <h3 className="text-2xl font-semibold">Asian Regional Platforms</h3>
+              </div>
+              <ul className="space-y-4">
+                {asianPlatforms.map((platform) => (
+                  <li key={platform.url} className="flex items-center gap-2">
+                    <CheckCircle className="h-5 w-5 text-success" />
+                    <span className="font-medium">{platform.name}</span>
+                    <span className="text-neutral-500">({platform.url})</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* FAQ Section */}
-      <section className="py-20 bg-white">
+      <section className="py-20 bg-neutral-50">
         <div className="max-w-4xl mx-auto px-4">
           <h2 className="text-4xl font-bold text-center mb-12">
             Frequently Asked Questions
