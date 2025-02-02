@@ -19,21 +19,29 @@ export default {
     },
     extend: {
       colors: {
-        border: "hsl(var(--border))",
-        background: "hsl(var(--background))",
-        foreground: "hsl(var(--foreground))",
         primary: {
-          DEFAULT: "#1a1f2c", // Deep sapphire blue
-          light: "#2a3040",
-          dark: "#12151e",
+          DEFAULT: "#6d3666",
+          light: "#8a4683",
+          dark: "#502849",
           foreground: "#ffffff",
         },
         secondary: {
-          DEFAULT: "#ffd700", // Gold accent
-          light: "#ffe033",
-          dark: "#ccac00",
-          foreground: "#1a1f2c",
+          DEFAULT: "#fec948",
+          light: "#fed470",
+          dark: "#febb20",
+          foreground: "#03032c",
         },
+        light: "#dcdde2",
+        dark: "#03032c",
+        info: "#f09432",
+        accent: {
+          1: "#30445a",
+          2: "#0273ba",
+          3: "#a6a8ad",
+        },
+        success: "#16C172",
+        warning: "#FFDE00",
+        danger: "#F8736E",
         neutral: {
           50: "#f8f9fa",
           100: "#f1f3f5",
@@ -56,7 +64,7 @@ export default {
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
-        'gradient-primary': 'linear-gradient(135deg, #1a1f2c 0%, #2a3040 100%)',
+        'gradient-primary': 'linear-gradient(135deg, #6d3666 0%, #8a4683 100%)',
       },
     },
   },

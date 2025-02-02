@@ -2,9 +2,12 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-d
 import { Toaster } from "@/components/ui/toaster";
 import Home from "@/pages/Home";
 import AlchemistWorkshop from "@/pages/AlchemyStation";
+import AlchemyRecords from "@/pages/AlchemyRecords";
 import Login from "@/pages/Login";
 import Terms from "@/pages/Terms";
 import Privacy from "@/pages/Privacy";
+import FAQ from "@/pages/FAQ";
+import Pricing from "@/pages/Pricing";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useEffect, useState } from "react";
@@ -54,6 +57,16 @@ function App() {
               } 
             />
             <Route 
+              path="/alchemy-records" 
+              element={
+                session ? (
+                  <AlchemyRecords />
+                ) : (
+                  <Navigate to="/login" replace />
+                )
+              } 
+            />
+            <Route 
               path="/login" 
               element={
                 session ? (
@@ -65,6 +78,8 @@ function App() {
             />
             <Route path="/terms" element={<Terms />} />
             <Route path="/privacy" element={<Privacy />} />
+            <Route path="/faq" element={<FAQ />} />
+            <Route path="/pricing" element={<Pricing />} />
           </Routes>
         </main>
         <Footer />

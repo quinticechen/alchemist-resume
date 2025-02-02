@@ -1,9 +1,6 @@
-import Header from "@/components/Header";
-
 const Privacy = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100">
-      <Header />
       <div className="container mx-auto px-4 py-12">
         <div className="max-w-3xl mx-auto prose prose-slate">
           <h1 className="text-4xl font-bold text-center mb-8 bg-gradient-primary text-transparent bg-clip-text">
