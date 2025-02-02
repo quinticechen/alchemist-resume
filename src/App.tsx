@@ -1,10 +1,12 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import Home from "@/pages/Home";
-import AlchemyStation from "@/pages/AlchemyStation";
+import AlchemistWorkshop from "@/pages/AlchemyStation";
 import Login from "@/pages/Login";
 import Terms from "@/pages/Terms";
 import Privacy from "@/pages/Privacy";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 import { useEffect, useState } from "react";
 import { supabase } from "./integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
@@ -36,32 +38,38 @@ function App() {
 
   return (
     <Router>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route 
-          path="/alchemy-station" 
-          element={
-            session ? (
-              <AlchemyStation />
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          } 
-        />
-        <Route 
-          path="/login" 
-          element={
-            session ? (
-              <Navigate to="/alchemy-station" replace />
-            ) : (
-              <Login />
-            )
-          } 
-        />
-        <Route path="/terms" element={<Terms />} />
-        <Route path="/privacy" element={<Privacy />} />
-      </Routes>
-      <Toaster />
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <main className="flex-grow">
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route 
+              path="/alchemist-workshop" 
+              element={
+                session ? (
+                  <AlchemistWorkshop />
+                ) : (
+                  <Navigate to="/login" replace />
+                )
+              } 
+            />
+            <Route 
+              path="/login" 
+              element={
+                session ? (
+                  <Navigate to="/alchemist-workshop" replace />
+                ) : (
+                  <Login />
+                )
+              } 
+            />
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/privacy" element={<Privacy />} />
+          </Routes>
+        </main>
+        <Footer />
+        <Toaster />
+      </div>
     </Router>
   );
 }

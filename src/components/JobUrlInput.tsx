@@ -40,6 +40,7 @@ const SUPPORTED_JOB_SITES = [
 const JobUrlInput = ({ onUrlSubmit, isProcessing = false }: JobUrlInputProps) => {
   const [url, setUrl] = useState("");
   const [showUnsupportedDialog, setShowUnsupportedDialog] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
   const isValidJobUrl = (url: string): boolean => {
@@ -51,13 +52,15 @@ const JobUrlInput = ({ onUrlSubmit, isProcessing = false }: JobUrlInputProps) =>
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isValidJobUrl(url)) {
       setShowUnsupportedDialog(true);
       return;
     }
-    onUrlSubmit(url);
+    setIsSubmitting(true);
+    await onUrlSubmit(url);
+    setIsSubmitting(false);
     setUrl("");
   };
 
@@ -75,10 +78,10 @@ const JobUrlInput = ({ onUrlSubmit, isProcessing = false }: JobUrlInputProps) =>
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               className="flex-1"
-              disabled={isProcessing}
+              disabled={isProcessing || isSubmitting}
             />
-            <Button type="submit" disabled={isProcessing}>
-              {isProcessing ? (
+            <Button type="submit" disabled={isProcessing || isSubmitting}>
+              {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Processing

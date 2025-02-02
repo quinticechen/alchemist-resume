@@ -94,15 +94,11 @@ export const useResumeUpload = (onUploadSuccess: (file: File, filePath: string, 
       console.log('Public URL:', publicUrl);
       
       onUploadSuccess(file, filePath, publicUrl, resume.id);
-      toast({
-        title: "簡歷上傳成功",
-        description: "您的簡歷已上傳，正在進行分析...",
-      });
     } catch (error) {
       console.error('Error uploading resume:', error);
       toast({
-        title: "上傳失敗",
-        description: "上傳簡歷時發生錯誤，請稍後重試。",
+        title: "Upload Failed",
+        description: "Failed to upload resume. Please try again.",
         variant: "destructive",
       });
     } finally {

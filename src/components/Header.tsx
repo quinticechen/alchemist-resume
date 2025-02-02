@@ -53,19 +53,20 @@ const Header = () => {
       <div className="container mx-auto px-4 py-4">
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-6">
-            <div 
-              onClick={() => navigate("/")} 
-              className="text-xl font-semibold bg-gradient-primary text-transparent bg-clip-text cursor-pointer hover:opacity-80 transition-opacity"
-            >
-              ResumeAlchemist
-            </div>
+            <Link to="/" className="flex items-center">
+              <img 
+                src="/lovable-uploads/646b205a-7bc6-432d-b8bc-f002fe2db329.png" 
+                alt="ResumeAlchemist" 
+                className="h-8"
+              />
+            </Link>
             <nav className="hidden sm:flex items-center gap-4 text-sm text-neutral-600">
               {session && (
                 <Link 
-                  to="/alchemy-station" 
+                  to="/alchemist-workshop" 
                   className="hover:text-neutral-900 transition-colors"
                 >
-                  Alchemy Station
+                  Alchemist Workshop
                 </Link>
               )}
               <Link to="/terms" className="hover:text-neutral-900 transition-colors">Terms</Link>
