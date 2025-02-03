@@ -16,14 +16,24 @@ import { Session } from "@supabase/supabase-js";
 
 function App() {
   const [session, setSession] = useState<Session | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    console.log("Initializing auth...");
+    
     const initializeAuth = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error('Error getting session:', error);
+          return;
+        }
+        console.log('Initial session:', session);
         setSession(session);
       } catch (error) {
         console.error('Error getting session:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -32,12 +42,17 @@ function App() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      console.log('Auth state changed:', _event);
+      console.log('Auth state changed:', _event, session?.user?.email);
       setSession(session);
     });
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // Show loading state while checking authentication
+  if (isLoading) {
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  }
 
   return (
     <Router>
@@ -52,7 +67,7 @@ function App() {
                 session ? (
                   <AlchemistWorkshop />
                 ) : (
-                  <Navigate to="/login" replace />
+                  <Navigate to="/login" replace state={{ from: "/alchemist-workshop" }} />
                 )
               } 
             />
@@ -62,7 +77,7 @@ function App() {
                 session ? (
                   <AlchemyRecords />
                 ) : (
-                  <Navigate to="/login" replace />
+                  <Navigate to="/login" replace state={{ from: "/alchemy-records" }} />
                 )
               } 
             />
