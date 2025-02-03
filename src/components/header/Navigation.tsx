@@ -10,27 +10,39 @@ interface NavigationProps {
 const Navigation = ({ session, onSupportedWebsitesClick, isHome }: NavigationProps) => {
   return (
     <nav className="hidden sm:flex items-center gap-4 text-sm text-neutral-600">
-      {session && (
-        <Link 
-          to="/alchemist-workshop" 
-          className="hover:text-neutral-900 transition-colors"
-        >
-          Alchemist Workshop
-        </Link>
-      )}
+      <Link 
+        to="/" 
+        className="hover:text-neutral-900 transition-colors"
+      >
+        Home
+      </Link>
+      <button
+        onClick={onSupportedWebsitesClick}
+        className="hover:text-neutral-900 transition-colors"
+      >
+        Supported Websites
+      </button>
       <Link 
         to="/pricing" 
         className="hover:text-neutral-900 transition-colors"
       >
         Pricing
       </Link>
-      {isHome && (
-        <button
-          onClick={onSupportedWebsitesClick}
-          className="hover:text-neutral-900 transition-colors"
-        >
-          Supported Websites
-        </button>
+      {session && (
+        <>
+          <Link 
+            to="/alchemist-workshop" 
+            className="hover:text-neutral-900 transition-colors"
+          >
+            Alchemist Workshop
+          </Link>
+          <Link 
+            to="/alchemy-records" 
+            className="hover:text-neutral-900 transition-colors"
+          >
+            Alchemy Records
+          </Link>
+        </>
       )}
     </nav>
   );
