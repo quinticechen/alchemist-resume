@@ -3,6 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import Home from "@/pages/Home";
 import AlchemistWorkshop from "@/pages/AlchemyStation";
 import AlchemyRecords from "@/pages/AlchemyRecords";
+import Account from "@/pages/Account";
 import Login from "@/pages/Login";
 import Terms from "@/pages/Terms";
 import Privacy from "@/pages/Privacy";
@@ -78,6 +79,16 @@ function App() {
                   <AlchemyRecords />
                 ) : (
                   <Navigate to="/login" replace state={{ from: "/alchemy-records" }} />
+                )
+              } 
+            />
+            <Route 
+              path="/account" 
+              element={
+                session ? (
+                  <Account />
+                ) : (
+                  <Navigate to="/login" replace state={{ from: "/account" }} />
                 )
               } 
             />

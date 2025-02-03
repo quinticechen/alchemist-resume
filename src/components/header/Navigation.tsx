@@ -9,41 +9,66 @@ interface NavigationProps {
 
 const Navigation = ({ session, onSupportedWebsitesClick, isHome }: NavigationProps) => {
   return (
-    <nav className="hidden sm:flex items-center gap-4 text-sm text-neutral-600">
-      <Link 
-        to="/" 
-        className="hover:text-neutral-900 transition-colors"
-      >
-        Home
-      </Link>
-      <button
-        onClick={onSupportedWebsitesClick}
-        className="hover:text-neutral-900 transition-colors"
-      >
-        Supported Websites
-      </button>
-      <Link 
-        to="/pricing" 
-        className="hover:text-neutral-900 transition-colors"
-      >
-        Pricing
-      </Link>
-      {session && (
-        <>
-          <Link 
-            to="/alchemist-workshop" 
-            className="hover:text-neutral-900 transition-colors"
-          >
-            Alchemist Workshop
-          </Link>
-          <Link 
-            to="/alchemy-records" 
-            className="hover:text-neutral-900 transition-colors"
-          >
-            Alchemy Records
-          </Link>
-        </>
-      )}
+    <nav>
+      <ul className="flex items-center gap-6">
+        {session ? (
+          <>
+            <li>
+              <Link
+                to="/alchemist-workshop"
+                className="text-sm font-medium text-neutral-600 hover:text-primary transition-colors"
+              >
+                Workshop
+              </Link>
+            </li>
+            <li>
+              <Link
+                to="/alchemy-records"
+                className="text-sm font-medium text-neutral-600 hover:text-primary transition-colors"
+              >
+                Records
+              </Link>
+            </li>
+            <li>
+              <Link
+                to="/account"
+                className="text-sm font-medium text-neutral-600 hover:text-primary transition-colors"
+              >
+                Account
+              </Link>
+            </li>
+          </>
+        ) : (
+          <>
+            {isHome ? (
+              <li>
+                <button
+                  onClick={onSupportedWebsitesClick}
+                  className="text-sm font-medium text-neutral-600 hover:text-primary transition-colors"
+                >
+                  Supported Websites
+                </button>
+              </li>
+            ) : null}
+            <li>
+              <Link
+                to="/pricing"
+                className="text-sm font-medium text-neutral-600 hover:text-primary transition-colors"
+              >
+                Pricing
+              </Link>
+            </li>
+            <li>
+              <Link
+                to="/faq"
+                className="text-sm font-medium text-neutral-600 hover:text-primary transition-colors"
+              >
+                FAQ
+              </Link>
+            </li>
+          </>
+        )}
+      </ul>
     </nav>
   );
 };
