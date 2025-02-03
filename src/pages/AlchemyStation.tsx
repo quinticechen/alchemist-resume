@@ -30,6 +30,11 @@ const AlchemistWorkshop = () => {
     });
   };
 
+  const handleUrlSubmit = async (url: string) => {
+    // Implement URL submission logic here
+    console.log("Submitting URL:", url);
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-4xl mx-auto space-y-8">
@@ -46,10 +51,12 @@ const AlchemistWorkshop = () => {
             description="Paste the URL of the job posting you're interested in"
           >
             <JobUrlInput
+              onUrlSubmit={handleUrlSubmit}
               jobUrl={jobUrl}
               setJobUrl={setJobUrl}
               resumeId={resumeId}
               setIsProcessing={setIsProcessing}
+              isProcessing={isProcessing}
             />
           </AlchemistSection>
         )}
