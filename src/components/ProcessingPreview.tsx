@@ -7,25 +7,19 @@ import { useToast } from "@/hooks/use-toast";
 
 interface ProcessingPreviewProps {
   analysisId?: string;
-  jobUrl?: string;
-  resumeId?: string;
-  setIsProcessing?: (isProcessing: boolean) => void;
 }
 
-const ProcessingPreview = ({ 
-  analysisId,
-  jobUrl,
-  resumeId,
-  setIsProcessing 
-}: ProcessingPreviewProps) => {
+const TIMEOUT_DURATION = 300000; // 5 minutes in milliseconds
+
+const ProcessingPreview = ({ analysisId }: ProcessingPreviewProps) => {
   const [progress, setProgress] = useState(33);
   const [googleDocUrl, setGoogleDocUrl] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
-    if (!analysisId && !resumeId) return;
+    if (!analysisId) return;
 
-    console.log('Setting up ProcessingPreview for analysis:', analysisId || resumeId);
+    console.log('Setting up ProcessingPreview for analysis:', analysisId);
 
     // Initial fetch of the analysis
     const fetchAnalysis = async () => {
@@ -33,7 +27,7 @@ const ProcessingPreview = ({
       const { data, error } = await supabase
         .from("resume_analyses")
         .select("google_doc_url")
-        .eq("id", analysisId || resumeId)
+        .eq("id", analysisId)
         .single();
 
       if (error) {
@@ -51,33 +45,36 @@ const ProcessingPreview = ({
 
     fetchAnalysis();
 
-    // Subscribe to real-time updates
+    // 初始化訂閱
     const channel = supabase
-      .channel(`analysis-${analysisId || resumeId}`)
+      .channel(`analysis-${analysisId}`)
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
           table: 'resume_analyses',
-          filter: `id=eq.${analysisId || resumeId}`,
+          filter: `id=eq.${analysisId}`,
         },
         (payload) => {
           console.log('Received real-time update:', payload);
           
+          // 檢查 resume_id 的更新
           if (payload.eventType === 'UPDATE') {
             const newData = payload.new;
             console.log('Analysis update received:', newData);
 
+            // 檢查分析狀態
             if (newData.google_doc_url && !googleDocUrl) {
               setGoogleDocUrl(newData.google_doc_url);
               setProgress(100);
               toast({
-                title: "Analysis Complete!",
-                description: "Your customized resume is now ready",
+                title: "分析完成！",
+                description: "您的客製化簡歷已經準備就緒",
               });
             }
             
+            // 根據分析進度更新 UI
             if (newData.analysis_data) {
               setProgress(90);
               console.log('Analysis data received:', newData.analysis_data);
@@ -92,13 +89,14 @@ const ProcessingPreview = ({
         }
       });
 
+    // 清理訂閱
     return () => {
       console.log('Cleaning up subscription');
       supabase.removeChannel(channel);
-      if (setIsProcessing) setIsProcessing(false);
     };
-  }, [analysisId, resumeId, toast, googleDocUrl, setIsProcessing]);
+  }, [analysisId, toast, googleDocUrl]);
 
+  // Progress animation effect
   useEffect(() => {
     if (!googleDocUrl && progress < 90) {
       const timer = setInterval(() => {

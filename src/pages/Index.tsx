@@ -122,10 +122,7 @@ const Index = () => {
                 onCancel={handleCancelResume}
               />
             ) : (
-              <ResumeUploader 
-                onUploadSuccess={handleFileUpload}
-                onFileUpload={handleFileUpload}
-              />
+              <ResumeUploader onFileUpload={handleFileUpload} />
             )}
             <JobUrlInput onUrlSubmit={handleUrlSubmit} isProcessing={isProcessing} />
             {showAlchemist && resumeId && <AlchemistSection resumeId={resumeId} />}

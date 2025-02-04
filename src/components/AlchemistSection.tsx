@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ExternalLink, Loader2 } from "lucide-react";
@@ -7,17 +7,14 @@ import { supabase } from "@/integrations/supabase/client";
 
 interface AlchemistSectionProps {
   resumeId?: string;
-  title?: string;
-  description?: string;
-  children?: React.ReactNode;
 }
 
 type ProcessingStatus = "idle" | "loading" | "error" | "success";
 
-const AlchemistSection = ({ resumeId, title, description, children }: AlchemistSectionProps) => {
+const AlchemistSection = ({ resumeId }: AlchemistSectionProps) => {
   const { toast } = useToast();
-  const [googleDocUrl, setGoogleDocUrl] = React.useState<string | null>(null);
-  const [status, setStatus] = React.useState<ProcessingStatus>("idle");
+  const [googleDocUrl, setGoogleDocUrl] = useState<string | null>(null);
+  const [status, setStatus] = useState<ProcessingStatus>("idle");
 
   useEffect(() => {
     if (!resumeId) return;
@@ -125,35 +122,30 @@ const AlchemistSection = ({ resumeId, title, description, children }: AlchemistS
     <Card className="w-full">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          {title || "ResumeAlchemist Results"}
+          ResumeAlchemist Results
         </CardTitle>
-        {description && (
-          <p className="text-sm text-gray-600">{description}</p>
-        )}
       </CardHeader>
       <CardContent>
-        {children || (
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              {status === "loading" && (
-                <Loader2 className="h-4 w-4 animate-spin text-primary" />
-              )}
-              <p className="text-sm text-gray-600">
-                {getStatusMessage()}
-              </p>
-            </div>
-            {status === "success" && googleDocUrl && (
-              <Button
-                onClick={() => window.open(googleDocUrl, '_blank')}
-                className="w-full sm:w-auto"
-                variant="outline"
-              >
-                <ExternalLink className="h-4 w-4 mr-2" />
-                View Enhanced Resume
-              </Button>
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            {status === "loading" && (
+              <Loader2 className="h-4 w-4 animate-spin text-primary" />
             )}
+            <p className="text-sm text-gray-600">
+              {getStatusMessage()}
+            </p>
           </div>
-        )}
+          {status === "success" && googleDocUrl && (
+            <Button
+              onClick={() => window.open(googleDocUrl, '_blank')}
+              className="w-full sm:w-auto"
+              variant="outline"
+            >
+              <ExternalLink className="h-4 w-4 mr-2" />
+              View Enhanced Resume
+            </Button>
+          )}
+        </div>
       </CardContent>
     </Card>
   );

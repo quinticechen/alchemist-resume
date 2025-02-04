@@ -1,36 +1,25 @@
 import { useEffect, useState } from "react";
-import { FileText, Eye } from "lucide-react";
+import { FileText, Link as LinkIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
 
 interface ResumeAnalysis {
   id: string;
   created_at: string;
   job_url: string;
   job_title: string;
-  google_doc_url: string | null;
+  job_company: string;
+  match_score: number;
   resume: {
     file_name: string;
     file_path: string;
   };
 }
 
-const ITEMS_PER_PAGE = 10;
-
 const AlchemyRecords = () => {
   const [usageCount, setUsageCount] = useState<number>(0);
   const [analyses, setAnalyses] = useState<ResumeAnalysis[]>([]);
   const [loading, setLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -44,16 +33,6 @@ const AlchemyRecords = () => {
           setUsageCount(profile.usage_count || 0);
         }
 
-        // First, get total count for pagination
-        const { count } = await supabase
-          .from('resume_analyses')
-          .select('*', { count: 'exact', head: true });
-
-        if (count) {
-          setTotalPages(Math.ceil(count / ITEMS_PER_PAGE));
-        }
-
-        // Then fetch paginated data
         const { data: analysesData, error } = await supabase
           .from('resume_analyses')
           .select(`
@@ -61,13 +40,13 @@ const AlchemyRecords = () => {
             created_at,
             job_url,
             job_title,
-            google_doc_url,
+            job_company,
+            match_score,
             resume:resumes (
               file_name,
               file_path
             )
           `)
-          .range((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE - 1)
           .order('created_at', { ascending: false });
 
         if (error) throw error;
@@ -80,7 +59,7 @@ const AlchemyRecords = () => {
     };
 
     fetchData();
-  }, [currentPage]);
+  }, []);
 
   const downloadResume = async (filePath: string) => {
     try {
@@ -128,7 +107,11 @@ const AlchemyRecords = () => {
                     <h3 className="font-semibold text-lg mb-1">
                       {analysis.job_title || 'Untitled Position'}
                     </h3>
+                    <p className="text-neutral-600">{analysis.job_company || 'Company Not Specified'}</p>
                   </div>
+                  <span className="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm">
+                    Match Score: {analysis.match_score || 'N/A'}%
+                  </span>
                 </div>
 
                 <div className="flex items-center gap-4 text-sm text-neutral-600">
@@ -152,58 +135,21 @@ const AlchemyRecords = () => {
                     onClick={() => analysis.resume?.file_path && downloadResume(analysis.resume.file_path)}
                     className="text-primary border-primary/20 hover:bg-primary/5"
                   >
-                    <Eye className="h-4 w-4 mr-2" />
-                    Preview Original Resume
+                    Download Resume
                   </Button>
-                  {analysis.google_doc_url && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => window.open(analysis.google_doc_url!, '_blank')}
-                      className="text-info border-info/20 hover:bg-info/5"
-                    >
-                      <Eye className="h-4 w-4 mr-2" />
-                      Preview Golden Resume
-                    </Button>
-                  )}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => window.open(analysis.job_url, '_blank')}
+                    className="text-info border-info/20 hover:bg-info/5"
+                  >
+                    <LinkIcon className="h-4 w-4 mr-2" />
+                    View Job Post
+                  </Button>
                 </div>
               </div>
             ))}
           </div>
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="mt-8">
-              <Pagination>
-                <PaginationContent>
-                  <PaginationItem>
-                    <PaginationPrevious 
-                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                      className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
-                    />
-                  </PaginationItem>
-                  
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                    <PaginationItem key={page}>
-                      <PaginationLink
-                        onClick={() => setCurrentPage(page)}
-                        isActive={currentPage === page}
-                      >
-                        {page}
-                      </PaginationLink>
-                    </PaginationItem>
-                  ))}
-                  
-                  <PaginationItem>
-                    <PaginationNext 
-                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                      className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
-                    />
-                  </PaginationItem>
-                </PaginationContent>
-              </Pagination>
-            </div>
-          )}
         </div>
       </div>
     </div>

@@ -3,7 +3,6 @@ import { Toaster } from "@/components/ui/toaster";
 import Home from "@/pages/Home";
 import AlchemistWorkshop from "@/pages/AlchemyStation";
 import AlchemyRecords from "@/pages/AlchemyRecords";
-import Account from "@/pages/Account";
 import Login from "@/pages/Login";
 import Terms from "@/pages/Terms";
 import Privacy from "@/pages/Privacy";
@@ -17,24 +16,14 @@ import { Session } from "@supabase/supabase-js";
 
 function App() {
   const [session, setSession] = useState<Session | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    console.log("Initializing auth...");
-    
     const initializeAuth = async () => {
       try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        if (error) {
-          console.error('Error getting session:', error);
-          return;
-        }
-        console.log('Initial session:', session);
+        const { data: { session } } = await supabase.auth.getSession();
         setSession(session);
       } catch (error) {
         console.error('Error getting session:', error);
-      } finally {
-        setIsLoading(false);
       }
     };
 
@@ -43,18 +32,12 @@ function App() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      console.log('Auth state changed:', _event, session?.user?.email);
+      console.log('Auth state changed:', _event);
       setSession(session);
-      setIsLoading(false);
     });
 
     return () => subscription.unsubscribe();
   }, []);
-
-  // Show loading state while checking authentication
-  if (isLoading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
-  }
 
   return (
     <Router>
@@ -69,7 +52,7 @@ function App() {
                 session ? (
                   <AlchemistWorkshop />
                 ) : (
-                  <Navigate to="/login" replace state={{ from: "/alchemist-workshop" }} />
+                  <Navigate to="/login" replace />
                 )
               } 
             />
@@ -79,17 +62,7 @@ function App() {
                 session ? (
                   <AlchemyRecords />
                 ) : (
-                  <Navigate to="/login" replace state={{ from: "/alchemy-records" }} />
-                )
-              } 
-            />
-            <Route 
-              path="/account" 
-              element={
-                session ? (
-                  <Account />
-                ) : (
-                  <Navigate to="/login" replace state={{ from: "/account" }} />
+                  <Navigate to="/login" replace />
                 )
               } 
             />

@@ -17,10 +17,6 @@ import {
 interface JobUrlInputProps {
   onUrlSubmit: (url: string) => void;
   isProcessing?: boolean;
-  jobUrl?: string;
-  setJobUrl?: (url: string) => void;
-  resumeId?: string;
-  setIsProcessing?: (isProcessing: boolean) => void;
 }
 
 const SUPPORTED_JOB_SITES = [
@@ -41,8 +37,8 @@ const SUPPORTED_JOB_SITES = [
   "zhaopin.com"
 ];
 
-const JobUrlInput = ({ onUrlSubmit, isProcessing = false, jobUrl = "", setJobUrl, resumeId, setIsProcessing }: JobUrlInputProps) => {
-  const [url, setUrl] = useState(jobUrl);
+const JobUrlInput = ({ onUrlSubmit, isProcessing = false }: JobUrlInputProps) => {
+  const [url, setUrl] = useState("");
   const [showUnsupportedDialog, setShowUnsupportedDialog] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
@@ -63,8 +59,6 @@ const JobUrlInput = ({ onUrlSubmit, isProcessing = false, jobUrl = "", setJobUrl
       return;
     }
     setIsSubmitting(true);
-    if (setJobUrl) setJobUrl(url);
-    if (setIsProcessing) setIsProcessing(true);
     await onUrlSubmit(url);
     setIsSubmitting(false);
     setUrl("");
