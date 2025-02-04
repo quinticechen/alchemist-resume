@@ -2,8 +2,8 @@ import { useState } from "react";
 import ResumeUploader from "@/components/ResumeUploader";
 import JobUrlInput from "@/components/JobUrlInput";
 import ProcessingPreview from "@/components/ProcessingPreview";
-import AlchemistSection from "@/components/AlchemistSection";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const AlchemistWorkshop = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
