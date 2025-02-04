@@ -1,7 +1,10 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import ResumeUploader from "@/components/ResumeUploader";
 import JobUrlInput from "@/components/JobUrlInput";
 import ProcessingPreview from "@/components/ProcessingPreview";
+import { Button } from "@/components/ui/button";
+import { History, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -12,7 +15,9 @@ const AlchemistWorkshop = () => {
   const [resumeId, setResumeId] = useState<string>("");
   const [jobUrl, setJobUrl] = useState<string>("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [analysisId, setAnalysisId] = useState<string>("");
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleFileUploadSuccess = (
     file: File,
@@ -53,6 +58,7 @@ const AlchemistWorkshop = () => {
 
       console.log('Processing started:', data);
       setJobUrl(url);
+      setAnalysisId(data.analysisId);
 
       toast({
         title: "Analysis Started",
@@ -69,9 +75,27 @@ const AlchemistWorkshop = () => {
     }
   };
 
+  const viewAllRecords = () => {
+    navigate('/alchemy-records');
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-4xl mx-auto space-y-8">
+        <div className="flex justify-between items-center">
+          <h1 className="text-3xl font-bold bg-gradient-primary text-transparent bg-clip-text">
+            Alchemist Workshop
+          </h1>
+          <Button
+            variant="outline"
+            onClick={viewAllRecords}
+            className="flex items-center gap-2"
+          >
+            <History className="h-4 w-4" />
+            View All Records
+          </Button>
+        </div>
+
         <ResumeUploader onUploadSuccess={handleFileUploadSuccess} />
 
         {selectedFile && (
@@ -85,10 +109,10 @@ const AlchemistWorkshop = () => {
           />
         )}
 
-        {isProcessing && (
+        {isProcessing && analysisId && (
           <ProcessingPreview
+            analysisId={analysisId}
             jobUrl={jobUrl}
-            resumeId={resumeId}
             setIsProcessing={setIsProcessing}
           />
         )}
