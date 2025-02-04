@@ -1,48 +1,7 @@
 import { Mail, Facebook, Twitter, Instagram, HelpCircle } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 
 const Footer = () => {
-  const { toast } = useToast();
-
-  const handleContactSupport = async () => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const userEmail = session?.user?.email;
-
-      if (!userEmail) {
-        toast({
-          title: "Error",
-          description: "Please log in to contact support",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const { error } = await supabase.functions.invoke('send-support-email', {
-        body: {
-          userEmail,
-          message: "Support request from Resume Alchemist user",
-        },
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Support request sent successfully. We'll get back to you soon!",
-      });
-    } catch (error) {
-      console.error('Error sending support email:', error);
-      toast({
-        title: "Error",
-        description: "Failed to send support request. Please try again later.",
-        variant: "destructive",
-      });
-    }
-  };
-
   return (
     <footer className="bg-white border-t border-neutral-200">
       <div className="container mx-auto px-4 py-8">
@@ -88,13 +47,13 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
-                <button 
-                  onClick={handleContactSupport}
+                <a 
+                  href="mailto:resume-alchemist@gmail.com"
                   className="hover:text-primary transition-colors flex items-center"
                 >
                   <Mail className="h-4 w-4 mr-2" />
-                  Contact Support
-                </button>
+                  resume-alchemist@gmail.com
+                </a>
               </li>
             </ul>
           </div>
