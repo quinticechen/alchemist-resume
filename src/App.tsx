@@ -45,6 +45,7 @@ function App() {
     } = supabase.auth.onAuthStateChange((_event, session) => {
       console.log('Auth state changed:', _event, session?.user?.email);
       setSession(session);
+      setIsLoading(false);
     });
 
     return () => subscription.unsubscribe();
