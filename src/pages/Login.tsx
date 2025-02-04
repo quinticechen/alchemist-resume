@@ -2,7 +2,7 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import SocialLogin from "@/components/auth/SocialLogin";
 import EmailForm from "@/components/auth/EmailForm";
 
@@ -13,6 +13,7 @@ const Login = () => {
   const [isLoading, setIsLoading] = React.useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const validatePassword = (password: string) => {
     const minLength = 8;
@@ -32,17 +33,25 @@ const Login = () => {
   const handleSocialLogin = async (provider: 'google' | 'linkedin_oidc') => {
     try {
       setIsLoading(true);
+      console.log(`Initiating ${provider} login...`);
+      
+      const redirectTo = `${window.location.origin}/alchemist-workshop`;
+      console.log('Redirect URL:', redirectTo);
+      
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}/alchemy-station`,
+          redirectTo,
+          queryParams: {
+            prompt: 'consent'
+          }
         },
       });
       
       if (error) throw error;
       
     } catch (error: any) {
-      console.error('Social login error:', error);
+      console.error(`${provider} login error:`, error);
       toast({
         title: "Authentication Error",
         description: error.message,
@@ -56,6 +65,7 @@ const Login = () => {
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    console.log('Attempting email login/signup...');
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
@@ -83,9 +93,13 @@ const Login = () => {
 
     try {
       if (isSignUp) {
+        console.log('Attempting signup...');
         const { error } = await supabase.auth.signUp({
           email,
           password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/alchemist-workshop`,
+          },
         });
         if (error) throw error;
         toast({
@@ -93,14 +107,17 @@ const Login = () => {
           description: "Please check your email to verify your account",
         });
       } else {
+        console.log('Attempting signin...');
         const { error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
         if (error) throw error;
-        navigate("/alchemy-station");
+        const from = (location.state as any)?.from || "/alchemist-workshop";
+        navigate(from);
       }
     } catch (error: any) {
+      console.error('Auth error:', error);
       toast({
         title: "Error",
         description: error.message,

@@ -1,136 +1,76 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import ResumeUploader from "@/components/ResumeUploader";
 import JobUrlInput from "@/components/JobUrlInput";
-import ResumePreview from "@/components/ResumePreview";
+import ProcessingPreview from "@/components/ProcessingPreview";
 import AlchemistSection from "@/components/AlchemistSection";
-import Header from "@/components/Header";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 
-const AlchemyStation = () => {
+const AlchemistWorkshop = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [filePath, setFilePath] = useState<string>();
-  const [publicUrl, setPublicUrl] = useState<string>();
-  const [resumeId, setResumeId] = useState<string>();
+  const [filePath, setFilePath] = useState<string>("");
+  const [publicUrl, setPublicUrl] = useState<string>("");
+  const [resumeId, setResumeId] = useState<string>("");
+  const [jobUrl, setJobUrl] = useState<string>("");
   const [isProcessing, setIsProcessing] = useState(false);
-  const [showAlchemist, setShowAlchemist] = useState(false);
   const { toast } = useToast();
 
-  const handleFileUpload = (file: File, path: string, url: string, id: string) => {
-    console.log("File uploaded:", file.name, "Path:", path, "Public URL:", url, "ID:", id);
+  const handleFileUploadSuccess = (
+    file: File,
+    path: string,
+    url: string,
+    id: string
+  ) => {
     setSelectedFile(file);
     setFilePath(path);
     setPublicUrl(url);
     setResumeId(id);
-    setShowAlchemist(false);
     toast({
-      title: "Resume Uploaded",
-      description: `Successfully uploaded ${file.name}`,
+      title: "Upload successful",
+      description: "Your resume has been uploaded successfully.",
     });
   };
 
-  const handleCancelResume = async () => {
-    if (filePath) {
-      try {
-        const { error: storageError } = await supabase.storage
-          .from('resumes')
-          .remove([filePath]);
-
-        if (storageError) throw storageError;
-
-        setSelectedFile(null);
-        setFilePath(undefined);
-        setPublicUrl(undefined);
-        setResumeId(undefined);
-        setIsProcessing(false);
-        setShowAlchemist(false);
-
-        toast({
-          title: "Resume Cancelled",
-          description: "Your resume has been removed",
-        });
-      } catch (error) {
-        console.error('Error removing resume:', error);
-        toast({
-          title: "Error",
-          description: "Failed to remove resume",
-          variant: "destructive",
-        });
-      }
-    }
-  };
-
   const handleUrlSubmit = async (url: string) => {
-    if (!resumeId) {
-      toast({
-        title: "Error",
-        description: "Please upload a resume first",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsProcessing(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('process-resume', {
-        body: {
-          resumeId,
-          jobUrl: url,
-        },
-      });
-
-      if (error) throw error;
-
-      console.log('Processing started:', data);
-      setShowAlchemist(true);
-
-      toast({
-        title: "Analysis Started",
-        description: "Your resume is being analyzed. Results will be available soon.",
-      });
-    } catch (error) {
-      console.error('Error processing resume:', error);
-      toast({
-        title: "Error",
-        description: "Failed to process resume",
-        variant: "destructive",
-      });
-      setIsProcessing(false);
-    }
+    // Implement URL submission logic here
+    console.log("Submitting URL:", url);
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100">
-      <Header />
-      <div className="py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto space-y-10 animate-fade-up">
-          <div className="text-center space-y-4">
-            <h1 className="text-4xl font-bold bg-gradient-primary text-transparent bg-clip-text">
-              Alchemy Station
-            </h1>
-            <p className="text-lg text-neutral-600 max-w-2xl mx-auto">
-              Transform your resume into a perfect match for your dream job using our AI-powered analysis
-            </p>
-          </div>
+    <div className="container mx-auto px-4 py-8">
+      <div className="max-w-4xl mx-auto space-y-8">
+        <AlchemistSection
+          title="Upload Your Resume"
+          description="Upload your resume in PDF format (max 5MB)"
+        >
+          <ResumeUploader onUploadSuccess={handleFileUploadSuccess} />
+        </AlchemistSection>
 
-          <div className="grid gap-8">
-            {selectedFile ? (
-              <ResumePreview 
-                file={selectedFile} 
-                filePath={filePath}
-                publicUrl={publicUrl}
-                onCancel={handleCancelResume}
-              />
-            ) : (
-              <ResumeUploader onFileUpload={handleFileUpload} />
-            )}
-            <JobUrlInput onUrlSubmit={handleUrlSubmit} isProcessing={isProcessing} />
-            {showAlchemist && resumeId && <AlchemistSection resumeId={resumeId} />}
-          </div>
-        </div>
+        {selectedFile && (
+          <AlchemistSection
+            title="Enter Job URL"
+            description="Paste the URL of the job posting you're interested in"
+          >
+            <JobUrlInput
+              onUrlSubmit={handleUrlSubmit}
+              jobUrl={jobUrl}
+              setJobUrl={setJobUrl}
+              resumeId={resumeId}
+              setIsProcessing={setIsProcessing}
+              isProcessing={isProcessing}
+            />
+          </AlchemistSection>
+        )}
+
+        {isProcessing && (
+          <ProcessingPreview
+            jobUrl={jobUrl}
+            resumeId={resumeId}
+            setIsProcessing={setIsProcessing}
+          />
+        )}
       </div>
     </div>
   );
 };
 
-export default AlchemyStation;
+export default AlchemistWorkshop;

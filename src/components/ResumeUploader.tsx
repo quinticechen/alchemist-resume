@@ -5,11 +5,12 @@ import { useResumeUpload } from "./upload/useResumeUpload";
 import { useResumeAnalysis } from "./upload/useResumeAnalysis";
 
 interface ResumeUploaderProps {
-  onFileUpload: (file: File, filePath: string, publicUrl: string, id: string) => void;
+  onUploadSuccess: (file: File, path: string, url: string, id: string) => void;
+  onFileUpload?: (file: File, filePath: string, publicUrl: string, id: string) => void;
 }
 
-const ResumeUploader = ({ onFileUpload }: ResumeUploaderProps) => {
-  const { isUploading, uploadFile } = useResumeUpload(onFileUpload);
+const ResumeUploader = ({ onUploadSuccess, onFileUpload }: ResumeUploaderProps) => {
+  const { isUploading, uploadFile } = useResumeUpload(onUploadSuccess || onFileUpload);
   useResumeAnalysis();
 
   return (
