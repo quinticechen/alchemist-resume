@@ -31,34 +31,58 @@ const AlchemistWorkshop = () => {
   };
 
   const handleUrlSubmit = async (url: string) => {
-    // Implement URL submission logic here
-    console.log("Submitting URL:", url);
+    if (!resumeId) {
+      toast({
+        title: "Error",
+        description: "Please upload a resume first",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('process-resume', {
+        body: {
+          resumeId,
+          jobUrl: url,
+        },
+      });
+
+      if (error) throw error;
+
+      console.log('Processing started:', data);
+      setJobUrl(url);
+
+      toast({
+        title: "Analysis Started",
+        description: "Your resume is being analyzed. Results will be available soon.",
+      });
+    } catch (error) {
+      console.error('Error processing resume:', error);
+      toast({
+        title: "Error",
+        description: "Failed to process resume",
+        variant: "destructive",
+      });
+      setIsProcessing(false);
+    }
   };
 
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-4xl mx-auto space-y-8">
-        <AlchemistSection
-          title="Upload Your Resume"
-          description="Upload your resume in PDF format (max 5MB)"
-        >
-          <ResumeUploader onUploadSuccess={handleFileUploadSuccess} />
-        </AlchemistSection>
+        <ResumeUploader onUploadSuccess={handleFileUploadSuccess} />
 
         {selectedFile && (
-          <AlchemistSection
-            title="Enter Job URL"
-            description="Paste the URL of the job posting you're interested in"
-          >
-            <JobUrlInput
-              onUrlSubmit={handleUrlSubmit}
-              jobUrl={jobUrl}
-              setJobUrl={setJobUrl}
-              resumeId={resumeId}
-              setIsProcessing={setIsProcessing}
-              isProcessing={isProcessing}
-            />
-          </AlchemistSection>
+          <JobUrlInput
+            onUrlSubmit={handleUrlSubmit}
+            isProcessing={isProcessing}
+            jobUrl={jobUrl}
+            setJobUrl={setJobUrl}
+            resumeId={resumeId}
+            setIsProcessing={setIsProcessing}
+          />
         )}
 
         {isProcessing && (
