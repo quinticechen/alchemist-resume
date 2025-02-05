@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Check } from "lucide-react";
+import { Loader2, Check, Github, Linkedin, Mail } from "lucide-react";
 
 interface Profile {
   email: string;
@@ -39,6 +39,7 @@ const Account = () => {
         .single();
 
       if (error) throw error;
+      console.log('Fetched profile:', profile);
       setProfile(profile);
       setNewFullName(profile.full_name || "");
     } catch (error: any) {
@@ -53,18 +54,14 @@ const Account = () => {
     }
   };
 
-  const checkSubscriptionStatus = async () => {
-    try {
-      const response = await fetch('/api/check-subscription', {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
-        }
-      });
-      const data = await response.json();
-      setIsSubscribed(data.subscribed);
-    } catch (error) {
-      console.error('Error checking subscription:', error);
+  const getProviderIcon = (provider: string | null) => {
+    switch (provider?.toLowerCase()) {
+      case 'github':
+        return <Github className="h-4 w-4" />;
+      case 'linkedin':
+        return <Linkedin className="h-4 w-4" />;
+      default:
+        return <Mail className="h-4 w-4" />;
     }
   };
 
@@ -139,11 +136,7 @@ const Account = () => {
               <h3 className="text-sm font-medium text-neutral-500">Email</h3>
               <p className="text-lg flex items-center gap-2">
                 {profile?.email}
-                {profile?.provider && (
-                  <span className="text-sm text-neutral-500">
-                    via {profile.provider}
-                  </span>
-                )}
+                {getProviderIcon(profile?.provider)}
               </p>
             </div>
             
@@ -202,7 +195,7 @@ const Account = () => {
                   </div>
                   <Button 
                     onClick={handleSubscribe}
-                    className="w-full sm:w-auto"
+                    className="w-full sm:w-auto bg-gradient-primary hover:opacity-90 transition-opacity"
                   >
                     Upgrade to Pro
                   </Button>

@@ -4,7 +4,7 @@ import ResumeUploader from "@/components/ResumeUploader";
 import JobUrlInput from "@/components/JobUrlInput";
 import ProcessingPreview from "@/components/ProcessingPreview";
 import { Button } from "@/components/ui/button";
-import { History, Eye } from "lucide-react";
+import { History } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -82,19 +82,9 @@ const AlchemistWorkshop = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-4xl mx-auto space-y-8">
-        <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold bg-gradient-primary text-transparent bg-clip-text">
-            Alchemist Workshop
-          </h1>
-          <Button
-            variant="outline"
-            onClick={viewAllRecords}
-            className="flex items-center gap-2"
-          >
-            <History className="h-4 w-4" />
-            View All Records
-          </Button>
-        </div>
+        <h1 className="text-3xl font-bold bg-gradient-primary text-transparent bg-clip-text">
+          Alchemist Workshop
+        </h1>
 
         <ResumeUploader onUploadSuccess={handleFileUploadSuccess} />
 
@@ -115,6 +105,19 @@ const AlchemistWorkshop = () => {
             jobUrl={jobUrl}
             setIsProcessing={setIsProcessing}
           />
+        )}
+
+        {analysisId && (
+          <div className="flex justify-center pt-8">
+            <Button
+              variant="outline"
+              onClick={viewAllRecords}
+              className="flex items-center gap-2"
+            >
+              <History className="h-4 w-4" />
+              View All Records
+            </Button>
+          </div>
         )}
       </div>
     </div>
