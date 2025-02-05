@@ -24,7 +24,6 @@ const Account = () => {
 
   useEffect(() => {
     fetchProfile();
-    checkSubscriptionStatus();
   }, []);
 
   const fetchProfile = async () => {
