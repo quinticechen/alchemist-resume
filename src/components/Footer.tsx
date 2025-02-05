@@ -6,7 +6,7 @@ const Footer = () => {
 
   const handleEmailClick = (e: React.MouseEvent) => {
     e.preventDefault();
-    const email = "support@resumealchemist.com";
+    const email = "support@resumealchemist.ai";
     navigator.clipboard.writeText(email);
     toast({
       title: "Email Copied",
@@ -32,7 +32,7 @@ const Footer = () => {
               Privacy
             </Link>
             <a
-              href="mailto:support@resumealchemist.com"
+              href="mailto:support@resumealchemist.ai"
               onClick={handleEmailClick}
               className="text-sm text-neutral-600 hover:text-primary transition-colors"
             >
