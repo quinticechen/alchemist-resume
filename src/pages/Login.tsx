@@ -113,8 +113,7 @@ const Login = () => {
           password,
         });
         if (error) throw error;
-        const from = (location.state as any)?.from || "/alchemist-workshop";
-        navigate(from);
+        navigate('/alchemist-workshop');
       }
     } catch (error: any) {
       console.error('Auth error:', error);

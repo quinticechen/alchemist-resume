@@ -29,14 +29,6 @@ const Navigation = ({ session, onSupportedWebsitesClick, isHome }: NavigationPro
                 Records
               </Link>
             </li>
-            <li>
-              <Link
-                to="/account"
-                className="text-sm font-medium text-neutral-600 hover:text-primary transition-colors"
-              >
-                Account
-              </Link>
-            </li>
           </>
         ) : (
           <>

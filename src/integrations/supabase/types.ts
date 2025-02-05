@@ -46,6 +46,7 @@ export type Database = {
         Row: {
           analysis_data: Json | null
           created_at: string
+          feedback: boolean | null
           google_doc_url: string | null
           id: string
           job_company: string | null
@@ -59,6 +60,7 @@ export type Database = {
         Insert: {
           analysis_data?: Json | null
           created_at?: string
+          feedback?: boolean | null
           google_doc_url?: string | null
           id?: string
           job_company?: string | null
@@ -72,6 +74,7 @@ export type Database = {
         Update: {
           analysis_data?: Json | null
           created_at?: string
+          feedback?: boolean | null
           google_doc_url?: string | null
           id?: string
           job_company?: string | null

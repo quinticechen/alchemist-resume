@@ -1,7 +1,27 @@
-import { Mail, Facebook, Twitter, Instagram, HelpCircle } from "lucide-react";
+import { Mail, Facebook, Twitter, Instagram, HelpCircle, Copy } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
 const Footer = () => {
+  const { toast } = useToast();
+  const supportEmail = "resume-alchemist@gmail.com";
+
+  const handleCopyEmail = async () => {
+    try {
+      await navigator.clipboard.writeText(supportEmail);
+      toast({
+        title: "Email Copied",
+        description: "Support email has been copied to clipboard",
+      });
+    } catch (err) {
+      toast({
+        title: "Failed to copy",
+        description: "Please try copying manually",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <footer className="bg-white border-t border-neutral-200">
       <div className="container mx-auto px-4 py-8">
@@ -47,13 +67,14 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
-                <a 
-                  href="mailto:resume-alchemist@gmail.com"
-                  className="hover:text-primary transition-colors flex items-center"
+                <button 
+                  onClick={handleCopyEmail}
+                  className="hover:text-primary transition-colors flex items-center group"
                 >
                   <Mail className="h-4 w-4 mr-2" />
-                  resume-alchemist@gmail.com
-                </a>
+                  <span>{supportEmail}</span>
+                  <Copy className="h-4 w-4 ml-2 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </button>
               </li>
             </ul>
           </div>

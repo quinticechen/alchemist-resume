@@ -7,13 +7,21 @@ interface SocialLoginProps {
 }
 
 const SocialLogin = ({ onSocialLogin, isLoading }: SocialLoginProps) => {
+  const handleSocialLogin = async (provider: 'google' | 'linkedin_oidc') => {
+    try {
+      await onSocialLogin(provider);
+    } catch (error) {
+      console.error(`${provider} login error:`, error);
+    }
+  };
+
   return (
     <div className="grid gap-3">
       <Button
         type="button"
         variant="outline"
         className="w-full"
-        onClick={() => onSocialLogin('google')}
+        onClick={() => handleSocialLogin('google')}
         disabled={isLoading}
       >
         <img
@@ -27,7 +35,7 @@ const SocialLogin = ({ onSocialLogin, isLoading }: SocialLoginProps) => {
         type="button"
         variant="outline"
         className="w-full"
-        onClick={() => onSocialLogin('linkedin_oidc')}
+        onClick={() => handleSocialLogin('linkedin_oidc')}
         disabled={isLoading}
       >
         <Linkedin className="w-5 h-5 mr-2" />
