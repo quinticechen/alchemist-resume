@@ -48,7 +48,7 @@ function App() {
       setIsLoading(false);
       
       // Redirect to alchemist-workshop after successful login/signup
-      if (_event === 'SIGNED_IN' || _event === 'SIGNED_UP') {
+      if (_event === 'SIGNED_IN') {
         window.location.href = '/alchemist-workshop';
       }
     });
