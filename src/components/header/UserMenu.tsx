@@ -1,9 +1,7 @@
 import { LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Session } from "@supabase/supabase-js";
-import { useNavigate } from "react-router-dom";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { Link } from "react-router-dom";
 
 interface UserMenuProps {
   session: Session;
@@ -14,7 +12,7 @@ interface UserMenuProps {
 const UserMenu = ({ session, usageCount, onLogout }: UserMenuProps) => {
   return (
     <div className="flex items-center gap-3">
-      <div className="flex items-center gap-3 text-neutral-600">
+      <Link to="/account" className="flex items-center gap-3 text-neutral-600 hover:text-primary transition-colors">
         <User className="h-5 w-5" />
         <span className="text-sm hidden sm:inline">
           {session.user.email}
@@ -22,7 +20,7 @@ const UserMenu = ({ session, usageCount, onLogout }: UserMenuProps) => {
         <span className="text-sm font-medium text-primary">
           ({3 - (usageCount || 0)} uses left)
         </span>
-      </div>
+      </Link>
       <Button
         variant="outline"
         size="sm"

@@ -46,12 +46,16 @@ function App() {
       console.log('Auth state changed:', _event, session?.user?.email);
       setSession(session);
       setIsLoading(false);
+      
+      // Redirect to alchemist-workshop after successful login/signup
+      if (_event === 'SIGNED_IN' || _event === 'SIGNED_UP') {
+        window.location.href = '/alchemist-workshop';
+      }
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
-  // Show loading state while checking authentication
   if (isLoading) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   }

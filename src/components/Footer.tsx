@@ -1,104 +1,46 @@
-import { Mail, Facebook, Twitter, Instagram, HelpCircle, Copy } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 
 const Footer = () => {
   const { toast } = useToast();
-  const supportEmail = "resume-alchemist@gmail.com";
 
-  const handleCopyEmail = async () => {
-    try {
-      await navigator.clipboard.writeText(supportEmail);
-      toast({
-        title: "Email Copied",
-        description: "Support email has been copied to clipboard",
-      });
-    } catch (err) {
-      toast({
-        title: "Failed to copy",
-        description: "Please try copying manually",
-        variant: "destructive",
-      });
-    }
+  const handleEmailClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const email = "support@resumealchemist.com";
+    navigator.clipboard.writeText(email);
+    toast({
+      title: "Email Copied",
+      description: "Support email has been copied to your clipboard",
+    });
   };
 
   return (
     <footer className="bg-white border-t border-neutral-200">
       <div className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          {/* Company Info */}
-          <div className="space-y-4">
-            <div className="flex items-center">
-              <img src="/lovable-uploads/646b205a-7bc6-432d-b8bc-f002fe2db329.png" alt="ResumeAlchemist" className="h-8" />
-            </div>
-            <p className="text-sm text-neutral-600">
-              Transform your resume with AI-powered customization
-            </p>
-            <p className="text-sm text-neutral-500">
-              © {new Date().getFullYear()} ResumeAlchemist. All rights reserved.
-            </p>
-          </div>
-
-          {/* Quick Links */}
-          <div>
-            <h3 className="font-semibold mb-4">Legal</h3>
-            <ul className="space-y-2 text-sm text-neutral-600">
-              <li>
-                <Link to="/terms" className="hover:text-primary transition-colors">
-                  Terms of Service
-                </Link>
-              </li>
-              <li>
-                <Link to="/privacy" className="hover:text-primary transition-colors">
-                  Privacy Policy
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* Support */}
-          <div>
-            <h3 className="font-semibold mb-4">Support</h3>
-            <ul className="space-y-2 text-sm text-neutral-600">
-              <li>
-                <Link to="/faq" className="hover:text-primary transition-colors">
-                  <HelpCircle className="h-4 w-4 inline-block mr-2" />
-                  FAQ
-                </Link>
-              </li>
-              <li>
-                <button 
-                  onClick={handleCopyEmail}
-                  className="hover:text-primary transition-colors flex items-center group"
-                >
-                  <Mail className="h-4 w-4 mr-2" />
-                  <span>{supportEmail}</span>
-                  <Copy className="h-4 w-4 ml-2 opacity-0 group-hover:opacity-100 transition-opacity" />
-                </button>
-              </li>
-            </ul>
-          </div>
-
-          {/* Social & Plans */}
-          <div>
-            <h3 className="font-semibold mb-4">Connect</h3>
-            <div className="flex space-x-4 mb-4">
-              <a href="#" className="text-neutral-600 hover:text-primary transition-colors">
-                <Facebook className="h-5 w-5" />
-              </a>
-              <a href="#" className="text-neutral-600 hover:text-primary transition-colors">
-                <Twitter className="h-5 w-5" />
-              </a>
-              <a href="#" className="text-neutral-600 hover:text-primary transition-colors">
-                <Instagram className="h-5 w-5" />
-              </a>
-            </div>
-            <Link 
-              to="/pricing" 
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+          <div className="flex flex-col md:flex-row items-center gap-4">
+            <Link
+              to="/terms"
               className="text-sm text-neutral-600 hover:text-primary transition-colors"
             >
-              View Subscription Plans
+              Terms
             </Link>
+            <Link
+              to="/privacy"
+              className="text-sm text-neutral-600 hover:text-primary transition-colors"
+            >
+              Privacy
+            </Link>
+            <a
+              href="mailto:support@resumealchemist.com"
+              onClick={handleEmailClick}
+              className="text-sm text-neutral-600 hover:text-primary transition-colors"
+            >
+              Support
+            </a>
+          </div>
+          <div className="text-sm text-neutral-600">
+            © {new Date().getFullYear()} ResumeAlchemist. All rights reserved.
           </div>
         </div>
       </div>
