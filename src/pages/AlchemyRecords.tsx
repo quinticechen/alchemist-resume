@@ -1,8 +1,5 @@
 import { useEffect, useState } from "react";
-import { FileText, Eye, ThumbsUp, ThumbsDown, Pencil, Check, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import {
   Pagination,
@@ -12,6 +9,8 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import UsageStats from "@/components/alchemy-records/UsageStats";
+import AnalysisCard from "@/components/alchemy-records/AnalysisCard";
 
 interface ResumeAnalysis {
   id: string;
@@ -35,7 +34,6 @@ const AlchemyRecords = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editingTitle, setEditingTitle] = useState("");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -114,24 +112,17 @@ const AlchemyRecords = () => {
     }
   };
 
-  const startEditing = (analysis: ResumeAnalysis) => {
-    setEditingId(analysis.id);
-    setEditingTitle(analysis.job_title || '');
-  };
-
-  const saveTitle = async () => {
-    if (!editingId) return;
-
+  const handleSaveTitle = async (id: string, title: string) => {
     try {
       const { error } = await supabase
         .from('resume_analyses')
-        .update({ job_title: editingTitle })
-        .eq('id', editingId);
+        .update({ job_title: title })
+        .eq('id', id);
 
       if (error) throw error;
 
       setAnalyses(analyses.map(analysis => 
-        analysis.id === editingId ? { ...analysis, job_title: editingTitle } : analysis
+        analysis.id === id ? { ...analysis, job_title: title } : analysis
       ));
 
       toast({
@@ -149,6 +140,10 @@ const AlchemyRecords = () => {
     setEditingId(null);
   };
 
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100">
       <div className="container mx-auto px-4 py-12">
@@ -157,119 +152,19 @@ const AlchemyRecords = () => {
             Alchemy Records
           </h1>
 
-          <div className="bg-white rounded-xl p-6 shadow-apple mb-8">
-            <h2 className="text-xl font-semibold mb-4">Usage Statistics</h2>
-            <p className="text-neutral-600">
-              Remaining Free Uses: <span className="font-semibold text-primary">{3 - usageCount}</span>
-            </p>
-          </div>
+          <UsageStats usageCount={usageCount} />
 
           <div className="space-y-6">
             {analyses.map((analysis) => (
-              <div key={analysis.id} className="bg-white rounded-xl p-6 shadow-apple">
-                <div className="flex justify-between items-start mb-4">
-                  <div className="flex-1">
-                    {editingId === analysis.id ? (
-                      <div className="flex items-center gap-2">
-                        <Input
-                          value={editingTitle}
-                          onChange={(e) => setEditingTitle(e.target.value)}
-                          className="max-w-sm"
-                        />
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={saveTitle}
-                        >
-                          <Check className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setEditingId(null)}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-semibold text-lg">
-                          {analysis.job_title || 'Untitled Position'}
-                        </h3>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => startEditing(analysis)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleFeedback(analysis.id, true)}
-                      className={analysis.feedback === true ? "text-green-600" : ""}
-                    >
-                      <ThumbsUp className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleFeedback(analysis.id, false)}
-                      className={analysis.feedback === false ? "text-red-600" : ""}
-                    >
-                      <ThumbsDown className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-4 text-sm text-neutral-600">
-                  <span>
-                    {new Date(analysis.created_at).toLocaleDateString('en-US', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                    })}
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <FileText className="h-4 w-4" />
-                    {analysis.resume?.file_name || 'Unnamed Resume'}
-                  </div>
-                </div>
-
-                <div className="mt-4 flex gap-4">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      if (analysis.resume?.file_path) {
-                        const { data } = supabase.storage
-                          .from('resumes')
-                          .getPublicUrl(analysis.resume.file_path);
-                        window.open(data.publicUrl, '_blank');
-                      }
-                    }}
-                    className="text-primary border-primary/20 hover:bg-primary/5"
-                  >
-                    <Eye className="h-4 w-4 mr-2" />
-                    Preview Original Resume
-                  </Button>
-                  {analysis.google_doc_url && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => window.open(analysis.google_doc_url!, '_blank')}
-                      className="text-info border-info/20 hover:bg-info/5"
-                    >
-                      <Eye className="h-4 w-4 mr-2" />
-                      Preview Golden Resume
-                    </Button>
-                  )}
-                </div>
-              </div>
+              <AnalysisCard
+                key={analysis.id}
+                {...analysis}
+                editingId={editingId}
+                onStartEditing={setEditingId}
+                onSaveTitle={handleSaveTitle}
+                onCancelEditing={() => setEditingId(null)}
+                onFeedback={handleFeedback}
+              />
             ))}
           </div>
 
