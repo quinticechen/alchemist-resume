@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { FileText, Eye } from "lucide-react";
+import { FileText, Eye, Link as LinkIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import AnalysisTitle from './AnalysisTitle';
 import FeedbackButtons from './FeedbackButtons';
@@ -14,6 +14,7 @@ interface AnalysisCardProps {
   id: string;
   created_at: string;
   job_title: string;
+  job_url: string;
   google_doc_url: string | null;
   feedback: boolean | null;
   resume: Resume;
@@ -28,6 +29,7 @@ const AnalysisCard = ({
   id,
   created_at,
   job_title,
+  job_url,
   google_doc_url,
   feedback,
   resume,
@@ -69,7 +71,7 @@ const AnalysisCard = ({
         </div>
       </div>
 
-      <div className="mt-4 flex gap-4">
+      <div className="mt-4 flex flex-wrap gap-4">
         <Button
           variant="outline"
           size="sm"
@@ -95,6 +97,17 @@ const AnalysisCard = ({
           >
             <Eye className="h-4 w-4 mr-2" />
             Preview Golden Resume
+          </Button>
+        )}
+        {job_url && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => window.open(job_url, '_blank')}
+            className="text-accent-2 border-accent-2/20 hover:bg-accent-2/5"
+          >
+            <LinkIcon className="h-4 w-4 mr-2" />
+            View Original Job Post
           </Button>
         )}
       </div>
