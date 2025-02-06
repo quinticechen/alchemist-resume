@@ -3,11 +3,11 @@ import { useToast } from "@/hooks/use-toast";
 
 const Footer = () => {
   const { toast } = useToast();
+  const supportEmail = "support@resumealchemist.ai";
 
   const handleEmailClick = (e: React.MouseEvent) => {
     e.preventDefault();
-    const email = "support@resumealchemist.ai";
-    navigator.clipboard.writeText(email);
+    navigator.clipboard.writeText(supportEmail);
     toast({
       title: "Email Copied",
       description: "Support email has been copied to your clipboard",
@@ -15,7 +15,7 @@ const Footer = () => {
   };
 
   return (
-    <footer className="bg-white border-t border-neutral-200">
+    <footer className="bg-[#ffffff] border-t border-neutral-200">
       <div className="container mx-auto px-4 py-8">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex flex-col md:flex-row items-center gap-4">
@@ -32,9 +32,9 @@ const Footer = () => {
               Privacy
             </Link>
             <a
-              href="mailto:support@resumealchemist.ai"
+              href={`mailto:${supportEmail}`}
               onClick={handleEmailClick}
-              className="text-sm text-neutral-600 hover:text-primary transition-colors"
+              className="text-sm text-neutral-600 hover:text-primary transition-colors cursor-pointer"
             >
               Support
             </a>
