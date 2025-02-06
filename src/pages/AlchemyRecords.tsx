@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
-import { FileText, Eye } from "lucide-react";
+import { FileText, Eye, ThumbsUp, ThumbsDown, Pencil, Check, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
 import {
   Pagination,
   PaginationContent,
@@ -17,6 +19,7 @@ interface ResumeAnalysis {
   job_url: string;
   job_title: string;
   google_doc_url: string | null;
+  feedback: boolean | null;
   resume: {
     file_name: string;
     file_path: string;
@@ -31,6 +34,9 @@ const AlchemyRecords = () => {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState("");
+  const { toast } = useToast();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -44,7 +50,6 @@ const AlchemyRecords = () => {
           setUsageCount(profile.usage_count || 0);
         }
 
-        // First, get total count for pagination
         const { count } = await supabase
           .from('resume_analyses')
           .select('*', { count: 'exact', head: true });
@@ -53,7 +58,6 @@ const AlchemyRecords = () => {
           setTotalPages(Math.ceil(count / ITEMS_PER_PAGE));
         }
 
-        // Then fetch paginated data
         const { data: analysesData, error } = await supabase
           .from('resume_analyses')
           .select(`
@@ -62,6 +66,7 @@ const AlchemyRecords = () => {
             job_url,
             job_title,
             google_doc_url,
+            feedback,
             resume:resumes (
               file_name,
               file_path
@@ -82,25 +87,66 @@ const AlchemyRecords = () => {
     fetchData();
   }, [currentPage]);
 
-  const downloadResume = async (filePath: string) => {
+  const handleFeedback = async (id: string, value: boolean) => {
     try {
-      const { data, error } = await supabase.storage
-        .from('resumes')
-        .download(filePath);
-      
+      const { error } = await supabase
+        .from('resume_analyses')
+        .update({ feedback: value })
+        .eq('id', id);
+
       if (error) throw error;
-      
-      const url = URL.createObjectURL(data);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filePath.split('/').pop() || 'resume.pdf';
-      document.body.appendChild(a);
-      a.click();
-      URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+
+      setAnalyses(analyses.map(analysis => 
+        analysis.id === id ? { ...analysis, feedback: value } : analysis
+      ));
+
+      toast({
+        title: "Feedback submitted",
+        description: "Thank you for your feedback!",
+      });
     } catch (error) {
-      console.error('Error downloading file:', error);
+      console.error('Error updating feedback:', error);
+      toast({
+        title: "Error",
+        description: "Failed to submit feedback",
+        variant: "destructive",
+      });
     }
+  };
+
+  const startEditing = (analysis: ResumeAnalysis) => {
+    setEditingId(analysis.id);
+    setEditingTitle(analysis.job_title || '');
+  };
+
+  const saveTitle = async () => {
+    if (!editingId) return;
+
+    try {
+      const { error } = await supabase
+        .from('resume_analyses')
+        .update({ job_title: editingTitle })
+        .eq('id', editingId);
+
+      if (error) throw error;
+
+      setAnalyses(analyses.map(analysis => 
+        analysis.id === editingId ? { ...analysis, job_title: editingTitle } : analysis
+      ));
+
+      toast({
+        title: "Title updated",
+        description: "Position name has been updated successfully",
+      });
+    } catch (error) {
+      console.error('Error updating title:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update position name",
+        variant: "destructive",
+      });
+    }
+    setEditingId(null);
   };
 
   return (
@@ -111,7 +157,6 @@ const AlchemyRecords = () => {
             Alchemy Records
           </h1>
 
-          {/* Usage Statistics */}
           <div className="bg-white rounded-xl p-6 shadow-apple mb-8">
             <h2 className="text-xl font-semibold mb-4">Usage Statistics</h2>
             <p className="text-neutral-600">
@@ -119,15 +164,65 @@ const AlchemyRecords = () => {
             </p>
           </div>
 
-          {/* Resume History */}
           <div className="space-y-6">
             {analyses.map((analysis) => (
               <div key={analysis.id} className="bg-white rounded-xl p-6 shadow-apple">
                 <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h3 className="font-semibold text-lg mb-1">
-                      {analysis.job_title || 'Untitled Position'}
-                    </h3>
+                  <div className="flex-1">
+                    {editingId === analysis.id ? (
+                      <div className="flex items-center gap-2">
+                        <Input
+                          value={editingTitle}
+                          onChange={(e) => setEditingTitle(e.target.value)}
+                          className="max-w-sm"
+                        />
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={saveTitle}
+                        >
+                          <Check className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setEditingId(null)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold text-lg">
+                          {analysis.job_title || 'Untitled Position'}
+                        </h3>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => startEditing(analysis)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleFeedback(analysis.id, true)}
+                      className={analysis.feedback === true ? "text-green-600" : ""}
+                    >
+                      <ThumbsUp className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleFeedback(analysis.id, false)}
+                      className={analysis.feedback === false ? "text-red-600" : ""}
+                    >
+                      <ThumbsDown className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
 
@@ -149,7 +244,14 @@ const AlchemyRecords = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => analysis.resume?.file_path && downloadResume(analysis.resume.file_path)}
+                    onClick={() => {
+                      if (analysis.resume?.file_path) {
+                        const { data } = supabase.storage
+                          .from('resumes')
+                          .getPublicUrl(analysis.resume.file_path);
+                        window.open(data.publicUrl, '_blank');
+                      }
+                    }}
                     className="text-primary border-primary/20 hover:bg-primary/5"
                   >
                     <Eye className="h-4 w-4 mr-2" />
@@ -171,7 +273,6 @@ const AlchemyRecords = () => {
             ))}
           </div>
 
-          {/* Pagination */}
           {totalPages > 1 && (
             <div className="mt-8">
               <Pagination>
