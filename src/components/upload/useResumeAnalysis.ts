@@ -13,11 +13,11 @@ export const useResumeAnalysis = () => {
   useEffect(() => {
     console.log('Setting up realtime subscription for resume analyses');
     const channel = supabase
-      .channel('resume_updates')
+      .channel('resume_analyses')
       .on(
         'postgres_changes',
         {
-          event: '*',
+          event: 'UPDATE',
           schema: 'public',
           table: 'resume_analyses',
         },
@@ -31,11 +31,13 @@ export const useResumeAnalysis = () => {
           }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Subscription status:', status);
+      });
 
     return () => {
       console.log('Cleaning up realtime subscription');
-      supabase.removeChannel(channel);
+      void supabase.removeChannel(channel);
     };
   }, [toast]);
 };
