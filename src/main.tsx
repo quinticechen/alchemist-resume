@@ -2,8 +2,11 @@
 import { createRoot } from 'react-dom/client';
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import App from './App.tsx';
 import './index.css';
+
+const queryClient = new QueryClient();
 
 // Initialize i18next with empty resources (they will be loaded dynamically)
 i18n
@@ -14,7 +17,17 @@ i18n
     fallbackLng: 'en',
     interpolation: {
       escapeValue: false
-    }
+    },
+    ns: ['translation'],
+    defaultNS: 'translation'
   });
 
-createRoot(document.getElementById('root')!).render(<App />);
+const container = document.getElementById('root');
+if (container) {
+  const root = createRoot(container);
+  root.render(
+    <QueryClientProvider client={queryClient}>
+      <App />
+    </QueryClientProvider>
+  );
+}

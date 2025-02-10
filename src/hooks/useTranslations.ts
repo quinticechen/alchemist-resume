@@ -19,23 +19,18 @@ export const useTranslations = () => {
 
   useEffect(() => {
     if (translations) {
-      const resources: { [key: string]: { [key: string]: string } } = {};
+      const resources: { [key: string]: { translation: { [key: string]: string } } } = {};
       
       translations.forEach((translation) => {
         if (!resources[translation.language_code]) {
-          resources[translation.language_code] = {};
+          resources[translation.language_code] = { translation: {} };
         }
         
-        const [namespace, key] = translation.key.split('.');
-        if (!resources[translation.language_code][namespace]) {
-          resources[translation.language_code][namespace] = {};
-        }
-        
-        resources[translation.language_code][namespace][key] = translation.value;
+        resources[translation.language_code].translation[translation.key] = translation.value;
       });
 
       Object.keys(resources).forEach((langCode) => {
-        i18n.addResourceBundle(langCode, 'common', resources[langCode].common, true, true);
+        i18n.addResourceBundle(langCode, 'translation', resources[langCode].translation, true, true);
       });
     }
   }, [translations]);
