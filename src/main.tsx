@@ -6,7 +6,15 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import App from './App.tsx';
 import './index.css';
 
-const queryClient = new QueryClient();
+// Create QueryClient instance
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+    },
+  },
+});
 
 // Initialize i18next with empty resources (they will be loaded dynamically)
 i18n
@@ -22,11 +30,13 @@ i18n
     defaultNS: 'translation'
   });
 
+// Get root element
 const container = document.getElementById('root');
 if (!container) {
   throw new Error('Root element not found');
 }
 
+// Create root and render app
 const root = createRoot(container);
 root.render(
   <QueryClientProvider client={queryClient}>
