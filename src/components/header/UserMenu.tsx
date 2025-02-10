@@ -3,6 +3,8 @@ import { LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Session } from "@supabase/supabase-js";
 import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface UserMenuProps {
   session: Session;
