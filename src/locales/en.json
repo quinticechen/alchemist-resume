@@ -1,0 +1,25 @@
+
+{
+  "common": {
+    "login": "Sign In",
+    "startTrial": "Start Free Trial",
+    "support": "Support",
+    "quickLinks": "Quick Links",
+    "followUs": "Follow Us",
+    "contactUs": "Contact Us",
+    "termsOfService": "Terms of Service",
+    "privacyPolicy": "Privacy Policy",
+    "faq": "FAQ",
+    "pricingPlans": "Pricing Plans",
+    "workshop": "Workshop",
+    "records": "Records",
+    "supportedWebsites": "Supported Websites",
+    "pricing": "Pricing",
+    "signOut": "Sign Out",
+    "usesLeft": "uses left"
+  },
+  "home": {
+    "title": "ResumeAlchemist",
+    "subtitle": "Transform your resume into a perfect match for your dream job using our AI-powered analysis"
+  }
+}

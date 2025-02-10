@@ -14,6 +14,7 @@ import Footer from "@/components/Footer";
 import { useEffect, useState } from "react";
 import { supabase } from "./integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
+import "@/i18n"; // Import i18n configuration
 
 // Create a wrapper component to handle auth state
 const AuthWrapper = () => {

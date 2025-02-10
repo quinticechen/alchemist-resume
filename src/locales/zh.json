@@ -1,0 +1,25 @@
+
+{
+  "common": {
+    "login": "登入",
+    "startTrial": "開始免費試用",
+    "support": "支援",
+    "quickLinks": "快速連結",
+    "followUs": "關注我們",
+    "contactUs": "聯絡我們",
+    "termsOfService": "服務條款",
+    "privacyPolicy": "隱私政策",
+    "faq": "常見問題",
+    "pricingPlans": "價格方案",
+    "workshop": "工作坊",
+    "records": "紀錄",
+    "supportedWebsites": "支援的網站",
+    "pricing": "價格",
+    "signOut": "登出",
+    "usesLeft": "次使用次數"
+  },
+  "home": {
+    "title": "履歷鍊金術師",
+    "subtitle": "使用我們的AI分析，將您的履歷轉化為夢想工作的完美匹配"
+  }
+}
