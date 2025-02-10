@@ -4,24 +4,62 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const PrePricing = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const googleFormUrl = "https://docs.google.com/forms/d/e/1FAIpQLScBhsrd96t2TZT-CfJv5yPfyP50L42BYAy2ATJOJsFF5FYOZA/viewform?embedded=true";
-
-  // Get current user's email
+  const { toast } = useToast();
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [surveyCompleted, setSurveyCompleted] = useState(false);
+  const googleFormUrl = "https://docs.google.com/forms/d/e/1FAIpQLScBhsrd96t2TZT-CfJv5yPfyP50L42BYAy2ATJOJsFF5FYOZA/viewform?embedded=true";
 
   useEffect(() => {
     const getUserEmail = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user?.email) {
         setUserEmail(session.user.email);
+
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('has_completed_survey')
+          .eq('id', session.user.id)
+          .single();
+
+        if (profile?.has_completed_survey) {
+          setSurveyCompleted(true);
+        }
+      } else {
+        navigate('/login');
       }
     };
     getUserEmail();
-  }, []);
+  }, [navigate]);
+
+  const handleSurveyCompletion = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) return;
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({ has_completed_survey: true })
+      .eq('id', session.user.id);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update survey status. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSurveyCompleted(true);
+    toast({
+      title: "Thank you!",
+      description: "Your feedback has been recorded. You can now continue using our services.",
+    });
+  };
 
   // Construct form URL with email parameter if available
   const formUrl = userEmail 
@@ -84,16 +122,17 @@ const PrePricing = () => {
           {/* Call-to-Action Buttons */}
           <div className="flex flex-col sm:flex-row justify-center gap-4 pt-8">
             <Button
-              onClick={() => navigate("/alchemist-workshop")}
+              onClick={handleSurveyCompletion}
               className="bg-gradient-primary text-white hover:opacity-90"
             >
-              Return to Workshop
+              I've Completed the Survey
             </Button>
             <Button
-              onClick={() => navigate("/pricing")}
+              onClick={() => navigate("/alchemist-workshop")}
               className="bg-white border-2 border-primary text-primary hover:bg-neutral-50"
+              disabled={!surveyCompleted}
             >
-              View Pricing Plans
+              Return to Workshop
             </Button>
           </div>
         </div>

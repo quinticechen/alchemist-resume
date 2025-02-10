@@ -92,26 +92,8 @@ const Account = () => {
     }
   };
 
-  const handleSubscribe = async () => {
-    try {
-      const response = await fetch('/api/create-checkout', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
-        }
-      });
-      const { url } = await response.json();
-      if (url) {
-        window.location.href = url;
-      }
-    } catch (error) {
-      console.error('Error creating checkout session:', error);
-      toast({
-        title: "Error",
-        description: "Failed to initiate subscription process",
-        variant: "destructive",
-      });
-    }
+  const handleSubscribe = () => {
+    navigate("/pre-pricing");
   };
 
   if (isLoading) {

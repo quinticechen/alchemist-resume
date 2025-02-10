@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import ResumeUploader from "@/components/ResumeUploader";
 import JobUrlInput from "@/components/JobUrlInput";
@@ -16,8 +16,51 @@ const AlchemistWorkshop = () => {
   const [jobUrl, setJobUrl] = useState<string>("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [analysisId, setAnalysisId] = useState<string>("");
+  const [usageCount, setUsageCount] = useState(0);
+  const [hasCompletedSurvey, setHasCompletedSurvey] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    checkUsageAndSurvey();
+  }, []);
+
+  const checkUsageAndSurvey = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) {
+      navigate('/login');
+      return;
+    }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('usage_count, has_completed_survey')
+      .eq('id', session.user.id)
+      .single();
+
+    if (profile) {
+      setUsageCount(profile.usage_count || 0);
+      setHasCompletedSurvey(profile.has_completed_survey || false);
+
+      if (profile.usage_count >= 3 && !profile.has_completed_survey) {
+        toast({
+          title: "Survey Required",
+          description: "Please complete the survey to continue using our services.",
+        });
+        navigate('/pre-pricing');
+        return;
+      }
+
+      if (profile.usage_count >= 3) {
+        toast({
+          title: "Free Trial Completed",
+          description: "Please upgrade to continue using our services.",
+        });
+        navigate('/account');
+        return;
+      }
+    }
+  };
 
   const handleFileUploadSuccess = (
     file: File,
@@ -36,12 +79,21 @@ const AlchemistWorkshop = () => {
   };
 
   const handleUrlSubmit = async (url: string) => {
-    if (!resumeId) {
+    if (usageCount >= 3 && !hasCompletedSurvey) {
       toast({
-        title: "Error",
-        description: "Please upload a resume first",
-        variant: "destructive",
+        title: "Survey Required",
+        description: "Please complete the survey to continue using our services.",
       });
+      navigate('/pre-pricing');
+      return;
+    }
+
+    if (usageCount >= 3) {
+      toast({
+        title: "Free Trial Completed",
+        description: "Please upgrade to continue using our services.",
+      });
+      navigate('/account');
       return;
     }
 

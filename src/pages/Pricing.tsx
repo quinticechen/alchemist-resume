@@ -2,9 +2,58 @@
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useEffect, useState } from "react";
 
 const Pricing = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [usageCount, setUsageCount] = useState(0);
+
+  useEffect(() => {
+    checkAuthAndUsage();
+  }, []);
+
+  const checkAuthAndUsage = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    setIsAuthenticated(!!session);
+
+    if (session?.user) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('usage_count')
+        .eq('id', session.user.id)
+        .single();
+
+      if (profile) {
+        setUsageCount(profile.usage_count || 0);
+      }
+    }
+  };
+
+  const handlePlanSelection = async () => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Sign in required",
+        description: "Please sign in or create an account to continue.",
+      });
+      navigate("/login", { state: { from: "/pricing" } });
+      return;
+    }
+
+    if (usageCount >= 3) {
+      toast({
+        title: "Free trial completed",
+        description: "Please upgrade to continue using our services.",
+      });
+      navigate("/account");
+      return;
+    }
+
+    navigate("/pre-pricing");
+  };
 
   const plans = [
     {
@@ -36,10 +85,6 @@ const Pricing = () => {
       highlighted: true,
     },
   ];
-
-  const handlePlanSelection = () => {
-    navigate("/pre-pricing");
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100">
