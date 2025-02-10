@@ -18,7 +18,6 @@ const AlchemistWorkshop = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [analysisId, setAnalysisId] = useState<string>("");
   const [usageCount, setUsageCount] = useState(0);
-  const [hasCompletedSurvey, setHasCompletedSurvey] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -35,13 +34,12 @@ const AlchemistWorkshop = () => {
 
     const { data: profile } = await supabase
       .from('profiles')
-      .select('usage_count, has_completed_survey')
+      .select('usage_count')
       .eq('id', session.user.id)
       .single();
 
     if (profile) {
       setUsageCount(profile.usage_count || 0);
-      setHasCompletedSurvey(profile.has_completed_survey || false);
 
       if (profile.usage_count >= 3) {
         toast({

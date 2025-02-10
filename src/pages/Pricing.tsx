@@ -11,7 +11,6 @@ const Pricing = () => {
   const { toast } = useToast();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [usageCount, setUsageCount] = useState(0);
-  const [hasCompletedSurvey, setHasCompletedSurvey] = useState(false);
 
   useEffect(() => {
     checkAuthAndUsage();
@@ -24,13 +23,12 @@ const Pricing = () => {
     if (session?.user) {
       const { data: profile } = await supabase
         .from('profiles')
-        .select('usage_count, has_completed_survey')
+        .select('usage_count')
         .eq('id', session.user.id)
         .single();
 
       if (profile) {
         setUsageCount(profile.usage_count || 0);
-        setHasCompletedSurvey(profile.has_completed_survey || false);
       }
     }
   };
