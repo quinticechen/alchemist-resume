@@ -11,7 +11,30 @@ interface UserMenuProps {
 }
 
 const UserMenu = ({ session, usageCount, onLogout }: UserMenuProps) => {
-  const remainingUses = Math.max(0, 3 - (usageCount || 0));
+  const [remainingUses, setRemainingUses] = useState<number>(0);
+  const [freeTrialLimit, setFreeTrialLimit] = useState<number>(3);
+
+  useEffect(() => {
+    const getFreeTrialLimit = async () => {
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('free_trial_limit')
+        .eq('id', session.user.id)
+        .single();
+
+      if (error) {
+        console.error('Error fetching free trial limit:', error);
+        return;
+      }
+
+      if (profile) {
+        setFreeTrialLimit(profile.free_trial_limit);
+        setRemainingUses(Math.max(0, profile.free_trial_limit - (usageCount || 0)));
+      }
+    };
+
+    getFreeTrialLimit();
+  }, [session.user.id, usageCount]);
 
   return (
     <div className="flex items-center gap-3">

@@ -34,14 +34,14 @@ const AlchemistWorkshop = () => {
 
     const { data: profile } = await supabase
       .from('profiles')
-      .select('usage_count')
+      .select('usage_count, free_trial_limit')
       .eq('id', session.user.id)
       .single();
 
     if (profile) {
       setUsageCount(profile.usage_count || 0);
 
-      if (profile.usage_count >= 3) {
+      if (profile.usage_count >= profile.free_trial_limit) {
         toast({
           title: "Free Trial Expired",
           description: "Please upgrade to continue using our services.",

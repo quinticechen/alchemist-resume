@@ -14,6 +14,7 @@ export type Database = {
           avatar_url: string | null
           created_at: string
           email: string
+          free_trial_limit: number
           full_name: string | null
           has_completed_survey: boolean | null
           id: string
@@ -25,6 +26,7 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           email: string
+          free_trial_limit?: number
           full_name?: string | null
           has_completed_survey?: boolean | null
           id: string
@@ -36,6 +38,7 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           email?: string
+          free_trial_limit?: number
           full_name?: string | null
           has_completed_survey?: boolean | null
           id?: string

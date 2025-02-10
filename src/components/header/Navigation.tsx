@@ -14,6 +14,7 @@ interface NavigationProps {
 const Navigation = ({ session, onSupportedWebsitesClick, isHome }: NavigationProps) => {
   const [usageCount, setUsageCount] = useState(0);
   const [hasCompletedSurvey, setHasCompletedSurvey] = useState(false);
+  const [freeTrialLimit, setFreeTrialLimit] = useState(3);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -26,19 +27,20 @@ const Navigation = ({ session, onSupportedWebsitesClick, isHome }: NavigationPro
   const checkProfileData = async () => {
     const { data: profile } = await supabase
       .from('profiles')
-      .select('usage_count, has_completed_survey')
+      .select('usage_count, has_completed_survey, free_trial_limit')
       .eq('id', session!.user.id)
       .single();
 
     if (profile) {
       setUsageCount(profile.usage_count || 0);
       setHasCompletedSurvey(profile.has_completed_survey || false);
+      setFreeTrialLimit(profile.free_trial_limit);
     }
   };
 
   const handleWorkshopClick = (e: React.MouseEvent) => {
     e.preventDefault();
-    if (usageCount >= 3) {
+    if (usageCount >= freeTrialLimit) {
       toast({
         title: "Free Trial Expired",
         description: "Please upgrade to continue using our services.",
