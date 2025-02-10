@@ -8,9 +8,6 @@ import { useToast } from "@/hooks/use-toast";
 import Logo from "./header/Logo";
 import Navigation from "./header/Navigation";
 import UserMenu from "./header/UserMenu";
-import LanguageToggle from "./header/LanguageToggle";
-import { useTranslations } from "@/hooks/useTranslations";
-import { useTranslation } from "react-i18next";
 
 const Header = () => {
   const [session, setSession] = useState<Session | null>(null);
@@ -18,8 +15,6 @@ const Header = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
-  const { t } = useTranslation();
-  useTranslations(); // Initialize translations
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -100,7 +95,6 @@ const Header = () => {
             />
           </div>
           <div className="flex items-center gap-6">
-            <LanguageToggle />
             {session ? (
               <UserMenu 
                 session={session}
@@ -114,7 +108,7 @@ const Header = () => {
                 className="flex items-center gap-2 bg-gradient-primary hover:opacity-90 transition-opacity"
               >
                 <LogIn className="h-4 w-4" />
-                {isHome ? t('common.startFreeTrial') : t('common.signIn')}
+                {isHome ? "Start Free Trial" : "Sign In"}
               </Button>
             )}
           </div>

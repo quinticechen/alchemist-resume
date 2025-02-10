@@ -2,44 +2,52 @@
 import { createRoot } from 'react-dom/client';
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import App from './App.tsx';
 import './index.css';
 
-// Create QueryClient instance
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 1,
-      staleTime: 5 * 60 * 1000, // 5 minutes
-    },
-  },
-});
+// English translations
+const enTranslations = {
+  common: {
+    workshop: 'Workshop',
+    records: 'Records',
+    pricing: 'Pricing',
+    faq: 'FAQ',
+    signOut: 'Sign Out',
+    usesLeft: '{{count}} uses left',
+    startFreeTrial: 'Start Free Trial',
+    signIn: 'Sign In',
+    supportedWebsites: 'Supported Websites'
+  }
+};
 
-// Initialize i18next with empty resources (they will be loaded dynamically)
+// Traditional Chinese translations
+const zhTranslations = {
+  common: {
+    workshop: '工作坊',
+    records: '記錄',
+    pricing: '價格',
+    faq: '常見問題',
+    signOut: '登出',
+    usesLeft: '剩餘 {{count}} 次使用',
+    startFreeTrial: '開始免費試用',
+    signIn: '登入',
+    supportedWebsites: '支援的網站'
+  }
+};
+
+// Initialize i18next
 i18n
   .use(initReactI18next)
   .init({
-    resources: {},
-    lng: localStorage.getItem('language') || navigator.language.split('-')[0] || 'en',
+    resources: {
+      en: enTranslations,
+      zh: zhTranslations
+    },
+    lng: localStorage.getItem('language') || 'en', // default language
     fallbackLng: 'en',
     interpolation: {
       escapeValue: false
-    },
-    ns: ['translation'],
-    defaultNS: 'translation'
+    }
   });
 
-// Get root element
-const container = document.getElementById('root');
-if (!container) {
-  throw new Error('Root element not found');
-}
-
-// Create root and render app
-const root = createRoot(container);
-root.render(
-  <QueryClientProvider client={queryClient}>
-    <App />
-  </QueryClientProvider>
-);
+createRoot(document.getElementById("root")!).render(<App />);
