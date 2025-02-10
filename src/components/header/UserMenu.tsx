@@ -1,9 +1,7 @@
-
 import { LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Session } from "@supabase/supabase-js";
 import { Link } from "react-router-dom";
-import { useTranslation } from "react-i18next";
 
 interface UserMenuProps {
   session: Session;
@@ -12,8 +10,6 @@ interface UserMenuProps {
 }
 
 const UserMenu = ({ session, usageCount, onLogout }: UserMenuProps) => {
-  const { t } = useTranslation();
-
   return (
     <div className="flex items-center gap-3">
       <Link to="/account" className="flex items-center gap-3 text-neutral-600 hover:text-primary transition-colors">
@@ -22,7 +18,7 @@ const UserMenu = ({ session, usageCount, onLogout }: UserMenuProps) => {
           {session.user.email}
         </span>
         <span className="text-sm font-medium text-primary">
-          ({3 - (usageCount || 0)} {t('common.usesLeft')})
+          ({3 - (usageCount || 0)} uses left)
         </span>
       </Link>
       <Button
@@ -32,7 +28,7 @@ const UserMenu = ({ session, usageCount, onLogout }: UserMenuProps) => {
         className="flex items-center gap-2 border-neutral-200 hover:bg-neutral-100"
       >
         <LogOut className="h-4 w-4" />
-        <span className="hidden sm:inline">{t('common.signOut')}</span>
+        <span className="hidden sm:inline">Sign Out</span>
       </Button>
     </div>
   );
