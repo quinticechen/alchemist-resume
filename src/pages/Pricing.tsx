@@ -11,6 +11,7 @@ const Pricing = () => {
   const { toast } = useToast();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [usageCount, setUsageCount] = useState(0);
+  const [hasCompletedSurvey, setHasCompletedSurvey] = useState(false);
 
   useEffect(() => {
     checkAuthAndUsage();
@@ -23,32 +24,20 @@ const Pricing = () => {
     if (session?.user) {
       const { data: profile } = await supabase
         .from('profiles')
-        .select('usage_count')
+        .select('usage_count, has_completed_survey')
         .eq('id', session.user.id)
         .single();
 
       if (profile) {
         setUsageCount(profile.usage_count || 0);
+        setHasCompletedSurvey(profile.has_completed_survey || false);
       }
     }
   };
 
   const handlePlanSelection = async () => {
     if (!isAuthenticated) {
-      toast({
-        title: "Sign in required",
-        description: "Please sign in or create an account to continue.",
-      });
       navigate("/login", { state: { from: "/pricing" } });
-      return;
-    }
-
-    if (usageCount >= 3) {
-      toast({
-        title: "Free trial completed",
-        description: "Please upgrade to continue using our services.",
-      });
-      navigate("/account");
       return;
     }
 

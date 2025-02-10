@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import ResumeUploader from "@/components/ResumeUploader";
@@ -32,37 +33,32 @@ const AlchemistWorkshop = () => {
       return;
     }
 
-    const { data: profile, error } = await supabase
+    const { data: profile } = await supabase
       .from('profiles')
       .select('usage_count, has_completed_survey')
       .eq('id', session.user.id)
       .single();
 
-    if (error) {
-      console.error('Error fetching profile:', error);
-      return;
-    }
-
     if (profile) {
       setUsageCount(profile.usage_count || 0);
       setHasCompletedSurvey(profile.has_completed_survey || false);
 
-      if (profile.usage_count >= 3 && !profile.has_completed_survey) {
-        toast({
-          title: "Survey Required",
-          description: "Please complete the survey to continue using our services.",
-        });
-        navigate('/pre-pricing');
-        return;
-      }
-
       if (profile.usage_count >= 3) {
-        toast({
-          title: "Free Trial Completed",
-          description: "Please upgrade to continue using our services.",
-        });
-        navigate('/account');
-        return;
+        if (profile.has_completed_survey) {
+          toast({
+            title: "Free Trial Completed",
+            description: "Please upgrade to continue using our services.",
+          });
+          navigate('/account');
+          return;
+        } else {
+          toast({
+            title: "Survey Required",
+            description: "Please complete the survey to continue using our services.",
+          });
+          navigate('/pre-pricing');
+          return;
+        }
       }
     }
   };

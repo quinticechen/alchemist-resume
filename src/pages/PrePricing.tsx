@@ -47,7 +47,10 @@ const PrePricing = () => {
 
     const { error } = await supabase
       .from('profiles')
-      .update({ has_completed_survey: true })
+      .update({ 
+        has_completed_survey: true,
+        usage_count: 0  // Reset usage count to 0 when survey is completed
+      })
       .eq('id', session.user.id);
 
     if (error) {
@@ -62,11 +65,11 @@ const PrePricing = () => {
     setSurveyCompleted(true);
     toast({
       title: "Thank you!",
-      description: "Your feedback has been recorded. You can now continue using our services.",
+      description: "Your feedback has been recorded. You now have 3 more free uses available.",
     });
+    navigate('/alchemist-workshop');
   };
 
-  // Construct form URL with email parameter if available
   const formUrl = userEmail 
     ? `${googleFormUrl}&entry.1234567890=${encodeURIComponent(userEmail)}`
     : googleFormUrl;
@@ -75,7 +78,6 @@ const PrePricing = () => {
     <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100">
       <div className="container mx-auto px-4 py-12">
         <div className="max-w-4xl mx-auto space-y-12">
-          {/* Thank You Message */}
           <div className="text-center space-y-4">
             <h1 className="text-4xl font-bold bg-gradient-primary text-transparent bg-clip-text">
               Thank You for Your Interest!
@@ -85,7 +87,6 @@ const PrePricing = () => {
             </p>
           </div>
 
-          {/* Value Proposition */}
           <div className="bg-white rounded-xl p-8 shadow-apple">
             <h2 className="text-2xl font-semibold mb-4 text-primary">
               Why Choose ResumeAlchemist?
@@ -97,7 +98,7 @@ const PrePricing = () => {
               </li>
               <li className="flex items-start">
                 <span className="text-2xl mr-2">🎁</span>
-                <span>Start with 3 free uses to experience our powerful AI-driven customization</span>
+                <span>Get 3 more free uses by completing our quick survey</span>
               </li>
               <li className="flex items-start">
                 <span className="text-2xl mr-2">⚡</span>
@@ -106,7 +107,6 @@ const PrePricing = () => {
             </ul>
           </div>
 
-          {/* Survey Section */}
           <div className="bg-white rounded-xl p-8 shadow-apple">
             <h2 className="text-2xl font-semibold mb-6 text-primary">
               Help Us Serve You Better
@@ -124,7 +124,6 @@ const PrePricing = () => {
             </div>
           </div>
 
-          {/* Call-to-Action Buttons */}
           <div className="flex flex-col sm:flex-row justify-center gap-4 pt-8">
             <Button
               onClick={handleSurveyCompletion}
