@@ -42,7 +42,6 @@ const Account = () => {
         .single();
 
       if (error) throw error;
-      console.log('Fetched profile:', profile);
       setProfile(profile);
       setNewFullName(profile.full_name || "");
     } catch (error: any) {
@@ -97,7 +96,7 @@ const Account = () => {
   };
 
   const handleSubscribe = () => {
-    navigate("/pre-pricing");
+    navigate("/pricing");
   };
 
   if (isLoading) {

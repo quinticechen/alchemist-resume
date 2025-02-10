@@ -35,12 +35,11 @@ const Pricing = () => {
     }
   };
 
-  const handlePlanSelection = async () => {
+  const handlePlanSelection = () => {
     if (!isAuthenticated) {
       navigate("/login", { state: { from: "/pricing" } });
       return;
     }
-
     navigate("/pre-pricing");
   };
 
