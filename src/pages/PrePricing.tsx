@@ -20,11 +20,16 @@ const PrePricing = () => {
       if (session?.user?.email) {
         setUserEmail(session.user.email);
 
-        const { data: profile } = await supabase
+        const { data: profile, error } = await supabase
           .from('profiles')
           .select('has_completed_survey')
           .eq('id', session.user.id)
           .single();
+
+        if (error) {
+          console.error('Error fetching profile:', error);
+          return;
+        }
 
         if (profile?.has_completed_survey) {
           setSurveyCompleted(true);

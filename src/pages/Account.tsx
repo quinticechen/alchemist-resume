@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Check, Github, Linkedin, Mail } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface Profile {
   email: string;
@@ -21,6 +22,7 @@ const Account = () => {
   const [newFullName, setNewFullName] = useState("");
   const [isSubscribed, setIsSubscribed] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchProfile();
