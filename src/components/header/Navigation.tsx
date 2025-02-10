@@ -1,5 +1,7 @@
+
 import { Link } from "react-router-dom";
 import { Session } from "@supabase/supabase-js";
+import { useTranslation } from "react-i18next";
 
 interface NavigationProps {
   session: Session | null;
@@ -8,6 +10,8 @@ interface NavigationProps {
 }
 
 const Navigation = ({ session, onSupportedWebsitesClick, isHome }: NavigationProps) => {
+  const { t } = useTranslation();
+
   return (
     <nav>
       <ul className="flex items-center gap-6">
@@ -18,7 +22,7 @@ const Navigation = ({ session, onSupportedWebsitesClick, isHome }: NavigationPro
                 to="/alchemist-workshop"
                 className="text-sm font-medium text-neutral-600 hover:text-primary transition-colors"
               >
-                Workshop
+                {t('common.workshop')}
               </Link>
             </li>
             <li>
@@ -26,7 +30,7 @@ const Navigation = ({ session, onSupportedWebsitesClick, isHome }: NavigationPro
                 to="/alchemy-records"
                 className="text-sm font-medium text-neutral-600 hover:text-primary transition-colors"
               >
-                Records
+                {t('common.records')}
               </Link>
             </li>
           </>
@@ -38,7 +42,7 @@ const Navigation = ({ session, onSupportedWebsitesClick, isHome }: NavigationPro
                   onClick={onSupportedWebsitesClick}
                   className="text-sm font-medium text-neutral-600 hover:text-primary transition-colors"
                 >
-                  Supported Websites
+                  {t('common.supportedWebsites')}
                 </button>
               </li>
             ) : null}
@@ -47,7 +51,7 @@ const Navigation = ({ session, onSupportedWebsitesClick, isHome }: NavigationPro
                 to="/pricing"
                 className="text-sm font-medium text-neutral-600 hover:text-primary transition-colors"
               >
-                Pricing
+                {t('common.pricing')}
               </Link>
             </li>
             <li>
@@ -55,7 +59,7 @@ const Navigation = ({ session, onSupportedWebsitesClick, isHome }: NavigationPro
                 to="/faq"
                 className="text-sm font-medium text-neutral-600 hover:text-primary transition-colors"
               >
-                FAQ
+                {t('common.faq')}
               </Link>
             </li>
           </>
