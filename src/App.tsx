@@ -1,6 +1,7 @@
+
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
-import Home from "@/pages/Home";
+import Index from "@/pages/Index";
 import AlchemistWorkshop from "@/pages/AlchemyStation";
 import AlchemyRecords from "@/pages/AlchemyRecords";
 import Account from "@/pages/Account";
@@ -14,7 +15,7 @@ import Footer from "@/components/Footer";
 import { useEffect, useState } from "react";
 import { supabase } from "./integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
-import "@/i18n"; // Import i18n configuration
+import "@/i18n";
 
 // Create a wrapper component to handle auth state
 const AuthWrapper = () => {
@@ -68,7 +69,7 @@ const AuthWrapper = () => {
       <Header />
       <main className="flex-grow">
         <Routes>
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={<Index />} />
           <Route 
             path="/alchemist-workshop" 
             element={
