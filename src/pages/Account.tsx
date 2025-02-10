@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,6 +14,7 @@ interface Profile {
   avatar_url: string | null;
   usage_count: number;
   provider: string;
+  has_completed_survey: boolean;
 }
 
 const Account = () => {
