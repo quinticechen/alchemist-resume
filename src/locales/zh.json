@@ -16,10 +16,31 @@
     "supportedWebsites": "支援的網站",
     "pricing": "價格",
     "signOut": "登出",
-    "usesLeft": "次使用次數"
+    "usesLeft": "次使用次數",
+    "learnMore": "了解更多",
+    "howItWorks": "運作方式",
+    "optimizeForCompanies": "為頂尖公司優化您的履歷",
+    "supportedPlatforms": "支援的求職平台",
+    "globalPlatforms": "全球平台",
+    "asianPlatforms": "亞洲區域平台",
+    "faqs": "常見問題"
   },
   "home": {
     "title": "履歷鍊金術師",
-    "subtitle": "使用我們的AI分析，將您的履歷轉化為夢想工作的完美匹配"
+    "subtitle": "使用我們的AI分析，將您的履歷轉化為夢想工作的完美匹配",
+    "features": {
+      "uploadResume": {
+        "title": "上傳履歷",
+        "description": "提交您現有的PDF履歷"
+      },
+      "addJobLink": {
+        "title": "添加職缺連結",
+        "description": "貼上目標職缺的網址"
+      },
+      "getOptimized": {
+        "title": "獲得優化",
+        "description": "收到完美匹配的履歷"
+      }
+    }
   }
 }

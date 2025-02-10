@@ -1,137 +1,203 @@
-import React, { useState } from "react";
-import ResumeUploader from "@/components/ResumeUploader";
-import JobUrlInput from "@/components/JobUrlInput";
-import ResumePreview from "@/components/ResumePreview";
-import AlchemistSection from "@/components/AlchemistSection";
-import Header from "@/components/Header";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+
+import { useTranslation } from "react-i18next";
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { ArrowRight, Upload, Zap, CheckCircle, Globe, MapPin } from "lucide-react";
+
+const companies = [
+  "Google", "Amazon", "Microsoft", "Apple", "Meta"
+];
+
+const features = [
+  {
+    title: "Upload Resume",
+    description: "Submit your existing PDF resume",
+    icon: Upload,
+  },
+  {
+    title: "Add Job Link",
+    description: "Paste the URL of your target job posting",
+    icon: ArrowRight,
+  },
+  {
+    title: "Get Optimized",
+    description: "Receive a perfectly matched resume",
+    icon: Zap,
+  },
+];
+
+const globalPlatforms = [
+  { name: "LinkedIn", url: "linkedin.com" },
+  { name: "Indeed", url: "indeed.com" },
+  { name: "Glassdoor", url: "glassdoor.com" },
+  { name: "Monster", url: "monster.com" },
+  { name: "ZipRecruiter", url: "ziprecruiter.com" },
+  { name: "CareerBuilder", url: "careerbuilder.com" },
+  { name: "SimplyHired", url: "simplyhired.com" },
+];
+
+const asianPlatforms = [
+  { name: "104 Job Bank", url: "104.com.tw" },
+  { name: "1111 Job Bank", url: "1111.com.tw" },
+  { name: "JobsDB", url: "jobsdb.com" },
+  { name: "Rikunabi NEXT", url: "next.rikunabi.com" },
+  { name: "51job", url: "51job.com" },
+  { name: "Zhaopin", url: "zhaopin.com" },
+];
+
+const faqs = [
+  {
+    question: "How many free uses do I get?",
+    answer: "New users receive 3 free uses to try our service.",
+  },
+  {
+    question: "What file formats are supported?",
+    answer: "Currently, we support PDF format for resume uploads.",
+  },
+  {
+    question: "How long does the process take?",
+    answer: "The optimization process typically takes 2-3 minutes.",
+  },
+];
 
 const Index = () => {
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [filePath, setFilePath] = useState<string>();
-  const [publicUrl, setPublicUrl] = useState<string>();
-  const [resumeId, setResumeId] = useState<string>();
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [showAlchemist, setShowAlchemist] = useState(false);
-  const { toast } = useToast();
-
-  const handleFileUpload = (file: File, path: string, url: string, id: string) => {
-    console.log("File uploaded:", file.name, "Path:", path, "Public URL:", url, "ID:", id);
-    setSelectedFile(file);
-    setFilePath(path);
-    setPublicUrl(url);
-    setResumeId(id);
-    setShowAlchemist(false);
-    toast({
-      title: "Resume Uploaded",
-      description: `Successfully uploaded ${file.name}`,
-    });
-  };
-
-  const handleCancelResume = async () => {
-    if (filePath) {
-      try {
-        const { error: storageError } = await supabase.storage
-          .from('resumes')
-          .remove([filePath]);
-
-        if (storageError) throw storageError;
-
-        setSelectedFile(null);
-        setFilePath(undefined);
-        setPublicUrl(undefined);
-        setResumeId(undefined);
-        setIsProcessing(false);
-        setShowAlchemist(false);
-
-        toast({
-          title: "Resume Cancelled",
-          description: "Your resume has been removed",
-        });
-      } catch (error) {
-        console.error('Error removing resume:', error);
-        toast({
-          title: "Error",
-          description: "Failed to remove resume",
-          variant: "destructive",
-        });
-      }
-    }
-  };
-
-  const handleUrlSubmit = async (url: string) => {
-    if (!resumeId) {
-      toast({
-        title: "Error",
-        description: "Please upload a resume first",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsProcessing(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('process-resume', {
-        body: {
-          resumeId,
-          jobUrl: url,
-        },
-      });
-
-      if (error) throw error;
-
-      console.log('Processing started:', data);
-      setShowAlchemist(true);
-
-      toast({
-        title: "Analysis Started",
-        description: "Your resume is being analyzed. Results will be available soon.",
-      });
-    } catch (error) {
-      console.error('Error processing resume:', error);
-      toast({
-        title: "Error",
-        description: "Failed to process resume",
-        variant: "destructive",
-      });
-      setIsProcessing(false);
-    }
-  };
+  const navigate = useNavigate();
+  const { t } = useTranslation();
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100">
-      <Header />
-      <div className="py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto space-y-10 animate-fade-up">
-          <div className="text-center space-y-4">
-            <h1 className="text-5xl font-bold bg-gradient-primary text-transparent bg-clip-text">
-              ResumeAlchemist
-            </h1>
-            <p className="text-lg text-neutral-600 max-w-2xl mx-auto">
-              Transform your resume into a perfect match for your dream job using our AI-powered analysis
-            </p>
-          </div>
-
-          <div className="grid gap-8">
-            {selectedFile ? (
-              <ResumePreview 
-                file={selectedFile} 
-                filePath={filePath}
-                publicUrl={publicUrl}
-                onCancel={handleCancelResume}
-              />
-            ) : (
-              <ResumeUploader 
-                onUploadSuccess={handleFileUpload}
-                onFileUpload={handleFileUpload}
-              />
-            )}
-            <JobUrlInput onUrlSubmit={handleUrlSubmit} isProcessing={isProcessing} />
-            {showAlchemist && resumeId && <AlchemistSection resumeId={resumeId} />}
+      {/* Hero Section */}
+      <section className="py-20 px-4">
+        <div className="max-w-6xl mx-auto text-center">
+          <h1 className="text-6xl font-bold bg-gradient-primary text-transparent bg-clip-text mb-6">
+            {t('home.title')}
+          </h1>
+          <p className="text-xl text-neutral-600 mb-8 max-w-3xl mx-auto">
+            {t('home.subtitle')}
+          </p>
+          <div className="flex gap-4 justify-center">
+            <Button
+              onClick={() => navigate("/login")}
+              size="lg"
+              className="bg-gradient-primary hover:opacity-90 transition-opacity"
+            >
+              {t('common.startTrial')}
+            </Button>
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={() => {
+                const featuresSection = document.getElementById("features");
+                featuresSection?.scrollIntoView({ behavior: "smooth" });
+              }}
+            >
+              Learn More
+            </Button>
           </div>
         </div>
-      </div>
+      </section>
+
+      {/* Features Section */}
+      <section id="features" className="py-20 bg-white">
+        <div className="max-w-6xl mx-auto px-4">
+          <h2 className="text-4xl font-bold text-center mb-12">How It Works</h2>
+          <div className="grid md:grid-cols-3 gap-8">
+            {features.map((feature, index) => (
+              <div
+                key={index}
+                className="p-6 rounded-xl border border-neutral-200 bg-white shadow-apple hover:shadow-apple-lg transition-shadow"
+              >
+                <feature.icon className="w-12 h-12 text-primary mb-4" />
+                <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
+                <p className="text-neutral-600">{feature.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Companies Section */}
+      <section className="py-16 bg-neutral-50">
+        <div className="max-w-6xl mx-auto px-4 text-center">
+          <h2 className="text-2xl font-semibold text-neutral-600 mb-8">
+            Optimize Your Resume for Top Companies
+          </h2>
+          <div className="flex flex-wrap justify-center gap-8 items-center">
+            {companies.map((company) => (
+              <span
+                key={company}
+                className="text-2xl font-bold bg-gradient-primary text-transparent bg-clip-text"
+              >
+                {company}
+              </span>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Supported Websites Section */}
+      <section id="supported-websites" className="py-20 bg-white">
+        <div className="max-w-6xl mx-auto px-4">
+          <h2 className="text-4xl font-bold text-center mb-12">Supported Job Platforms</h2>
+          
+          <div className="grid md:grid-cols-2 gap-12">
+            {/* Global Platforms */}
+            <div className="space-y-6">
+              <div className="flex items-center gap-3 mb-6">
+                <Globe className="h-6 w-6 text-primary" />
+                <h3 className="text-2xl font-semibold">Global Platforms</h3>
+              </div>
+              <ul className="space-y-4">
+                {globalPlatforms.map((platform) => (
+                  <li key={platform.url} className="flex items-center gap-2">
+                    <CheckCircle className="h-5 w-5 text-success" />
+                    <span className="font-medium">{platform.name}</span>
+                    <span className="text-neutral-500">({platform.url})</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Asian Regional Platforms */}
+            <div className="space-y-6">
+              <div className="flex items-center gap-3 mb-6">
+                <MapPin className="h-6 w-6 text-primary" />
+                <h3 className="text-2xl font-semibold">Asian Regional Platforms</h3>
+              </div>
+              <ul className="space-y-4">
+                {asianPlatforms.map((platform) => (
+                  <li key={platform.url} className="flex items-center gap-2">
+                    <CheckCircle className="h-5 w-5 text-success" />
+                    <span className="font-medium">{platform.name}</span>
+                    <span className="text-neutral-500">({platform.url})</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ Section */}
+      <section className="py-20 bg-neutral-50">
+        <div className="max-w-4xl mx-auto px-4">
+          <h2 className="text-4xl font-bold text-center mb-12">
+            Frequently Asked Questions
+          </h2>
+          <div className="space-y-6">
+            {faqs.map((faq, index) => (
+              <div
+                key={index}
+                className="p-6 rounded-xl border border-neutral-200 bg-white"
+              >
+                <h3 className="text-xl font-semibold mb-2">{faq.question}</h3>
+                <p className="text-neutral-600">{faq.answer}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
     </div>
   );
 };
