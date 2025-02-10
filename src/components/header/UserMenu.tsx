@@ -1,3 +1,4 @@
+
 import { LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Session } from "@supabase/supabase-js";
@@ -10,6 +11,8 @@ interface UserMenuProps {
 }
 
 const UserMenu = ({ session, usageCount, onLogout }: UserMenuProps) => {
+  const remainingUses = Math.max(0, 3 - (usageCount || 0));
+
   return (
     <div className="flex items-center gap-3">
       <Link to="/account" className="flex items-center gap-3 text-neutral-600 hover:text-primary transition-colors">
@@ -18,7 +21,7 @@ const UserMenu = ({ session, usageCount, onLogout }: UserMenuProps) => {
           {session.user.email}
         </span>
         <span className="text-sm font-medium text-primary">
-          ({3 - (usageCount || 0)} uses left)
+          ({remainingUses} {remainingUses === 1 ? 'use' : 'uses'} left)
         </span>
       </Link>
       <Button

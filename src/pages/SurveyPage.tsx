@@ -1,4 +1,3 @@
-
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -47,10 +46,7 @@ const SurveyPage = () => {
 
     const { error } = await supabase
       .from('profiles')
-      .update({ 
-        has_completed_survey: true,
-        usage_count: 0  // Reset usage count to 0 when survey is completed
-      })
+      .update({ has_completed_survey: true })
       .eq('id', session.user.id);
 
     if (error) {

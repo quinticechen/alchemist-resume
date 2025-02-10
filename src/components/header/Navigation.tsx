@@ -13,24 +13,26 @@ interface NavigationProps {
 
 const Navigation = ({ session, onSupportedWebsitesClick, isHome }: NavigationProps) => {
   const [usageCount, setUsageCount] = useState(0);
+  const [hasCompletedSurvey, setHasCompletedSurvey] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
     if (session?.user) {
-      checkUsageCount();
+      checkProfileData();
     }
   }, [session]);
 
-  const checkUsageCount = async () => {
+  const checkProfileData = async () => {
     const { data: profile } = await supabase
       .from('profiles')
-      .select('usage_count')
+      .select('usage_count, has_completed_survey')
       .eq('id', session!.user.id)
       .single();
 
     if (profile) {
       setUsageCount(profile.usage_count || 0);
+      setHasCompletedSurvey(profile.has_completed_survey || false);
     }
   };
 
