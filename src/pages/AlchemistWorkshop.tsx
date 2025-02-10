@@ -44,21 +44,12 @@ const AlchemistWorkshop = () => {
       setHasCompletedSurvey(profile.has_completed_survey || false);
 
       if (profile.usage_count >= 3) {
-        if (profile.has_completed_survey) {
-          toast({
-            title: "Free Trial Completed",
-            description: "Please upgrade to continue using our services.",
-          });
-          navigate('/account');
-          return;
-        } else {
-          toast({
-            title: "Survey Required",
-            description: "Please complete the survey to continue using our services.",
-          });
-          navigate('/pre-pricing');
-          return;
-        }
+        toast({
+          title: "Free Trial Expired",
+          description: "Your free trial has expired. Please upgrade to continue using our services.",
+        });
+        navigate('/pricing');
+        return;
       }
     }
   };
@@ -80,21 +71,12 @@ const AlchemistWorkshop = () => {
   };
 
   const handleUrlSubmit = async (url: string) => {
-    if (usageCount >= 3 && !hasCompletedSurvey) {
-      toast({
-        title: "Survey Required",
-        description: "Please complete the survey to continue using our services.",
-      });
-      navigate('/pre-pricing');
-      return;
-    }
-
     if (usageCount >= 3) {
       toast({
-        title: "Free Trial Completed",
-        description: "Please upgrade to continue using our services.",
+        title: "Free Trial Expired",
+        description: "Your free trial has expired. Please upgrade to continue using our services.",
       });
-      navigate('/account');
+      navigate('/pricing');
       return;
     }
 
