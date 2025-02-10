@@ -1,3 +1,4 @@
+
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -36,6 +37,10 @@ const Pricing = () => {
     },
   ];
 
+  const handlePlanSelection = () => {
+    navigate("/pre-pricing");
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100">
       <div className="container mx-auto px-4 py-12">
@@ -71,7 +76,7 @@ const Pricing = () => {
                   ))}
                 </ul>
                 <Button
-                  onClick={() => navigate("/login")}
+                  onClick={handlePlanSelection}
                   className={`w-full ${
                     plan.highlighted
                       ? "bg-white text-primary hover:bg-neutral-100"
