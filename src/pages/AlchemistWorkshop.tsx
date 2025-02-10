@@ -46,7 +46,7 @@ const AlchemistWorkshop = () => {
       if (profile.usage_count >= 3) {
         toast({
           title: "Free Trial Expired",
-          description: "Your free trial has expired. Please upgrade to continue using our services.",
+          description: "Please upgrade to continue using our services.",
         });
         navigate('/pricing');
         return;

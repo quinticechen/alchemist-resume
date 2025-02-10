@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import Home from "@/pages/Home";
@@ -10,7 +9,7 @@ import Terms from "@/pages/Terms";
 import Privacy from "@/pages/Privacy";
 import FAQ from "@/pages/FAQ";
 import Pricing from "@/pages/Pricing";
-import PrePricing from "@/pages/PrePricing";
+import SurveyPage from "@/pages/SurveyPage";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useEffect, useState } from "react";
@@ -114,7 +113,7 @@ const AuthWrapper = () => {
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/faq" element={<FAQ />} />
           <Route path="/pricing" element={<Pricing />} />
-          <Route path="/pre-pricing" element={<PrePricing />} />
+          <Route path="/survey-page" element={<SurveyPage />} />
         </Routes>
       </main>
       <Footer />

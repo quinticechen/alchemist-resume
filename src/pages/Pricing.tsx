@@ -40,7 +40,7 @@ const Pricing = () => {
       navigate("/login", { state: { from: "/pricing" } });
       return;
     }
-    navigate("/pre-pricing");
+    navigate("/survey-page");
   };
 
   const plans = [

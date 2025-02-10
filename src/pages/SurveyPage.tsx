@@ -1,0 +1,148 @@
+
+import { useTranslation } from "react-i18next";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+
+const SurveyPage = () => {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [surveyCompleted, setSurveyCompleted] = useState(false);
+  const googleFormUrl = "https://docs.google.com/forms/d/e/1FAIpQLScBhsrd96t2TZT-CfJv5yPfyP50L42BYAy2ATJOJsFF5FYOZA/viewform?embedded=true";
+
+  useEffect(() => {
+    const getUserEmail = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user?.email) {
+        setUserEmail(session.user.email);
+
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('has_completed_survey')
+          .eq('id', session.user.id)
+          .single();
+
+        if (error) {
+          console.error('Error fetching profile:', error);
+          return;
+        }
+
+        if (profile?.has_completed_survey) {
+          setSurveyCompleted(true);
+        }
+      } else {
+        navigate('/login');
+      }
+    };
+    getUserEmail();
+  }, [navigate]);
+
+  const handleSurveyCompletion = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) return;
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({ 
+        has_completed_survey: true,
+        usage_count: 0  // Reset usage count to 0 when survey is completed
+      })
+      .eq('id', session.user.id);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update survey status. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSurveyCompleted(true);
+    toast({
+      title: "Thank you!",
+      description: "Your feedback has been recorded. You now have 3 more free uses available.",
+    });
+    navigate('/alchemist-workshop');
+  };
+
+  const formUrl = userEmail 
+    ? `${googleFormUrl}&entry.1234567890=${encodeURIComponent(userEmail)}`
+    : googleFormUrl;
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100">
+      <div className="container mx-auto px-4 py-12">
+        <div className="max-w-4xl mx-auto space-y-12">
+          <div className="text-center space-y-4">
+            <h1 className="text-4xl font-bold bg-gradient-primary text-transparent bg-clip-text">
+              Feedback Survey
+            </h1>
+            <p className="text-xl text-neutral-600">
+              Help us improve your resume transformation experience
+            </p>
+          </div>
+
+          <div className="bg-white rounded-xl p-8 shadow-apple">
+            <h2 className="text-2xl font-semibold mb-4 text-primary">
+              Get 3 More Free Uses
+            </h2>
+            <ul className="space-y-4 text-neutral-600">
+              <li className="flex items-start">
+                <span className="text-2xl mr-2">✨</span>
+                <span>Complete our quick survey to unlock additional free uses</span>
+              </li>
+              <li className="flex items-start">
+                <span className="text-2xl mr-2">🎯</span>
+                <span>Your feedback helps us improve our service</span>
+              </li>
+              <li className="flex items-start">
+                <span className="text-2xl mr-2">⚡</span>
+                <span>Takes less than 5 minutes to complete</span>
+              </li>
+            </ul>
+          </div>
+
+          <div className="bg-white rounded-xl p-8 shadow-apple">
+            <h2 className="text-2xl font-semibold mb-6 text-primary">
+              Quick Survey
+            </h2>
+            <div className="w-full flex justify-center">
+              <iframe
+                src={formUrl}
+                width="100%"
+                height="500"
+                className="border-0"
+                title="Feedback Survey"
+              >
+                Loading...
+              </iframe>
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row justify-center gap-4 pt-8">
+            <Button
+              onClick={handleSurveyCompletion}
+              className="bg-gradient-primary text-white hover:opacity-90"
+            >
+              I've Completed the Survey
+            </Button>
+            <Button
+              onClick={() => navigate("/alchemist-workshop")}
+              className="bg-white border-2 border-primary text-primary hover:bg-neutral-50"
+              disabled={!surveyCompleted}
+            >
+              Return to Workshop
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default SurveyPage;
