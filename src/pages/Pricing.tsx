@@ -7,8 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { loadStripe } from "@stripe/stripe-js";
 
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '');
-
+// Move this inside a useEffect to properly handle client-side environment variables
 const Pricing = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -16,6 +15,16 @@ const Pricing = () => {
   const [hasCompletedSurvey, setHasCompletedSurvey] = useState(false);
   const [isAnnual, setIsAnnual] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [stripePromise, setStripePromise] = useState<any>(null);
+
+  useEffect(() => {
+    const publishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
+    if (!publishableKey) {
+      console.error('Stripe publishable key is not set');
+      return;
+    }
+    setStripePromise(loadStripe(publishableKey));
+  }, []);
 
   useEffect(() => {
     checkAuthAndSurveyStatus();
@@ -46,6 +55,15 @@ const Pricing = () => {
 
     if (!hasCompletedSurvey) {
       navigate("/survey-page", { state: { selectedPlan: planId, isAnnual } });
+      return;
+    }
+
+    if (!stripePromise) {
+      toast({
+        title: "Error",
+        description: "Payment system is not properly initialized",
+        variant: "destructive",
+      });
       return;
     }
 
