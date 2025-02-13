@@ -19,6 +19,9 @@ export type Database = {
           has_completed_survey: boolean | null
           id: string
           provider: string | null
+          subscription_status:
+            | Database["public"]["Enums"]["subscription_tier"]
+            | null
           updated_at: string
           usage_count: number | null
         }
@@ -31,6 +34,9 @@ export type Database = {
           has_completed_survey?: boolean | null
           id: string
           provider?: string | null
+          subscription_status?:
+            | Database["public"]["Enums"]["subscription_tier"]
+            | null
           updated_at?: string
           usage_count?: number | null
         }
@@ -43,6 +49,9 @@ export type Database = {
           has_completed_survey?: boolean | null
           id?: string
           provider?: string | null
+          subscription_status?:
+            | Database["public"]["Enums"]["subscription_tier"]
+            | null
           updated_at?: string
           usage_count?: number | null
         }
@@ -134,6 +143,48 @@ export type Database = {
         }
         Relationships: []
       }
+      subscriptions: {
+        Row: {
+          cancel_at_period_end: boolean | null
+          created_at: string
+          current_period_end: string | null
+          current_period_start: string | null
+          id: string
+          status: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          tier: Database["public"]["Enums"]["subscription_tier"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cancel_at_period_end?: boolean | null
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          tier?: Database["public"]["Enums"]["subscription_tier"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cancel_at_period_end?: boolean | null
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          tier?: Database["public"]["Enums"]["subscription_tier"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       translations: {
         Row: {
           created_at: string
@@ -161,6 +212,27 @@ export type Database = {
         }
         Relationships: []
       }
+      usage_logs: {
+        Row: {
+          action_type: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          action_type: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          action_type?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -169,7 +241,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      subscription_tier: "apprentice" | "alchemist" | "grandmaster"
     }
     CompositeTypes: {
       [_ in never]: never
