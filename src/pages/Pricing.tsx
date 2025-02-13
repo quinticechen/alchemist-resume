@@ -7,7 +7,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { loadStripe } from "@stripe/stripe-js";
 
-// Move this inside a useEffect to properly handle client-side environment variables
 const Pricing = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -18,13 +17,36 @@ const Pricing = () => {
   const [stripePromise, setStripePromise] = useState<any>(null);
 
   useEffect(() => {
-    const publishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
-    if (!publishableKey) {
-      console.error('Stripe publishable key is not set');
-      return;
-    }
-    setStripePromise(loadStripe(publishableKey));
-  }, []);
+    const initializeStripe = async () => {
+      const publishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
+      if (!publishableKey) {
+        console.error('Stripe publishable key is not set');
+        toast({
+          title: "Configuration Error",
+          description: "Payment system is not properly configured. Please try again later.",
+          variant: "destructive",
+        });
+        return;
+      }
+      try {
+        const stripe = await loadStripe(publishableKey);
+        if (stripe) {
+          setStripePromise(stripe);
+        } else {
+          throw new Error('Failed to initialize Stripe');
+        }
+      } catch (error) {
+        console.error('Error initializing Stripe:', error);
+        toast({
+          title: "Error",
+          description: "Failed to initialize payment system. Please try again later.",
+          variant: "destructive",
+        });
+      }
+    };
+
+    initializeStripe();
+  }, [toast]);
 
   useEffect(() => {
     checkAuthAndSurveyStatus();
@@ -60,8 +82,8 @@ const Pricing = () => {
 
     if (!stripePromise) {
       toast({
-        title: "Error",
-        description: "Payment system is not properly initialized",
+        title: "Payment System Initializing",
+        description: "Please wait a moment and try again.",
         variant: "destructive",
       });
       return;
