@@ -1,4 +1,3 @@
-
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -14,51 +13,34 @@ const Pricing = () => {
   const [hasCompletedSurvey, setHasCompletedSurvey] = useState(false);
   const [isAnnual, setIsAnnual] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isStripeInitializing, setIsStripeInitializing] = useState(true);
   const [stripePromise, setStripePromise] = useState<any>(null);
 
   useEffect(() => {
     const initializeStripe = async () => {
-      // Debug logs
-      console.log('Environment variables:', {
-        VITE_STRIPE_PUBLISHABLE_KEY: import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY,
-        allEnvVars: import.meta.env
-      });
-
+      setIsStripeInitializing(true);
       const publishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
       
       if (!publishableKey) {
         console.error('Stripe publishable key is not set');
-        toast({
-          title: "Configuration Error",
-          description: "Payment system is not properly configured. Please try again later.",
-          variant: "destructive",
-        });
+        setIsStripeInitializing(false);
         return;
       }
 
-      console.log('Attempting to initialize Stripe with key:', publishableKey);
-      
       try {
         const stripe = await loadStripe(publishableKey);
-        console.log('Stripe initialization result:', !!stripe);
-        
         if (stripe) {
           setStripePromise(stripe);
-        } else {
-          throw new Error('Failed to initialize Stripe');
         }
       } catch (error) {
         console.error('Error initializing Stripe:', error);
-        toast({
-          title: "Error",
-          description: "Failed to initialize payment system. Please try again later.",
-          variant: "destructive",
-        });
+      } finally {
+        setIsStripeInitializing(false);
       }
     };
 
     initializeStripe();
-  }, [toast]);
+  }, []);
 
   useEffect(() => {
     checkAuthAndSurveyStatus();
@@ -92,10 +74,18 @@ const Pricing = () => {
       return;
     }
 
+    if (isStripeInitializing) {
+      toast({
+        title: "Please Wait",
+        description: "Payment system is initializing. Please try again in a moment.",
+      });
+      return;
+    }
+
     if (!stripePromise) {
       toast({
-        title: "Payment System Initializing",
-        description: "Please wait a moment and try again.",
+        title: "Payment System Error",
+        description: "Unable to initialize payment system. Please ensure you have set up your Stripe configuration.",
         variant: "destructive",
       });
       return;
@@ -113,7 +103,6 @@ const Pricing = () => {
       });
 
       if (error) {
-        console.error('Payment function error:', error);
         throw new Error(error.message || 'Failed to initiate payment');
       }
 
