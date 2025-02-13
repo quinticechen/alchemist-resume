@@ -10,12 +10,12 @@ const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
 
 const PLANS = {
   'alchemist': {
-    monthly: 'price_monthly_alchemist', // Replace with your actual price IDs from Stripe
-    annual: 'price_annual_alchemist'
+    monthly: 'price_1Qs0CVGYVYFmwG4FmEwa1iWO',
+    annual: 'price_1Qs0ECGYVYFmwG4FluFhUdQH'
   },
   'grandmaster': {
-    monthly: 'price_monthly_grandmaster', // Replace with your actual price IDs from Stripe
-    annual: 'price_annual_grandmaster'
+    monthly: 'price_1Qs0BTGYVYFmwG4FFDbYpi5v',
+    annual: 'price_1Qs0BtGYVYFmwG4FrtkMrNNx'
   }
 };
 
