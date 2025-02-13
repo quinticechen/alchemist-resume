@@ -10,25 +10,26 @@ const Pricing = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [usageCount, setUsageCount] = useState(0);
+  const [hasCompletedSurvey, setHasCompletedSurvey] = useState(false);
+  const [isAnnual, setIsAnnual] = useState(false);
 
   useEffect(() => {
-    checkAuthAndUsage();
+    checkAuthAndSurveyStatus();
   }, []);
 
-  const checkAuthAndUsage = async () => {
+  const checkAuthAndSurveyStatus = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     setIsAuthenticated(!!session);
 
     if (session?.user) {
       const { data: profile } = await supabase
         .from('profiles')
-        .select('usage_count')
+        .select('has_completed_survey')
         .eq('id', session.user.id)
         .single();
 
       if (profile) {
-        setUsageCount(profile.usage_count || 0);
+        setHasCompletedSurvey(profile.has_completed_survey || false);
       }
     }
   };
@@ -38,65 +39,136 @@ const Pricing = () => {
       navigate("/login", { state: { from: "/pricing" } });
       return;
     }
-    navigate("/survey-page");
+
+    if (!hasCompletedSurvey) {
+      navigate("/survey-page");
+      return;
+    }
+
+    // TODO: Implement purchase flow
+    toast({
+      title: "Coming Soon",
+      description: "The purchase flow will be implemented soon.",
+    });
   };
 
   const plans = [
     {
-      name: "Free Trial",
-      price: "$0",
-      period: "",
+      name: "Free",
+      price: {
+        monthly: "$0",
+        annual: "$0",
+      },
       features: [
         "3 Resume Customizations",
         "Basic AI Analysis",
         "PDF Format Support",
-        "24-hour Support",
       ],
       buttonText: "Start Free Trial",
       highlighted: false,
+      showWhenAuthenticated: !isAuthenticated,
+    },
+    {
+      name: "Advanced",
+      price: {
+        monthly: "$39.99",
+        annual: "$359.99",
+      },
+      features: [
+        "Everything in Free plan",
+        "30 uses per Month",
+        "Advanced AI Analysis",
+        "Multiple Resume Versions",
+        "Resume Performance Analytics",
+      ],
+      buttonText: "Get Advanced",
+      highlighted: false,
+      showWhenAuthenticated: true,
     },
     {
       name: "Professional",
-      price: "$19",
-      period: "/month",
+      price: {
+        monthly: "$99.99",
+        annual: "$899.99",
+      },
       features: [
-        "Unlimited Resume Customizations",
-        "Advanced AI Analysis",
-        "Priority Support",
-        "Resume Performance Analytics",
-        "Multiple Resume Versions",
+        "Everything in Advanced plan",
+        "Unlimited uses",
         "Interview Tips",
+        "Priority Support",
+        "Early access to new features",
       ],
-      buttonText: "Get Started",
+      buttonText: "Get Professional",
       highlighted: true,
+      showWhenAuthenticated: true,
+      mostPopular: true,
     },
   ];
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100">
       <div className="container mx-auto px-4 py-12">
-        <div className="max-w-5xl mx-auto">
-          <h1 className="text-4xl font-bold text-center mb-4 bg-gradient-primary text-transparent bg-clip-text">
-            Choose Your Plan
-          </h1>
-          <p className="text-xl text-center text-neutral-600 mb-12">
-            Start with a free trial or upgrade for unlimited access
-          </p>
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-12">
+            <h1 className="text-4xl font-bold mb-4 bg-gradient-primary text-transparent bg-clip-text">
+              Choose Your Plan
+            </h1>
+            <p className="text-xl text-neutral-600 mb-8">
+              Select the perfect plan for your career growth
+            </p>
+            
+            <div className="flex items-center justify-center gap-4 mb-8">
+              <span className={`text-lg ${!isAnnual ? 'text-primary font-semibold' : 'text-neutral-600'}`}>
+                Monthly
+              </span>
+              <button
+                onClick={() => setIsAnnual(!isAnnual)}
+                className={`relative w-16 h-8 rounded-full transition-colors ${
+                  isAnnual ? 'bg-primary' : 'bg-neutral-300'
+                }`}
+              >
+                <span
+                  className={`absolute top-1 left-1 w-6 h-6 rounded-full bg-white transition-transform transform ${
+                    isAnnual ? 'translate-x-8' : ''
+                  }`}
+                />
+              </button>
+              <span className={`text-lg ${isAnnual ? 'text-primary font-semibold' : 'text-neutral-600'}`}>
+                Annual
+              </span>
+              {isAnnual && (
+                <span className="ml-2 px-2 py-1 bg-green-100 text-green-800 text-sm font-medium rounded">
+                  Save 25%
+                </span>
+              )}
+            </div>
+          </div>
 
-          <div className="grid md:grid-cols-2 gap-8">
-            {plans.map((plan, index) => (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {plans.filter(plan => plan.showWhenAuthenticated).map((plan, index) => (
               <div
                 key={index}
-                className={`rounded-xl p-8 ${
+                className={`rounded-xl p-8 relative ${
                   plan.highlighted
                     ? "bg-gradient-primary text-white ring-2 ring-primary"
                     : "bg-white"
                 }`}
               >
+                {plan.mostPopular && (
+                  <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                    <span className="bg-primary text-white px-4 py-1 rounded-full text-sm font-medium">
+                      Most Popular
+                    </span>
+                  </div>
+                )}
                 <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
                 <div className="flex items-baseline mb-6">
-                  <span className="text-4xl font-bold">{plan.price}</span>
-                  <span className="text-lg ml-1">{plan.period}</span>
+                  <span className="text-4xl font-bold">
+                    {isAnnual ? plan.price.annual : plan.price.monthly}
+                  </span>
+                  <span className="text-lg ml-1">
+                    {plan.price.monthly !== "$0" && `/${isAnnual ? 'year' : 'month'}`}
+                  </span>
                 </div>
                 <ul className="space-y-4 mb-8">
                   {plan.features.map((feature, idx) => (
