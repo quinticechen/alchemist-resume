@@ -54,7 +54,7 @@ const Pricing = () => {
 
   const plans = [
     {
-      name: "Free",
+      name: "Apprentice",
       price: {
         monthly: "$0",
         annual: "$0",
@@ -69,36 +69,36 @@ const Pricing = () => {
       showButton: !isAuthenticated,
     },
     {
-      name: "Advanced",
+      name: "Alchemist",
       price: {
         monthly: "$39.99",
         annual: "$359.99",
       },
       features: [
-        "Everything in Free plan",
+        "Everything in Apprentice plan",
         "30 uses per Month",
         "Advanced AI Analysis",
         "Multiple Resume Versions",
         "Resume Performance Analytics",
       ],
-      buttonText: "Get Advanced",
+      buttonText: "Get Alchemist",
       highlighted: false,
       showButton: true,
     },
     {
-      name: "Professional",
+      name: "Grandmaster",
       price: {
         monthly: "$99.99",
         annual: "$899.99",
       },
       features: [
-        "Everything in Advanced plan",
+        "Everything in Alchemist plan",
         "Unlimited uses",
         "Interview Tips",
         "Priority Support",
         "Early access to new features",
       ],
-      buttonText: "Get Professional",
+      buttonText: "Get Grandmaster",
       highlighted: true,
       showButton: true,
       mostPopular: true,
