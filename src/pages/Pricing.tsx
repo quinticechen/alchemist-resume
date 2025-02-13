@@ -18,7 +18,14 @@ const Pricing = () => {
 
   useEffect(() => {
     const initializeStripe = async () => {
+      // Debug logs
+      console.log('Environment variables:', {
+        VITE_STRIPE_PUBLISHABLE_KEY: import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY,
+        allEnvVars: import.meta.env
+      });
+
       const publishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
+      
       if (!publishableKey) {
         console.error('Stripe publishable key is not set');
         toast({
@@ -28,8 +35,13 @@ const Pricing = () => {
         });
         return;
       }
+
+      console.log('Attempting to initialize Stripe with key:', publishableKey);
+      
       try {
         const stripe = await loadStripe(publishableKey);
+        console.log('Stripe initialization result:', !!stripe);
+        
         if (stripe) {
           setStripePromise(stripe);
         } else {
