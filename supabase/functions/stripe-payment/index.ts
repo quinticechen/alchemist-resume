@@ -27,138 +27,95 @@ serve(async (req) => {
   }
 
   try {
-    // Validate authorization
     const { authorization } = req.headers;
     if (!authorization) {
-      console.error('No authorization header provided');
       throw new Error('No authorization header');
     }
 
     // Initialize Supabase client
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: {
-          headers: { Authorization: authorization },
-        },
-      }
-    );
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
 
-    // Get authenticated user
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
-
-    if (userError) {
-      console.error('Auth error:', userError);
-      throw userError;
+    if (!supabaseUrl || !supabaseAnonKey) {
+      throw new Error('Missing Supabase configuration');
     }
 
-    if (!user) {
-      console.error('No user found');
-      throw new Error('User not authenticated');
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: {
+        headers: { Authorization: authorization },
+      },
+    });
+
+    // Get authenticated user
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      throw new Error('Authentication required');
     }
 
     // Parse request body
     const { planId, isAnnual } = await req.json();
-    console.log('Plan selection:', { planId, isAnnual });
 
-    // Validate plan selection
     if (!planId || !PLANS[planId]) {
-      console.error('Invalid plan:', planId);
       throw new Error(`Invalid plan ID: ${planId}`);
     }
 
     // Get or create Stripe customer
-    const { data: profiles, error: profileError } = await supabase
+    const { data: profile } = await supabase
       .from('profiles')
       .select('stripe_customer_id')
       .eq('id', user.id)
-      .single();
+      .maybeSingle();
 
-    if (profileError) {
-      console.error('Profile fetch error:', profileError);
-      throw profileError;
-    }
-
-    let customerId = profiles?.stripe_customer_id;
-    console.log('Existing customer ID:', customerId);
+    let customerId = profile?.stripe_customer_id;
 
     if (!customerId) {
-      try {
-        const customer = await stripe.customers.create({
-          email: user.email,
-          metadata: {
-            supabase_uid: user.id,
-          },
-        });
-        customerId = customer.id;
-        console.log('Created new customer:', customerId);
-
-        const { error: updateError } = await supabase
-          .from('profiles')
-          .update({ stripe_customer_id: customerId })
-          .eq('id', user.id);
-
-        if (updateError) {
-          console.error('Profile update error:', updateError);
-          throw updateError;
-        }
-      } catch (stripeError) {
-        console.error('Stripe customer creation error:', stripeError);
-        throw stripeError;
-      }
-    }
-
-    // Get price ID for selected plan
-    const priceId = PLANS[planId][isAnnual ? 'annual' : 'monthly'];
-    console.log('Selected price ID:', priceId);
-
-    if (!priceId) {
-      throw new Error(`Price not found for plan: ${planId}, isAnnual: ${isAnnual}`);
-    }
-
-    // Create Stripe Checkout session
-    try {
-      const session = await stripe.checkout.sessions.create({
-        customer: customerId,
-        line_items: [
-          {
-            price: priceId,
-            quantity: 1,
-          },
-        ],
-        mode: 'subscription',
-        success_url: `${req.headers.get('origin')}/alchemist-workshop?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${req.headers.get('origin')}/pricing`,
-        subscription_data: {
-          metadata: {
-            supabase_uid: user.id,
-          },
+      const customer = await stripe.customers.create({
+        email: user.email,
+        metadata: {
+          supabase_uid: user.id,
         },
       });
+      customerId = customer.id;
 
-      console.log('Created checkout session:', session.id);
-
-      return new Response(
-        JSON.stringify({ sessionUrl: session.url }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200,
-        }
-      );
-    } catch (stripeError) {
-      console.error('Stripe session creation error:', stripeError);
-      throw stripeError;
+      await supabase
+        .from('profiles')
+        .update({ stripe_customer_id: customerId })
+        .eq('id', user.id);
     }
+
+    const priceId = PLANS[planId][isAnnual ? 'annual' : 'monthly'];
+
+    const session = await stripe.checkout.sessions.create({
+      customer: customerId,
+      line_items: [
+        {
+          price: priceId,
+          quantity: 1,
+        },
+      ],
+      mode: 'subscription',
+      success_url: `${req.headers.get('origin')}/alchemist-workshop?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${req.headers.get('origin')}/pricing`,
+      subscription_data: {
+        metadata: {
+          supabase_uid: user.id,
+        },
+      },
+    });
+
+    return new Response(
+      JSON.stringify({ sessionUrl: session.url }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      }
+    );
   } catch (error) {
     console.error('Error in payment function:', error);
     return new Response(
       JSON.stringify({ 
-        error: error.message,
-        details: error.toString()
+        error: error instanceof Error ? error.message : 'Unknown error occurred',
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
