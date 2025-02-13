@@ -2,24 +2,42 @@
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useStripeInit } from "@/hooks/useStripeInit";
 import { useAuthAndSurvey } from "@/hooks/useAuthAndSurvey";
 import { PricingToggle } from "@/components/pricing/PricingToggle";
 import { PricingCard } from "@/components/pricing/PricingCard";
 import { pricingPlans } from "@/data/pricingPlans";
+import { Session } from "@supabase/supabase-js";
 
 const Pricing = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isAnnual, setIsAnnual] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [session, setSession] = useState<Session | null>(null);
   
   const { isStripeInitializing, stripePromise } = useStripeInit();
   const { isAuthenticated, hasCompletedSurvey } = useAuthAndSurvey();
 
+  useEffect(() => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   const handlePlanSelection = async (planId: string) => {
-    if (!isAuthenticated) {
+    if (!isAuthenticated || !session) {
       navigate("/login", { state: { from: "/pricing" } });
       return;
     }
@@ -48,12 +66,13 @@ const Pricing = () => {
 
     setIsLoading(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        throw new Error('Not authenticated');
+      // Use the stored session directly
+      if (!session?.access_token) {
+        throw new Error('No valid session found');
       }
 
-      // Get the current session and pass it in the authorization header
+      console.log('Making request with access token:', session.access_token);
+      
       const { data, error } = await supabase.functions.invoke('stripe-payment', {
         body: { planId, isAnnual },
         headers: {
@@ -61,8 +80,14 @@ const Pricing = () => {
         },
       });
 
-      if (error) throw error;
-      if (!data?.sessionUrl) throw new Error('No checkout URL received');
+      if (error) {
+        console.error('Stripe payment function error:', error);
+        throw error;
+      }
+
+      if (!data?.sessionUrl) {
+        throw new Error('No checkout URL received');
+      }
 
       window.location.href = data.sessionUrl;
     } catch (error: any) {
