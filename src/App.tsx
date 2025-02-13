@@ -21,7 +21,6 @@ import { Session } from "@supabase/supabase-js";
 const AuthWrapper = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const navigate = useNavigate();
 
   useEffect(() => {
     console.log("Initializing auth...");
@@ -50,15 +49,10 @@ const AuthWrapper = () => {
       console.log('Auth state changed:', _event, session?.user?.email);
       setSession(session);
       setIsLoading(false);
-      
-      // Only redirect on initial sign in, not on every auth state change
-      if (_event === 'SIGNED_IN') {
-        navigate('/alchemist-workshop');
-      }
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, []);
 
   if (isLoading) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
