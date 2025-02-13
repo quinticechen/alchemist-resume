@@ -53,17 +53,16 @@ const Pricing = () => {
         throw new Error('Not authenticated');
       }
 
+      // Get the current session and pass it in the authorization header
       const { data, error } = await supabase.functions.invoke('stripe-payment', {
         body: { planId, isAnnual },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
       });
 
-      if (error) {
-        throw new Error(error.message || 'Failed to initiate payment');
-      }
-
-      if (!data?.sessionUrl) {
-        throw new Error('No checkout URL received');
-      }
+      if (error) throw error;
+      if (!data?.sessionUrl) throw new Error('No checkout URL received');
 
       window.location.href = data.sessionUrl;
     } catch (error: any) {
