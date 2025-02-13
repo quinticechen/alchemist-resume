@@ -1,7 +1,7 @@
 
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -9,9 +9,13 @@ import { useToast } from "@/hooks/use-toast";
 const SurveyPage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [surveyCompleted, setSurveyCompleted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const selectedPlan = location.state?.selectedPlan;
+  const isAnnual = location.state?.isAnnual;
   const googleFormUrl = "https://docs.google.com/forms/d/e/1FAIpQLScBhsrd96t2TZT-CfJv5yPfyP50L42BYAy2ATJOJsFF5FYOZA/viewform?embedded=true";
 
   useEffect(() => {
@@ -42,6 +46,7 @@ const SurveyPage = () => {
   }, [navigate]);
 
   const handleSurveyCompletion = async () => {
+    setIsLoading(true);
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) return;
 
@@ -56,15 +61,53 @@ const SurveyPage = () => {
         description: "Failed to update survey status. Please try again.",
         variant: "destructive",
       });
+      setIsLoading(false);
       return;
     }
 
     setSurveyCompleted(true);
-    toast({
-      title: "Thank you!",
-      description: "Your feedback has been recorded. You now have 3 more free uses available.",
-    });
-    navigate('/alchemist-workshop');
+    if (selectedPlan) {
+      proceedToPayment(selectedPlan);
+    } else {
+      toast({
+        title: "Thank you!",
+        description: "Your feedback has been recorded. You now have 3 more free uses available.",
+      });
+      navigate('/alchemist-workshop');
+    }
+  };
+
+  const proceedToPayment = async (planId: string) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Not authenticated');
+
+      const { data, error } = await supabase.functions.invoke('stripe-payment', {
+        body: { planId, isAnnual },
+      });
+
+      if (error) throw error;
+      if (!data.sessionUrl) throw new Error('No checkout URL received');
+
+      window.location.href = data.sessionUrl;
+    } catch (error: any) {
+      console.error('Payment error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to initiate payment. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSkipSurvey = () => {
+    if (selectedPlan) {
+      proceedToPayment(selectedPlan);
+    } else {
+      navigate('/alchemist-workshop');
+    }
   };
 
   const formUrl = userEmail 
@@ -124,16 +167,18 @@ const SurveyPage = () => {
           <div className="flex flex-col sm:flex-row justify-center gap-4 pt-8">
             <Button
               onClick={handleSurveyCompletion}
+              disabled={isLoading}
               className="bg-gradient-primary text-white hover:opacity-90"
             >
-              I've Completed the Survey
+              {isLoading ? "Processing..." : "I've Completed the Survey"}
             </Button>
             <Button
-              onClick={() => navigate("/alchemist-workshop")}
-              className="bg-white border-2 border-primary text-primary hover:bg-neutral-50"
-              disabled={!surveyCompleted}
+              onClick={handleSkipSurvey}
+              disabled={isLoading}
+              variant="outline"
+              className="border-2 border-primary text-primary hover:bg-neutral-50"
             >
-              Return to Workshop
+              Skip Survey & Purchase Directly
             </Button>
           </div>
         </div>
