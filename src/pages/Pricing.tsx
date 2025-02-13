@@ -66,7 +66,7 @@ const Pricing = () => {
       ],
       buttonText: "Start Free Trial",
       highlighted: false,
-      showWhenAuthenticated: !isAuthenticated,
+      showButton: !isAuthenticated,
     },
     {
       name: "Advanced",
@@ -83,7 +83,7 @@ const Pricing = () => {
       ],
       buttonText: "Get Advanced",
       highlighted: false,
-      showWhenAuthenticated: true,
+      showButton: true,
     },
     {
       name: "Professional",
@@ -100,7 +100,7 @@ const Pricing = () => {
       ],
       buttonText: "Get Professional",
       highlighted: true,
-      showWhenAuthenticated: true,
+      showButton: true,
       mostPopular: true,
     },
   ];
@@ -136,16 +136,20 @@ const Pricing = () => {
               <span className={`text-lg ${isAnnual ? 'text-primary font-semibold' : 'text-neutral-600'}`}>
                 Annual
               </span>
-              {isAnnual && (
+              {isAnnual ? (
                 <span className="ml-2 px-2 py-1 bg-green-100 text-green-800 text-sm font-medium rounded">
                   Save 25%
+                </span>
+              ) : (
+                <span className="ml-2 px-2 py-1 bg-green-100 text-green-800 text-sm font-medium rounded">
+                  Switch to annual plan to save 25%
                 </span>
               )}
             </div>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {plans.filter(plan => plan.showWhenAuthenticated).map((plan, index) => (
+            {plans.map((plan, index) => (
               <div
                 key={index}
                 className={`rounded-xl p-8 relative ${
@@ -178,16 +182,18 @@ const Pricing = () => {
                     </li>
                   ))}
                 </ul>
-                <Button
-                  onClick={handlePlanSelection}
-                  className={`w-full ${
-                    plan.highlighted
-                      ? "bg-white text-primary hover:bg-neutral-100"
-                      : "bg-gradient-primary text-white hover:opacity-90"
-                  }`}
-                >
-                  {plan.buttonText}
-                </Button>
+                {plan.showButton && (
+                  <Button
+                    onClick={handlePlanSelection}
+                    className={`w-full ${
+                      plan.highlighted
+                        ? "bg-white text-primary hover:bg-neutral-100"
+                        : "bg-gradient-primary text-white hover:opacity-90"
+                    }`}
+                  >
+                    {plan.buttonText}
+                  </Button>
+                )}
               </div>
             ))}
           </div>
