@@ -1,4 +1,5 @@
 
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import Stripe from "https://esm.sh/stripe@14.18.0?target=deno";
 import { corsHeaders } from "../_shared/cors.ts";
@@ -68,6 +69,21 @@ serve(async (req) => {
         },
       });
       customerId = customer.id;
+
+      // Update profile with Stripe customer ID
+      await supabase
+        .from('profiles')
+        .update({ stripe_customer_id: customerId })
+        .eq('id', user.id);
+    }
+
+    if (!PLANS[planId]) {
+      throw new Error(`Invalid plan ID: ${planId}`);
+    }
+
+    const priceId = PLANS[planId][isAnnual ? 'annual' : 'monthly'];
+    if (!priceId) {
+      throw new Error(`Price not found for plan: ${planId}, isAnnual: ${isAnnual}`);
     }
 
     // Create a Stripe Checkout Session
@@ -75,7 +91,7 @@ serve(async (req) => {
       customer: customerId,
       line_items: [
         {
-          price: PLANS[planId][isAnnual ? 'annual' : 'monthly'],
+          price: priceId,
           quantity: 1,
         },
       ],
