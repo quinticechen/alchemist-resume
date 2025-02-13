@@ -12,15 +12,20 @@ export const useStripeInit = () => {
       const publishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
       
       if (!publishableKey) {
-        console.error('Stripe publishable key is not set');
+        console.error('Stripe publishable key is not set in environment variables');
         setIsStripeInitializing(false);
         return;
       }
 
+      console.log('Initializing Stripe with publishable key:', publishableKey);
+
       try {
         const stripe = await loadStripe(publishableKey);
         if (stripe) {
+          console.log('Stripe initialized successfully');
           setStripePromise(stripe);
+        } else {
+          console.error('Failed to initialize Stripe - stripe object is null');
         }
       } catch (error) {
         console.error('Error initializing Stripe:', error);
