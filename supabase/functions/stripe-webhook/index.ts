@@ -67,6 +67,14 @@ serve(async (req) => {
             onConflict: 'user_id',
           });
 
+        // Also update the profile's subscription status
+        await supabase
+          .from('profiles')
+          .update({
+            subscription_status: subscription.items.data[0].price.nickname?.toLowerCase() || 'apprentice'
+          })
+          .eq('id', userId);
+
         break;
 
       case 'customer.subscription.deleted':
@@ -75,6 +83,7 @@ serve(async (req) => {
         const deletedUserId = deletedCustomer.metadata.supabase_uid;
 
         if (deletedUserId) {
+          // Update subscription status
           await supabase
             .from('subscriptions')
             .update({
@@ -82,6 +91,14 @@ serve(async (req) => {
               cancel_at_period_end: true,
             })
             .eq('user_id', deletedUserId);
+
+          // Reset profile subscription status
+          await supabase
+            .from('profiles')
+            .update({
+              subscription_status: 'apprentice'
+            })
+            .eq('id', deletedUserId);
         }
         break;
     }

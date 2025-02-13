@@ -19,6 +19,7 @@ export type Database = {
           has_completed_survey: boolean | null
           id: string
           provider: string | null
+          stripe_customer_id: string | null
           subscription_status:
             | Database["public"]["Enums"]["subscription_tier"]
             | null
@@ -34,6 +35,7 @@ export type Database = {
           has_completed_survey?: boolean | null
           id: string
           provider?: string | null
+          stripe_customer_id?: string | null
           subscription_status?:
             | Database["public"]["Enums"]["subscription_tier"]
             | null
@@ -49,6 +51,7 @@ export type Database = {
           has_completed_survey?: boolean | null
           id?: string
           provider?: string | null
+          stripe_customer_id?: string | null
           subscription_status?:
             | Database["public"]["Enums"]["subscription_tier"]
             | null
