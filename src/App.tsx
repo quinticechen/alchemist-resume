@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import Home from "@/pages/Home";
@@ -50,7 +51,7 @@ const AuthWrapper = () => {
       setSession(session);
       setIsLoading(false);
       
-      // Use React Router navigation instead of window.location
+      // Only redirect on initial sign in, not on every auth state change
       if (_event === 'SIGNED_IN') {
         navigate('/alchemist-workshop');
       }
