@@ -5,6 +5,9 @@ import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
+import { loadStripe } from "@stripe/stripe-js";
+
+const stripePromise = loadStripe(process.env.STRIPE_PUBLISHABLE_KEY || '');
 
 const Pricing = () => {
   const navigate = useNavigate();
@@ -12,6 +15,7 @@ const Pricing = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [hasCompletedSurvey, setHasCompletedSurvey] = useState(false);
   const [isAnnual, setIsAnnual] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     checkAuthAndSurveyStatus();
@@ -34,7 +38,7 @@ const Pricing = () => {
     }
   };
 
-  const handlePlanSelection = () => {
+  const handlePlanSelection = async (planId: string) => {
     if (!isAuthenticated) {
       navigate("/login", { state: { from: "/pricing" } });
       return;
@@ -45,16 +49,35 @@ const Pricing = () => {
       return;
     }
 
-    // TODO: Implement purchase flow
-    toast({
-      title: "Coming Soon",
-      description: "The purchase flow will be implemented soon.",
-    });
+    setIsLoading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Not authenticated');
+
+      const { data, error } = await supabase.functions.invoke('stripe-payment', {
+        body: { planId, isAnnual },
+      });
+
+      if (error) throw error;
+      if (!data.sessionUrl) throw new Error('No checkout URL received');
+
+      window.location.href = data.sessionUrl;
+    } catch (error: any) {
+      console.error('Payment error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to initiate payment. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const plans = [
     {
       name: "Apprentice",
+      planId: "apprentice",
       price: {
         monthly: "$0",
         annual: "$0",
@@ -70,6 +93,7 @@ const Pricing = () => {
     },
     {
       name: "Alchemist",
+      planId: "alchemist",
       price: {
         monthly: "$39.99",
         annual: "$359.99",
@@ -87,6 +111,7 @@ const Pricing = () => {
     },
     {
       name: "Grandmaster",
+      planId: "grandmaster",
       price: {
         monthly: "$99.99",
         annual: "$899.99",
@@ -149,9 +174,9 @@ const Pricing = () => {
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {plans.map((plan, index) => (
+            {plans.map((plan) => (
               <div
-                key={index}
+                key={plan.planId}
                 className={`rounded-xl p-8 relative ${
                   plan.highlighted
                     ? "bg-gradient-primary text-white ring-2 ring-primary"
@@ -184,14 +209,15 @@ const Pricing = () => {
                 </ul>
                 {plan.showButton && (
                   <Button
-                    onClick={handlePlanSelection}
+                    onClick={() => handlePlanSelection(plan.planId)}
+                    disabled={isLoading}
                     className={`w-full ${
                       plan.highlighted
                         ? "bg-white text-primary hover:bg-neutral-100"
                         : "bg-gradient-primary text-white hover:opacity-90"
                     }`}
                   >
-                    {plan.buttonText}
+                    {isLoading ? "Processing..." : plan.buttonText}
                   </Button>
                 )}
               </div>
