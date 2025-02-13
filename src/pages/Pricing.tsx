@@ -5,7 +5,6 @@ import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
-import { loadStripe } from "@stripe/stripe-js";
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '');
 
@@ -52,21 +51,29 @@ const Pricing = () => {
     setIsLoading(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error('Not authenticated');
+      if (!session) {
+        throw new Error('Not authenticated');
+      }
 
       const { data, error } = await supabase.functions.invoke('stripe-payment', {
         body: { planId, isAnnual },
       });
 
-      if (error) throw error;
-      if (!data.sessionUrl) throw new Error('No checkout URL received');
+      if (error) {
+        console.error('Payment function error:', error);
+        throw new Error(error.message || 'Failed to initiate payment');
+      }
+
+      if (!data?.sessionUrl) {
+        throw new Error('No checkout URL received');
+      }
 
       window.location.href = data.sessionUrl;
     } catch (error: any) {
       console.error('Payment error:', error);
       toast({
-        title: "Error",
-        description: "Failed to initiate payment. Please try again.",
+        title: "Payment Error",
+        description: error.message || "Failed to initiate payment. Please try again.",
         variant: "destructive",
       });
     } finally {

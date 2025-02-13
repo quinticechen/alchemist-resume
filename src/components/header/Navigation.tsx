@@ -4,7 +4,6 @@ import { Session } from "@supabase/supabase-js";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
 import { ArrowUp } from "lucide-react";
 
 interface NavigationProps {
@@ -76,15 +75,13 @@ const Navigation = ({ session, onSupportedWebsitesClick, isHome }: NavigationPro
               </Link>
             </li>
             <li>
-              <Button
-                onClick={() => navigate('/pricing')}
-                size="sm"
-                variant="outline"
-                className="border-primary text-primary hover:bg-primary hover:text-white"
+              <Link
+                to="/pricing"
+                className="inline-flex items-center text-sm font-medium text-neutral-600 hover:text-primary transition-colors"
               >
                 <ArrowUp className="mr-1 h-4 w-4" />
                 Upgrade
-              </Button>
+              </Link>
             </li>
           </>
         ) : (
