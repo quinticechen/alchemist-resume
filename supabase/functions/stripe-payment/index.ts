@@ -21,16 +21,20 @@ const PLANS = {
 };
 
 serve(async (req) => {
+  // Handle CORS
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
 
   try {
+    // Validate authorization
     const { authorization } = req.headers;
     if (!authorization) {
+      console.error('No authorization header provided');
       throw new Error('No authorization header');
     }
 
+    // Initialize Supabase client
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
@@ -41,81 +45,121 @@ serve(async (req) => {
       }
     );
 
+    // Get authenticated user
     const {
       data: { user },
       error: userError,
     } = await supabase.auth.getUser();
 
-    if (userError || !user) {
+    if (userError) {
+      console.error('Auth error:', userError);
+      throw userError;
+    }
+
+    if (!user) {
+      console.error('No user found');
       throw new Error('User not authenticated');
     }
 
+    // Parse request body
     const { planId, isAnnual } = await req.json();
+    console.log('Plan selection:', { planId, isAnnual });
+
+    // Validate plan selection
+    if (!planId || !PLANS[planId]) {
+      console.error('Invalid plan:', planId);
+      throw new Error(`Invalid plan ID: ${planId}`);
+    }
 
     // Get or create Stripe customer
-    const { data: profiles } = await supabase
+    const { data: profiles, error: profileError } = await supabase
       .from('profiles')
       .select('stripe_customer_id')
       .eq('id', user.id)
       .single();
 
+    if (profileError) {
+      console.error('Profile fetch error:', profileError);
+      throw profileError;
+    }
+
     let customerId = profiles?.stripe_customer_id;
+    console.log('Existing customer ID:', customerId);
 
     if (!customerId) {
-      const customer = await stripe.customers.create({
-        email: user.email,
-        metadata: {
-          supabase_uid: user.id,
-        },
-      });
-      customerId = customer.id;
+      try {
+        const customer = await stripe.customers.create({
+          email: user.email,
+          metadata: {
+            supabase_uid: user.id,
+          },
+        });
+        customerId = customer.id;
+        console.log('Created new customer:', customerId);
 
-      // Update profile with Stripe customer ID
-      await supabase
-        .from('profiles')
-        .update({ stripe_customer_id: customerId })
-        .eq('id', user.id);
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ stripe_customer_id: customerId })
+          .eq('id', user.id);
+
+        if (updateError) {
+          console.error('Profile update error:', updateError);
+          throw updateError;
+        }
+      } catch (stripeError) {
+        console.error('Stripe customer creation error:', stripeError);
+        throw stripeError;
+      }
     }
 
-    if (!PLANS[planId]) {
-      throw new Error(`Invalid plan ID: ${planId}`);
-    }
-
+    // Get price ID for selected plan
     const priceId = PLANS[planId][isAnnual ? 'annual' : 'monthly'];
+    console.log('Selected price ID:', priceId);
+
     if (!priceId) {
       throw new Error(`Price not found for plan: ${planId}, isAnnual: ${isAnnual}`);
     }
 
-    // Create a Stripe Checkout Session
-    const session = await stripe.checkout.sessions.create({
-      customer: customerId,
-      line_items: [
-        {
-          price: priceId,
-          quantity: 1,
+    // Create Stripe Checkout session
+    try {
+      const session = await stripe.checkout.sessions.create({
+        customer: customerId,
+        line_items: [
+          {
+            price: priceId,
+            quantity: 1,
+          },
+        ],
+        mode: 'subscription',
+        success_url: `${req.headers.get('origin')}/alchemist-workshop?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${req.headers.get('origin')}/pricing`,
+        subscription_data: {
+          metadata: {
+            supabase_uid: user.id,
+          },
         },
-      ],
-      mode: 'subscription',
-      success_url: `${req.headers.get('origin')}/alchemist-workshop?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${req.headers.get('origin')}/pricing`,
-      subscription_data: {
-        metadata: {
-          supabase_uid: user.id,
-        },
-      },
-    });
+      });
 
-    return new Response(
-      JSON.stringify({ sessionUrl: session.url }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
-      }
-    );
+      console.log('Created checkout session:', session.id);
+
+      return new Response(
+        JSON.stringify({ sessionUrl: session.url }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200,
+        }
+      );
+    } catch (stripeError) {
+      console.error('Stripe session creation error:', stripeError);
+      throw stripeError;
+    }
   } catch (error) {
-    console.error('Error:', error);
+    console.error('Error in payment function:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        details: error.toString()
+      }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400,
