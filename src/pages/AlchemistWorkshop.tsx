@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import ResumeUploader from "@/components/ResumeUploader";
@@ -33,38 +32,63 @@ const AlchemistWorkshop = () => {
       return;
     }
 
-    // First check active subscription
-    const { data: subscription } = await supabase
-      .from('subscriptions')
-      .select('tier, status')
-      .eq('user_id', session.user.id)
-      .single();
+    try {
+      console.log("Checking access for user:", session.user.id);
 
-    // If there's an active subscription, allow access immediately
-    if (subscription && subscription.status === 'active') {
-      console.log('Active subscription found:', subscription.tier);
-      return; // Allow access
-    }
+      // First check active subscription
+      const { data: subscription, error: subError } = await supabase
+        .from('subscriptions')
+        .select('tier, status')
+        .eq('user_id', session.user.id)
+        .maybeSingle();
 
-    // If no active subscription, check profile
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('subscription_status, usage_count, free_trial_limit, has_completed_survey, monthly_usage_count')
-      .eq('id', session.user.id)
-      .single();
+      if (subError) {
+        console.error("Error checking subscription:", subError);
+        throw subError;
+      }
 
-    if (profile) {
+      console.log("Subscription check result:", subscription);
+
+      // If there's an active subscription, allow access immediately
+      if (subscription?.status === 'active') {
+        console.log('Active subscription found:', subscription.tier);
+        return; // Allow access
+      }
+
+      // If no active subscription, check profile
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('subscription_status, usage_count, free_trial_limit, has_completed_survey, monthly_usage_count')
+        .eq('id', session.user.id)
+        .maybeSingle();
+
+      if (profileError) {
+        console.error("Error checking profile:", profileError);
+        throw profileError;
+      }
+
+      console.log("Profile check result:", profile);
+
+      if (!profile) {
+        console.error("No profile found for user");
+        navigate('/login');
+        return;
+      }
+
       setUsageCount(profile.usage_count || 0);
       setHasCompletedSurvey(profile.has_completed_survey || false);
 
       // Check subscription status from profile
       if (profile.subscription_status === 'grandmaster') {
+        console.log("User is grandmaster, allowing access");
         return; // Allow access
       }
 
       if (profile.subscription_status === 'alchemist') {
+        console.log("User is alchemist, checking monthly usage");
         const monthlyUsage = profile.monthly_usage_count || 0;
         if (monthlyUsage >= 30) {
+          console.log("Monthly limit reached");
           toast({
             title: "Monthly Limit Reached",
             description: "You've reached your monthly usage limit. Please upgrade to our Grandmaster plan for unlimited access.",
@@ -76,14 +100,17 @@ const AlchemistWorkshop = () => {
       }
 
       // Free tier (apprentice) checks
+      console.log("User is apprentice, checking usage count:", profile.usage_count, "limit:", profile.free_trial_limit);
       if (profile.usage_count >= profile.free_trial_limit) {
         if (!profile.has_completed_survey) {
+          console.log("Survey not completed, redirecting to survey");
           toast({
             title: "Survey Required",
             description: "Please complete the survey to continue using our services.",
           });
           navigate('/survey-page');
         } else {
+          console.log("Free trial completed, redirecting to pricing");
           toast({
             title: "Free Trial Completed",
             description: "Please upgrade to continue using our services.",
@@ -92,6 +119,14 @@ const AlchemistWorkshop = () => {
         }
         return;
       }
+    } catch (error) {
+      console.error("Error in checkAccessAndUsage:", error);
+      toast({
+        title: "Error",
+        description: "An error occurred while checking access. Please try again.",
+        variant: "destructive",
+      });
+      navigate('/login');
     }
   };
 
