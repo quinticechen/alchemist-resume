@@ -46,13 +46,6 @@ export const PricingCard: FC<PricingCardProps> = ({
           </span>
         </div>
       )}
-      {plan.isCurrentPlan && (
-        <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-          <span className="bg-green-500 text-white px-4 py-1 rounded-full text-sm font-medium">
-            Current Plan
-          </span>
-        </div>
-      )}
       <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
       <div className="flex items-baseline mb-6">
         <span className="text-4xl font-bold">
