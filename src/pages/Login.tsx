@@ -16,28 +16,41 @@ const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const checkSubscriptionAndUsage = async (userId: string) => {
+  const checkSubscription = async (userId: string) => {
     const { data: profile } = await supabase
       .from('profiles')
-      .select('subscription_status, usage_count, free_trial_limit')
+      .select('subscription_status')
       .eq('id', userId)
       .single();
 
     if (profile) {
-      const { subscription_status, usage_count, free_trial_limit } = profile;
-      
-      // Only show trial expired message for apprentice tier with exceeded usage
-      if (subscription_status === 'apprentice' && usage_count >= free_trial_limit) {
+      // Always navigate to workshop for paid subscribers (alchemist or grandmaster)
+      if (profile.subscription_status === 'alchemist' || profile.subscription_status === 'grandmaster') {
+        toast({
+          title: "Welcome back!",
+          description: "You've successfully signed in."
+        });
+        navigate('/alchemist-workshop');
+        return;
+      }
+
+      // For free tier, check usage limits
+      const { data: usageData } = await supabase
+        .from('profiles')
+        .select('usage_count, free_trial_limit')
+        .eq('id', userId)
+        .single();
+
+      if (usageData && usageData.usage_count >= usageData.free_trial_limit) {
         toast({
           title: "Free Trial Expired",
-          description: "Please upgrade to continue using our services.",
+          description: "Please upgrade to continue using our services."
         });
         navigate('/pricing');
       } else {
-        // Successful login with valid subscription or remaining trial
         toast({
           title: "Welcome back!",
-          description: "You've successfully signed in.",
+          description: "You've successfully signed in."
         });
         navigate('/alchemist-workshop');
       }
@@ -68,8 +81,7 @@ const Login = () => {
       console.error(`${provider} login error:`, error);
       toast({
         title: "Authentication Error",
-        description: error.message,
-        variant: "destructive",
+        description: error.message
       });
     } finally {
       setIsLoading(false);
@@ -85,8 +97,7 @@ const Login = () => {
     if (!emailRegex.test(email)) {
       toast({
         title: "Invalid Email",
-        description: "Please enter a valid email address",
-        variant: "destructive",
+        description: "Please enter a valid email address"
       });
       setIsLoading(false);
       return;
@@ -105,7 +116,7 @@ const Login = () => {
         if (error) throw error;
         toast({
           title: "Success",
-          description: "Please check your email to verify your account",
+          description: "Please check your email to verify your account"
         });
       } else {
         console.log('Attempting signin...');
@@ -115,17 +126,15 @@ const Login = () => {
         });
         if (error) throw error;
         
-        // Check subscription status and redirect accordingly
         if (data.user) {
-          await checkSubscriptionAndUsage(data.user.id);
+          await checkSubscription(data.user.id);
         }
       }
     } catch (error: any) {
       console.error('Auth error:', error);
       toast({
         title: "Error",
-        description: error.message,
-        variant: "destructive",
+        description: error.message
       });
     } finally {
       setIsLoading(false);
