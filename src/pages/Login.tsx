@@ -30,7 +30,7 @@ const Login = () => {
     // Then check the profile
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('subscription_status, usage_count, free_trial_limit')
+      .select('subscription_status, usage_count, free_trial_limit, monthly_usage_count')
       .eq('id', userId)
       .single();
 
@@ -61,7 +61,8 @@ const Login = () => {
 
       if (profile.subscription_status === 'alchemist') {
         console.log('Alchemist status in profile');
-        if (profile.monthly_usage_count >= 30) {
+        const monthlyUsage = profile.monthly_usage_count || 0; // Handle case where it might be null
+        if (monthlyUsage >= 30) {
           toast({
             title: "Monthly Limit Reached",
             description: "You've reached your monthly usage limit. Please upgrade to our Grandmaster plan for unlimited access."
