@@ -22,21 +22,8 @@ import { useSubscriptionCheck } from "@/hooks/useSubscriptionCheck";
 const AuthWrapper = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [hasActiveSubscription, setHasActiveSubscription] = useState(false);
   const { checkSubscriptionAndRedirect } = useSubscriptionCheck();
   const navigate = useNavigate();
-
-  // Check if user has active subscription
-  const checkSubscription = async (userId: string) => {
-    const { data: subscription } = await supabase
-      .from('subscriptions')
-      .select('*')
-      .eq('user_id', userId)
-      .maybeSingle();
-
-    return subscription?.status === 'active' && 
-           (subscription.tier === 'alchemist' || subscription.tier === 'grandmaster');
-  };
 
   useEffect(() => {
     console.log("Initializing auth...");
@@ -51,14 +38,20 @@ const AuthWrapper = () => {
         }
         
         setSession(session);
-        
-        if (session?.user) {
-          const isActive = await checkSubscription(session.user.id);
-          setHasActiveSubscription(isActive);
-          checkSubscriptionAndRedirect(session.user.id).catch(console.error);
-        }
-        
         setIsLoading(false);
+
+        if (session?.user) {
+          const { data: subscription } = await supabase
+            .from('subscriptions')
+            .select('*')
+            .eq('user_id', session.user.id)
+            .maybeSingle();
+
+          if (subscription?.status === 'active' && 
+              (subscription.tier === 'alchemist' || subscription.tier === 'grandmaster')) {
+            navigate('/alchemist-workshop');
+          }
+        }
       } catch (error) {
         console.error('Error getting session:', error);
         setIsLoading(false);
@@ -74,11 +67,16 @@ const AuthWrapper = () => {
       setSession(session);
 
       if (session?.user) {
-        const isActive = await checkSubscription(session.user.id);
-        setHasActiveSubscription(isActive);
-        checkSubscriptionAndRedirect(session.user.id).catch(console.error);
-      } else {
-        setHasActiveSubscription(false);
+        const { data: subscription } = await supabase
+          .from('subscriptions')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .maybeSingle();
+
+        if (subscription?.status === 'active' && 
+            (subscription.tier === 'alchemist' || subscription.tier === 'grandmaster')) {
+          navigate('/alchemist-workshop');
+        }
       }
     });
 
@@ -96,13 +94,7 @@ const AuthWrapper = () => {
         <Routes>
           <Route 
             path="/" 
-            element={
-              session && hasActiveSubscription ? (
-                <Navigate to="/alchemist-workshop" replace />
-              ) : (
-                <Home />
-              )
-            } 
+            element={<Home />}
           />
           <Route 
             path="/alchemist-workshop" 
