@@ -94,10 +94,9 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
         }
 
         if (isSubscribed) {
-          setHasAccess(userHasAccess);
-          setIsLoading(false);
-          
           if (!userHasAccess) {
+            setHasAccess(false);
+            setIsLoading(false);
             toast({
               title: "Access Restricted",
               description: profile.subscription_status === 'apprentice'
@@ -105,11 +104,15 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
                 : "Please check your subscription status.",
             });
             navigate('/pricing', { replace: true });
+          } else {
+            setHasAccess(true);
+            setIsLoading(false);
           }
         }
       } catch (error) {
         console.error('Access check error:', error);
         if (isSubscribed) {
+          setHasAccess(false);
           setIsLoading(false);
           toast({
             title: "Error",
