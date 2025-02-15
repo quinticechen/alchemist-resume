@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
@@ -15,19 +16,32 @@ const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const validatePassword = (password: string) => {
-    const minLength = 8;
-    const hasUpperCase = /[A-Z]/.test(password);
-    const hasLowerCase = /[a-z]/.test(password);
-    const hasNumbers = /\d/.test(password);
-    
-    if (password.length < minLength) {
-      return "Password must be at least 8 characters long";
+  const checkSubscriptionAndUsage = async (userId: string) => {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('subscription_status, usage_count, free_trial_limit')
+      .eq('id', userId)
+      .single();
+
+    if (profile) {
+      const { subscription_status, usage_count, free_trial_limit } = profile;
+      
+      // Only show trial expired message for apprentice tier with exceeded usage
+      if (subscription_status === 'apprentice' && usage_count >= free_trial_limit) {
+        toast({
+          title: "Free Trial Expired",
+          description: "Please upgrade to continue using our services.",
+        });
+        navigate('/pricing');
+      } else {
+        // Successful login with valid subscription or remaining trial
+        toast({
+          title: "Welcome back!",
+          description: "You've successfully signed in.",
+        });
+        navigate('/alchemist-workshop');
+      }
     }
-    if (!hasUpperCase || !hasLowerCase || !hasNumbers) {
-      return "Password must contain uppercase, lowercase letters and numbers";
-    }
-    return null;
   };
 
   const handleSocialLogin = async (provider: 'google' | 'linkedin_oidc') => {
@@ -78,19 +92,6 @@ const Login = () => {
       return;
     }
 
-    if (isSignUp) {
-      const passwordError = validatePassword(password);
-      if (passwordError) {
-        toast({
-          title: "Invalid Password",
-          description: passwordError,
-          variant: "destructive",
-        });
-        setIsLoading(false);
-        return;
-      }
-    }
-
     try {
       if (isSignUp) {
         console.log('Attempting signup...');
@@ -108,12 +109,16 @@ const Login = () => {
         });
       } else {
         console.log('Attempting signin...');
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
         if (error) throw error;
-        navigate('/alchemist-workshop');
+        
+        // Check subscription status and redirect accordingly
+        if (data.user) {
+          await checkSubscriptionAndUsage(data.user.id);
+        }
       }
     } catch (error: any) {
       console.error('Auth error:', error);
@@ -150,7 +155,9 @@ const Login = () => {
                 <span className="w-full border-t border-gray-300" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">Or continue with email</span>
+                <span className="px-2 bg-white text-gray-500">
+                  Or continue with email
+                </span>
               </div>
             </div>
 
