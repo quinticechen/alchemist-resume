@@ -16,11 +16,14 @@ import Footer from "@/components/Footer";
 import { useEffect, useState } from "react";
 import { supabase } from "./integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
+import { useSubscriptionCheck } from "@/hooks/useSubscriptionCheck";
 
 // Create a wrapper component to handle auth state
 const AuthWrapper = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { checkSubscriptionAndRedirect } = useSubscriptionCheck();
+  const navigate = useNavigate();
 
   useEffect(() => {
     console.log("Initializing auth...");
@@ -33,6 +36,9 @@ const AuthWrapper = () => {
           return;
         }
         console.log('Initial session:', session);
+        if (session?.user) {
+          await checkSubscriptionAndRedirect(session.user.id);
+        }
         setSession(session);
       } catch (error) {
         console.error('Error getting session:', error);
@@ -45,8 +51,11 @@ const AuthWrapper = () => {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
       console.log('Auth state changed:', _event, session?.user?.email);
+      if (session?.user) {
+        await checkSubscriptionAndRedirect(session.user.id);
+      }
       setSession(session);
       setIsLoading(false);
     });
