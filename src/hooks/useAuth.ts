@@ -25,9 +25,7 @@ export const useAuth = () => {
           redirectTo: `${window.location.origin}/alchemist-workshop`,
           queryParams: {
             prompt: 'consent'
-          },
-          // Enable session persistence
-          persistSession: true
+          }
         },
       });
       
@@ -69,9 +67,7 @@ export const useAuth = () => {
             emailRedirectTo: `${window.location.origin}/alchemist-workshop`,
             data: {
               email: email,
-            },
-            // Enable session persistence
-            persistSession: true
+            }
           },
         });
         if (error) throw error;
@@ -83,11 +79,7 @@ export const useAuth = () => {
         console.log('Attempting signin...');
         const { data, error } = await supabase.auth.signInWithPassword({
           email,
-          password,
-          options: {
-            // Enable session persistence
-            persistSession: true
-          }
+          password
         });
         if (error) throw error;
         
@@ -101,7 +93,10 @@ export const useAuth = () => {
 
           // Store session in localStorage for persistence
           if (profile) {
-            localStorage.setItem('userProfile', JSON.stringify(profile));
+            localStorage.setItem('userProfile', JSON.stringify({
+              ...profile,
+              cachedAt: Date.now()
+            }));
           }
 
           await checkSubscriptionAndRedirect(data.user.id);
