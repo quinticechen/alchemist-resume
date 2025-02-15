@@ -38,20 +38,26 @@ const AuthWrapper = () => {
         }
         
         setSession(session);
-        setIsLoading(false);
 
         if (session?.user) {
-          const { data: subscription } = await supabase
-            .from('subscriptions')
-            .select('*')
-            .eq('user_id', session.user.id)
-            .maybeSingle();
+          try {
+            const { data: subscription } = await supabase
+              .from('subscriptions')
+              .select('*')
+              .eq('user_id', session.user.id)
+              .maybeSingle();
 
-          if (subscription?.status === 'active' && 
-              (subscription.tier === 'alchemist' || subscription.tier === 'grandmaster')) {
-            navigate('/alchemist-workshop');
+            if (subscription?.status === 'active' && 
+                (subscription.tier === 'alchemist' || subscription.tier === 'grandmaster')) {
+              navigate('/alchemist-workshop');
+            }
+          } catch (subError) {
+            console.error('Error checking subscription:', subError);
           }
         }
+        
+        // Set loading to false only after all checks are complete
+        setIsLoading(false);
       } catch (error) {
         console.error('Error getting session:', error);
         setIsLoading(false);
@@ -67,15 +73,19 @@ const AuthWrapper = () => {
       setSession(session);
 
       if (session?.user) {
-        const { data: subscription } = await supabase
-          .from('subscriptions')
-          .select('*')
-          .eq('user_id', session.user.id)
-          .maybeSingle();
+        try {
+          const { data: subscription } = await supabase
+            .from('subscriptions')
+            .select('*')
+            .eq('user_id', session.user.id)
+            .maybeSingle();
 
-        if (subscription?.status === 'active' && 
-            (subscription.tier === 'alchemist' || subscription.tier === 'grandmaster')) {
-          navigate('/alchemist-workshop');
+          if (subscription?.status === 'active' && 
+              (subscription.tier === 'alchemist' || subscription.tier === 'grandmaster')) {
+            navigate('/alchemist-workshop');
+          }
+        } catch (subError) {
+          console.error('Error checking subscription:', subError);
         }
       }
     });
@@ -84,7 +94,14 @@ const AuthWrapper = () => {
   }, []);
 
   if (isLoading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="mb-4 text-xl font-semibold text-primary">Loading...</div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+        </div>
+      </div>
+    );
   }
 
   return (
