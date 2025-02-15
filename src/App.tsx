@@ -1,5 +1,5 @@
 
-import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import Home from "@/pages/Home";
 import AlchemistWorkshop from "@/pages/AlchemyStation";
@@ -16,84 +16,32 @@ import Footer from "@/components/Footer";
 import { useEffect, useState } from "react";
 import { supabase } from "./integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
-import { useSubscriptionCheck } from "@/hooks/useSubscriptionCheck";
 
-// Create a wrapper component to handle auth state
 const AuthWrapper = () => {
   const [session, setSession] = useState<Session | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const { checkSubscriptionAndRedirect } = useSubscriptionCheck();
-  const navigate = useNavigate();
+  const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
     console.log("Initializing auth...");
     
-    const initializeAuth = async () => {
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        if (error) {
-          console.error('Error getting session:', error);
-          setIsLoading(false);
-          return;
-        }
-        
-        setSession(session);
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setInitialized(true);
+    });
 
-        if (session?.user) {
-          try {
-            const { data: subscription } = await supabase
-              .from('subscriptions')
-              .select('*')
-              .eq('user_id', session.user.id)
-              .maybeSingle();
-
-            if (subscription?.status === 'active' && 
-                (subscription.tier === 'alchemist' || subscription.tier === 'grandmaster')) {
-              navigate('/alchemist-workshop');
-            }
-          } catch (subError) {
-            console.error('Error checking subscription:', subError);
-          }
-        }
-        
-        // Set loading to false only after all checks are complete
-        setIsLoading(false);
-      } catch (error) {
-        console.error('Error getting session:', error);
-        setIsLoading(false);
-      }
-    };
-
-    initializeAuth();
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       console.log('Auth state changed:', _event, session?.user?.email);
       setSession(session);
-
-      if (session?.user) {
-        try {
-          const { data: subscription } = await supabase
-            .from('subscriptions')
-            .select('*')
-            .eq('user_id', session.user.id)
-            .maybeSingle();
-
-          if (subscription?.status === 'active' && 
-              (subscription.tier === 'alchemist' || subscription.tier === 'grandmaster')) {
-            navigate('/alchemist-workshop');
-          }
-        } catch (subError) {
-          console.error('Error checking subscription:', subError);
-        }
-      }
+      setInitialized(true);
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
-  if (isLoading) {
+  // Only show loading on initial auth check
+  if (!initialized) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -109,48 +57,32 @@ const AuthWrapper = () => {
       <Header />
       <main className="flex-grow">
         <Routes>
-          <Route 
-            path="/" 
-            element={<Home />}
-          />
+          <Route path="/" element={<Home />} />
           <Route 
             path="/alchemist-workshop" 
             element={
-              session ? (
-                <AlchemistWorkshop />
-              ) : (
-                <Navigate to="/login" replace state={{ from: "/alchemist-workshop" }} />
-              )
+              session ? <AlchemistWorkshop /> : 
+              <Navigate to="/login" replace state={{ from: "/alchemist-workshop" }} />
             } 
           />
           <Route 
             path="/alchemy-records" 
             element={
-              session ? (
-                <AlchemyRecords />
-              ) : (
-                <Navigate to="/login" replace state={{ from: "/alchemy-records" }} />
-              )
+              session ? <AlchemyRecords /> : 
+              <Navigate to="/login" replace state={{ from: "/alchemy-records" }} />
             } 
           />
           <Route 
             path="/account" 
             element={
-              session ? (
-                <Account />
-              ) : (
-                <Navigate to="/login" replace state={{ from: "/account" }} />
-              )
+              session ? <Account /> : 
+              <Navigate to="/login" replace state={{ from: "/account" }} />
             } 
           />
           <Route 
             path="/login" 
             element={
-              session ? (
-                <Navigate to="/alchemist-workshop" replace />
-              ) : (
-                <Login />
-              )
+              session ? <Navigate to="/alchemist-workshop" replace /> : <Login />
             } 
           />
           <Route path="/terms" element={<Terms />} />
@@ -166,7 +98,6 @@ const AuthWrapper = () => {
   );
 };
 
-// Main App component
 function App() {
   return (
     <Router>
