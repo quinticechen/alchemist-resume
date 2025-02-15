@@ -18,19 +18,39 @@ const Login = () => {
 
   const checkSubscription = async (userId: string) => {
     console.log('Checking subscription for user:', userId);
-    const { data: profile, error } = await supabase
+    // First check the subscriptions table
+    const { data: subscription, error: subError } = await supabase
+      .from('subscriptions')
+      .select('tier, status')
+      .eq('user_id', userId)
+      .single();
+
+    console.log('Subscription data:', subscription);
+
+    // Then check the profile
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('subscription_status, usage_count, free_trial_limit')
       .eq('id', userId)
       .single();
 
     console.log('Profile data:', profile);
-    console.log('Profile error:', error);
 
+    // Prioritize subscription table data as it's the source of truth
+    if (subscription && subscription.status === 'active') {
+      console.log('Active subscription found:', subscription.tier);
+      toast({
+        title: "Welcome back!",
+        description: "You've successfully signed in."
+      });
+      navigate('/alchemist-workshop');
+      return;
+    }
+
+    // Fall back to profile data
     if (profile) {
-      // For grandmaster plan - unlimited access
       if (profile.subscription_status === 'grandmaster') {
-        console.log('User has Grandmaster plan');
+        console.log('Grandmaster status in profile');
         toast({
           title: "Welcome back!",
           description: "You've successfully signed in."
@@ -39,16 +59,9 @@ const Login = () => {
         return;
       }
 
-      // For alchemist plan - check monthly limits
       if (profile.subscription_status === 'alchemist') {
-        console.log('User has Alchemist plan');
-        const { data: monthlyUsage } = await supabase
-          .from('profiles')
-          .select('monthly_usage_count')
-          .eq('id', userId)
-          .single();
-
-        if (monthlyUsage && monthlyUsage.monthly_usage_count >= 30) {
+        console.log('Alchemist status in profile');
+        if (profile.monthly_usage_count >= 30) {
           toast({
             title: "Monthly Limit Reached",
             description: "You've reached your monthly usage limit. Please upgrade to our Grandmaster plan for unlimited access."
@@ -64,8 +77,8 @@ const Login = () => {
         return;
       }
 
-      // For free tier (apprentice)
-      console.log('User has Apprentice plan');
+      // Free tier (apprentice)
+      console.log('Apprentice status in profile');
       if (profile.usage_count >= profile.free_trial_limit) {
         toast({
           title: "Free Trial Expired",
