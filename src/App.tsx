@@ -16,49 +16,97 @@ import Footer from "@/components/Footer";
 import { useEffect, useState } from "react";
 import { supabase } from "./integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+
+interface ProtectedRouteProps {
+  children: React.ReactNode;
+}
+
+const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasAccess, setHasAccess] = useState(false);
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const checkAccess = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session?.user) {
+        toast({
+          title: "Access Denied",
+          description: "Please sign in to continue.",
+        });
+        navigate('/login');
+        setIsLoading(false);
+        return;
+      }
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('subscription_status, usage_count, free_trial_limit, monthly_usage_count')
+        .eq('id', session.user.id)
+        .single();
+
+      if (!profile) {
+        navigate('/login');
+        setIsLoading(false);
+        return;
+      }
+
+      let userHasAccess = false;
+
+      if (profile.subscription_status === 'apprentice') {
+        userHasAccess = profile.usage_count < profile.free_trial_limit;
+      } else if (profile.subscription_status === 'alchemist') {
+        userHasAccess = (profile.monthly_usage_count || 0) < 30;
+      } else if (profile.subscription_status === 'grandmaster') {
+        const { data: subscription } = await supabase
+          .from('subscriptions')
+          .select('current_period_end')
+          .eq('user_id', session.user.id)
+          .eq('status', 'active')
+          .maybeSingle();
+
+        if (subscription?.current_period_end) {
+          userHasAccess = new Date(subscription.current_period_end) > new Date();
+        }
+      }
+
+      if (!userHasAccess) {
+        toast({
+          title: "Access Denied",
+          description: "Please upgrade your plan to continue using our services.",
+        });
+        navigate('/pricing');
+      }
+
+      setHasAccess(userHasAccess);
+      setIsLoading(false);
+    };
+
+    checkAccess();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="mb-4 text-xl font-semibold text-primary">Loading...</div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+        </div>
+      </div>
+    );
+  }
+
+  return hasAccess ? <>{children}</> : null;
+};
 
 const AuthWrapper = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [initialized, setInitialized] = useState(false);
-  const navigate = useNavigate();
   const { toast } = useToast();
-
-  const checkUserAccess = async (userId: string) => {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('subscription_status, usage_count, free_trial_limit, monthly_usage_count')
-      .eq('id', userId)
-      .single();
-
-    if (!profile) {
-      return false;
-    }
-
-    if (profile.subscription_status === 'apprentice') {
-      return profile.usage_count < profile.free_trial_limit;
-    }
-
-    if (profile.subscription_status === 'alchemist') {
-      return (profile.monthly_usage_count || 0) < 30;
-    }
-
-    if (profile.subscription_status === 'grandmaster') {
-      const { data: subscription } = await supabase
-        .from('subscriptions')
-        .select('current_period_end')
-        .eq('user_id', userId)
-        .eq('status', 'active')
-        .maybeSingle();
-
-      if (subscription?.current_period_end) {
-        return new Date(subscription.current_period_end) > new Date();
-      }
-    }
-
-    return false;
-  };
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -66,21 +114,15 @@ const AuthWrapper = () => {
       setInitialized(true);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
       setInitialized(true);
 
-      if (event === 'SIGNED_IN' && session?.user) {
-        const hasAccess = await checkUserAccess(session.user.id);
-        if (hasAccess) {
-          toast({
-            title: "Welcome back!",
-            description: "Successfully signed in"
-          });
-          navigate('/alchemist-workshop');
-        } else {
-          navigate('/pricing');
-        }
+      if (event === 'SIGNED_IN') {
+        toast({
+          title: "Welcome back!",
+          description: "Successfully signed in"
+        });
       }
     });
 
@@ -107,29 +149,31 @@ const AuthWrapper = () => {
           <Route 
             path="/alchemist-workshop" 
             element={
-              session ? <AlchemistWorkshop /> : 
-              <Navigate to="/login" replace state={{ from: "/alchemist-workshop" }} />
-            } 
+              <ProtectedRoute>
+                <AlchemistWorkshop />
+              </ProtectedRoute>
+            }
           />
           <Route 
             path="/alchemy-records" 
             element={
-              session ? <AlchemyRecords /> : 
-              <Navigate to="/login" replace state={{ from: "/alchemy-records" }} />
-            } 
+              <ProtectedRoute>
+                <AlchemyRecords />
+              </ProtectedRoute>
+            }
           />
           <Route 
             path="/account" 
             element={
               session ? <Account /> : 
               <Navigate to="/login" replace state={{ from: "/account" }} />
-            } 
+            }
           />
           <Route 
             path="/login" 
             element={
               session ? <Navigate to="/alchemist-workshop" replace /> : <Login />
-            } 
+            }
           />
           <Route path="/terms" element={<Terms />} />
           <Route path="/privacy" element={<Privacy />} />
