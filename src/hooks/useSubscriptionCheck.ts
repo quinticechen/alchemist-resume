@@ -45,10 +45,26 @@ export const useSubscriptionCheck = () => {
         throw new Error('No profile found');
       }
 
-      // Handle different subscription statuses
-      if (profile.subscription_status === 'grandmaster' || 
-          profile.subscription_status === 'alchemist') {
-        console.log('Premium status in profile:', profile.subscription_status);
+      // First check subscription status
+      if (profile.subscription_status === 'alchemist') {
+        // For Alchemist, check monthly usage
+        if ((profile.monthly_usage_count || 0) < 30) {
+          toast({
+            title: "Welcome back!",
+            description: "You've successfully signed in."
+          });
+          return;
+        } else {
+          toast({
+            title: "Monthly Limit Reached",
+            description: "You've reached your monthly usage limit."
+          });
+          navigate('/account');
+          return;
+        }
+      }
+
+      if (profile.subscription_status === 'grandmaster') {
         toast({
           title: "Welcome back!",
           description: "You've successfully signed in."
@@ -56,8 +72,8 @@ export const useSubscriptionCheck = () => {
         return;
       }
 
-      // Handle free trial cases
-      if (profile.usage_count >= profile.free_trial_limit) {
+      // Handle free trial cases only for apprentice users
+      if (profile.subscription_status === 'apprentice' && profile.usage_count >= profile.free_trial_limit) {
         if (!profile.has_completed_survey) {
           toast({
             title: "Survey Required",
@@ -75,7 +91,7 @@ export const useSubscriptionCheck = () => {
         }
       }
 
-      // User is within free trial limits
+      // User is within free trial limits or has valid subscription
       toast({
         title: "Welcome back!",
         description: "You've successfully signed in."
