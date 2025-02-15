@@ -13,9 +13,21 @@ const supabase = createClient(
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 );
 
+// Add CORS headers
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
 serve(async (req) => {
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
   const signature = req.headers.get('stripe-signature');
   if (!signature) {
+    console.error('No Stripe signature found in webhook request');
     return new Response('No signature', { status: 400 });
   }
 
@@ -35,12 +47,17 @@ serve(async (req) => {
       return new Response(`Webhook Error: ${err.message}`, { status: 400 });
     }
 
-    console.log(`Event type: ${event.type}`);
+    console.log(`Received Stripe webhook event: ${event.type}`);
+    console.log('Event data:', JSON.stringify(event.data.object, null, 2));
 
     switch (event.type) {
       case 'customer.subscription.created':
       case 'customer.subscription.updated':
-        const subscription = event.data.object;
+      case 'checkout.session.completed':
+        const subscription = event.type === 'checkout.session.completed'
+          ? await stripe.subscriptions.retrieve(event.data.object.subscription)
+          : event.data.object;
+        
         const customerId = subscription.customer;
         
         // Get customer to find Supabase user ID
@@ -48,10 +65,11 @@ serve(async (req) => {
         const userId = customer.metadata.supabase_uid;
 
         if (!userId) {
+          console.error('No user ID found in customer metadata');
           throw new Error('No user ID found in customer metadata');
         }
 
-        // Get the price nickname to determine the tier
+        // Get the price ID to determine the tier
         const priceId = subscription.items.data[0].price.id;
         let tier = 'apprentice';
         
@@ -68,9 +86,15 @@ serve(async (req) => {
         }
 
         console.log(`Updating subscription for user ${userId} to tier ${tier}`);
+        console.log('Subscription details:', {
+          status: subscription.status,
+          priceId,
+          tier,
+          customerId,
+        });
 
         // Update subscriptions table
-        await supabase
+        const { error: subscriptionError } = await supabase
           .from('subscriptions')
           .upsert({
             user_id: userId,
@@ -85,16 +109,27 @@ serve(async (req) => {
             onConflict: 'user_id',
           });
 
-        // Also update the profile's subscription status
-        await supabase
+        if (subscriptionError) {
+          console.error('Error updating subscription:', subscriptionError);
+          throw subscriptionError;
+        }
+
+        // Update profile's subscription status
+        const { error: profileError } = await supabase
           .from('profiles')
           .update({
             subscription_status: tier,
-            monthly_usage_count: tier === 'apprentice' ? null : 0, // Reset monthly count for new subscribers
+            monthly_usage_count: tier === 'apprentice' ? null : 0,
             monthly_usage_reset_date: tier === 'alchemist' ? new Date() : null
           })
           .eq('id', userId);
 
+        if (profileError) {
+          console.error('Error updating profile:', profileError);
+          throw profileError;
+        }
+
+        console.log(`Successfully updated subscription and profile for user ${userId}`);
         break;
 
       case 'customer.subscription.deleted':
@@ -106,7 +141,7 @@ serve(async (req) => {
           console.log(`Cancelling subscription for user ${deletedUserId}`);
           
           // Update subscription status
-          await supabase
+          const { error: deleteSubError } = await supabase
             .from('subscriptions')
             .update({
               status: 'canceled',
@@ -114,8 +149,13 @@ serve(async (req) => {
             })
             .eq('user_id', deletedUserId);
 
+          if (deleteSubError) {
+            console.error('Error updating subscription on deletion:', deleteSubError);
+            throw deleteSubError;
+          }
+
           // Reset profile subscription status
-          await supabase
+          const { error: deleteProfileError } = await supabase
             .from('profiles')
             .update({
               subscription_status: 'apprentice',
@@ -123,12 +163,22 @@ serve(async (req) => {
               monthly_usage_reset_date: null
             })
             .eq('id', deletedUserId);
+
+          if (deleteProfileError) {
+            console.error('Error updating profile on deletion:', deleteProfileError);
+            throw deleteProfileError;
+          }
+
+          console.log(`Successfully cancelled subscription for user ${deletedUserId}`);
         }
         break;
+
+      default:
+        console.log(`Unhandled event type: ${event.type}`);
     }
 
     return new Response(JSON.stringify({ received: true }), {
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     });
   } catch (err) {
@@ -137,7 +187,7 @@ serve(async (req) => {
       JSON.stringify({ error: err.message }),
       { 
         status: 400,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
     );
   }
