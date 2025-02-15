@@ -19,13 +19,13 @@ const Login = () => {
   const checkSubscription = async (userId: string) => {
     const { data: profile } = await supabase
       .from('profiles')
-      .select('subscription_status')
+      .select('subscription_status, monthly_usage_count')
       .eq('id', userId)
       .single();
 
     if (profile) {
-      // Always navigate to workshop for paid subscribers (alchemist or grandmaster)
-      if (profile.subscription_status === 'alchemist' || profile.subscription_status === 'grandmaster') {
+      // For grandmaster plan - unlimited access
+      if (profile.subscription_status === 'grandmaster') {
         toast({
           title: "Welcome back!",
           description: "You've successfully signed in."
@@ -34,7 +34,25 @@ const Login = () => {
         return;
       }
 
-      // For free tier, check usage limits
+      // For alchemist plan - check monthly limits
+      if (profile.subscription_status === 'alchemist') {
+        if (profile.monthly_usage_count >= 30) {
+          toast({
+            title: "Monthly Limit Reached",
+            description: "You've reached your monthly usage limit. Please upgrade to our Grandmaster plan for unlimited access."
+          });
+          navigate('/pricing');
+        } else {
+          toast({
+            title: "Welcome back!",
+            description: "You've successfully signed in."
+          });
+          navigate('/alchemist-workshop');
+        }
+        return;
+      }
+
+      // For free tier (apprentice), check usage limits
       const { data: usageData } = await supabase
         .from('profiles')
         .select('usage_count, free_trial_limit')
