@@ -51,6 +51,24 @@ serve(async (req) => {
           throw new Error('No user ID found in customer metadata');
         }
 
+        // Get the price nickname to determine the tier
+        const priceId = subscription.items.data[0].price.id;
+        let tier = 'apprentice';
+        
+        // Map price IDs to subscription tiers
+        switch (priceId) {
+          case 'price_1Qs0CVGYVYFmwG4FmEwa1iWO':
+          case 'price_1Qs0ECGYVYFmwG4FluFhUdQH':
+            tier = 'alchemist';
+            break;
+          case 'price_1Qs0BTGYVYFmwG4FFDbYpi5v':
+          case 'price_1Qs0BtGYVYFmwG4FrtkMrNNx':
+            tier = 'grandmaster';
+            break;
+        }
+
+        console.log(`Updating subscription for user ${userId} to tier ${tier}`);
+
         // Update subscriptions table
         await supabase
           .from('subscriptions')
@@ -59,7 +77,7 @@ serve(async (req) => {
             stripe_customer_id: customerId,
             stripe_subscription_id: subscription.id,
             status: subscription.status,
-            tier: subscription.items.data[0].price.nickname?.toLowerCase() || 'apprentice',
+            tier: tier,
             current_period_start: new Date(subscription.current_period_start * 1000),
             current_period_end: new Date(subscription.current_period_end * 1000),
             cancel_at_period_end: subscription.cancel_at_period_end,
@@ -71,7 +89,9 @@ serve(async (req) => {
         await supabase
           .from('profiles')
           .update({
-            subscription_status: subscription.items.data[0].price.nickname?.toLowerCase() || 'apprentice'
+            subscription_status: tier,
+            monthly_usage_count: tier === 'apprentice' ? null : 0, // Reset monthly count for new subscribers
+            monthly_usage_reset_date: tier === 'alchemist' ? new Date() : null
           })
           .eq('id', userId);
 
@@ -83,6 +103,8 @@ serve(async (req) => {
         const deletedUserId = deletedCustomer.metadata.supabase_uid;
 
         if (deletedUserId) {
+          console.log(`Cancelling subscription for user ${deletedUserId}`);
+          
           // Update subscription status
           await supabase
             .from('subscriptions')
@@ -96,7 +118,9 @@ serve(async (req) => {
           await supabase
             .from('profiles')
             .update({
-              subscription_status: 'apprentice'
+              subscription_status: 'apprentice',
+              monthly_usage_count: null,
+              monthly_usage_reset_date: null
             })
             .eq('id', deletedUserId);
         }
