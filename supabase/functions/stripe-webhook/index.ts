@@ -25,6 +25,8 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // For Stripe webhooks, we don't need to check authorization header
+  // Instead, we verify the request using the Stripe signature
   const signature = req.headers.get('stripe-signature');
   if (!signature) {
     console.error('No Stripe signature found in webhook request');
