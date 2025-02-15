@@ -25,7 +25,7 @@ const AuthWrapper = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const checkUserAccessAndRedirect = async (userId: string) => {
+  const checkUserAccess = async (userId: string) => {
     const { data: profile } = await supabase
       .from('profiles')
       .select('subscription_status, usage_count, free_trial_limit, monthly_usage_count')
@@ -61,26 +61,26 @@ const AuthWrapper = () => {
   };
 
   useEffect(() => {
-    console.log("Initializing auth...");
-    
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setInitialized(true);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state changed:', event, session?.user?.email);
       setSession(session);
       setInitialized(true);
 
       if (event === 'SIGNED_IN' && session?.user) {
-        toast({
-          title: "Welcome back!",
-          description: "Successfully signed in"
-        });
-
-        const hasAccess = await checkUserAccessAndRedirect(session.user.id);
-        navigate(hasAccess ? '/alchemist-workshop' : '/pricing');
+        const hasAccess = await checkUserAccess(session.user.id);
+        if (hasAccess) {
+          toast({
+            title: "Welcome back!",
+            description: "Successfully signed in"
+          });
+          navigate('/alchemist-workshop');
+        } else {
+          navigate('/pricing');
+        }
       }
     });
 
