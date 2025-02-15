@@ -24,17 +24,18 @@ export const useSubscriptionCheck = () => {
       
       console.log('Full subscription data:', subscription);
 
-      if (subscription && subscription.status === 'active' && 
+      // Check for active subscription first
+      if (subscription?.status === 'active' && 
           (subscription.tier === 'alchemist' || subscription.tier === 'grandmaster')) {
         console.log('Valid active subscription found:', subscription);
         toast({
           title: "Welcome back!",
           description: "You've successfully signed in."
         });
-        navigate('/alchemist-workshop');
-        return;
+        return; // Don't navigate - let the app handle normal routing
       }
 
+      // If no active subscription, check profile
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('*')
@@ -53,6 +54,7 @@ export const useSubscriptionCheck = () => {
         throw new Error('No profile found');
       }
 
+      // Check profile subscription status
       if (profile.subscription_status === 'grandmaster' || 
           profile.subscription_status === 'alchemist') {
         console.log('Premium status in profile:', profile.subscription_status);
@@ -60,38 +62,34 @@ export const useSubscriptionCheck = () => {
           title: "Welcome back!",
           description: "You've successfully signed in."
         });
-        navigate('/alchemist-workshop');
-        return;
+        return; // Don't navigate - let the app handle normal routing
       }
 
+      // Handle free trial cases
       if (profile.usage_count >= profile.free_trial_limit) {
-        console.log('Free trial limit reached:', {
-          usage_count: profile.usage_count,
-          limit: profile.free_trial_limit
-        });
-        
         if (!profile.has_completed_survey) {
           toast({
             title: "Survey Required",
             description: "Please complete the survey to continue using our services."
           });
           navigate('/survey-page');
+          return;
         } else {
           toast({
             title: "Free Trial Completed",
             description: "Please upgrade to continue using our services."
           });
           navigate('/pricing');
+          return;
         }
-        return;
       }
 
-      console.log('User within free trial limits');
+      // User is within free trial limits
       toast({
         title: "Welcome back!",
         description: "You've successfully signed in."
       });
-      navigate('/alchemist-workshop');
+      // Don't navigate - let the app handle normal routing
     } catch (error) {
       console.error('Detailed subscription check error:', error);
       toast({
