@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import Home from "@/pages/Home";
@@ -28,18 +27,18 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const [hasAccess, setHasAccess] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const location = useLocation();
 
   useEffect(() => {
     const checkAccess = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session?.user) {
-        toast({
-          title: "Access Denied",
-          description: "Please sign in to continue.",
-        });
-        navigate('/login');
         setIsLoading(false);
+        navigate('/login', { 
+          state: { returnTo: location.pathname },
+          replace: true 
+        });
         return;
       }
 
@@ -97,7 +96,7 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     };
 
     checkAccess();
-  }, []);
+  }, [location.pathname]);
 
   if (isLoading) {
     return (
@@ -118,6 +117,7 @@ const AuthWrapper = () => {
   const [initialized, setInitialized] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -142,8 +142,10 @@ const AuthWrapper = () => {
           description: "Successfully signed in"
         });
 
-        // Always redirect to workshop after login - access will be checked by ProtectedRoute
-        navigate('/alchemist-workshop');
+        // Get the return path from state, default to workshop if none
+        const state = location.state as { returnTo?: string };
+        const returnTo = state?.returnTo || '/alchemist-workshop';
+        navigate(returnTo, { replace: true });
       }
     });
 
@@ -187,13 +189,18 @@ const AuthWrapper = () => {
             path="/account" 
             element={
               session ? <Account /> : 
-              <Navigate to="/login" replace state={{ from: "/account" }} />
+              <Navigate to="/login" replace state={{ returnTo: "/account" }} />
             }
           />
           <Route 
             path="/login" 
             element={
-              session ? <Navigate to="/alchemist-workshop" replace /> : <Login />
+              session ? 
+                <Navigate 
+                  to={(location.state as { returnTo?: string })?.returnTo || '/alchemist-workshop'} 
+                  replace 
+                /> : 
+                <Login />
             }
           />
           <Route path="/terms" element={<Terms />} />
