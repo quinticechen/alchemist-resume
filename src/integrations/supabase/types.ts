@@ -18,6 +18,8 @@ export type Database = {
           full_name: string | null
           has_completed_survey: boolean | null
           id: string
+          monthly_usage_count: number | null
+          monthly_usage_reset_date: string | null
           provider: string | null
           stripe_customer_id: string | null
           subscription_status:
@@ -34,6 +36,8 @@ export type Database = {
           full_name?: string | null
           has_completed_survey?: boolean | null
           id: string
+          monthly_usage_count?: number | null
+          monthly_usage_reset_date?: string | null
           provider?: string | null
           stripe_customer_id?: string | null
           subscription_status?:
@@ -50,6 +54,8 @@ export type Database = {
           full_name?: string | null
           has_completed_survey?: boolean | null
           id?: string
+          monthly_usage_count?: number | null
+          monthly_usage_reset_date?: string | null
           provider?: string | null
           stripe_customer_id?: string | null
           subscription_status?:
@@ -241,7 +247,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      reset_monthly_usage_count: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
       subscription_tier: "apprentice" | "alchemist" | "grandmaster"

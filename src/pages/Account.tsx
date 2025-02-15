@@ -13,16 +13,25 @@ interface Profile {
   full_name: string | null;
   avatar_url: string | null;
   usage_count: number;
+  monthly_usage_count: number;
   provider: string;
   has_completed_survey: boolean;
+  subscription_status: 'apprentice' | 'alchemist' | 'grandmaster';
+}
+
+interface Subscription {
+  tier: 'apprentice' | 'alchemist' | 'grandmaster';
+  current_period_end: string;
+  cancel_at_period_end: boolean;
+  status: string;
 }
 
 const Account = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [newFullName, setNewFullName] = useState("");
-  const [isSubscribed, setIsSubscribed] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -35,14 +44,26 @@ const Account = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
-      const { data: profile, error } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', user.id)
         .single();
 
-      if (error) throw error;
+      if (profileError) throw profileError;
+
+      const { data: subscription, error: subscriptionError } = await supabase
+        .from('subscriptions')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
+      if (subscriptionError && subscriptionError.code !== 'PGRST116') {
+        throw subscriptionError;
+      }
+
       setProfile(profile);
+      setSubscription(subscription);
       setNewFullName(profile.full_name || "");
     } catch (error: any) {
       console.error('Error fetching profile:', error);
@@ -93,6 +114,30 @@ const Account = () => {
         variant: "destructive",
       });
     }
+  };
+
+  const getUsageLimit = () => {
+    if (!profile) return 0;
+    switch (profile.subscription_status) {
+      case 'grandmaster':
+        return '∞';
+      case 'alchemist':
+        return 30;
+      default:
+        return 3;
+    }
+  };
+
+  const getRemainingUses = () => {
+    if (!profile) return 0;
+    const limit = getUsageLimit();
+    if (limit === '∞') return '∞';
+    
+    if (profile.subscription_status === 'alchemist') {
+      return Math.max(0, Number(limit) - (profile.monthly_usage_count || 0));
+    }
+    
+    return Math.max(0, Number(limit) - (profile.usage_count || 0));
   };
 
   const handleSubscribe = () => {
@@ -154,12 +199,30 @@ const Account = () => {
             <div className="space-y-2">
               <h3 className="text-sm font-medium text-neutral-500">Usage</h3>
               <p className="text-lg">
-                {profile?.usage_count || 0} resumes customized
-                <span className="text-sm text-neutral-500 ml-2">
-                  ({3 - (profile?.usage_count || 0)} free uses remaining)
-                </span>
+                {profile?.subscription_status === 'alchemist' ? (
+                  <>
+                    {profile.monthly_usage_count || 0} resumes this month
+                    <span className="text-sm text-neutral-500 ml-2">
+                      ({getRemainingUses()} uses remaining this month)
+                    </span>
+                  </>
+                ) : profile?.subscription_status === 'grandmaster' ? (
+                  <>
+                    {profile.usage_count || 0} resumes customized
+                    <span className="text-sm text-neutral-500 ml-2">
+                      (Unlimited uses)
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    {profile?.usage_count || 0} resumes customized
+                    <span className="text-sm text-neutral-500 ml-2">
+                      ({getRemainingUses()} free uses remaining)
+                    </span>
+                  </>
+                )}
               </p>
-              {!isSubscribed && profile?.usage_count && profile.usage_count >= 3 && (
+              {profile?.subscription_status === 'apprentice' && profile?.usage_count && profile.usage_count >= 3 && (
                 <p className="text-sm text-red-500">
                   You've reached the free trial limit. Subscribe to continue using the service.
                 </p>
@@ -168,9 +231,24 @@ const Account = () => {
 
             <div className="pt-4 border-t">
               <h3 className="text-sm font-medium text-neutral-500 mb-4">Subscription Status</h3>
-              {isSubscribed ? (
-                <div className="bg-green-50 text-green-700 px-4 py-2 rounded-md">
-                  Active Subscription
+              {subscription && subscription.status === 'active' ? (
+                <div className="space-y-3">
+                  <div className="bg-green-50 text-green-700 px-4 py-2 rounded-md">
+                    {subscription.tier.charAt(0).toUpperCase() + subscription.tier.slice(1)} Plan
+                    {subscription.current_period_end && (
+                      <span className="block text-sm">
+                        Current period ends: {new Date(subscription.current_period_end).toLocaleDateString()}
+                        {subscription.cancel_at_period_end && " (Cancels at period end)"}
+                      </span>
+                    )}
+                  </div>
+                  <Button 
+                    onClick={handleSubscribe}
+                    className="w-full sm:w-auto"
+                    variant="outline"
+                  >
+                    Manage Subscription
+                  </Button>
                 </div>
               ) : (
                 <div className="space-y-3">
