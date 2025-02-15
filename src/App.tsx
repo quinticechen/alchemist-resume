@@ -94,28 +94,29 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
         }
 
         if (isSubscribed) {
+          setHasAccess(userHasAccess);
+          setIsLoading(false);
+          
           if (!userHasAccess) {
             toast({
-              title: "Access Denied",
+              title: "Access Restricted",
               description: profile.subscription_status === 'apprentice'
                 ? "Free trial completed. Please upgrade your plan to continue."
-                : "Please check your subscription status or upgrade your plan.",
+                : "Please check your subscription status.",
             });
             navigate('/pricing', { replace: true });
           }
-          setHasAccess(userHasAccess);
-          setIsLoading(false);
         }
       } catch (error) {
         console.error('Access check error:', error);
         if (isSubscribed) {
+          setIsLoading(false);
           toast({
             title: "Error",
             description: "There was an error checking your access. Please try again.",
             variant: "destructive"
           });
           navigate('/login', { replace: true });
-          setIsLoading(false);
         }
       }
     };
@@ -130,7 +131,7 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
+        <div className="text-center space-y-4">
           <div className="mb-4 text-xl font-semibold text-primary">Loading...</div>
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
         </div>
@@ -152,10 +153,43 @@ const AuthWrapper = () => {
     let isSubscribed = true;
 
     const initializeAuth = async () => {
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
-      if (isSubscribed) {
-        setSession(currentSession);
-        setInitialized(true);
+      try {
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        if (isSubscribed) {
+          setSession(currentSession);
+          setInitialized(true);
+
+          if (currentSession) {
+            // Get user profile
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('subscription_status')
+              .eq('id', currentSession.user.id)
+              .single();
+
+            if (profile) {
+              toast({
+                title: "Welcome back!",
+                description: "Successfully signed in"
+              });
+
+              // Handle redirect
+              const state = location.state as { returnTo?: string };
+              const returnTo = state?.returnTo || '/alchemist-workshop';
+              navigate(returnTo, { replace: true });
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Auth initialization error:', error);
+        if (isSubscribed) {
+          setInitialized(true);
+          toast({
+            title: "Error",
+            description: "There was an error initializing the application.",
+            variant: "destructive"
+          });
+        }
       }
     };
 
@@ -175,14 +209,16 @@ const AuthWrapper = () => {
             .eq('id', session.user.id)
             .single();
 
-          toast({
-            title: "Welcome back!",
-            description: "Successfully signed in"
-          });
+          if (profile) {
+            toast({
+              title: "Welcome back!",
+              description: "Successfully signed in"
+            });
 
-          const state = location.state as { returnTo?: string };
-          const returnTo = state?.returnTo || '/alchemist-workshop';
-          navigate(returnTo, { replace: true });
+            const state = location.state as { returnTo?: string };
+            const returnTo = state?.returnTo || '/alchemist-workshop';
+            navigate(returnTo, { replace: true });
+          }
         } else if (event === 'SIGNED_OUT') {
           navigate('/login', { replace: true });
         }
@@ -198,7 +234,7 @@ const AuthWrapper = () => {
   if (!initialized) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
+        <div className="text-center space-y-4">
           <div className="mb-4 text-xl font-semibold text-primary">Loading...</div>
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
         </div>
