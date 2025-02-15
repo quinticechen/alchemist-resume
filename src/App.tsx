@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import Home from "@/pages/Home";
@@ -16,31 +15,76 @@ import Footer from "@/components/Footer";
 import { useEffect, useState } from "react";
 import { supabase } from "./integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
 const AuthWrapper = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [initialized, setInitialized] = useState(false);
+  const navigate = useNavigate();
+
+  const checkUserAccessAndRedirect = async (userId: string) => {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('subscription_status, usage_count, free_trial_limit, monthly_usage_count')
+      .eq('id', userId)
+      .single();
+
+    if (!profile) {
+      return false;
+    }
+
+    if (profile.subscription_status === 'apprentice') {
+      return profile.usage_count < profile.free_trial_limit;
+    }
+
+    if (profile.subscription_status === 'alchemist') {
+      return (profile.monthly_usage_count || 0) < 30;
+    }
+
+    if (profile.subscription_status === 'grandmaster') {
+      const { data: subscription } = await supabase
+        .from('subscriptions')
+        .select('current_period_end')
+        .eq('user_id', userId)
+        .eq('status', 'active')
+        .maybeSingle();
+
+      if (subscription?.current_period_end) {
+        return new Date(subscription.current_period_end) > new Date();
+      }
+    }
+
+    return false;
+  };
 
   useEffect(() => {
     console.log("Initializing auth...");
     
-    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setInitialized(true);
     });
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      console.log('Auth state changed:', _event, session?.user?.email);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state changed:', event, session?.user?.email);
       setSession(session);
       setInitialized(true);
+
+      if (event === 'SIGNED_IN' && session?.user) {
+        toast({
+          title: "Welcome back!",
+          description: "Successfully signed in"
+        });
+
+        const hasAccess = await checkUserAccessAndRedirect(session.user.id);
+        navigate(hasAccess ? '/alchemist-workshop' : '/pricing');
+      }
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
-  // Only show loading on initial auth check
   if (!initialized) {
     return (
       <div className="min-h-screen flex items-center justify-center">

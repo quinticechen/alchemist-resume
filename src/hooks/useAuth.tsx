@@ -51,15 +51,25 @@ export const useAuth = () => {
     return false;
   };
 
+  const handleAuthSuccess = async (userId: string) => {
+    // Show single welcome toast
+    toast({
+      title: "Welcome back!",
+      description: "Successfully signed in"
+    });
+
+    // Check user access and redirect accordingly
+    const hasAccess = await checkUserAccess(userId);
+    navigate(hasAccess ? '/alchemist-workshop' : '/pricing');
+  };
+
   const handleSocialLogin = async (provider: 'google' | 'linkedin_oidc') => {
     try {
       setIsLoading(true);
-      const redirectTo = `${window.location.origin}/alchemist-workshop`;
       
-      const { error } = await supabase.auth.signInWithOAuth({
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo,
           queryParams: {
             prompt: 'consent'
           }
@@ -67,6 +77,9 @@ export const useAuth = () => {
       });
       
       if (error) throw error;
+      
+      // For OAuth, we'll handle the redirect in the Auth state change listener
+      // This is because OAuth redirects to a new page and we lose our state
       
     } catch (error: any) {
       console.error(`${provider} login error:`, error);
@@ -114,15 +127,7 @@ export const useAuth = () => {
         });
         if (error) throw error;
 
-        // Show single welcome toast
-        toast({
-          title: "Welcome back!",
-          description: "Successfully signed in"
-        });
-
-        // Check user access and redirect accordingly
-        const hasAccess = await checkUserAccess(data.user.id);
-        navigate(hasAccess ? '/alchemist-workshop' : '/pricing');
+        await handleAuthSuccess(data.user.id);
       }
     } catch (error: any) {
       console.error('Auth error:', error);
@@ -144,6 +149,7 @@ export const useAuth = () => {
     setIsSignUp,
     isLoading,
     handleSocialLogin,
-    handleEmailLogin
+    handleEmailLogin,
+    handleAuthSuccess
   };
 };
