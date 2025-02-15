@@ -18,6 +18,7 @@ const AlchemistWorkshop = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [analysisId, setAnalysisId] = useState<string>("");
   const [usageCount, setUsageCount] = useState(0);
+  const [hasCompletedSurvey, setHasCompletedSurvey] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -34,16 +35,26 @@ const AlchemistWorkshop = () => {
 
     const { data: profile } = await supabase
       .from('profiles')
-      .select('usage_count, free_trial_limit')
+      .select('usage_count, has_completed_survey')
       .eq('id', session.user.id)
       .single();
 
     if (profile) {
       setUsageCount(profile.usage_count || 0);
+      setHasCompletedSurvey(profile.has_completed_survey || false);
 
-      if (profile.usage_count >= profile.free_trial_limit) {
+      if (profile.usage_count >= 3 && !profile.has_completed_survey) {
         toast({
-          title: "Free Trial Expired",
+          title: "Survey Required",
+          description: "Please complete the survey to continue using our services.",
+        });
+        navigate('/survey-page');
+        return;
+      }
+
+      if (profile.usage_count >= 3) {
+        toast({
+          title: "Free Trial Completed",
           description: "Please upgrade to continue using our services.",
         });
         navigate('/pricing');
@@ -69,10 +80,19 @@ const AlchemistWorkshop = () => {
   };
 
   const handleUrlSubmit = async (url: string) => {
+    if (usageCount >= 3 && !hasCompletedSurvey) {
+      toast({
+        title: "Survey Required",
+        description: "Please complete the survey to continue using our services.",
+      });
+      navigate('/survey-page');
+      return;
+    }
+
     if (usageCount >= 3) {
       toast({
-        title: "Free Trial Expired",
-        description: "Your free trial has expired. Please upgrade to continue using our services.",
+        title: "Free Trial Completed",
+        description: "Please upgrade to continue using our services.",
       });
       navigate('/pricing');
       return;
