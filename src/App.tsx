@@ -33,16 +33,18 @@ const AuthWrapper = () => {
         const { data: { session }, error } = await supabase.auth.getSession();
         if (error) {
           console.error('Error getting session:', error);
+          setIsLoading(false);
           return;
         }
         console.log('Initial session:', session);
-        if (session?.user) {
-          await checkSubscriptionAndRedirect(session.user.id);
-        }
         setSession(session);
+        setIsLoading(false);
+
+        if (session?.user) {
+          checkSubscriptionAndRedirect(session.user.id).catch(console.error);
+        }
       } catch (error) {
         console.error('Error getting session:', error);
-      } finally {
         setIsLoading(false);
       }
     };
@@ -53,11 +55,11 @@ const AuthWrapper = () => {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
       console.log('Auth state changed:', _event, session?.user?.email);
-      if (session?.user) {
-        await checkSubscriptionAndRedirect(session.user.id);
-      }
       setSession(session);
-      setIsLoading(false);
+
+      if (session?.user) {
+        checkSubscriptionAndRedirect(session.user.id).catch(console.error);
+      }
     });
 
     return () => subscription.unsubscribe();
