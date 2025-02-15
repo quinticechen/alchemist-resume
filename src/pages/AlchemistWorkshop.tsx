@@ -28,22 +28,9 @@ const AlchemistWorkshop = () => {
         return;
       }
 
-      // Check subscription status
-      const { data: subscription } = await supabase
-        .from('subscriptions')
-        .select('status, tier')
-        .eq('user_id', session.user.id)
-        .maybeSingle();
-
-      if (subscription?.status === 'active' && 
-          (subscription.tier === 'alchemist' || subscription.tier === 'grandmaster')) {
-        return; // User has access
-      }
-
-      // Check profile subscription status as fallback
       const { data: profile } = await supabase
         .from('profiles')
-        .select('subscription_status, usage_count, free_trial_limit, has_completed_survey')
+        .select('subscription_status, usage_count, free_trial_limit, monthly_usage_count')
         .eq('id', session.user.id)
         .single();
 
@@ -52,20 +39,31 @@ const AlchemistWorkshop = () => {
         return;
       }
 
-      // Handle premium status in profile
-      if (profile.subscription_status === 'grandmaster' || 
-          profile.subscription_status === 'alchemist') {
-        return; // User has access
+      let hasAccess = false;
+
+      if (profile.subscription_status === 'apprentice') {
+        hasAccess = profile.usage_count < profile.free_trial_limit;
+      } else if (profile.subscription_status === 'alchemist') {
+        hasAccess = (profile.monthly_usage_count || 0) < 30;
+      } else if (profile.subscription_status === 'grandmaster') {
+        const { data: subscription } = await supabase
+          .from('subscriptions')
+          .select('current_period_end')
+          .eq('user_id', session.user.id)
+          .eq('status', 'active')
+          .maybeSingle();
+
+        if (subscription?.current_period_end) {
+          hasAccess = new Date(subscription.current_period_end) > new Date();
+        }
       }
 
-      // Check free trial
-      if (profile.usage_count >= profile.free_trial_limit) {
+      if (!hasAccess) {
         toast({
-          title: "Free Trial Completed",
-          description: "Please upgrade to continue using our services.",
+          title: "Access Denied",
+          description: "Please upgrade your plan to continue using our services.",
         });
         navigate('/pricing');
-        return;
       }
     };
 
