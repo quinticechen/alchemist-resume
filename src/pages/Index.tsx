@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import ResumeUploader from "@/components/ResumeUploader";
 import JobUrlInput from "@/components/JobUrlInput";
 import ResumePreview from "@/components/ResumePreview";
@@ -6,6 +8,7 @@ import AlchemistSection from "@/components/AlchemistSection";
 import Header from "@/components/Header";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useSubscriptionCheck } from "@/hooks/useSubscriptionCheck";
 
 const Index = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -15,6 +18,20 @@ const Index = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [showAlchemist, setShowAlchemist] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const { checkSubscriptionAndRedirect } = useSubscriptionCheck();
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        console.log('User is logged in, checking subscription:', session.user.id);
+        await checkSubscriptionAndRedirect(session.user.id);
+      }
+    };
+
+    checkAuth();
+  }, []);
 
   const handleFileUpload = (file: File, path: string, url: string, id: string) => {
     console.log("File uploaded:", file.name, "Path:", path, "Public URL:", url, "ID:", id);
