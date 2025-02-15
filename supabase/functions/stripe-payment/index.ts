@@ -27,72 +27,60 @@ serve(async (req) => {
   }
 
   try {
-    // Check Stripe secret key
+    // Early validation of required environment variables
     const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY');
-    if (!stripeSecretKey) {
-      console.error('Stripe secret key is not set');
-      throw new Error('Payment system configuration error');
-    }
-
-    const { authorization } = req.headers;
-    if (!authorization) {
-      console.error('No authorization header provided');
-      throw new Error('Authentication required');
-    }
-
-    // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
 
-    if (!supabaseUrl || !supabaseAnonKey) {
-      console.error('Missing Supabase configuration');
-      throw new Error('System configuration error');
+    if (!stripeSecretKey || !supabaseUrl || !supabaseAnonKey) {
+      throw new Error('Missing required environment variables');
     }
 
-    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-      global: {
-        headers: { Authorization: authorization },
-      },
-    });
-
-    // Get authenticated user
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-
-    if (userError) {
-      console.error('User authentication error:', userError);
-      throw new Error('Authentication failed');
+    // Validate authorization header
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid authorization header' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
+      );
     }
 
-    if (!user) {
-      console.error('No user found');
-      throw new Error('User not found');
+    // Initialize Supabase client with the JWT from the request
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+    
+    // Verify the user's session
+    const { data: { user }, error: authError } = await supabase.auth.getUser(
+      authHeader.replace('Bearer ', '')
+    );
+
+    if (authError || !user) {
+      console.error('Auth error:', authError);
+      return new Response(
+        JSON.stringify({ error: 'Invalid authentication token' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
+      );
     }
 
-    // Parse request body
+    // Parse and validate request body
     const { planId, isAnnual } = await req.json();
-    console.log('Received request for plan:', planId, 'isAnnual:', isAnnual);
-
+    
     if (!planId || !PLANS[planId]) {
-      console.error('Invalid plan ID:', planId);
-      throw new Error(`Invalid plan selected`);
+      return new Response(
+        JSON.stringify({ error: 'Invalid plan selected' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
     }
 
     // Get or create Stripe customer
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile } = await supabase
       .from('profiles')
       .select('stripe_customer_id')
       .eq('id', user.id)
-      .maybeSingle();
-
-    if (profileError) {
-      console.error('Error fetching profile:', profileError);
-      throw new Error('Failed to fetch user profile');
-    }
+      .single();
 
     let customerId = profile?.stripe_customer_id;
 
     if (!customerId) {
-      console.log('Creating new Stripe customer for user:', user.id);
       const customer = await stripe.customers.create({
         email: user.email,
         metadata: {
@@ -101,25 +89,18 @@ serve(async (req) => {
       });
       customerId = customer.id;
 
-      const { error: updateError } = await supabase
+      await supabase
         .from('profiles')
         .update({ stripe_customer_id: customerId })
         .eq('id', user.id);
-
-      if (updateError) {
-        console.error('Error updating profile with customer ID:', updateError);
-        throw new Error('Failed to update user profile');
-      }
     }
 
-    const priceId = PLANS[planId][isAnnual ? 'annual' : 'monthly'];
-    console.log('Creating checkout session with price ID:', priceId);
-
+    // Create Stripe checkout session
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       line_items: [
         {
-          price: priceId,
+          price: PLANS[planId][isAnnual ? 'annual' : 'monthly'],
           quantity: 1,
         },
       ],
@@ -133,8 +114,6 @@ serve(async (req) => {
       },
     });
 
-    console.log('Checkout session created:', session.id);
-
     return new Response(
       JSON.stringify({ sessionUrl: session.url }),
       {
@@ -146,7 +125,7 @@ serve(async (req) => {
     console.error('Error in payment function:', error);
     return new Response(
       JSON.stringify({ 
-        error: error instanceof Error ? error.message : 'Unknown error occurred',
+        error: error instanceof Error ? error.message : 'Unknown error occurred' 
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
