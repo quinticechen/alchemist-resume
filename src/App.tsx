@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import Home from "@/pages/Home";
@@ -171,12 +170,7 @@ const AuthWrapper = () => {
               .single();
 
             if (profile) {
-              toast({
-                title: "Welcome back!",
-                description: "Successfully signed in"
-              });
-
-              // Handle redirect
+              // Only show welcome toast on actual sign in, not initial session check
               const state = location.state as { returnTo?: string };
               const returnTo = state?.returnTo || '/alchemist-workshop';
               navigate(returnTo, { replace: true });
@@ -199,32 +193,56 @@ const AuthWrapper = () => {
     initializeAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state changed:', event, session);
+      if (!isSubscribed) return;
       
-      if (isSubscribed) {
-        setSession(session);
-        setInitialized(true);
+      // Only log auth state changes for actual sign in/out events, not initial session check
+      if (event !== 'INITIAL_SESSION') {
+        console.log('Auth state changed:', event, session);
+      }
+      
+      setSession(session);
+      setInitialized(true);
 
-        if (event === 'SIGNED_IN' && session) {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('subscription_status')
-            .eq('id', session.user.id)
-            .single();
+      switch (event) {
+        case 'SIGNED_IN':
+          if (session) {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('subscription_status')
+              .eq('id', session.user.id)
+              .single();
 
-          if (profile) {
-            toast({
-              title: "Welcome back!",
-              description: "Successfully signed in"
-            });
+            if (profile) {
+              toast({
+                title: "Welcome back!",
+                description: "Successfully signed in"
+              });
 
-            const state = location.state as { returnTo?: string };
-            const returnTo = state?.returnTo || '/alchemist-workshop';
-            navigate(returnTo, { replace: true });
+              const state = location.state as { returnTo?: string };
+              const returnTo = state?.returnTo || '/alchemist-workshop';
+              navigate(returnTo, { replace: true });
+            }
           }
-        } else if (event === 'SIGNED_OUT') {
+          break;
+
+        case 'SIGNED_OUT':
+          // Clear any cached data
+          localStorage.removeItem('userProfile');
           navigate('/login', { replace: true });
-        }
+          break;
+
+        case 'TOKEN_REFRESHED':
+          // Handle token refresh silently
+          break;
+
+        case 'USER_UPDATED':
+          // Handle user data update silently
+          break;
+
+        case 'USER_DELETED':
+          localStorage.removeItem('userProfile');
+          navigate('/login', { replace: true });
+          break;
       }
     });
 
