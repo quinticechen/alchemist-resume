@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import Home from "@/pages/Home";
@@ -239,9 +240,8 @@ const AuthWrapper = () => {
           // Handle user data update silently
           break;
 
-        case 'USER_DELETED':
-          localStorage.removeItem('userProfile');
-          navigate('/login', { replace: true });
+        case 'PASSWORD_RECOVERY':
+          // Handle password recovery silently
           break;
       }
     });
