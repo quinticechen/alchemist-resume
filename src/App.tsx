@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import Home from "@/pages/Home";
@@ -42,57 +43,72 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
         return;
       }
 
-      // First check if user has an active subscription
-      const { data: subscription } = await supabase
-        .from('subscriptions')
-        .select('status, tier, current_period_end')
-        .eq('user_id', session.user.id)
-        .eq('status', 'active')
-        .maybeSingle();
+      try {
+        // Get profile data first
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('subscription_status, usage_count, free_trial_limit, monthly_usage_count')
+          .eq('id', session.user.id)
+          .single();
 
-      // Get profile data
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('subscription_status, usage_count, free_trial_limit, monthly_usage_count')
-        .eq('id', session.user.id)
-        .single();
-
-      if (!profile) {
-        navigate('/login');
-        setIsLoading(false);
-        return;
-      }
-
-      let userHasAccess = false;
-
-      // Check subscription first
-      if (subscription?.status === 'active') {
-        if (subscription.tier === 'grandmaster') {
-          userHasAccess = new Date(subscription.current_period_end!) > new Date();
-        } else if (subscription.tier === 'alchemist') {
-          userHasAccess = (profile.monthly_usage_count || 0) < 30;
+        if (profileError || !profile) {
+          console.error('Profile fetch error:', profileError);
+          throw new Error('Could not fetch profile');
         }
-      } else {
-        // Fallback to profile check for apprentice
-        if (profile.subscription_status === 'apprentice') {
+
+        console.log('Profile data:', profile); // Debug log
+
+        let userHasAccess = false;
+
+        if (profile.subscription_status === 'alchemist') {
+          // For Alchemist, only check monthly usage
+          userHasAccess = (profile.monthly_usage_count || 0) < 30;
+          console.log('Alchemist access check:', { 
+            monthlyUsage: profile.monthly_usage_count, 
+            hasAccess: userHasAccess 
+          });
+        } else if (profile.subscription_status === 'apprentice') {
+          // For Apprentice, check trial usage
           userHasAccess = profile.usage_count < profile.free_trial_limit;
-        } else if (profile.subscription_status === 'alchemist') {
-          userHasAccess = (profile.monthly_usage_count || 0) < 30;
+        } else if (profile.subscription_status === 'grandmaster') {
+          // For Grandmaster, check subscription status
+          const { data: subscription } = await supabase
+            .from('subscriptions')
+            .select('current_period_end')
+            .eq('user_id', session.user.id)
+            .eq('status', 'active')
+            .maybeSingle();
+
+          userHasAccess = subscription?.current_period_end 
+            ? new Date(subscription.current_period_end) > new Date()
+            : false;
         }
-      }
 
-      if (!userHasAccess) {
+        if (!userHasAccess) {
+          toast({
+            title: "Access Denied",
+            description: profile.subscription_status === 'apprentice' 
+              ? "Free trial completed. Please upgrade your plan to continue."
+              : "Please check your subscription status or upgrade your plan.",
+          });
+          navigate('/pricing');
+          setIsLoading(false);
+          return;
+        }
+
+        setHasAccess(true);
+        setIsLoading(false);
+
+      } catch (error) {
+        console.error('Access check error:', error);
         toast({
-          title: "Access Denied",
-          description: profile.subscription_status === 'apprentice' 
-            ? "Free trial completed. Please upgrade your plan to continue."
-            : "Please check your subscription status or upgrade your plan.",
+          title: "Error",
+          description: "There was an error checking your access. Please try again.",
+          variant: "destructive"
         });
-        navigate('/pricing');
+        navigate('/account');
+        setIsLoading(false);
       }
-
-      setHasAccess(userHasAccess);
-      setIsLoading(false);
     };
 
     checkAccess();
