@@ -43,6 +43,15 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
         return;
       }
 
+      // First check if user has an active subscription
+      const { data: subscription } = await supabase
+        .from('subscriptions')
+        .select('status, tier, current_period_end')
+        .eq('user_id', session.user.id)
+        .eq('status', 'active')
+        .maybeSingle();
+
+      // Get profile data
       const { data: profile } = await supabase
         .from('profiles')
         .select('subscription_status, usage_count, free_trial_limit, monthly_usage_count')
@@ -57,27 +66,28 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
 
       let userHasAccess = false;
 
-      if (profile.subscription_status === 'apprentice') {
-        userHasAccess = profile.usage_count < profile.free_trial_limit;
-      } else if (profile.subscription_status === 'alchemist') {
-        userHasAccess = (profile.monthly_usage_count || 0) < 30;
-      } else if (profile.subscription_status === 'grandmaster') {
-        const { data: subscription } = await supabase
-          .from('subscriptions')
-          .select('current_period_end')
-          .eq('user_id', session.user.id)
-          .eq('status', 'active')
-          .maybeSingle();
-
-        if (subscription?.current_period_end) {
-          userHasAccess = new Date(subscription.current_period_end) > new Date();
+      // Check subscription first
+      if (subscription?.status === 'active') {
+        if (subscription.tier === 'grandmaster') {
+          userHasAccess = new Date(subscription.current_period_end!) > new Date();
+        } else if (subscription.tier === 'alchemist') {
+          userHasAccess = (profile.monthly_usage_count || 0) < 30;
+        }
+      } else {
+        // Fallback to profile check for apprentice
+        if (profile.subscription_status === 'apprentice') {
+          userHasAccess = profile.usage_count < profile.free_trial_limit;
+        } else if (profile.subscription_status === 'alchemist') {
+          userHasAccess = (profile.monthly_usage_count || 0) < 30;
         }
       }
 
       if (!userHasAccess) {
         toast({
           title: "Access Denied",
-          description: "Please upgrade your plan to continue using our services.",
+          description: profile.subscription_status === 'apprentice' 
+            ? "Free trial completed. Please upgrade your plan to continue."
+            : "Please check your subscription status or upgrade your plan.",
         });
         navigate('/pricing');
       }
@@ -107,6 +117,7 @@ const AuthWrapper = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [initialized, setInitialized] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -114,15 +125,25 @@ const AuthWrapper = () => {
       setInitialized(true);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       setSession(session);
       setInitialized(true);
 
-      if (event === 'SIGNED_IN') {
+      if (event === 'SIGNED_IN' && session) {
+        // Check user's subscription status
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('subscription_status')
+          .eq('id', session.user.id)
+          .single();
+
         toast({
           title: "Welcome back!",
           description: "Successfully signed in"
         });
+
+        // Always redirect to workshop after login - access will be checked by ProtectedRoute
+        navigate('/alchemist-workshop');
       }
     });
 
