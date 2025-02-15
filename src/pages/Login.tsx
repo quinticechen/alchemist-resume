@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
@@ -23,16 +22,21 @@ const Login = () => {
       // First check active subscription in subscriptions table
       const { data: subscription, error: subError } = await supabase
         .from('subscriptions')
-        .select('tier, status')
+        .select('*')  // Select all fields for better debugging
         .eq('user_id', userId)
         .maybeSingle();
 
-      if (subError) throw subError;
+      if (subError) {
+        console.error('Subscription check error:', subError);
+        throw subError;
+      }
       
-      console.log('Subscription data:', subscription);
+      console.log('Full subscription data:', subscription);
 
-      if (subscription?.status === 'active') {
-        console.log('Active subscription found, redirecting to workshop');
+      // Modified check for active subscription
+      if (subscription && subscription.status === 'active' && 
+          (subscription.tier === 'alchemist' || subscription.tier === 'grandmaster')) {
+        console.log('Valid active subscription found:', subscription);
         toast({
           title: "Welcome back!",
           description: "You've successfully signed in."
@@ -41,47 +45,75 @@ const Login = () => {
         return;
       }
 
-      // Check profile status as fallback
+      // Only check profile if no active subscription found
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('subscription_status, usage_count, free_trial_limit')
+        .select('*')  // Select all fields for better debugging
         .eq('id', userId)
-        .single();
+        .maybeSingle();
 
-      if (profileError) throw profileError;
+      if (profileError) {
+        console.error('Profile check error:', profileError);
+        throw profileError;
+      }
 
-      console.log('Profile data:', profile);
+      console.log('Full profile data:', profile);
 
+      if (!profile) {
+        console.error('No profile found for user');
+        throw new Error('No profile found');
+      }
+
+      // Check profile subscription status
       if (profile.subscription_status === 'grandmaster' || 
           profile.subscription_status === 'alchemist') {
-        console.log('Premium status in profile, redirecting to workshop');
+        console.log('Premium status in profile:', profile.subscription_status);
         toast({
           title: "Welcome back!",
           description: "You've successfully signed in."
         });
         navigate('/alchemist-workshop');
-      } else if (profile.usage_count >= profile.free_trial_limit) {
-        console.log('Free trial completed, redirecting to pricing');
-        toast({
-          title: "Free Trial Completed",
-          description: "Please upgrade to continue using our services."
-        });
-        navigate('/pricing');
-      } else {
-        console.log('Free trial active, redirecting to workshop');
-        toast({
-          title: "Welcome back!",
-          description: "You've successfully signed in."
-        });
-        navigate('/alchemist-workshop');
+        return;
       }
+
+      // Handle free trial user
+      if (profile.usage_count >= profile.free_trial_limit) {
+        console.log('Free trial limit reached:', {
+          usage_count: profile.usage_count,
+          limit: profile.free_trial_limit
+        });
+        
+        if (!profile.has_completed_survey) {
+          toast({
+            title: "Survey Required",
+            description: "Please complete the survey to continue using our services."
+          });
+          navigate('/survey-page');
+        } else {
+          toast({
+            title: "Free Trial Completed",
+            description: "Please upgrade to continue using our services."
+          });
+          navigate('/pricing');
+        }
+        return;
+      }
+
+      // Allow access for users within free trial
+      console.log('User within free trial limits');
+      toast({
+        title: "Welcome back!",
+        description: "You've successfully signed in."
+      });
+      navigate('/alchemist-workshop');
     } catch (error) {
-      console.error('Error checking subscription:', error);
+      console.error('Detailed subscription check error:', error);
       toast({
         title: "Error",
         description: "There was an error checking your subscription status."
       });
-      navigate('/alchemist-workshop');
+      // Default to login page on error
+      navigate('/login');
     }
   };
 

@@ -28,6 +28,7 @@ const AlchemistWorkshop = () => {
   const checkAccessAndUsage = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) {
+      console.log('No session found, redirecting to login');
       navigate('/login');
       return;
     }
@@ -38,55 +39,66 @@ const AlchemistWorkshop = () => {
       // First check active subscription
       const { data: subscription, error: subError } = await supabase
         .from('subscriptions')
-        .select('tier, status')
+        .select('*')  // Select all fields for better debugging
         .eq('user_id', session.user.id)
         .maybeSingle();
 
       if (subError) {
-        console.error("Error checking subscription:", subError);
+        console.error("Subscription check error:", subError);
         throw subError;
       }
 
-      console.log("Subscription check result:", subscription);
+      console.log("Full subscription data:", subscription);
 
-      // Check for active subscription first
-      if (subscription?.status === 'active') {
-        console.log('Active subscription found:', subscription.tier);
+      // Check for valid active subscription first
+      if (subscription && subscription.status === 'active' && 
+          (subscription.tier === 'alchemist' || subscription.tier === 'grandmaster')) {
+        console.log('Valid active subscription found:', subscription);
         return; // Allow access
       }
 
       // Then check profile
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('subscription_status, usage_count, free_trial_limit, has_completed_survey, monthly_usage_count')
+        .select('*')  // Select all fields for better debugging
         .eq('id', session.user.id)
-        .single();
+        .maybeSingle();
 
       if (profileError) {
-        console.error("Error checking profile:", profileError);
+        console.error("Profile check error:", profileError);
         throw profileError;
       }
 
-      console.log("Profile check result:", profile);
+      console.log("Full profile data:", profile);
 
+      if (!profile) {
+        console.error('No profile found');
+        throw new Error('No profile found');
+      }
+
+      // Check profile subscription status
       if (profile.subscription_status === 'grandmaster' || 
           profile.subscription_status === 'alchemist') {
-        console.log("Premium user, allowing access");
+        console.log('Premium status in profile:', profile.subscription_status);
         return; // Allow access
       }
 
       // Free tier (apprentice) checks
-      console.log("User is apprentice, checking usage count:", profile.usage_count, "limit:", profile.free_trial_limit);
+      console.log("Free tier checks:", {
+        usage_count: profile.usage_count,
+        limit: profile.free_trial_limit
+      });
+
       if (profile.usage_count >= profile.free_trial_limit) {
         if (!profile.has_completed_survey) {
-          console.log("Survey not completed, redirecting to survey");
+          console.log("Survey required");
           toast({
             title: "Survey Required",
             description: "Please complete the survey to continue using our services.",
           });
           navigate('/survey-page');
         } else {
-          console.log("Free trial completed, redirecting to pricing");
+          console.log("Free trial completed");
           toast({
             title: "Free Trial Completed",
             description: "Please upgrade to continue using our services.",
@@ -96,7 +108,7 @@ const AlchemistWorkshop = () => {
         return;
       }
     } catch (error) {
-      console.error("Error in checkAccessAndUsage:", error);
+      console.error("Detailed access check error:", error);
       toast({
         title: "Error",
         description: "An error occurred while checking access. Please try again.",
