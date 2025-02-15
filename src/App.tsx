@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import Home from "@/pages/Home";
@@ -16,12 +17,13 @@ import { useEffect, useState } from "react";
 import { supabase } from "./integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
 import { useNavigate } from "react-router-dom";
-import { toast } from "react-toastify";
+import { useToast } from "@/hooks/use-toast";
 
 const AuthWrapper = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [initialized, setInitialized] = useState(false);
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const checkUserAccessAndRedirect = async (userId: string) => {
     const { data: profile } = await supabase
