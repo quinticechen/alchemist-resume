@@ -17,15 +17,20 @@ const Login = () => {
   const location = useLocation();
 
   const checkSubscription = async (userId: string) => {
-    const { data: profile } = await supabase
+    console.log('Checking subscription for user:', userId);
+    const { data: profile, error } = await supabase
       .from('profiles')
-      .select('subscription_status, monthly_usage_count')
+      .select('subscription_status, usage_count, free_trial_limit')
       .eq('id', userId)
       .single();
+
+    console.log('Profile data:', profile);
+    console.log('Profile error:', error);
 
     if (profile) {
       // For grandmaster plan - unlimited access
       if (profile.subscription_status === 'grandmaster') {
+        console.log('User has Grandmaster plan');
         toast({
           title: "Welcome back!",
           description: "You've successfully signed in."
@@ -36,7 +41,14 @@ const Login = () => {
 
       // For alchemist plan - check monthly limits
       if (profile.subscription_status === 'alchemist') {
-        if (profile.monthly_usage_count >= 30) {
+        console.log('User has Alchemist plan');
+        const { data: monthlyUsage } = await supabase
+          .from('profiles')
+          .select('monthly_usage_count')
+          .eq('id', userId)
+          .single();
+
+        if (monthlyUsage && monthlyUsage.monthly_usage_count >= 30) {
           toast({
             title: "Monthly Limit Reached",
             description: "You've reached your monthly usage limit. Please upgrade to our Grandmaster plan for unlimited access."
@@ -52,14 +64,9 @@ const Login = () => {
         return;
       }
 
-      // For free tier (apprentice), check usage limits
-      const { data: usageData } = await supabase
-        .from('profiles')
-        .select('usage_count, free_trial_limit')
-        .eq('id', userId)
-        .single();
-
-      if (usageData && usageData.usage_count >= usageData.free_trial_limit) {
+      // For free tier (apprentice)
+      console.log('User has Apprentice plan');
+      if (profile.usage_count >= profile.free_trial_limit) {
         toast({
           title: "Free Trial Expired",
           description: "Please upgrade to continue using our services."
