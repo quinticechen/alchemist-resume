@@ -28,23 +28,37 @@ serve(async (req) => {
   const signature = req.headers.get('stripe-signature');
   if (!signature) {
     console.error('No Stripe signature found in webhook request');
-    return new Response('No signature', { status: 400 });
+    return new Response('No signature', { 
+      status: 400,
+      headers: corsHeaders 
+    });
   }
 
   try {
     const body = await req.text();
     const endpointSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET');
     
+    if (!endpointSecret) {
+      console.error('No webhook secret found');
+      return new Response('No webhook secret configured', { 
+        status: 500,
+        headers: corsHeaders 
+      });
+    }
+
     let event;
     try {
       event = stripe.webhooks.constructEvent(
         body,
         signature,
-        endpointSecret || ''
+        endpointSecret
       );
     } catch (err) {
       console.error(`Webhook signature verification failed: ${err.message}`);
-      return new Response(`Webhook Error: ${err.message}`, { status: 400 });
+      return new Response(`Webhook Error: ${err.message}`, { 
+        status: 400,
+        headers: corsHeaders 
+      });
     }
 
     console.log(`Received Stripe webhook event: ${event.type}`);
@@ -85,51 +99,50 @@ serve(async (req) => {
             break;
         }
 
-        console.log(`Updating subscription for user ${userId} to tier ${tier}`);
-        console.log('Subscription details:', {
-          status: subscription.status,
-          priceId,
-          tier,
-          customerId,
-        });
+        // Only update if subscription is active
+        if (subscription.status === 'active' || subscription.status === 'trialing') {
+          console.log(`Updating subscription for user ${userId} to tier ${tier}`);
+          
+          // Update subscriptions table
+          const { error: subscriptionError } = await supabase
+            .from('subscriptions')
+            .upsert({
+              user_id: userId,
+              stripe_customer_id: customerId,
+              stripe_subscription_id: subscription.id,
+              status: subscription.status,
+              tier: tier,
+              current_period_start: new Date(subscription.current_period_start * 1000),
+              current_period_end: new Date(subscription.current_period_end * 1000),
+              cancel_at_period_end: subscription.cancel_at_period_end,
+            }, {
+              onConflict: 'user_id',
+            });
 
-        // Update subscriptions table
-        const { error: subscriptionError } = await supabase
-          .from('subscriptions')
-          .upsert({
-            user_id: userId,
-            stripe_customer_id: customerId,
-            stripe_subscription_id: subscription.id,
-            status: subscription.status,
-            tier: tier,
-            current_period_start: new Date(subscription.current_period_start * 1000),
-            current_period_end: new Date(subscription.current_period_end * 1000),
-            cancel_at_period_end: subscription.cancel_at_period_end,
-          }, {
-            onConflict: 'user_id',
-          });
+          if (subscriptionError) {
+            console.error('Error updating subscription:', subscriptionError);
+            throw subscriptionError;
+          }
 
-        if (subscriptionError) {
-          console.error('Error updating subscription:', subscriptionError);
-          throw subscriptionError;
+          // Update profile's subscription status
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .update({
+              subscription_status: tier,
+              monthly_usage_count: tier === 'apprentice' ? null : 0,
+              monthly_usage_reset_date: tier === 'alchemist' ? new Date() : null
+            })
+            .eq('id', userId);
+
+          if (profileError) {
+            console.error('Error updating profile:', profileError);
+            throw profileError;
+          }
+
+          console.log(`Successfully updated subscription and profile for user ${userId}`);
+        } else {
+          console.log(`Subscription ${subscription.id} status is ${subscription.status}, not updating database`);
         }
-
-        // Update profile's subscription status
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .update({
-            subscription_status: tier,
-            monthly_usage_count: tier === 'apprentice' ? null : 0,
-            monthly_usage_reset_date: tier === 'alchemist' ? new Date() : null
-          })
-          .eq('id', userId);
-
-        if (profileError) {
-          console.error('Error updating profile:', profileError);
-          throw profileError;
-        }
-
-        console.log(`Successfully updated subscription and profile for user ${userId}`);
         break;
 
       case 'customer.subscription.deleted':
