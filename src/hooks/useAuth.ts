@@ -19,16 +19,15 @@ export const useAuth = () => {
       setIsLoading(true);
       console.log(`Initiating ${provider} login...`);
       
-      const redirectTo = `${window.location.origin}/alchemist-workshop`;
-      console.log('Redirect URL:', redirectTo);
-      
-      const { error } = await supabase.auth.signInWithOAuth({
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo,
+          redirectTo: `${window.location.origin}/alchemist-workshop`,
           queryParams: {
             prompt: 'consent'
-          }
+          },
+          // Enable session persistence
+          persistSession: true
         },
       });
       
@@ -68,6 +67,11 @@ export const useAuth = () => {
           password,
           options: {
             emailRedirectTo: `${window.location.origin}/alchemist-workshop`,
+            data: {
+              email: email,
+            },
+            // Enable session persistence
+            persistSession: true
           },
         });
         if (error) throw error;
@@ -80,10 +84,26 @@ export const useAuth = () => {
         const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
+          options: {
+            // Enable session persistence
+            persistSession: true
+          }
         });
         if (error) throw error;
         
+        // Cache user profile data for faster access
         if (data.user) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', data.user.id)
+            .single();
+
+          // Store session in localStorage for persistence
+          if (profile) {
+            localStorage.setItem('userProfile', JSON.stringify(profile));
+          }
+
           await checkSubscriptionAndRedirect(data.user.id);
         }
       }

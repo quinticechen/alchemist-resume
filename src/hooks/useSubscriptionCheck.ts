@@ -11,40 +11,31 @@ export const useSubscriptionCheck = () => {
     console.log('Checking subscription for user:', userId);
     
     try {
-      const { data: subscription, error: subError } = await supabase
-        .from('subscriptions')
-        .select('*')
-        .eq('user_id', userId)
-        .maybeSingle();
+      // First check cached profile data
+      const cachedProfile = localStorage.getItem('userProfile');
+      let profile = cachedProfile ? JSON.parse(cachedProfile) : null;
 
-      if (subError) {
-        console.error('Subscription check error:', subError);
-        throw subError;
-      }
-      
-      console.log('Full subscription data:', subscription);
+      // If no cached data or cache is old (>1 hour), fetch fresh data
+      if (!profile || (Date.now() - (profile.cachedAt || 0) > 3600000)) {
+        const { data: freshProfile, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', userId)
+          .single();
 
-      // Check for active subscription first
-      if (subscription?.status === 'active' && 
-          (subscription.tier === 'alchemist' || subscription.tier === 'grandmaster')) {
-        console.log('Valid active subscription found:', subscription);
-        toast({
-          title: "Welcome back!",
-          description: "You've successfully signed in."
-        });
-        return; // Don't navigate - let the app handle normal routing
-      }
+        if (profileError) {
+          console.error('Profile check error:', profileError);
+          throw profileError;
+        }
 
-      // If no active subscription, check profile
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .maybeSingle();
-
-      if (profileError) {
-        console.error('Profile check error:', profileError);
-        throw profileError;
+        if (freshProfile) {
+          // Update cache with fresh data and timestamp
+          profile = {
+            ...freshProfile,
+            cachedAt: Date.now()
+          };
+          localStorage.setItem('userProfile', JSON.stringify(profile));
+        }
       }
 
       console.log('Full profile data:', profile);
@@ -54,7 +45,7 @@ export const useSubscriptionCheck = () => {
         throw new Error('No profile found');
       }
 
-      // Check profile subscription status
+      // Handle different subscription statuses
       if (profile.subscription_status === 'grandmaster' || 
           profile.subscription_status === 'alchemist') {
         console.log('Premium status in profile:', profile.subscription_status);
@@ -62,7 +53,7 @@ export const useSubscriptionCheck = () => {
           title: "Welcome back!",
           description: "You've successfully signed in."
         });
-        return; // Don't navigate - let the app handle normal routing
+        return;
       }
 
       // Handle free trial cases
@@ -89,7 +80,6 @@ export const useSubscriptionCheck = () => {
         title: "Welcome back!",
         description: "You've successfully signed in."
       });
-      // Don't navigate - let the app handle normal routing
     } catch (error) {
       console.error('Detailed subscription check error:', error);
       toast({
