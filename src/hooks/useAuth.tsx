@@ -3,7 +3,6 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useSubscriptionCheck } from "./useSubscriptionCheck";
 
 export const useAuth = () => {
   const [email, setEmail] = useState("");
@@ -12,15 +11,50 @@ export const useAuth = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { checkSubscriptionAndRedirect } = useSubscriptionCheck();
+
+  const checkUserAccess = async (userId: string) => {
+    // First check profile status
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('subscription_status, usage_count, free_trial_limit, monthly_usage_count')
+      .eq('id', userId)
+      .single();
+
+    if (!profile) {
+      return false;
+    }
+
+    // For Apprentice: Check free trial usage
+    if (profile.subscription_status === 'apprentice') {
+      return profile.usage_count < profile.free_trial_limit;
+    }
+
+    // For Alchemist: Check monthly usage
+    if (profile.subscription_status === 'alchemist') {
+      return (profile.monthly_usage_count || 0) < 30;
+    }
+
+    // For Grandmaster: Check subscription period
+    if (profile.subscription_status === 'grandmaster') {
+      const { data: subscription } = await supabase
+        .from('subscriptions')
+        .select('current_period_end')
+        .eq('user_id', userId)
+        .eq('status', 'active')
+        .maybeSingle();
+
+      if (subscription?.current_period_end) {
+        return new Date(subscription.current_period_end) > new Date();
+      }
+    }
+
+    return false;
+  };
 
   const handleSocialLogin = async (provider: 'google' | 'linkedin_oidc') => {
     try {
       setIsLoading(true);
-      console.log(`Initiating ${provider} login...`);
-      
       const redirectTo = `${window.location.origin}/alchemist-workshop`;
-      console.log('Redirect URL:', redirectTo);
       
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
@@ -48,7 +82,6 @@ export const useAuth = () => {
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    console.log('Attempting email login/signup...');
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
@@ -62,7 +95,6 @@ export const useAuth = () => {
 
     try {
       if (isSignUp) {
-        console.log('Attempting signup...');
         const { error } = await supabase.auth.signUp({
           email,
           password,
@@ -76,15 +108,21 @@ export const useAuth = () => {
           description: "Please check your email to verify your account"
         });
       } else {
-        console.log('Attempting signin...');
         const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
         if (error) throw error;
-        
-        // Always redirect to alchemist-workshop after successful login
-        navigate('/alchemist-workshop');
+
+        // Show single welcome toast
+        toast({
+          title: "Welcome back!",
+          description: "Successfully signed in"
+        });
+
+        // Check user access and redirect accordingly
+        const hasAccess = await checkUserAccess(data.user.id);
+        navigate(hasAccess ? '/alchemist-workshop' : '/pricing');
       }
     } catch (error: any) {
       console.error('Auth error:', error);
