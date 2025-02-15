@@ -23,19 +23,33 @@ const AlchemistWorkshop = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    checkUsageAndSurvey();
+    checkAccessAndUsage();
   }, []);
 
-  const checkUsageAndSurvey = async () => {
+  const checkAccessAndUsage = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) {
       navigate('/login');
       return;
     }
 
+    // First check active subscription
+    const { data: subscription } = await supabase
+      .from('subscriptions')
+      .select('tier, status')
+      .eq('user_id', session.user.id)
+      .single();
+
+    // If there's an active subscription, allow access immediately
+    if (subscription && subscription.status === 'active') {
+      console.log('Active subscription found:', subscription.tier);
+      return; // Allow access
+    }
+
+    // If no active subscription, check profile
     const { data: profile } = await supabase
       .from('profiles')
-      .select('usage_count, has_completed_survey')
+      .select('subscription_status, usage_count, free_trial_limit, has_completed_survey, monthly_usage_count')
       .eq('id', session.user.id)
       .single();
 
@@ -43,21 +57,39 @@ const AlchemistWorkshop = () => {
       setUsageCount(profile.usage_count || 0);
       setHasCompletedSurvey(profile.has_completed_survey || false);
 
-      if (profile.usage_count >= 3 && !profile.has_completed_survey) {
-        toast({
-          title: "Survey Required",
-          description: "Please complete the survey to continue using our services.",
-        });
-        navigate('/survey-page');
-        return;
+      // Check subscription status from profile
+      if (profile.subscription_status === 'grandmaster') {
+        return; // Allow access
       }
 
-      if (profile.usage_count >= 3) {
-        toast({
-          title: "Free Trial Completed",
-          description: "Please upgrade to continue using our services.",
-        });
-        navigate('/pricing');
+      if (profile.subscription_status === 'alchemist') {
+        const monthlyUsage = profile.monthly_usage_count || 0;
+        if (monthlyUsage >= 30) {
+          toast({
+            title: "Monthly Limit Reached",
+            description: "You've reached your monthly usage limit. Please upgrade to our Grandmaster plan for unlimited access.",
+          });
+          navigate('/pricing');
+          return;
+        }
+        return; // Allow access if under monthly limit
+      }
+
+      // Free tier (apprentice) checks
+      if (profile.usage_count >= profile.free_trial_limit) {
+        if (!profile.has_completed_survey) {
+          toast({
+            title: "Survey Required",
+            description: "Please complete the survey to continue using our services.",
+          });
+          navigate('/survey-page');
+        } else {
+          toast({
+            title: "Free Trial Completed",
+            description: "Please upgrade to continue using our services.",
+          });
+          navigate('/pricing');
+        }
         return;
       }
     }
@@ -80,24 +112,75 @@ const AlchemistWorkshop = () => {
   };
 
   const handleUrlSubmit = async (url: string) => {
-    if (usageCount >= 3 && !hasCompletedSurvey) {
-      toast({
-        title: "Survey Required",
-        description: "Please complete the survey to continue using our services.",
-      });
-      navigate('/survey-page');
+    // Recheck access before processing
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) {
+      navigate('/login');
       return;
     }
 
-    if (usageCount >= 3) {
-      toast({
-        title: "Free Trial Completed",
-        description: "Please upgrade to continue using our services.",
-      });
-      navigate('/pricing');
+    // Check subscription status again
+    const { data: subscription } = await supabase
+      .from('subscriptions')
+      .select('tier, status')
+      .eq('user_id', session.user.id)
+      .single();
+
+    if (subscription && subscription.status === 'active') {
+      // Process normally for active subscribers
+      await processResume(url);
       return;
     }
 
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('subscription_status, usage_count, free_trial_limit, has_completed_survey, monthly_usage_count')
+      .eq('id', session.user.id)
+      .single();
+
+    if (profile) {
+      if (profile.subscription_status === 'grandmaster') {
+        await processResume(url);
+        return;
+      }
+
+      if (profile.subscription_status === 'alchemist') {
+        const monthlyUsage = profile.monthly_usage_count || 0;
+        if (monthlyUsage >= 30) {
+          toast({
+            title: "Monthly Limit Reached",
+            description: "Please upgrade to continue using our services.",
+          });
+          navigate('/pricing');
+          return;
+        }
+        await processResume(url);
+        return;
+      }
+
+      // Free tier checks
+      if (profile.usage_count >= profile.free_trial_limit) {
+        if (!profile.has_completed_survey) {
+          toast({
+            title: "Survey Required",
+            description: "Please complete the survey to continue using our services.",
+          });
+          navigate('/survey-page');
+        } else {
+          toast({
+            title: "Free Trial Completed",
+            description: "Please upgrade to continue using our services.",
+          });
+          navigate('/pricing');
+        }
+        return;
+      }
+
+      await processResume(url);
+    }
+  };
+
+  const processResume = async (url: string) => {
     setIsProcessing(true);
     try {
       const { data, error } = await supabase.functions.invoke('process-resume', {
