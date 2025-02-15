@@ -16,42 +16,23 @@ const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const checkSubscription = async (userId: string) => {
+  const checkSubscriptionAndRedirect = async (userId: string) => {
     console.log('Checking subscription for user:', userId);
     
-    // Get subscription status
-    const { data: subscription, error: subError } = await supabase
-      .from('subscriptions')
-      .select('tier, status, stripe_customer_id')
-      .eq('user_id', userId)
-      .single();
+    try {
+      // First check active subscription in subscriptions table
+      const { data: subscription, error: subError } = await supabase
+        .from('subscriptions')
+        .select('tier, status')
+        .eq('user_id', userId)
+        .maybeSingle();
 
-    console.log('Subscription data:', subscription);
+      if (subError) throw subError;
+      
+      console.log('Subscription data:', subscription);
 
-    // Get profile data
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('subscription_status, usage_count, free_trial_limit, monthly_usage_count')
-      .eq('id', userId)
-      .single();
-
-    console.log('Profile data:', profile);
-
-    // Prioritize subscription table data as it's the source of truth
-    if (subscription && subscription.status === 'active') {
-      console.log('Active subscription found:', subscription.tier);
-      toast({
-        title: "Welcome back!",
-        description: "You've successfully signed in."
-      });
-      navigate('/alchemist-workshop');
-      return;
-    }
-
-    // Fall back to profile data
-    if (profile) {
-      if (profile.subscription_status === 'grandmaster') {
-        console.log('Grandmaster status in profile');
+      if (subscription?.status === 'active') {
+        console.log('Active subscription found, redirecting to workshop');
         toast({
           title: "Welcome back!",
           description: "You've successfully signed in."
@@ -60,40 +41,47 @@ const Login = () => {
         return;
       }
 
-      if (profile.subscription_status === 'alchemist') {
-        console.log('Alchemist status in profile');
-        const monthlyUsage = profile.monthly_usage_count || 0;
-        if (monthlyUsage >= 30) {
-          toast({
-            title: "Monthly Limit Reached",
-            description: "You've reached your monthly usage limit. Please upgrade to our Grandmaster plan for unlimited access."
-          });
-          navigate('/pricing');
-        } else {
-          toast({
-            title: "Welcome back!",
-            description: "You've successfully signed in."
-          });
-          navigate('/alchemist-workshop');
-        }
-        return;
-      }
+      // Check profile status as fallback
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('subscription_status, usage_count, free_trial_limit')
+        .eq('id', userId)
+        .single();
 
-      // Free tier (apprentice)
-      console.log('Apprentice status in profile');
-      if (profile.usage_count >= profile.free_trial_limit) {
+      if (profileError) throw profileError;
+
+      console.log('Profile data:', profile);
+
+      if (profile.subscription_status === 'grandmaster' || 
+          profile.subscription_status === 'alchemist') {
+        console.log('Premium status in profile, redirecting to workshop');
         toast({
-          title: "Free Trial Expired",
+          title: "Welcome back!",
+          description: "You've successfully signed in."
+        });
+        navigate('/alchemist-workshop');
+      } else if (profile.usage_count >= profile.free_trial_limit) {
+        console.log('Free trial completed, redirecting to pricing');
+        toast({
+          title: "Free Trial Completed",
           description: "Please upgrade to continue using our services."
         });
         navigate('/pricing');
       } else {
+        console.log('Free trial active, redirecting to workshop');
         toast({
           title: "Welcome back!",
           description: "You've successfully signed in."
         });
         navigate('/alchemist-workshop');
       }
+    } catch (error) {
+      console.error('Error checking subscription:', error);
+      toast({
+        title: "Error",
+        description: "There was an error checking your subscription status."
+      });
+      navigate('/alchemist-workshop');
     }
   };
 
@@ -167,7 +155,7 @@ const Login = () => {
         if (error) throw error;
         
         if (data.user) {
-          await checkSubscription(data.user.id);
+          await checkSubscriptionAndRedirect(data.user.id);
         }
       }
     } catch (error: any) {

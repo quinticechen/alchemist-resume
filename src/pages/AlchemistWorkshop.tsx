@@ -49,18 +49,18 @@ const AlchemistWorkshop = () => {
 
       console.log("Subscription check result:", subscription);
 
-      // If there's an active subscription, allow access immediately
+      // Check for active subscription first
       if (subscription?.status === 'active') {
         console.log('Active subscription found:', subscription.tier);
         return; // Allow access
       }
 
-      // If no active subscription, check profile
+      // Then check profile
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('subscription_status, usage_count, free_trial_limit, has_completed_survey, monthly_usage_count')
         .eq('id', session.user.id)
-        .maybeSingle();
+        .single();
 
       if (profileError) {
         console.error("Error checking profile:", profileError);
@@ -69,34 +69,10 @@ const AlchemistWorkshop = () => {
 
       console.log("Profile check result:", profile);
 
-      if (!profile) {
-        console.error("No profile found for user");
-        navigate('/login');
-        return;
-      }
-
-      setUsageCount(profile.usage_count || 0);
-      setHasCompletedSurvey(profile.has_completed_survey || false);
-
-      // Check subscription status from profile
-      if (profile.subscription_status === 'grandmaster') {
-        console.log("User is grandmaster, allowing access");
+      if (profile.subscription_status === 'grandmaster' || 
+          profile.subscription_status === 'alchemist') {
+        console.log("Premium user, allowing access");
         return; // Allow access
-      }
-
-      if (profile.subscription_status === 'alchemist') {
-        console.log("User is alchemist, checking monthly usage");
-        const monthlyUsage = profile.monthly_usage_count || 0;
-        if (monthlyUsage >= 30) {
-          console.log("Monthly limit reached");
-          toast({
-            title: "Monthly Limit Reached",
-            description: "You've reached your monthly usage limit. Please upgrade to our Grandmaster plan for unlimited access.",
-          });
-          navigate('/pricing');
-          return;
-        }
-        return; // Allow access if under monthly limit
       }
 
       // Free tier (apprentice) checks
