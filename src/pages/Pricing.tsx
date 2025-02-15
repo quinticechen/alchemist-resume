@@ -9,6 +9,7 @@ import { PricingToggle } from "@/components/pricing/PricingToggle";
 import { PricingCard } from "@/components/pricing/PricingCard";
 import { pricingPlans } from "@/data/pricingPlans";
 import { Session } from "@supabase/supabase-js";
+import { Badge } from "@/components/ui/badge";
 
 const Pricing = () => {
   const navigate = useNavigate();
@@ -16,6 +17,12 @@ const Pricing = () => {
   const [isAnnual, setIsAnnual] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [session, setSession] = useState<Session | null>(null);
+  const [usageInfo, setUsageInfo] = useState<{
+    subscription_status: 'apprentice' | 'alchemist' | 'grandmaster';
+    usage_count: number;
+    monthly_usage_count: number | null;
+    free_trial_limit: number;
+  } | null>(null);
   
   const { isStripeInitializing, stripePromise } = useStripeInit();
   const { isAuthenticated, hasCompletedSurvey } = useAuthAndSurvey();
@@ -24,6 +31,9 @@ const Pricing = () => {
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
+      if (session?.user) {
+        fetchUsageInfo(session.user.id);
+      }
     });
 
     // Listen for auth changes
@@ -31,10 +41,41 @@ const Pricing = () => {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
+      if (session?.user) {
+        fetchUsageInfo(session.user.id);
+      }
     });
 
     return () => subscription.unsubscribe();
   }, []);
+
+  const fetchUsageInfo = async (userId: string) => {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('subscription_status, usage_count, monthly_usage_count, free_trial_limit')
+      .eq('id', userId)
+      .single();
+
+    if (error) {
+      console.error('Error fetching usage info:', error);
+      return;
+    }
+
+    setUsageInfo(data);
+  };
+
+  const getRemainingUses = () => {
+    if (!usageInfo) return 0;
+    
+    switch (usageInfo.subscription_status) {
+      case 'grandmaster':
+        return '∞';
+      case 'alchemist':
+        return Math.max(0, 30 - (usageInfo.monthly_usage_count || 0));
+      default:
+        return Math.max(0, usageInfo.free_trial_limit - (usageInfo.usage_count || 0));
+    }
+  };
 
   const handlePlanSelection = async (planId: string) => {
     if (!isAuthenticated || !session) {
@@ -66,7 +107,6 @@ const Pricing = () => {
 
     setIsLoading(true);
     try {
-      // Use the stored session directly
       if (!session?.access_token) {
         throw new Error('No valid session found');
       }
@@ -104,7 +144,8 @@ const Pricing = () => {
 
   const plans = pricingPlans.map(plan => ({
     ...plan,
-    showButton: plan.planId === 'apprentice' ? !isAuthenticated : plan.showButton
+    showButton: plan.planId === 'apprentice' ? !isAuthenticated : plan.showButton,
+    isCurrentPlan: usageInfo?.subscription_status === plan.planId
   }));
 
   return (
@@ -115,9 +156,19 @@ const Pricing = () => {
             <h1 className="text-4xl font-bold mb-4 bg-gradient-primary text-transparent bg-clip-text">
               Choose Your Plan
             </h1>
-            <p className="text-xl text-neutral-600 mb-8">
+            <p className="text-xl text-neutral-600 mb-4">
               Select the perfect plan for your career growth
             </p>
+            {isAuthenticated && usageInfo && (
+              <div className="flex items-center justify-center gap-2 mb-8">
+                <Badge variant="outline" className="text-primary border-primary">
+                  Current Plan: {usageInfo.subscription_status.charAt(0).toUpperCase() + usageInfo.subscription_status.slice(1)}
+                </Badge>
+                <Badge variant="outline" className="text-primary border-primary">
+                  Remaining Uses: {getRemainingUses()}
+                </Badge>
+              </div>
+            )}
             
             <PricingToggle isAnnual={isAnnual} setIsAnnual={setIsAnnual} />
           </div>
