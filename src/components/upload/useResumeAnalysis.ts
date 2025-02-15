@@ -1,3 +1,4 @@
+
 import { useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,8 +13,12 @@ export const useResumeAnalysis = () => {
 
   useEffect(() => {
     console.log('Setting up realtime subscription for resume analyses');
+    
+    // Create a stable channel name
+    const channelName = 'resume_analyses_updates';
+    
     const channel = supabase
-      .channel('resume_analyses')
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
@@ -32,12 +37,18 @@ export const useResumeAnalysis = () => {
         }
       )
       .subscribe((status) => {
-        console.log('Subscription status:', status);
+        console.log(`Subscription ${channelName} status:`, status);
+        if (status === 'SUBSCRIBED') {
+          console.log(`Successfully subscribed to ${channelName}`);
+        }
       });
 
+    // Cleanup function
     return () => {
-      console.log('Cleaning up realtime subscription');
-      void supabase.removeChannel(channel);
+      console.log(`Cleaning up realtime subscription for ${channelName}`);
+      supabase.removeChannel(channel).then(() => {
+        console.log(`Successfully cleaned up ${channelName} subscription`);
+      });
     };
-  }, [toast]);
+  }, [toast]); // Only re-run if toast changes
 };

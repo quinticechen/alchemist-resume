@@ -18,16 +18,17 @@ const Login = () => {
 
   const checkSubscription = async (userId: string) => {
     console.log('Checking subscription for user:', userId);
-    // First check the subscriptions table
+    
+    // Get subscription status
     const { data: subscription, error: subError } = await supabase
       .from('subscriptions')
-      .select('tier, status')
+      .select('tier, status, stripe_customer_id')
       .eq('user_id', userId)
       .single();
 
     console.log('Subscription data:', subscription);
 
-    // Then check the profile
+    // Get profile data
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('subscription_status, usage_count, free_trial_limit, monthly_usage_count')
@@ -61,7 +62,7 @@ const Login = () => {
 
       if (profile.subscription_status === 'alchemist') {
         console.log('Alchemist status in profile');
-        const monthlyUsage = profile.monthly_usage_count || 0; // Handle case where it might be null
+        const monthlyUsage = profile.monthly_usage_count || 0;
         if (monthlyUsage >= 30) {
           toast({
             title: "Monthly Limit Reached",
