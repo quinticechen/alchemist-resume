@@ -50,7 +50,6 @@ serve(async (req) => {
 
     let event;
     try {
-      // Using constructEventAsync instead of constructEvent
       event = await stripe.webhooks.constructEventAsync(
         body,
         signature,
@@ -133,7 +132,7 @@ serve(async (req) => {
             .update({
               subscription_status: tier,
               monthly_usage_count: tier === 'apprentice' ? null : 0,
-              monthly_usage_reset_date: tier === 'alchemist' ? new Date() : null
+              monthly_usage_reset_date: tier === 'alchemist' ? new Date(subscription.current_period_start * 1000) : null
             })
             .eq('id', userId);
 
