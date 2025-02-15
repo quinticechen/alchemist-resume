@@ -31,87 +31,100 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const location = useLocation();
 
   useEffect(() => {
-    const checkAccess = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session?.user) {
-        setIsLoading(false);
-        navigate('/login', { 
-          state: { returnTo: location.pathname },
-          replace: true 
-        });
-        return;
-      }
+    let isSubscribed = true;
 
+    const checkAccess = async () => {
       try {
-        // Get profile data first
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session?.user) {
+          console.log('No session found, redirecting to login');
+          navigate('/login', { 
+            state: { returnTo: location.pathname },
+            replace: true 
+          });
+          return;
+        }
+
+        // Get profile data
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('subscription_status, usage_count, free_trial_limit, monthly_usage_count')
           .eq('id', session.user.id)
           .single();
 
-        if (profileError || !profile) {
+        if (profileError) {
           console.error('Profile fetch error:', profileError);
-          throw new Error('Could not fetch profile');
+          throw profileError;
         }
 
-        console.log('Profile data:', profile); // Debug log
+        console.log('Profile data:', profile);
+
+        if (!profile) {
+          console.error('No profile found');
+          throw new Error('No profile found');
+        }
 
         let userHasAccess = false;
 
-        if (profile.subscription_status === 'alchemist') {
-          // For Alchemist, only check monthly usage
-          userHasAccess = (profile.monthly_usage_count || 0) < 30;
-          console.log('Alchemist access check:', { 
-            monthlyUsage: profile.monthly_usage_count, 
-            hasAccess: userHasAccess 
-          });
-        } else if (profile.subscription_status === 'apprentice') {
-          // For Apprentice, check trial usage
-          userHasAccess = profile.usage_count < profile.free_trial_limit;
-        } else if (profile.subscription_status === 'grandmaster') {
-          // For Grandmaster, check subscription status
-          const { data: subscription } = await supabase
-            .from('subscriptions')
-            .select('current_period_end')
-            .eq('user_id', session.user.id)
-            .eq('status', 'active')
-            .maybeSingle();
-
-          userHasAccess = subscription?.current_period_end 
-            ? new Date(subscription.current_period_end) > new Date()
-            : false;
+        // Simplified access check logic
+        switch (profile.subscription_status) {
+          case 'alchemist':
+            userHasAccess = (profile.monthly_usage_count || 0) < 30;
+            console.log('Alchemist check:', { monthly: profile.monthly_usage_count, hasAccess: userHasAccess });
+            break;
+          case 'apprentice':
+            userHasAccess = profile.usage_count < profile.free_trial_limit;
+            console.log('Apprentice check:', { usage: profile.usage_count, limit: profile.free_trial_limit });
+            break;
+          case 'grandmaster':
+            const { data: subscription } = await supabase
+              .from('subscriptions')
+              .select('current_period_end')
+              .eq('user_id', session.user.id)
+              .eq('status', 'active')
+              .maybeSingle();
+            userHasAccess = subscription?.current_period_end 
+              ? new Date(subscription.current_period_end) > new Date()
+              : false;
+            console.log('Grandmaster check:', { subscription, hasAccess: userHasAccess });
+            break;
+          default:
+            userHasAccess = false;
         }
 
-        if (!userHasAccess) {
-          toast({
-            title: "Access Denied",
-            description: profile.subscription_status === 'apprentice' 
-              ? "Free trial completed. Please upgrade your plan to continue."
-              : "Please check your subscription status or upgrade your plan.",
-          });
-          navigate('/pricing');
+        if (isSubscribed) {
+          if (!userHasAccess) {
+            toast({
+              title: "Access Denied",
+              description: profile.subscription_status === 'apprentice'
+                ? "Free trial completed. Please upgrade your plan to continue."
+                : "Please check your subscription status or upgrade your plan.",
+            });
+            navigate('/pricing', { replace: true });
+          }
+          setHasAccess(userHasAccess);
           setIsLoading(false);
-          return;
         }
-
-        setHasAccess(true);
-        setIsLoading(false);
-
       } catch (error) {
         console.error('Access check error:', error);
-        toast({
-          title: "Error",
-          description: "There was an error checking your access. Please try again.",
-          variant: "destructive"
-        });
-        navigate('/account');
-        setIsLoading(false);
+        if (isSubscribed) {
+          toast({
+            title: "Error",
+            description: "There was an error checking your access. Please try again.",
+            variant: "destructive"
+          });
+          navigate('/login', { replace: true });
+          setIsLoading(false);
+        }
       }
     };
 
     checkAccess();
+    
+    return () => {
+      isSubscribed = false;
+    };
   }, [location.pathname]);
 
   if (isLoading) {
@@ -136,36 +149,50 @@ const AuthWrapper = () => {
   const location = useLocation();
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setInitialized(true);
-    });
+    let isSubscribed = true;
+
+    const initializeAuth = async () => {
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      if (isSubscribed) {
+        setSession(currentSession);
+        setInitialized(true);
+      }
+    };
+
+    initializeAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      setSession(session);
-      setInitialized(true);
+      console.log('Auth state changed:', event, session);
+      
+      if (isSubscribed) {
+        setSession(session);
+        setInitialized(true);
 
-      if (event === 'SIGNED_IN' && session) {
-        // Check user's subscription status
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('subscription_status')
-          .eq('id', session.user.id)
-          .single();
+        if (event === 'SIGNED_IN' && session) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('subscription_status')
+            .eq('id', session.user.id)
+            .single();
 
-        toast({
-          title: "Welcome back!",
-          description: "Successfully signed in"
-        });
+          toast({
+            title: "Welcome back!",
+            description: "Successfully signed in"
+          });
 
-        // Get the return path from state, default to workshop if none
-        const state = location.state as { returnTo?: string };
-        const returnTo = state?.returnTo || '/alchemist-workshop';
-        navigate(returnTo, { replace: true });
+          const state = location.state as { returnTo?: string };
+          const returnTo = state?.returnTo || '/alchemist-workshop';
+          navigate(returnTo, { replace: true });
+        } else if (event === 'SIGNED_OUT') {
+          navigate('/login', { replace: true });
+        }
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      isSubscribed = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   if (!initialized) {
