@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Upload, Zap, CheckCircle, Globe, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
+import { useToast } from "@/hooks/use-toast";
 
 const companies = [
   "Google", "Amazon", "Microsoft", "Apple", "Meta"
@@ -64,28 +65,85 @@ const faqs = [
 const Home = () => {
   const navigate = useNavigate();
   const [session, setSession] = useState<Session | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-    });
+    const initializeSession = async () => {
+      try {
+        const { data: { session: initialSession }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error('Session error:', sessionError);
+          throw sessionError;
+        }
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
+        console.log('Initial session check:', initialSession);
+        setSession(initialSession);
 
-    return () => subscription.unsubscribe();
-  }, []);
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, currentSession) => {
+          console.log('Auth state changed:', event, currentSession);
+          setSession(currentSession);
+          
+          if (event === 'SIGNED_IN' && currentSession) {
+            toast({
+              title: "Successfully signed in",
+              description: "Redirecting to workshop..."
+            });
+            navigate('/alchemist-workshop');
+          }
+        });
 
-  const handleStartTrial = () => {
-    if (session) {
-      navigate("/alchemist-workshop");
-    } else {
-      navigate("/login");
+        return () => {
+          subscription.unsubscribe();
+        };
+      } catch (error) {
+        console.error('Session initialization error:', error);
+        toast({
+          title: "Error",
+          description: "There was a problem checking your login status. Please try again.",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    initializeSession();
+  }, [navigate, toast]);
+
+  const handleStartTrial = async () => {
+    try {
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      console.log('Current session before navigation:', currentSession);
+
+      if (currentSession) {
+        console.log('Navigating to workshop (user is logged in)');
+        navigate("/alchemist-workshop");
+      } else {
+        console.log('Navigating to login (user is not logged in)');
+        navigate("/login");
+      }
+    } catch (error) {
+      console.error('Navigation error:', error);
+      toast({
+        title: "Error",
+        description: "There was a problem checking your login status. Please try again.",
+        variant: "destructive"
+      });
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="mb-4 text-xl font-semibold text-primary">Loading...</div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100">
