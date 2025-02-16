@@ -115,4 +115,70 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
         if (isSubscribed) {
           setHasAccess(false);
           toast({
-            title: "Error
+            title: "Error",
+            description: "There was an error checking your access. Please try again.",
+            variant: "destructive"
+          });
+        }
+      } finally {
+        if (isSubscribed) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    checkAccess();
+
+    return () => {
+      isSubscribed = false;
+    };
+  }, [navigate, location, toast]);
+
+  if (isLoading) {
+    return <LoadingScreen />;
+  }
+
+  return hasAccess ? <>{children}</> : null;
+};
+
+const App = () => {
+  return (
+    <Router>
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <main className="flex-grow">
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route 
+              path="/alchemist-workshop" 
+              element={
+                <ProtectedRoute>
+                  <AlchemistWorkshop />
+                </ProtectedRoute>
+              }
+            />
+            <Route 
+              path="/alchemy-records" 
+              element={
+                <ProtectedRoute>
+                  <AlchemyRecords />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="/account" element={<Account />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/faq" element={<FAQ />} />
+            <Route path="/pricing" element={<Pricing />} />
+            <Route path="/survey-page" element={<SurveyPage />} />
+          </Routes>
+        </main>
+        <Footer />
+        <Toaster />
+      </div>
+    </Router>
+  );
+};
+
+export default App;
