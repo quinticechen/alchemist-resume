@@ -1,7 +1,9 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Upload, Zap, CheckCircle, Globe, MapPin } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { Session } from "@supabase/supabase-js";
 
 const companies = [
   "Google", "Amazon", "Microsoft", "Apple", "Meta"
@@ -61,10 +63,32 @@ const faqs = [
 
 const Home = () => {
   const navigate = useNavigate();
+  const [session, setSession] = useState<Session | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleStartTrial = () => {
+    if (session) {
+      navigate("/alchemist-workshop");
+    } else {
+      navigate("/login");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100">
-      {/* Hero Section */}
       <section className="py-20 px-4">
         <div className="max-w-6xl mx-auto text-center">
           <h1 className="text-6xl font-bold bg-gradient-primary text-transparent bg-clip-text mb-6">
@@ -75,11 +99,11 @@ const Home = () => {
           </p>
           <div className="flex gap-4 justify-center">
             <Button
-              onClick={() => navigate("/login")}
+              onClick={handleStartTrial}
               size="lg"
               className="bg-gradient-primary hover:opacity-90 transition-opacity"
             >
-              Start Free Trial
+              {session ? "Go to Workshop" : "Start Free Trial"}
             </Button>
             <Button
               variant="outline"
@@ -95,7 +119,6 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Features Section */}
       <section id="features" className="py-20 bg-white">
         <div className="max-w-6xl mx-auto px-4">
           <h2 className="text-4xl font-bold text-center mb-12">How It Works</h2>
@@ -114,7 +137,6 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Companies Section */}
       <section className="py-16 bg-neutral-50">
         <div className="max-w-6xl mx-auto px-4 text-center">
           <h2 className="text-2xl font-semibold text-neutral-600 mb-8">
@@ -133,7 +155,6 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Free Trial Section */}
       <section className="py-20 bg-gradient-primary text-white">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <h2 className="text-4xl font-bold mb-6">Start with 3 Free Uses</h2>
@@ -141,23 +162,21 @@ const Home = () => {
             Try our AI-powered resume optimization with no commitment.
           </p>
           <Button
-            onClick={() => navigate("/login")}
+            onClick={handleStartTrial}
             size="lg"
             variant="secondary"
             className="bg-secondary hover:bg-secondary/90 text-primary"
           >
-            Start Free Trial
+            {session ? "Go to Workshop" : "Start Free Trial"}
           </Button>
         </div>
       </section>
 
-      {/* Supported Websites Section */}
       <section id="supported-websites" className="py-20 bg-white">
         <div className="max-w-6xl mx-auto px-4">
           <h2 className="text-4xl font-bold text-center mb-12">Supported Job Platforms</h2>
           
           <div className="grid md:grid-cols-2 gap-12">
-            {/* Global Platforms */}
             <div className="space-y-6">
               <div className="flex items-center gap-3 mb-6">
                 <Globe className="h-6 w-6 text-primary" />
@@ -174,7 +193,6 @@ const Home = () => {
               </ul>
             </div>
 
-            {/* Asian Regional Platforms */}
             <div className="space-y-6">
               <div className="flex items-center gap-3 mb-6">
                 <MapPin className="h-6 w-6 text-primary" />
@@ -194,7 +212,6 @@ const Home = () => {
         </div>
       </section>
 
-      {/* FAQ Section */}
       <section className="py-20 bg-neutral-50">
         <div className="max-w-4xl mx-auto px-4">
           <h2 className="text-4xl font-bold text-center mb-12">
