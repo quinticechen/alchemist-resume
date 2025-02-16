@@ -151,6 +151,9 @@ const AuthWrapper = () => {
   useEffect(() => {
     let isSubscribed = true;
 
+    localStorage.removeItem('userProfile');
+    supabase.auth.clearSession();
+
     const initializeAuth = async () => {
       try {
         const { data: { session: currentSession } } = await supabase.auth.getSession();
@@ -188,6 +191,15 @@ const AuthWrapper = () => {
 
     initializeAuth();
 
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        localStorage.removeItem('userProfile');
+        supabase.auth.clearSession();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!isSubscribed) return;
       
@@ -216,6 +228,7 @@ const AuthWrapper = () => {
     return () => {
       isSubscribed = false;
       subscription.unsubscribe();
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [navigate, location, toast]);
 
