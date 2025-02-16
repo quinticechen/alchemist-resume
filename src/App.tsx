@@ -152,7 +152,7 @@ const AuthWrapper = () => {
     let isSubscribed = true;
 
     localStorage.removeItem('userProfile');
-    supabase.auth.clearSession();
+    supabase.auth.signOut();
 
     const initializeAuth = async () => {
       try {
@@ -194,7 +194,7 @@ const AuthWrapper = () => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'hidden') {
         localStorage.removeItem('userProfile');
-        supabase.auth.clearSession();
+        supabase.auth.signOut();
       }
     };
 
