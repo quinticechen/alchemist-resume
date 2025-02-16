@@ -57,7 +57,13 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
           return;
         }
 
-        // Get profile data
+        const { data: subscription } = await supabase
+          .from('subscriptions')
+          .select('current_period_end, status, tier')
+          .eq('user_id', session.user.id)
+          .eq('status', 'active')
+          .maybeSingle();
+
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('subscription_status, usage_count, free_trial_limit, monthly_usage_count')
@@ -72,26 +78,22 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
 
         let userHasAccess = false;
 
-        switch (profile.subscription_status) {
-          case 'alchemist':
-            userHasAccess = (profile.monthly_usage_count || 0) < 30;
-            break;
-          case 'apprentice':
-            userHasAccess = profile.usage_count < profile.free_trial_limit;
-            break;
-          case 'grandmaster':
-            const { data: subscription } = await supabase
-              .from('subscriptions')
-              .select('current_period_end')
-              .eq('user_id', session.user.id)
-              .eq('status', 'active')
-              .maybeSingle();
-            userHasAccess = subscription?.current_period_end 
-              ? new Date(subscription.current_period_end) > new Date()
-              : false;
-            break;
-          default:
-            userHasAccess = false;
+        if (subscription?.status === 'active' && subscription?.current_period_end) {
+          const isSubscriptionValid = new Date(subscription.current_period_end) > new Date();
+          if (isSubscriptionValid) {
+            userHasAccess = true;
+          }
+        } else {
+          switch (profile.subscription_status) {
+            case 'alchemist':
+              userHasAccess = (profile.monthly_usage_count || 0) < 30;
+              break;
+            case 'apprentice':
+              userHasAccess = profile.usage_count < profile.free_trial_limit;
+              break;
+            default:
+              userHasAccess = false;
+          }
         }
 
         if (isSubscribed) {
