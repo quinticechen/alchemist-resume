@@ -20,56 +20,6 @@ const AlchemistWorkshop = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const checkAccess = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) {
-        navigate('/login');
-        return;
-      }
-
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('subscription_status, usage_count, free_trial_limit, monthly_usage_count')
-        .eq('id', session.user.id)
-        .single();
-
-      if (!profile) {
-        navigate('/login');
-        return;
-      }
-
-      let hasAccess = false;
-
-      if (profile.subscription_status === 'apprentice') {
-        hasAccess = profile.usage_count < profile.free_trial_limit;
-      } else if (profile.subscription_status === 'alchemist') {
-        hasAccess = (profile.monthly_usage_count || 0) < 30;
-      } else if (profile.subscription_status === 'grandmaster') {
-        const { data: subscription } = await supabase
-          .from('subscriptions')
-          .select('current_period_end')
-          .eq('user_id', session.user.id)
-          .eq('status', 'active')
-          .maybeSingle();
-
-        if (subscription?.current_period_end) {
-          hasAccess = new Date(subscription.current_period_end) > new Date();
-        }
-      }
-
-      if (!hasAccess) {
-        toast({
-          title: "Access Denied",
-          description: "Please upgrade your plan to continue using our services.",
-        });
-        navigate('/pricing');
-      }
-    };
-
-    checkAccess();
-  }, []);
-
   const handleFileUploadSuccess = (
     file: File,
     path: string,

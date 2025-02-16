@@ -2,7 +2,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import Home from "@/pages/Home";
-import AlchemistWorkshop from "@/pages/AlchemyStation";
+import AlchemistWorkshop from "@/pages/AlchemistWorkshop";
 import AlchemyRecords from "@/pages/AlchemyRecords";
 import Account from "@/pages/Account";
 import Login from "@/pages/Login";
