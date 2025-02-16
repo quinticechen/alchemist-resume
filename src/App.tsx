@@ -151,9 +151,6 @@ const AuthWrapper = () => {
   useEffect(() => {
     let isSubscribed = true;
 
-    localStorage.removeItem('userProfile');
-    supabase.auth.signOut();
-
     const initializeAuth = async () => {
       try {
         const { data: { session: currentSession } } = await supabase.auth.getSession();
