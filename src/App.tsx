@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import Home from "@/pages/Home";
@@ -44,7 +43,10 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
 
     const checkAccess = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        setIsLoading(true);
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) throw sessionError;
         
         if (!session?.user) {
           console.log('No session found, redirecting to login');
@@ -62,15 +64,9 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
           .eq('id', session.user.id)
           .single();
 
-        if (profileError) {
-          console.error('Profile fetch error:', profileError);
-          throw profileError;
-        }
-
-        console.log('Profile data:', profile);
+        if (profileError) throw profileError;
 
         if (!profile) {
-          console.error('No profile found');
           throw new Error('No profile found');
         }
 
@@ -79,11 +75,9 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
         switch (profile.subscription_status) {
           case 'alchemist':
             userHasAccess = (profile.monthly_usage_count || 0) < 30;
-            console.log('Alchemist check:', { monthly: profile.monthly_usage_count, hasAccess: userHasAccess });
             break;
           case 'apprentice':
             userHasAccess = profile.usage_count < profile.free_trial_limit;
-            console.log('Apprentice check:', { usage: profile.usage_count, limit: profile.free_trial_limit });
             break;
           case 'grandmaster':
             const { data: subscription } = await supabase
@@ -95,7 +89,6 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
             userHasAccess = subscription?.current_period_end 
               ? new Date(subscription.current_period_end) > new Date()
               : false;
-            console.log('Grandmaster check:', { subscription, hasAccess: userHasAccess });
             break;
           default:
             userHasAccess = false;
@@ -103,7 +96,6 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
 
         if (isSubscribed) {
           setHasAccess(userHasAccess);
-          setIsLoading(false);
           
           if (!userHasAccess) {
             toast({
@@ -119,13 +111,16 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
         console.error('Access check error:', error);
         if (isSubscribed) {
           setHasAccess(false);
-          setIsLoading(false);
           toast({
             title: "Error",
             description: "There was an error checking your access. Please try again.",
             variant: "destructive"
           });
           navigate('/login', { replace: true });
+        }
+      } finally {
+        if (isSubscribed) {
+          setIsLoading(false);
         }
       }
     };

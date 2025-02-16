@@ -13,64 +13,85 @@ import UserMenu from "./header/UserMenu";
 const Header = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [usageCount, setUsageCount] = useState<number>(0);
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      if (session?.user) {
-        fetchUsageCount(session.user.id);
+    // Initialize session
+    const initSession = async () => {
+      try {
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        console.log("Initial session check:", currentSession);
+        setSession(currentSession);
+        if (currentSession?.user) {
+          await fetchUsageCount(currentSession.user.id);
+        }
+      } catch (error) {
+        console.error("Session initialization error:", error);
+      } finally {
+        setIsLoading(false);
       }
-    });
+    };
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      console.log("Auth state changed:", _event, session);
-      setSession(session);
-      if (session?.user) {
-        fetchUsageCount(session.user.id);
-        if (_event === 'SIGNED_IN') {
+    initSession();
+
+    // Set up auth state change listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
+      console.log("Auth state changed:", event, newSession);
+      setSession(newSession);
+
+      if (event === 'SIGNED_IN' && newSession?.user) {
+        await fetchUsageCount(newSession.user.id);
+        if (location.pathname === '/') {
           navigate('/alchemist-workshop');
+        }
+      } else if (event === 'SIGNED_OUT') {
+        setUsageCount(0);
+        if (location.pathname !== '/') {
+          navigate('/');
         }
       }
     });
 
-    return () => subscription.unsubscribe();
-  }, [navigate]);
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [navigate, location.pathname]);
 
   const fetchUsageCount = async (userId: string) => {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('usage_count')
-      .eq('id', userId)
-      .single();
-    
-    if (error) {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('usage_count')
+        .eq('id', userId)
+        .single();
+      
+      if (error) throw error;
+      setUsageCount(data?.usage_count || 0);
+    } catch (error) {
       console.error('Error fetching usage count:', error);
-      return;
     }
-    
-    setUsageCount(data?.usage_count || 0);
   };
 
   const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      console.error("Error logging out:", error.message);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to log out. Please try again.",
-      });
-    } else {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      
       toast({
         title: "Logged out",
         description: "You have been successfully logged out.",
       });
       navigate("/");
+    } catch (error: any) {
+      console.error("Error logging out:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to log out. Please try again.",
+      });
     }
   };
 
@@ -93,6 +114,18 @@ const Header = () => {
       navigate("/login");
     }
   };
+
+  if (isLoading) {
+    return (
+      <header className="bg-white/80 backdrop-blur-md border-b border-neutral-200 sticky top-0 z-50">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex justify-between items-center">
+            <Logo />
+          </div>
+        </div>
+      </header>
+    );
+  }
 
   return (
     <header className="bg-white/80 backdrop-blur-md border-b border-neutral-200 sticky top-0 z-50">
@@ -120,7 +153,7 @@ const Header = () => {
                 className="flex items-center gap-2 bg-gradient-primary hover:opacity-90 transition-opacity"
               >
                 <LogIn className="h-4 w-4" />
-                {session ? "Go to Workshop" : (isHome ? "Start Free Trial" : "Sign In")}
+                {isHome ? "Start Free Trial" : "Sign In"}
               </Button>
             )}
           </div>
