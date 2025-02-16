@@ -23,6 +23,15 @@ interface ProtectedRouteProps {
   children: React.ReactNode;
 }
 
+const LoadingScreen = () => (
+  <div className="min-h-screen flex items-center justify-center">
+    <div className="text-center space-y-4">
+      <div className="mb-4 text-xl font-semibold text-primary">Loading...</div>
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+    </div>
+  </div>
+);
+
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [hasAccess, setHasAccess] = useState(false);
@@ -67,7 +76,6 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
 
         let userHasAccess = false;
 
-        // Simplified access check logic
         switch (profile.subscription_status) {
           case 'alchemist':
             userHasAccess = (profile.monthly_usage_count || 0) < 30;
@@ -94,9 +102,10 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
         }
 
         if (isSubscribed) {
+          setHasAccess(userHasAccess);
+          setIsLoading(false);
+          
           if (!userHasAccess) {
-            setHasAccess(false);
-            setIsLoading(false);
             toast({
               title: "Access Restricted",
               description: profile.subscription_status === 'apprentice'
@@ -104,9 +113,6 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
                 : "Please check your subscription status.",
             });
             navigate('/pricing', { replace: true });
-          } else {
-            setHasAccess(true);
-            setIsLoading(false);
           }
         }
       } catch (error) {
@@ -129,17 +135,10 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     return () => {
       isSubscribed = false;
     };
-  }, [location.pathname]);
+  }, [location.pathname, navigate, toast]);
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="mb-4 text-xl font-semibold text-primary">Loading...</div>
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-        </div>
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   return hasAccess ? <>{children}</> : null;
@@ -158,12 +157,12 @@ const AuthWrapper = () => {
     const initializeAuth = async () => {
       try {
         const { data: { session: currentSession } } = await supabase.auth.getSession();
+        
         if (isSubscribed) {
           setSession(currentSession);
           setInitialized(true);
 
-          if (currentSession) {
-            // Get user profile
+          if (currentSession?.user) {
             const { data: profile } = await supabase
               .from('profiles')
               .select('subscription_status')
@@ -171,7 +170,6 @@ const AuthWrapper = () => {
               .single();
 
             if (profile) {
-              // Only show welcome toast on actual sign in, not initial session check
               const state = location.state as { returnTo?: string };
               const returnTo = state?.returnTo || '/alchemist-workshop';
               navigate(returnTo, { replace: true });
@@ -196,53 +194,25 @@ const AuthWrapper = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!isSubscribed) return;
       
-      // Only log auth state changes for actual sign in/out events, not initial session check
-      if (event !== 'INITIAL_SESSION') {
-        console.log('Auth state changed:', event, session);
-      }
-      
+      console.log('Auth state changed:', event, session);
       setSession(session);
       setInitialized(true);
 
-      switch (event) {
-        case 'SIGNED_IN':
-          if (session) {
-            const { data: profile } = await supabase
-              .from('profiles')
-              .select('subscription_status')
-              .eq('id', session.user.id)
-              .single();
+      if (event === 'SIGNED_IN' && session) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('subscription_status')
+          .eq('id', session.user.id)
+          .single();
 
-            if (profile) {
-              toast({
-                title: "Welcome back!",
-                description: "Successfully signed in"
-              });
-
-              const state = location.state as { returnTo?: string };
-              const returnTo = state?.returnTo || '/alchemist-workshop';
-              navigate(returnTo, { replace: true });
-            }
-          }
-          break;
-
-        case 'SIGNED_OUT':
-          // Clear any cached data
-          localStorage.removeItem('userProfile');
-          navigate('/login', { replace: true });
-          break;
-
-        case 'TOKEN_REFRESHED':
-          // Handle token refresh silently
-          break;
-
-        case 'USER_UPDATED':
-          // Handle user data update silently
-          break;
-
-        case 'PASSWORD_RECOVERY':
-          // Handle password recovery silently
-          break;
+        if (profile) {
+          const state = location.state as { returnTo?: string };
+          const returnTo = state?.returnTo || '/alchemist-workshop';
+          navigate(returnTo, { replace: true });
+        }
+      } else if (event === 'SIGNED_OUT') {
+        localStorage.removeItem('userProfile');
+        navigate('/login', { replace: true });
       }
     });
 
@@ -250,17 +220,10 @@ const AuthWrapper = () => {
       isSubscribed = false;
       subscription.unsubscribe();
     };
-  }, []);
+  }, [navigate, location, toast]);
 
   if (!initialized) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="mb-4 text-xl font-semibold text-primary">Loading...</div>
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-        </div>
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   return (
