@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { LogIn } from "lucide-react";
@@ -27,15 +28,18 @@ const Header = () => {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
+      console.log("Auth state changed:", _event, session);
       setSession(session);
       if (session?.user) {
         fetchUsageCount(session.user.id);
+        if (_event === 'SIGNED_IN') {
+          navigate('/alchemist-workshop');
+        }
       }
-      console.log("Auth state changed:", _event, session);
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [navigate]);
 
   const fetchUsageCount = async (userId: string) => {
     const { data, error } = await supabase
@@ -82,6 +86,14 @@ const Header = () => {
     }
   };
 
+  const handleAuthClick = () => {
+    if (session) {
+      navigate("/alchemist-workshop");
+    } else {
+      navigate("/login");
+    }
+  };
+
   return (
     <header className="bg-white/80 backdrop-blur-md border-b border-neutral-200 sticky top-0 z-50">
       <div className="container mx-auto px-4 py-4">
@@ -103,12 +115,12 @@ const Header = () => {
               />
             ) : !isLogin && (
               <Button
-                onClick={() => navigate("/login")}
+                onClick={handleAuthClick}
                 size="sm"
                 className="flex items-center gap-2 bg-gradient-primary hover:opacity-90 transition-opacity"
               >
                 <LogIn className="h-4 w-4" />
-                {isHome ? "Start Free Trial" : "Sign In"}
+                {session ? "Go to Workshop" : (isHome ? "Start Free Trial" : "Sign In")}
               </Button>
             )}
           </div>
