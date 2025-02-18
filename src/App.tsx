@@ -44,10 +44,12 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
 
     const checkAccess = async () => {
       try {
-        setIsLoading(true);
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
-        if (sessionError) throw sessionError;
+        if (sessionError) {
+          console.error('Session error:', sessionError);
+          throw sessionError;
+        }
         
         if (!session?.user) {
           console.log('No session found, redirecting to login');
@@ -58,20 +60,49 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
           return;
         }
 
-        const { data: subscription } = await supabase
-          .from('subscriptions')
-          .select('current_period_end, status, tier')
-          .eq('user_id', session.user.id)
-          .eq('status', 'active')
-          .maybeSingle();
+        // First check cached subscription data
+        const cachedSubscription = localStorage.getItem('userSubscription');
+        let subscription = cachedSubscription ? JSON.parse(cachedSubscription) : null;
 
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('subscription_status, usage_count, free_trial_limit, monthly_usage_count')
-          .eq('id', session.user.id)
-          .single();
+        // If no cache or cache is old (>1 hour), fetch fresh data
+        if (!subscription || (Date.now() - (subscription.cachedAt || 0) > 3600000)) {
+          const { data: freshSubscription } = await supabase
+            .from('subscriptions')
+            .select('current_period_end, status, tier')
+            .eq('user_id', session.user.id)
+            .eq('status', 'active')
+            .maybeSingle();
 
-        if (profileError) throw profileError;
+          if (freshSubscription) {
+            subscription = {
+              ...freshSubscription,
+              cachedAt: Date.now()
+            };
+            localStorage.setItem('userSubscription', JSON.stringify(subscription));
+          }
+        }
+
+        // Check profile data (also use cache)
+        const cachedProfile = localStorage.getItem('userProfile');
+        let profile = cachedProfile ? JSON.parse(cachedProfile) : null;
+
+        if (!profile || (Date.now() - (profile.cachedAt || 0) > 3600000)) {
+          const { data: freshProfile, error: profileError } = await supabase
+            .from('profiles')
+            .select('subscription_status, usage_count, free_trial_limit, monthly_usage_count')
+            .eq('id', session.user.id)
+            .single();
+
+          if (profileError) throw profileError;
+
+          if (freshProfile) {
+            profile = {
+              ...freshProfile,
+              cachedAt: Date.now()
+            };
+            localStorage.setItem('userProfile', JSON.stringify(profile));
+          }
+        }
 
         if (!profile) {
           throw new Error('No profile found');
@@ -109,20 +140,19 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
             });
             navigate('/pricing', { replace: true });
           }
+          setIsLoading(false);
         }
       } catch (error) {
         console.error('Access check error:', error);
         if (isSubscribed) {
           setHasAccess(false);
+          setIsLoading(false);
           toast({
             title: "Error",
             description: "There was an error checking your access. Please try again.",
             variant: "destructive"
           });
-        }
-      } finally {
-        if (isSubscribed) {
-          setIsLoading(false);
+          navigate('/login', { replace: true });
         }
       }
     };
