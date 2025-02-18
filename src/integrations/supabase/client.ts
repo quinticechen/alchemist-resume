@@ -8,8 +8,9 @@ const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 
 // Get the current URL for redirect
 const getRedirectTo = () => {
-  // Hard code the production URL since that's what's set in Supabase
-  return `https://qwizai.com/alchemist-workshop`;
+  // Get the current origin dynamically
+  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://qwizai.com';
+  return `${origin}/alchemist-workshop`;
 };
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
