@@ -1,4 +1,3 @@
-
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,7 +27,6 @@ const Pricing = () => {
   const { isAuthenticated, hasCompletedSurvey } = useAuthAndSurvey();
 
   useEffect(() => {
-    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       if (session?.user) {
@@ -36,7 +34,6 @@ const Pricing = () => {
       }
     });
 
-    // Listen for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -107,6 +104,8 @@ const Pricing = () => {
 
     setIsLoading(true);
     try {
+      trackBeginCheckout(planId, isAnnual);
+
       if (!session?.access_token) {
         throw new Error('No valid session found');
       }

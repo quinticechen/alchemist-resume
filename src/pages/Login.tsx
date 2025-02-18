@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import SocialLogin from "@/components/auth/SocialLogin";
 import EmailForm from "@/components/auth/EmailForm";
 import { useAuth } from "@/hooks/useAuth";
+import { trackLogin, trackSignUp } from "@/utils/gtm";
 
 const Login = () => {
   const {
@@ -17,6 +18,25 @@ const Login = () => {
     handleSocialLogin,
     handleEmailLogin
   } = useAuth();
+
+  const handleSocialLoginWithTracking = async (provider: 'google' | 'linkedin_oidc') => {
+    const providerName = provider === 'linkedin_oidc' ? 'LinkedIn' : 'Google';
+    if (isSignUp) {
+      trackSignUp(providerName);
+    } else {
+      trackLogin(providerName);
+    }
+    await handleSocialLogin(provider);
+  };
+
+  const handleEmailLoginWithTracking = async (e: React.FormEvent) => {
+    if (isSignUp) {
+      trackSignUp('Email');
+    } else {
+      trackLogin('Email');
+    }
+    await handleEmailLogin(e);
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -32,7 +52,7 @@ const Login = () => {
         <CardContent>
           <div className="space-y-4">
             <SocialLogin 
-              onSocialLogin={handleSocialLogin}
+              onSocialLogin={handleSocialLoginWithTracking}
               isLoading={isLoading}
             />
 
@@ -54,7 +74,7 @@ const Login = () => {
               isLoading={isLoading}
               onEmailChange={(e) => setEmail(e.target.value)}
               onPasswordChange={(e) => setPassword(e.target.value)}
-              onSubmit={handleEmailLogin}
+              onSubmit={handleEmailLoginWithTracking}
               onToggleMode={() => setIsSignUp(!isSignUp)}
             />
           </div>
