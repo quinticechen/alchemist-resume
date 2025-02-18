@@ -19,43 +19,48 @@ const Header = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Initialize session
+    let isMounted = true;
+
     const initSession = async () => {
       try {
         const { data: { session: currentSession } } = await supabase.auth.getSession();
-        console.log("Initial session check:", currentSession);
-        setSession(currentSession);
-        if (currentSession?.user) {
-          await fetchUsageCount(currentSession.user.id);
+        if (isMounted) {
+          setSession(currentSession);
+          if (currentSession?.user) {
+            await fetchUsageCount(currentSession.user.id);
+          }
         }
       } catch (error) {
         console.error("Session initialization error:", error);
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
 
     initSession();
 
-    // Set up auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
       console.log("Auth state changed:", event, newSession);
-      setSession(newSession);
-
-      if (event === 'SIGNED_IN' && newSession?.user) {
-        await fetchUsageCount(newSession.user.id);
-        if (location.pathname === '/') {
-          navigate('/alchemist-workshop');
-        }
-      } else if (event === 'SIGNED_OUT') {
-        setUsageCount(0);
-        if (location.pathname !== '/') {
-          navigate('/');
+      if (isMounted) {
+        setSession(newSession);
+        if (event === 'SIGNED_IN' && newSession?.user) {
+          await fetchUsageCount(newSession.user.id);
+          if (location.pathname === '/') {
+            navigate('/alchemist-workshop');
+          }
+        } else if (event === 'SIGNED_OUT') {
+          setUsageCount(0);
+          if (location.pathname !== '/') {
+            navigate('/');
+          }
         }
       }
     });
 
     return () => {
+      isMounted = false;
       subscription.unsubscribe();
     };
   }, [navigate, location.pathname]);
@@ -66,7 +71,7 @@ const Header = () => {
         .from('profiles')
         .select('usage_count')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
       
       if (error) throw error;
       setUsageCount(data?.usage_count || 0);
@@ -115,18 +120,7 @@ const Header = () => {
     }
   };
 
-  if (isLoading) {
-    return (
-      <header className="bg-white/80 backdrop-blur-md border-b border-neutral-200 sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex justify-between items-center">
-            <Logo />
-          </div>
-        </div>
-      </header>
-    );
-  }
-
+  // Always render the header content, even during loading
   return (
     <header className="bg-white/80 backdrop-blur-md border-b border-neutral-200 sticky top-0 z-50">
       <div className="container mx-auto px-4 py-4">
