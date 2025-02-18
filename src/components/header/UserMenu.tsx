@@ -6,7 +6,7 @@ import { Link } from "react-router-dom";
 
 interface UserMenuProps {
   session: Session;
-  usageCount: number;
+  usageCount?: number;
   onLogout: () => Promise<void>;
 }
 
