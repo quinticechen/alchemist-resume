@@ -8,8 +8,8 @@ const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 
 // Get the current URL for redirect
 const getRedirectTo = () => {
-  // Use window.location.origin to get the current domain
-  return `${window.location.origin}/alchemist-workshop`;
+  // Hard code the production URL since that's what's set in Supabase
+  return `https://qwizai.com/alchemist-workshop`;
 };
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
@@ -19,7 +19,6 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     autoRefreshToken: true,
     persistSession: true,
     storage: {
-      // Use local storage to persist the session
       getItem: (key) => {
         try {
           const value = localStorage.getItem(key);
@@ -51,18 +50,6 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     },
   },
 });
-
-// Update auth configuration with dynamic redirect
-supabase.auth.setSession = async function(...args) {
-  const response = await this._getAuthResponse(...args);
-  if (response.error) {
-    throw response.error;
-  }
-  
-  // Force a session refresh after setting to ensure proper state
-  await this.auth.refreshSession();
-  return response;
-};
 
 // Helper function for login with dynamic redirect
 export const signInWithProvider = async (provider: 'google' | 'linkedin_oidc') => {
