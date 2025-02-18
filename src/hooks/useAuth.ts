@@ -83,7 +83,6 @@ export const useAuth = () => {
         });
         if (error) throw error;
         
-        // Cache user profile data for faster access
         if (data.user) {
           const { data: profile } = await supabase
             .from('profiles')
@@ -91,7 +90,6 @@ export const useAuth = () => {
             .eq('id', data.user.id)
             .single();
 
-          // Store session in localStorage for persistence
           if (profile) {
             localStorage.setItem('userProfile', JSON.stringify({
               ...profile,
