@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -65,7 +66,7 @@ const AlchemyRecords = () => {
             job_title,
             google_doc_url,
             feedback,
-            resume:resumes (
+            resume:resumes!resume_id (
               file_name,
               file_path
             )
@@ -74,7 +75,14 @@ const AlchemyRecords = () => {
           .order('created_at', { ascending: false });
 
         if (error) throw error;
-        setAnalyses(analysesData || []);
+
+        // Transform the data to match our expected type
+        const transformedData: ResumeAnalysis[] = (analysesData || []).map(item => ({
+          ...item,
+          resume: Array.isArray(item.resume) ? item.resume[0] : item.resume
+        }));
+
+        setAnalyses(transformedData);
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {
