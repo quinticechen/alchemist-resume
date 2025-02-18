@@ -8,8 +8,8 @@ const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 
 // Get the current URL for redirect
 const getRedirectTo = () => {
-  // Get the complete current URL
-  return typeof window !== 'undefined' ? window.location.href : 'https://qwizai.com';
+  // Get the complete current URL or fallback to the site URL
+  return typeof window !== 'undefined' ? window.location.href : 'https://resumealchemist.qwizai.com';
 };
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
