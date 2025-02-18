@@ -1,6 +1,6 @@
-
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter as Router } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
+import { AuthProvider } from "@/contexts/AuthContext";
 import Home from "@/pages/Home";
 import AlchemistWorkshop from "@/pages/AlchemistWorkshop";
 import AlchemyRecords from "@/pages/AlchemyRecords";
@@ -219,41 +219,43 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
 
 const App = () => {
   return (
-    <Router>
-      <div className="min-h-screen flex flex-col">
-        <Header />
-        <main className="flex-grow">
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route 
-              path="/alchemist-workshop" 
-              element={
-                <ProtectedRoute>
-                  <AlchemistWorkshop />
-                </ProtectedRoute>
-              }
-            />
-            <Route 
-              path="/alchemy-records" 
-              element={
-                <ProtectedRoute>
-                  <AlchemyRecords />
-                </ProtectedRoute>
-              }
-            />
-            <Route path="/account" element={<Account />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/terms" element={<Terms />} />
-            <Route path="/privacy" element={<Privacy />} />
-            <Route path="/faq" element={<FAQ />} />
-            <Route path="/pricing" element={<Pricing />} />
-            <Route path="/survey-page" element={<SurveyPage />} />
-          </Routes>
-        </main>
-        <Footer />
-        <Toaster />
-      </div>
-    </Router>
+    <AuthProvider>
+      <Router>
+        <div className="min-h-screen flex flex-col">
+          <Header />
+          <main className="flex-grow">
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route 
+                path="/alchemist-workshop" 
+                element={
+                  <ProtectedRoute>
+                    <AlchemistWorkshop />
+                  </ProtectedRoute>
+                }
+              />
+              <Route 
+                path="/alchemy-records" 
+                element={
+                  <ProtectedRoute>
+                    <AlchemyRecords />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="/account" element={<Account />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/terms" element={<Terms />} />
+              <Route path="/privacy" element={<Privacy />} />
+              <Route path="/faq" element={<FAQ />} />
+              <Route path="/pricing" element={<Pricing />} />
+              <Route path="/survey-page" element={<SurveyPage />} />
+            </Routes>
+          </main>
+          <Footer />
+          <Toaster />
+        </div>
+      </Router>
+    </AuthProvider>
   );
 };
 
