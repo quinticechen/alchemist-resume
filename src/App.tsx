@@ -44,6 +44,7 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
 
     const checkAccess = async () => {
       try {
+        console.log('Checking session...');
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError) {
@@ -52,96 +53,128 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
         }
         
         if (!session?.user) {
-          console.log('No session found, redirecting to login');
-          navigate('/login', { 
-            state: { returnTo: location.pathname },
-            replace: true 
-          });
+          console.log('No valid session found, redirecting to login');
+          if (isSubscribed) {
+            setIsLoading(false);
+            navigate('/login', { 
+              state: { returnTo: location.pathname },
+              replace: true 
+            });
+          }
           return;
         }
 
-        // First check cached subscription data
-        const cachedSubscription = localStorage.getItem('userSubscription');
-        let subscription = cachedSubscription ? JSON.parse(cachedSubscription) : null;
-
-        // If no cache or cache is old (>1 hour), fetch fresh data
-        if (!subscription || (Date.now() - (subscription.cachedAt || 0) > 3600000)) {
-          const { data: freshSubscription } = await supabase
-            .from('subscriptions')
-            .select('current_period_end, status, tier')
-            .eq('user_id', session.user.id)
-            .eq('status', 'active')
-            .maybeSingle();
-
-          if (freshSubscription) {
-            subscription = {
-              ...freshSubscription,
-              cachedAt: Date.now()
-            };
-            localStorage.setItem('userSubscription', JSON.stringify(subscription));
-          }
-        }
-
-        // Check profile data (also use cache)
-        const cachedProfile = localStorage.getItem('userProfile');
-        let profile = cachedProfile ? JSON.parse(cachedProfile) : null;
-
-        if (!profile || (Date.now() - (profile.cachedAt || 0) > 3600000)) {
-          const { data: freshProfile, error: profileError } = await supabase
-            .from('profiles')
-            .select('subscription_status, usage_count, free_trial_limit, monthly_usage_count')
-            .eq('id', session.user.id)
-            .single();
-
-          if (profileError) throw profileError;
-
-          if (freshProfile) {
-            profile = {
-              ...freshProfile,
-              cachedAt: Date.now()
-            };
-            localStorage.setItem('userProfile', JSON.stringify(profile));
-          }
-        }
-
-        if (!profile) {
-          throw new Error('No profile found');
-        }
-
-        let userHasAccess = false;
-
-        if (subscription?.status === 'active' && subscription?.current_period_end) {
-          const isSubscriptionValid = new Date(subscription.current_period_end) > new Date();
-          if (isSubscriptionValid) {
-            userHasAccess = true;
-          }
-        } else {
-          switch (profile.subscription_status) {
-            case 'alchemist':
-              userHasAccess = (profile.monthly_usage_count || 0) < 30;
-              break;
-            case 'apprentice':
-              userHasAccess = profile.usage_count < profile.free_trial_limit;
-              break;
-            default:
-              userHasAccess = false;
-          }
-        }
-
-        if (isSubscribed) {
-          setHasAccess(userHasAccess);
-          
-          if (!userHasAccess) {
+        console.log('Valid session found, checking subscription...');
+        
+        // Add timeout to prevent infinite loading
+        const timeoutId = setTimeout(() => {
+          if (isSubscribed && isLoading) {
+            console.log('Access check timed out');
+            setIsLoading(false);
+            setHasAccess(false);
+            navigate('/login', { replace: true });
             toast({
-              title: "Access Restricted",
-              description: profile.subscription_status === 'apprentice'
-                ? "Free trial completed. Please upgrade your plan to continue."
-                : "Please check your subscription status.",
+              title: "Error",
+              description: "Session verification timed out. Please try logging in again.",
+              variant: "destructive"
             });
-            navigate('/pricing', { replace: true });
           }
-          setIsLoading(false);
+        }, 10000); // 10 second timeout
+
+        try {
+          // First check cached subscription data
+          const cachedSubscription = localStorage.getItem('userSubscription');
+          let subscription = cachedSubscription ? JSON.parse(cachedSubscription) : null;
+
+          if (!subscription || (Date.now() - (subscription.cachedAt || 0) > 3600000)) {
+            console.log('Fetching fresh subscription data...');
+            const { data: freshSubscription } = await supabase
+              .from('subscriptions')
+              .select('current_period_end, status, tier')
+              .eq('user_id', session.user.id)
+              .eq('status', 'active')
+              .maybeSingle();
+
+            if (freshSubscription) {
+              subscription = {
+                ...freshSubscription,
+                cachedAt: Date.now()
+              };
+              localStorage.setItem('userSubscription', JSON.stringify(subscription));
+            }
+          }
+
+          // Check profile data
+          const cachedProfile = localStorage.getItem('userProfile');
+          let profile = cachedProfile ? JSON.parse(cachedProfile) : null;
+
+          if (!profile || (Date.now() - (profile.cachedAt || 0) > 3600000)) {
+            console.log('Fetching fresh profile data...');
+            const { data: freshProfile, error: profileError } = await supabase
+              .from('profiles')
+              .select('subscription_status, usage_count, free_trial_limit, monthly_usage_count')
+              .eq('id', session.user.id)
+              .maybeSingle();
+
+            if (profileError) {
+              console.error('Profile fetch error:', profileError);
+              throw profileError;
+            }
+
+            if (freshProfile) {
+              profile = {
+                ...freshProfile,
+                cachedAt: Date.now()
+              };
+              localStorage.setItem('userProfile', JSON.stringify(profile));
+            }
+          }
+
+          if (!profile) {
+            throw new Error('No profile found');
+          }
+
+          let userHasAccess = false;
+
+          if (subscription?.status === 'active' && subscription?.current_period_end) {
+            const isSubscriptionValid = new Date(subscription.current_period_end) > new Date();
+            if (isSubscriptionValid) {
+              userHasAccess = true;
+            }
+          } else {
+            switch (profile.subscription_status) {
+              case 'alchemist':
+                userHasAccess = (profile.monthly_usage_count || 0) < 30;
+                break;
+              case 'apprentice':
+                userHasAccess = profile.usage_count < profile.free_trial_limit;
+                break;
+              default:
+                userHasAccess = false;
+            }
+          }
+
+          clearTimeout(timeoutId);
+
+          if (isSubscribed) {
+            setHasAccess(userHasAccess);
+            
+            if (!userHasAccess) {
+              toast({
+                title: "Access Restricted",
+                description: profile.subscription_status === 'apprentice'
+                  ? "Free trial completed. Please upgrade your plan to continue."
+                  : "Please check your subscription status.",
+              });
+              navigate('/pricing', { replace: true });
+            }
+            setIsLoading(false);
+          }
+        } catch (error) {
+          clearTimeout(timeoutId);
+          throw error;
         }
+
       } catch (error) {
         console.error('Access check error:', error);
         if (isSubscribed) {
@@ -157,10 +190,23 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
       }
     };
 
+    // Initial check
     checkAccess();
+
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('Auth state changed:', event, session?.user?.id);
+      if (event === 'SIGNED_OUT') {
+        setHasAccess(false);
+        navigate('/login', { replace: true });
+      } else if (event === 'SIGNED_IN' && session) {
+        checkAccess();
+      }
+    });
 
     return () => {
       isSubscribed = false;
+      subscription.unsubscribe();
     };
   }, [navigate, location, toast]);
 
