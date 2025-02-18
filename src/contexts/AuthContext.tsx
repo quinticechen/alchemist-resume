@@ -3,6 +3,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 
 interface AuthContextType {
   session: Session | null;
@@ -18,6 +19,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Initialize session
@@ -79,6 +81,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         title: "Logged out",
         description: "You have been successfully logged out.",
       });
+      
+      // Redirect to home page after successful logout
+      navigate('/');
     } catch (error: any) {
       console.error('Error signing out:', error);
       toast({
