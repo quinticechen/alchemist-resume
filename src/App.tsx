@@ -1,5 +1,5 @@
 
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Home from "@/pages/Home";
@@ -14,11 +14,12 @@ import Pricing from "@/pages/Pricing";
 import SurveyPage from "@/pages/SurveyPage";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { Routes, Route } from "react-router-dom";
 
 const App = () => {
   return (
-    <AuthProvider>
-      <Router>
+    <Router>
+      <AuthProvider>
         <div className="min-h-screen flex flex-col">
           <Header />
           <main className="flex-grow">
@@ -44,8 +45,8 @@ const App = () => {
           <Footer />
           <Toaster />
         </div>
-      </Router>
-    </AuthProvider>
+      </AuthProvider>
+    </Router>
   );
 };
 
