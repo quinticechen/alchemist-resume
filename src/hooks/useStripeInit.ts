@@ -17,10 +17,13 @@ export const useStripeInit = () => {
             body: { type: 'publishable' }
           });
 
-        if (error || !data?.publishableKey) {
-          console.error('Error fetching Stripe publishable key:', error);
-          setIsStripeInitializing(false);
-          return;
+        if (error) {
+          console.error('Error invoking get-stripe-key function:', error);
+          throw error;
+        }
+
+        if (!data?.publishableKey) {
+          throw new Error('No publishable key received from server');
         }
 
         console.log('Initializing Stripe with publishable key');
@@ -30,7 +33,7 @@ export const useStripeInit = () => {
           console.log('Stripe initialized successfully');
           setStripePromise(stripe);
         } else {
-          console.error('Failed to initialize Stripe - stripe object is null');
+          throw new Error('Failed to initialize Stripe - stripe object is null');
         }
       } catch (error) {
         console.error('Error initializing Stripe:', error);
