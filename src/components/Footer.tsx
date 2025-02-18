@@ -56,7 +56,7 @@ const Footer = () => {
                   to="/terms"
                   className="text-sm text-neutral-600 hover:text-primary transition-colors flex items-center"
                 >
-                  <LinkIcon className="h-4 w-4 mr-2" />
+                  {/* <LinkIcon className="h-4 w-4 mr-2" /> */}
                   Terms of Service
                 </Link>
               </li>
@@ -65,7 +65,7 @@ const Footer = () => {
                   to="/privacy"
                   className="text-sm text-neutral-600 hover:text-primary transition-colors flex items-center"
                 >
-                  <LinkIcon className="h-4 w-4 mr-2" />
+                  {/* <LinkIcon className="h-4 w-4 mr-2" /> */}
                   Privacy Policy
                 </Link>
               </li>
@@ -74,7 +74,7 @@ const Footer = () => {
                   to="/faq"
                   className="text-sm text-neutral-600 hover:text-primary transition-colors flex items-center"
                 >
-                  <LinkIcon className="h-4 w-4 mr-2" />
+                  {/* <LinkIcon className="h-4 w-4 mr-2" /> */}
                   FAQ
                 </Link>
               </li>
@@ -83,7 +83,7 @@ const Footer = () => {
                   to="/pricing"
                   className="text-sm text-neutral-600 hover:text-primary transition-colors flex items-center"
                 >
-                  <LinkIcon className="h-4 w-4 mr-2" />
+                  {/* <LinkIcon className="h-4 w-4 mr-2" /> */}
                   Pricing Plans
                 </Link>
               </li>
