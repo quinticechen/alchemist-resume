@@ -11,7 +11,8 @@ export const useStripeInit = () => {
     const initializeStripe = async () => {
       setIsStripeInitializing(true);
       try {
-        // Get the publishable key from Supabase using GET method
+        console.log('Initiating request to get-stripe-key function');
+        
         const { data, error } = await supabase.functions.invoke('get-stripe-key', {
           method: 'GET'
         });
@@ -22,18 +23,19 @@ export const useStripeInit = () => {
         }
 
         if (!data?.publishableKey) {
+          console.error('No publishable key in response:', data);
           throw new Error('No publishable key received from server');
         }
 
-        console.log('Initializing Stripe with publishable key');
+        console.log('Successfully received publishable key, initializing Stripe');
         const stripe = await loadStripe(data.publishableKey);
         
-        if (stripe) {
-          console.log('Stripe initialized successfully');
-          setStripePromise(stripe);
-        } else {
+        if (!stripe) {
           throw new Error('Failed to initialize Stripe - stripe object is null');
         }
+
+        console.log('Stripe initialized successfully');
+        setStripePromise(stripe);
       } catch (error) {
         console.error('Error initializing Stripe:', error);
       } finally {
