@@ -4,6 +4,7 @@ import { Session } from "@supabase/supabase-js";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Hammer, ScrollText, Crown, Globe, HelpCircle, Wallet } from "lucide-react";
 
 interface NavigationProps {
   session: Session | null;
@@ -77,7 +78,6 @@ const Navigation = ({ session, onSupportedWebsitesClick, isHome }: NavigationPro
     }
   };
 
-  // Always show navigation items, even during loading
   return (
     <nav>
       <ul className="flex items-center gap-6">
@@ -87,25 +87,28 @@ const Navigation = ({ session, onSupportedWebsitesClick, isHome }: NavigationPro
               <a
                 href="/alchemist-workshop"
                 onClick={handleWorkshopClick}
-                className="text-sm font-medium text-neutral-600 hover:text-primary transition-colors"
+                className="text-sm font-medium text-neutral-600 hover:text-primary transition-colors flex items-center gap-2"
               >
-                Workshop
+                <Hammer className="h-5 w-5" />
+                <span className="hidden sm:inline">Workshop</span>
               </a>
             </li>
             <li>
               <Link
                 to="/alchemy-records"
-                className="text-sm font-medium text-neutral-600 hover:text-primary transition-colors"
+                className="text-sm font-medium text-neutral-600 hover:text-primary transition-colors flex items-center gap-2"
               >
-                Records
+                <ScrollText className="h-5 w-5" />
+                <span className="hidden sm:inline">Records</span>
               </Link>
             </li>
             <li>
               <Link
                 to="/pricing"
-                className="text-sm font-medium text-neutral-600 hover:text-primary transition-colors"
+                className="text-sm font-medium text-neutral-600 hover:text-primary transition-colors flex items-center gap-2"
               >
-                Upgrade
+                <Crown className="h-5 w-5" />
+                <span className="hidden sm:inline">Upgrade</span>
               </Link>
             </li>
           </>
@@ -115,26 +118,29 @@ const Navigation = ({ session, onSupportedWebsitesClick, isHome }: NavigationPro
               <li>
                 <button
                   onClick={onSupportedWebsitesClick}
-                  className="text-sm font-medium text-neutral-600 hover:text-primary transition-colors"
+                  className="text-sm font-medium text-neutral-600 hover:text-primary transition-colors flex items-center gap-2"
                 >
-                  Supported Websites
+                  <Globe className="h-5 w-5" />
+                  <span className="hidden sm:inline">Supported Websites</span>
                 </button>
               </li>
             ) : null}
             <li>
               <Link
                 to="/pricing"
-                className="text-sm font-medium text-neutral-600 hover:text-primary transition-colors"
+                className="text-sm font-medium text-neutral-600 hover:text-primary transition-colors flex items-center gap-2"
               >
-                Pricing
+                <Wallet className="h-5 w-5" />
+                <span className="hidden sm:inline">Pricing</span>
               </Link>
             </li>
             <li>
               <Link
                 to="/faq"
-                className="text-sm font-medium text-neutral-600 hover:text-primary transition-colors"
+                className="text-sm font-medium text-neutral-600 hover:text-primary transition-colors flex items-center gap-2"
               >
-                FAQ
+                <HelpCircle className="h-5 w-5" />
+                <span className="hidden sm:inline">FAQ</span>
               </Link>
             </li>
           </>
