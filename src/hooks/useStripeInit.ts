@@ -11,11 +11,10 @@ export const useStripeInit = () => {
     const initializeStripe = async () => {
       setIsStripeInitializing(true);
       try {
-        // Get the publishable key from Supabase
-        const { data, error } = await supabase
-          .functions.invoke('get-stripe-key', {
-            body: { type: 'publishable' }
-          });
+        // Get the publishable key from Supabase using GET method
+        const { data, error } = await supabase.functions.invoke('get-stripe-key', {
+          method: 'GET'
+        });
 
         if (error) {
           console.error('Error invoking get-stripe-key function:', error);
