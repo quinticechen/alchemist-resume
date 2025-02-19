@@ -20,6 +20,8 @@ serve(async (req) => {
       throw new Error('Stripe publishable key not found');
     }
 
+    console.log('Successfully retrieved Stripe publishable key');
+
     return new Response(
       JSON.stringify({ 
         publishableKey 
@@ -30,6 +32,7 @@ serve(async (req) => {
       },
     );
   } catch (error) {
+    console.error('Error in get-stripe-key function:', error);
     return new Response(
       JSON.stringify({ 
         error: error instanceof Error ? error.message : 'Unknown error occurred' 

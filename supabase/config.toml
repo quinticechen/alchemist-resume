@@ -1,1 +1,10 @@
+
 project_id = "vhofgqmmovjtcnakowlv"
+
+[api]
+enabled = true
+url = "https://vhofgqmmovjtcnakowlv.supabase.co"
+
+[functions]
+[functions.get-stripe-key]
+verify_jwt = false
