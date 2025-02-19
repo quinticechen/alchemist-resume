@@ -6,11 +6,28 @@ const projectId = 'vhofgqmmovjtcnakowlv';
 const supabaseUrl = `https://${projectId}.supabase.co`;
 const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZob2ZncW1tb3ZqdGNuYWtvd2x2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzY1NzM3MzYsImV4cCI6MjA1MjE0OTczNn0.-kse7xq6jQtuOjEWym-9PKCB8Emjv_IMeGi52ciuGtk';
 
+// Get the current environment
+const getEnvironment = () => {
+  const hostname = window.location.hostname;
+  if (hostname.includes('localhost') || hostname.includes('127.0.0.1')) {
+    return 'development';
+  }
+  if (hostname.includes('vercel.app')) {
+    // Check if it's a preview deployment
+    if (hostname.includes('-git-') || hostname.includes('-pr-')) {
+      return 'preview';
+    }
+  }
+  return 'production';
+};
+
 // Get the current URL for redirect
 const getRedirectTo = () => {
   // Get the complete current URL or fallback to the site URL
   return typeof window !== 'undefined' ? window.location.href : 'https://resumealchemist.qwizai.com';
 };
+
+console.log('Current environment:', getEnvironment());
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
@@ -47,6 +64,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   global: {
     headers: {
       'x-application-name': 'resume-alchemist',
+      'x-environment': getEnvironment(), // Add environment to headers
     },
   },
 });
