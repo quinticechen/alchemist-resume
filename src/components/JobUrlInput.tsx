@@ -187,11 +187,11 @@ interface JobUrlInputProps {
   setIsProcessing?: (isProcessing: boolean) => void;
 }
 
-const SUPPORTED_JOB_SITES = [
+export const SUPPORTED_JOB_SITES = [
   "linkedin.com",
   "indeed.com",
   "glassdoor.com",
-  "foundit", // foundit.in, foundit.hk
+  "foundit.com", // 確保是 foundit.com
   "ziprecruiter.com",
   "simplyhired.com",
   "104.com.tw",
@@ -200,6 +200,7 @@ const SUPPORTED_JOB_SITES = [
   "next.rikunabi.com",
   "51job.com",
 ];
+
 
 const JobUrlInput = ({
   onUrlSubmit,

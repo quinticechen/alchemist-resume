@@ -2,27 +2,13 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import ResumeUploader from "@/components/ResumeUploader";
-import JobUrlInput from "@/components/JobUrlInput";
+import JobUrlInput, { SUPPORTED_JOB_SITES } from "@/components/JobUrlInput"; 
 import ProcessingPreview from "@/components/ProcessingPreview";
 import { Button } from "@/components/ui/button";
 import { History, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-
-const SUPPORTED_JOB_SITES = [
-  "linkedin.com",
-  "indeed.com",
-  "glassdoor.com",
-  "foundit",
-  "ziprecruiter.com",
-  "simplyhired.com",
-  "104.com.tw",
-  "1111.com.tw",
-  "jobsdb.com",
-  "next.rikunabi.com",
-  "51job.com",
-];
 
 
 const AlchemistWorkshop = () => {
