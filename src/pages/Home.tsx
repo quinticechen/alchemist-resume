@@ -5,7 +5,7 @@ import { ArrowRight, Upload, Zap, CheckCircle, Globe, MapPin } from "lucide-reac
 import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
 import { useToast } from "@/hooks/use-toast";
-import Lottie from "react-lottie";
+import Lottie from 'react-lottie';
 import animationData from "@/animations/Jellyfish.yellow.money.json"; 
 
 const companies = [
