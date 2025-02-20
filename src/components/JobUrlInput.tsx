@@ -24,32 +24,20 @@ interface JobUrlInputProps {
   setIsProcessing?: (isProcessing: boolean) => void;
 }
 
-const RESTRICTED_SITES = {
-  'linkedin.com': {
-    baseUrl: 'https://www.linkedin.com/',
-    example: 'https://www.linkedin.com/jobs/view/4143525421'
-  },
-  'jobsdb.com': {
-    baseUrl: 'https://*.jobsdb.com/',
-    example: 'https://sg.jobsdb.com/job/VP-Product-bc4e496fb39492b60bdc95d6e4e2d3f5'
-  }
-};
-
 const SUPPORTED_JOB_SITES = [
-  // Restricted Platforms (with special conditions)
-  "linkedin.com",
-  "jobsdb.com",
-  // Global Platforms
-  "indeed.com",
-  "glassdoor.com",
-  "foundit.in",
-  "ziprecruiter.com",
-  "simplyhired.com",
-  // Asian Regional Platforms
-  "104.com.tw",
-  "1111.com.tw",
-  "next.rikunabi.com",
-  "51job.com"
+  // Restricted Platforms (URLs with 'search' not allowed)
+  { domain: "linkedin.com", restricted: true },
+  { domain: "jobsdb.com", restricted: true },
+  // Unrestricted Platforms (all URLs allowed)
+  { domain: "indeed.com", restricted: false },
+  { domain: "glassdoor.com", restricted: false },
+  { domain: "foundit.in", restricted: false },
+  { domain: "ziprecruiter.com", restricted: false },
+  { domain: "simplyhired.com", restricted: false },
+  { domain: "104.com.tw", restricted: false },
+  { domain: "1111.com.tw", restricted: false },
+  { domain: "next.rikunabi.com", restricted: false },
+  { domain: "51job.com", restricted: false }
 ];
 
 const JobUrlInput = ({ onUrlSubmit, isProcessing = false, jobUrl = "", setJobUrl, resumeId, setIsProcessing }: JobUrlInputProps) => {
@@ -64,32 +52,22 @@ const JobUrlInput = ({ onUrlSubmit, isProcessing = false, jobUrl = "", setJobUrl
       const urlString = url.toLowerCase();
       const hostname = urlObj.hostname.toLowerCase();
       
-      // Check if the URL is from a supported job site
-      const supportedSite = SUPPORTED_JOB_SITES.find(site => hostname.includes(site));
+      // Find matching site
+      const matchingSite = SUPPORTED_JOB_SITES.find(site => hostname.includes(site.domain));
       
-      if (!supportedSite) {
+      if (!matchingSite) {
         setShowUnsupportedDialog(true);
         return false;
       }
 
-      // Special handling for LinkedIn and JobsDB
-      if (hostname.includes('linkedin.com') || hostname.includes('jobsdb.com')) {
-        if (urlString.includes('search')) {
-          toast({
-            title: "Invalid URL",
-            description: "Search result URLs are not supported. Please use the direct job posting URL.",
-            variant: "destructive",
-          });
-          return false;
-        }
-
-        const site = Object.entries(RESTRICTED_SITES).find(([domain]) => hostname.includes(domain));
-        if (site) {
-          toast({
-            title: "URL Format Example",
-            description: `Example of a valid URL format: ${site[1].example}`,
-          });
-        }
+      // Check for search URLs in restricted sites
+      if (matchingSite.restricted && urlString.includes('search')) {
+        toast({
+          title: "Invalid URL",
+          description: `Search URLs are not allowed for ${matchingSite.domain}. Please use direct job posting URLs.`,
+          variant: "destructive",
+        });
+        return false;
       }
 
       return true;
