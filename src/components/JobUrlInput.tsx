@@ -50,6 +50,17 @@ const JobUrlInput = ({ onUrlSubmit, isProcessing = false, jobUrl = "", setJobUrl
   const isValidJobUrl = (url: string): boolean => {
     try {
       const urlObj = new URL(url);
+      
+      // Check for search parameters
+      if (urlObj.search) {
+        toast({
+          title: "Invalid URL Format",
+          description: "Please use the share button within the job posting to get the correct URL. URLs with search parameters are not supported.",
+          variant: "destructive",
+        });
+        return false;
+      }
+      
       return SUPPORTED_JOB_SITES.some(domain => urlObj.hostname.includes(domain));
     } catch {
       return false;

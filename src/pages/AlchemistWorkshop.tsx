@@ -5,7 +5,7 @@ import ResumeUploader from "@/components/ResumeUploader";
 import JobUrlInput from "@/components/JobUrlInput";
 import ProcessingPreview from "@/components/ProcessingPreview";
 import { Button } from "@/components/ui/button";
-import { History } from "lucide-react";
+import { History, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -39,6 +39,18 @@ const AlchemistWorkshop = () => {
   const handleUrlSubmit = async (url: string) => {
     setIsProcessing(true);
     try {
+      // Check for search parameters in URL
+      const urlObj = new URL(url);
+      if (urlObj.search) {
+        toast({
+          title: "Invalid URL Format",
+          description: "Please use the share button within the job posting to get the correct URL. URLs with search parameters are not supported.",
+          variant: "destructive",
+        });
+        setIsProcessing(false);
+        return;
+      }
+
       const { data, error } = await supabase.functions.invoke('process-resume', {
         body: {
           resumeId,
@@ -46,7 +58,10 @@ const AlchemistWorkshop = () => {
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error processing resume:', error);
+        throw error;
+      }
 
       setJobUrl(url);
       setAnalysisId(data.analysisId);
@@ -59,7 +74,7 @@ const AlchemistWorkshop = () => {
       console.error('Error processing resume:', error);
       toast({
         title: "Error",
-        description: "Failed to process resume",
+        description: "Failed to process resume. Please try again later.",
         variant: "destructive",
       });
       setIsProcessing(false);
@@ -70,24 +85,44 @@ const AlchemistWorkshop = () => {
     navigate('/alchemy-records');
   };
 
+  const previewOriginalResume = () => {
+    if (filePath) {
+      const { data } = supabase.storage
+        .from('resumes')
+        .getPublicUrl(filePath);
+      window.open(data.publicUrl, '_blank');
+    }
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-4xl mx-auto space-y-8">
-        <h1 className="text-3xl font-bold bg-gradient-primary text-transparent bg-clip-text">
+        <h1 className="text-3xl font-bold bg-gradient-primary text-transparent bg-clip-text text-center">
           Alchemist Workshop
         </h1>
 
         <ResumeUploader onUploadSuccess={handleFileUploadSuccess} />
 
         {selectedFile && (
-          <JobUrlInput
-            onUrlSubmit={handleUrlSubmit}
-            isProcessing={isProcessing}
-            jobUrl={jobUrl}
-            setJobUrl={setJobUrl}
-            resumeId={resumeId}
-            setIsProcessing={setIsProcessing}
-          />
+          <>
+            <Button
+              variant="outline"
+              onClick={previewOriginalResume}
+              className="w-full flex items-center justify-center gap-2 text-primary border-primary/20 hover:bg-primary/5"
+            >
+              <FileText className="h-4 w-4" />
+              Preview Original Resume
+            </Button>
+
+            <JobUrlInput
+              onUrlSubmit={handleUrlSubmit}
+              isProcessing={isProcessing}
+              jobUrl={jobUrl}
+              setJobUrl={setJobUrl}
+              resumeId={resumeId}
+              setIsProcessing={setIsProcessing}
+            />
+          </>
         )}
 
         {isProcessing && analysisId && (
