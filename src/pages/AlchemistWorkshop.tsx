@@ -91,7 +91,7 @@ const AlchemistWorkshop = () => {
         .getPublicUrl(resumeData.file_path);
 
       // Trigger the Make.com webhook with the correct data format
-      const makeWebhookUrl = 'https://hook.eu2.make.com/ug8t2abll9xnyl3zas6d47385y3roa22';
+      const makeWebhookUrl = 'https://hook.eu2.make.com/pthisc4aefvf15i7pj4ja99a84dp7kce';
       const webhookResponse = await fetch(makeWebhookUrl, {
         method: 'POST',
         headers: {
