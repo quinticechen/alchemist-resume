@@ -180,12 +180,9 @@ const Home = () => {
               Learn More
             </Button>
             <Button
-              variant="outline"
               size="lg"
-              text-red-500
               onClick={handleStartTrial}
-              
-                className="text-light"
+                className="bg-light text-gradient-primary"
             >
               {session ? "Go to Workshop" : "Start Free Trial"}
             </Button>
