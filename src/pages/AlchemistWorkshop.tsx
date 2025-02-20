@@ -1,9 +1,10 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import ResumeUploader from "@//ResumeUploader";
-import JobUrlInput from "@//JobUrlInput";
-import ProcessingPreview from "@//ProcessingPreview";
-import { Button } from "@//ui/button";
+import ResumeUploader from "@/components/ResumeUploader";
+import JobUrlInput from "@/components/JobUrlInput";
+import ProcessingPreview from "@/components/ProcessingPreview";
+import { Button } from "@/components/ui/button";
 import { History, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,7 +14,7 @@ const SUPPORTED_JOB_SITES = [
   "linkedin.com",
   "indeed.com",
   "glassdoor.com",
-  "foundit", // foundit.in, foundit.hk
+  "foundit",
   "ziprecruiter.com",
   "simplyhired.com",
   "104.com.tw",
@@ -23,15 +24,16 @@ const SUPPORTED_JOB_SITES = [
   "51job.com",
 ];
 
+
 const AlchemistWorkshop = () => {
   const { session, isLoading } = useAuth();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [filePath, setFilePath] = useState<>("");
-  const [publicUrl, setPublicUrl] = useState<>("");
-  const [resumeId, setResumeId] = useState<>("");
-  const [jobUrl, setJobUrl] = useState<>("");
+  const [filePath, setFilePath] = useState<string>("");
+  const [publicUrl, setPublicUrl] = useState<string>("");
+  const [resumeId, setResumeId] = useState<string>("");
+  const [jobUrl, setJobUrl] = useState<string>("");
   const [isProcessing, setIsProcessing] = useState(false);
-  const [analysisId, setAnalysisId] = useState<>("");
+  const [analysisId, setAnalysisId] = useState<string>("");
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -66,6 +68,7 @@ const AlchemistWorkshop = () => {
       const hostname = urlObj.hostname.toLowerCase();
 
       if (!hostname.includes("indeed.com") && !hostname.includes("ziprecruiter.com")) {
+        // 移除 "?" 之後的所有內容
         processedUrl = url.split("?")[0];
       }
 
@@ -83,11 +86,11 @@ const AlchemistWorkshop = () => {
 
       console.log('Creating analysis record with data:', {
         resume_id: resumeId,
-        job_url: processedUrl, // 使用處理後的 URL
+        job_url: processedUrl,
         user_id: session?.user?.id
       });
 
-      // ... (其餘的資料庫和 webhook 邏輯保持不變)
+      // First, create the analysis record in the database
       const { data: analysisRecord, error: analysisError } = await supabase
         .from('resume_analyses')
         .insert({
@@ -98,7 +101,61 @@ const AlchemistWorkshop = () => {
         .select()
         .single();
 
-      // ... (其餘的資料庫和 webhook 邏輯保持不變)
+      if (analysisError) {
+        console.error('Error creating analysis record:', analysisError);
+        throw analysisError;
+      }
+
+      console.log('Analysis record created:', analysisRecord);
+
+      // Get the resume details
+      const { data: resumeData, error: resumeError } = await supabase
+        .from('resumes')
+        .select('file_name, file_path')
+        .eq('id', resumeId)
+        .single();
+
+      if (resumeError) {
+        console.error('Error fetching resume:', resumeError);
+        throw resumeError;
+      }
+
+      console.log('Resume data fetched:', resumeData);
+
+      // Get the storage URL for the resume
+      const { data: storageData } = supabase.storage
+        .from('resumes')
+        .getPublicUrl(resumeData.file_path);
+
+      console.log('Storage URL generated:', storageData);
+
+      const webhookData = {
+        analysisId: analysisRecord.id,
+        resumeUrl: storageData.publicUrl,
+        jobUrl: url,
+        fileName: resumeData.file_name
+      };
+
+      console.log('Preparing to send webhook data:', webhookData);
+
+      // Trigger the Make.com webhook with the correct data format
+      const makeWebhookUrl = 'https://hook.eu2.make.com/pthisc4aefvf15i7pj4ja99a84dp7kce';
+      console.log('Sending webhook to:', makeWebhookUrl);
+
+      const webhookResponse = await fetch(makeWebhookUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(webhookData),
+      });
+
+      console.log('Webhook response status:', webhookResponse.status);
+
+      if (!webhookResponse.ok) {
+        console.error('Webhook response not OK:', webhookResponse);
+        throw new Error('Failed to trigger Make.com webhook');
+      }
 
       setJobUrl(processedUrl);
       setAnalysisId(analysisRecord.id);
