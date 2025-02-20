@@ -244,21 +244,6 @@ const JobUrlInput = ({ onUrlSubmit, isProcessing = false, jobUrl = "", setJobUrl
         return false;
       }
 
-      // Check for search parameters in all sites
-      const commonSearchParams = ['search', 'keywords', 'q', 'query', 'kw', 'searchterm'];
-      const hasSearchParams = Array.from(searchParams.keys()).some(param => 
-        commonSearchParams.some(searchParam => param.toLowerCase().includes(searchParam))
-      );
-
-      if (hasSearchParams) {
-        toast({
-          title: "Invalid URL",
-          description: "Please provide a direct job posting URL, not a search results page.",
-          variant: "destructive",
-        });
-        return false;
-      }
-
       // Additional validation for specific platforms
       if (hostname.includes('linkedin.com')) {
         if (!pathname.includes('/jobs/view/')) {
