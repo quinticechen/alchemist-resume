@@ -146,11 +146,11 @@ const Home = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100">
       <section className="py-20 px-4">
-        <div className="max-w-6xl mx-auto text-center">
+        <div className="max-w-6xl mx-auto justify-content: center text-center">
           <h1 className="text-6xl font-bold bg-gradient-primary text-transparent bg-clip-text mb-6">
             Transform Your Resume with AI Alchemy 。///。
           </h1>
-          <video width="50% justify-center" controls autoPlay loop>
+          <video width="50%" controls autoPlay loop>s
               <source src="https://vhofgqmmovjtcnakowlv.supabase.co/storage/v1/object/sign/elements/Jellyfish-Yellow-Money.mp4?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJlbGVtZW50cy9KZWxseWZpc2gtWWVsbG93LU1vbmV5Lm1wNCIsImlhdCI6MTc0MDA0NjY2NSwiZXhwIjozMzI0NDUxMDY2NX0.cdnvOQEZc6gF2DLwfLXcN393IPYCuyAG7IUVW1z1jd0" type="video/mp4" />
               Your browser does not support the video tag.
           </video>
