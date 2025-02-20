@@ -32,9 +32,8 @@ const globalPlatforms = [
   { name: "LinkedIn", url: "linkedin.com" },
   { name: "Indeed", url: "indeed.com" },
   { name: "Glassdoor", url: "glassdoor.com" },
-  { name: "Monster", url: "monster.com" },
+  { name: "Foundit", url: "foundit.in" },
   { name: "ZipRecruiter", url: "ziprecruiter.com" },
-  { name: "CareerBuilder", url: "careerbuilder.com" },
   { name: "SimplyHired", url: "simplyhired.com" },
 ];
 
@@ -44,7 +43,6 @@ const asianPlatforms = [
   { name: "JobsDB", url: "jobsdb.com" },
   { name: "Rikunabi NEXT", url: "next.rikunabi.com" },
   { name: "51job", url: "51job.com" },
-  { name: "Zhaopin", url: "zhaopin.com" },
 ];
 
 const faqs = [
