@@ -158,46 +158,49 @@ const Home = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100">
-      <section className="py-20 px-4">
+      <section className="bg-gradient-primary py-20 px-4">
         <div className="max-w-6xl mx-auto justify-content: center text-center">
-          <h1 className="text-6xl font-bold bg-gradient-primary text-transparent bg-clip-text mb-6">
+          <h1 className="text-6xl font-bold bg-light text-transparent bg-clip-text mb-6">
             Transform Your Resume with AI Alchemy 
           </h1>
           {/* 移除 <video> 元素，並替換為 Lottie 元件 */}
           <Lottie options={defaultOptions} height={400} width={400} />
-          <p className="text-xl text-neutral-600 mb-8 max-w-3xl mx-auto">
+          <p className="text-xl text-light mb-8 max-w-3xl mx-auto">
             Turn your ordinary resume into the perfect match for your dream job using our AI-powered optimization technology.
           </p>
           <div className="flex gap-4 justify-center">
             <Button
-              onClick={handleStartTrial}
-              size="lg"
-              className="bg-gradient-primary hover:opacity-90 transition-opacity"
-            >
-              {session ? "Go to Workshop" : "Start Free Trial"}
-            </Button>
-            <Button
-              variant="outline"
-              size="lg"
               onClick={() => {
                 const featuresSection = document.getElementById("features");
                 featuresSection?.scrollIntoView({ behavior: "smooth" });
               }}
+              size="lg"
+              className="bg-gradient-primary hover:opacity-90 transition-opacity"
             >
               Learn More
+            </Button>
+            <Button
+              variant="outline"
+              size="lg"
+              text-red-500
+              onClick={handleStartTrial}
+              
+                className="text-light"
+            >
+              {session ? "Go to Workshop" : "Start Free Trial"}
             </Button>
           </div>
         </div>
       </section>
 
-      <section id="features" className="py-20 bg-white">
+      <section id="features" className="py-20 bg-light">
         <div className="max-w-6xl mx-auto px-4">
           <h2 className="text-4xl font-bold text-center mb-12">How It Works</h2>
           <div className="grid md:grid-cols-3 gap-8">
             {features.map((feature, index) => (
               <div
                 key={index}
-                className="p-6 rounded-xl border border-neutral-200 bg-white shadow-apple hover:shadow-apple-lg transition-shadow"
+                className="p-6 rounded-xl border border-neutral-200 bg-light shadow-apple hover:shadow-apple-lg transition-shadow"
               >
                 <feature.icon className="w-12 h-12 text-primary mb-4" />
                 <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
@@ -226,7 +229,7 @@ const Home = () => {
         </div>
       </section>
 
-      <section className="py-20 bg-gradient-primary text-white">
+      <section className="py-20 bg-gradient-primary text-light">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <h2 className="text-4xl font-bold mb-6">Start with 3 Free Uses</h2>
           <p className="text-xl mb-8 opacity-90">
@@ -243,7 +246,7 @@ const Home = () => {
         </div>
       </section>
 
-      <section id="supported-websites" className="py-20 bg-white">
+      <section id="supported-websites" className="py-20 bg-light">
         <div className="max-w-6xl mx-auto px-4">
           <h2 className="text-4xl font-bold text-center mb-12">Supported Job Platforms</h2>
           
@@ -292,7 +295,7 @@ const Home = () => {
             {faqs.map((faq, index) => (
               <div
                 key={index}
-                className="p-6 rounded-xl border border-neutral-200 bg-white"
+                className="p-6 rounded-xl border border-neutral-200 bg-light"
               >
                 <h3 className="text-xl font-semibold mb-2">{faq.question}</h3>
                 <p className="text-neutral-600">{faq.answer}</p>
