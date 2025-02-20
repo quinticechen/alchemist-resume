@@ -32,10 +32,10 @@ const AlchemistWorkshop = () => {
 
   const handleFileUploadSuccess = (
     file: File,
-    path: ,
-    url: ,
-    id: 
-  ) => {
+    path: string,
+    url: string,
+    id: string
+) => {
     setSelectedFile(file);
     setFilePath(path);
     setPublicUrl(url);
