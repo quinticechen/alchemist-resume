@@ -60,6 +60,12 @@ const AlchemistWorkshop = () => {
         return;
       }
 
+      console.log('Creating analysis record with data:', {
+        resume_id: resumeId,
+        job_url: url,
+        user_id: session?.user?.id
+      });
+
       // First, create the analysis record in the database
       const { data: analysisRecord, error: analysisError } = await supabase
         .from('resume_analyses')
@@ -76,6 +82,8 @@ const AlchemistWorkshop = () => {
         throw analysisError;
       }
 
+      console.log('Analysis record created:', analysisRecord);
+
       // Get the resume details
       const { data: resumeData, error: resumeError } = await supabase
         .from('resumes')
@@ -88,27 +96,40 @@ const AlchemistWorkshop = () => {
         throw resumeError;
       }
 
+      console.log('Resume data fetched:', resumeData);
+
       // Get the storage URL for the resume
       const { data: storageData } = supabase.storage
         .from('resumes')
         .getPublicUrl(resumeData.file_path);
 
+      console.log('Storage URL generated:', storageData);
+
+      const webhookData = {
+        analysisId: analysisRecord.id,
+        resumeUrl: storageData.publicUrl,
+        jobUrl: url,
+        fileName: resumeData.file_name
+      };
+
+      console.log('Preparing to send webhook data:', webhookData);
+
       // Trigger the Make.com webhook with the correct data format
-      const makeWebhookUrl = 'https://hook.eu2.make.com/ug8t2abll9xnyl3zas6d47385y3roa22';
+      const makeWebhookUrl = 'https://hook.eu2.make.com/pthisc4aefvf15i7pj4ja99a84dp7kce';
+      console.log('Sending webhook to:', makeWebhookUrl);
+
       const webhookResponse = await fetch(makeWebhookUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          analysisId: analysisRecord.id,
-          resumeUrl: storageData.publicUrl,
-          jobUrl: url,
-          fileName: resumeData.file_name
-        }),
+        body: JSON.stringify(webhookData),
       });
 
+      console.log('Webhook response status:', webhookResponse.status);
+
       if (!webhookResponse.ok) {
+        console.error('Webhook response not OK:', webhookResponse);
         throw new Error('Failed to trigger Make.com webhook');
       }
 
