@@ -283,15 +283,16 @@ const Home = () => {
                 <p className="text-neutral-600">{faq.answer}</p>
               </div>
             ))}
-                                          <Button
-                                          
-                              onClick="/faq"
-                              size="lg"
-                              variant="outline"
-                              className="bg-secondary hover:bg-secondary/90 text-primary"
-                            >
-                              More
-                            </Button>
+            <div className="flex justify-center pt-4">
+              <Button
+                onClick={() => navigate("/faq")}
+                size="lg"
+                variant="outline"
+                className="bg-secondary hover:bg-secondary/90 text-primary"
+              >
+                More
+              </Button>
+            </div>
           </div>
         </div>
       </section>
