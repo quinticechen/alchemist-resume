@@ -170,7 +170,7 @@
 // export default JobUrlInput;
 
 
----
+// ---
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -234,11 +234,10 @@ const JobUrlInput = ({ onUrlSubmit, isProcessing = false, jobUrl = "", setJobUrl
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isValidJobUrl(url)) {
+    const cleanedUrl = cleanUrl(url);
+    if (!isValidJobUrl(cleanedUrl)) {
       return;
     }
-
-    const cleanedUrl = cleanUrl(url);
 
     setIsSubmitting(true);
     if (setJobUrl) setJobUrl(cleanedUrl);
