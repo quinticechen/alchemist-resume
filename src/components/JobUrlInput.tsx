@@ -24,48 +24,22 @@ interface JobUrlInputProps {
   setIsProcessing?: (isProcessing: boolean) => void;
 }
 
-const URL_PATTERNS = {
+const RESTRICTED_SITES = {
   'linkedin.com': {
-    valid: /^https:\/\/www\.linkedin\.com\/jobs\/view\/\d+/,
+    baseUrl: 'https://www.linkedin.com/',
     example: 'https://www.linkedin.com/jobs/view/4143525421'
   },
-  'indeed.com': {
-    valid: /^https:\/\/www\.indeed\.com\/viewjob\?.*?jk=[a-zA-Z0-9]+/,
-    example: 'https://www.indeed.com/viewjob?jk=723d3d2eaf66b3d6&from=shareddesktop'
-  },
-  'glassdoor.com': {
-    valid: /^https:\/\/www\.glassdoor\.com\/Job\/.*?(?:jobListingId|jl)=\d+.*$/,
-    example: 'https://www.glassdoor.com/Job/marketing-response-center-intern-jobs-SRCH_KO0,32.htm?jl=1009505372887&ao=1136043'
-  },
-  'foundit.in': {
-    valid: /^https:\/\/www\.foundit\.in\/job\/.*?\?.*$/,
-    example: 'https://www.foundit.in/job/cloud-solution-engineer-database-taiwan-oracle-taiwan-34014328?searchId=cbf0ab48-f092-4937-b59a-6980c738bede'
-  },
-  'ziprecruiter.com': {
-    valid: /^https:\/\/www\.ziprecruiter\.com\/c\/.*?\/Job\/.*?\?.*?jid=[a-zA-Z0-9]+$/,
-    example: 'https://www.ziprecruiter.com/c/TekWissen-LLC/Job/Lynx-Implementation-Specialist/-in-Irving,TX?jid=87dd15916c0ab9fd'
-  },
-  '104.com.tw': {
-    valid: /^https:\/\/www\.104\.com\.tw\/job\/[a-zA-Z0-9]+\?.*$/,
-    example: 'https://www.104.com.tw/job/8mq0p?jobsource=index_job_n'
-  },
   'jobsdb.com': {
-    valid: /^https:\/\/[a-z]+\.jobsdb\.com\/job\/.*?\?.*$/,
-    example: 'https://sg.jobsdb.com/job/VP-Product-bc4e496fb39492b60bdc95d6e4e2d3f5?abstract_type=original'
-  },
-  'next.rikunabi.com': {
-    valid: /^https:\/\/next\.rikunabi\.com\/company\/.*?\/nx\d+_[a-zA-Z0-9]+\/\?.*$/,
-    example: 'https://next.rikunabi.com/company/cmi0167304069/nx1_rq0020358736/?leadtc=onbcmplist_kibou_btn'
-  },
-  '51job.com': {
-    valid: /^https:\/\/jobs\.51job\.com\/.*?\/\d+\.html\?.*$/,
-    example: 'https://jobs.51job.com/shanghai-pdxq/161830554.html?s=sou_sou_soulb'
+    baseUrl: 'https://*.jobsdb.com/',
+    example: 'https://sg.jobsdb.com/job/VP-Product-bc4e496fb39492b60bdc95d6e4e2d3f5'
   }
 };
 
 const SUPPORTED_JOB_SITES = [
-  // Global Platforms
+  // Restricted Platforms (with special conditions)
   "linkedin.com",
+  "jobsdb.com",
+  // Global Platforms
   "indeed.com",
   "glassdoor.com",
   "foundit.in",
@@ -74,7 +48,6 @@ const SUPPORTED_JOB_SITES = [
   // Asian Regional Platforms
   "104.com.tw",
   "1111.com.tw",
-  "jobsdb.com",
   "next.rikunabi.com",
   "51job.com"
 ];
@@ -89,37 +62,37 @@ const JobUrlInput = ({ onUrlSubmit, isProcessing = false, jobUrl = "", setJobUrl
     try {
       const urlObj = new URL(url);
       const urlString = url.toLowerCase();
+      const hostname = urlObj.hostname.toLowerCase();
       
-      // Special handling for LinkedIn and JobsDB - reject URLs containing "search"
-      if ((urlObj.hostname.includes('linkedin.com') || urlObj.hostname.includes('jobsdb.com')) && 
-          urlString.includes('search')) {
-        toast({
-          title: "Invalid URL",
-          description: "Search result URLs are not supported. Please use the direct job posting URL.",
-          variant: "destructive",
-        });
+      // Check if the URL is from a supported job site
+      const supportedSite = SUPPORTED_JOB_SITES.find(site => hostname.includes(site));
+      
+      if (!supportedSite) {
+        setShowUnsupportedDialog(true);
         return false;
       }
-      
-      // Find matching site pattern
-      for (const domain of SUPPORTED_JOB_SITES) {
-        if (urlObj.hostname.includes(domain)) {
-          const pattern = URL_PATTERNS[domain];
-          if (pattern && pattern.valid.test(url)) {
-            return true;
-          } else {
-            toast({
-              title: "Invalid URL Format",
-              description: `Please use the correct URL format for ${domain}. Example: ${pattern?.example}`,
-              variant: "destructive",
-            });
-            return false;
-          }
+
+      // Special handling for LinkedIn and JobsDB
+      if (hostname.includes('linkedin.com') || hostname.includes('jobsdb.com')) {
+        if (urlString.includes('search')) {
+          toast({
+            title: "Invalid URL",
+            description: "Search result URLs are not supported. Please use the direct job posting URL.",
+            variant: "destructive",
+          });
+          return false;
+        }
+
+        const site = Object.entries(RESTRICTED_SITES).find(([domain]) => hostname.includes(domain));
+        if (site) {
+          toast({
+            title: "URL Format Example",
+            description: `Example of a valid URL format: ${site[1].example}`,
+          });
         }
       }
-      
-      setShowUnsupportedDialog(true);
-      return false;
+
+      return true;
     } catch {
       toast({
         title: "Invalid URL",
@@ -178,15 +151,15 @@ const JobUrlInput = ({ onUrlSubmit, isProcessing = false, jobUrl = "", setJobUrl
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <AlertCircle className="h-5 w-5 text-destructive" />
-              Unsupported Website or Invalid URL Format
+              Unsupported Website
             </AlertDialogTitle>
             <AlertDialogDescription className="space-y-4">
-              <p>The provided URL is not from one of our supported job platforms or doesn't follow the required format. We currently support:</p>
+              <p>The provided URL is not from one of our supported job platforms. We currently support:</p>
               
               <div className="space-y-2">
                 <p className="font-semibold">Global Platforms:</p>
                 <ul className="list-disc pl-6 space-y-1">
-                  <li>LinkedIn (linkedin.com)</li>
+                  <li>LinkedIn (linkedin.com) - No search URLs allowed</li>
                   <li>Indeed (indeed.com)</li>
                   <li>Glassdoor (glassdoor.com)</li>
                   <li>Foundit (foundit.in)</li>
@@ -200,7 +173,7 @@ const JobUrlInput = ({ onUrlSubmit, isProcessing = false, jobUrl = "", setJobUrl
                 <ul className="list-disc pl-6 space-y-1">
                   <li>104 Job Bank (104.com.tw)</li>
                   <li>1111 Job Bank (1111.com.tw)</li>
-                  <li>JobsDB (jobsdb.com)</li>
+                  <li>JobsDB (jobsdb.com) - No search URLs allowed</li>
                   <li>Rikunabi NEXT (next.rikunabi.com)</li>
                   <li>51job (51job.com)</li>
                 </ul>
