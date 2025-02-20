@@ -60,16 +60,19 @@ const AlchemistWorkshop = () => {
         return;
       }
 
-      // First process the resume through Supabase to get the analysis ID
-      const { data: analysisData, error: analysisError } = await supabase.functions.invoke('process-resume', {
-        body: {
-          resumeId,
-          jobUrl: url,
-        },
-      });
+      // First, create the analysis record in the database
+      const { data: analysisRecord, error: analysisError } = await supabase
+        .from('resume_analyses')
+        .insert({
+          resume_id: resumeId,
+          job_url: url,
+          user_id: session?.user?.id
+        })
+        .select()
+        .single();
 
       if (analysisError) {
-        console.error('Error processing resume:', analysisError);
+        console.error('Error creating analysis record:', analysisError);
         throw analysisError;
       }
 
@@ -91,14 +94,14 @@ const AlchemistWorkshop = () => {
         .getPublicUrl(resumeData.file_path);
 
       // Trigger the Make.com webhook with the correct data format
-      const makeWebhookUrl = 'https://hook.eu2.make.com/pthisc4aefvf15i7pj4ja99a84dp7kce';
+      const makeWebhookUrl = 'https://hook.eu2.make.com/ug8t2abll9xnyl3zas6d47385y3roa22';
       const webhookResponse = await fetch(makeWebhookUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          analysisId: analysisData.analysisId,
+          analysisId: analysisRecord.id,
           resumeUrl: storageData.publicUrl,
           jobUrl: url,
           fileName: resumeData.file_name
@@ -110,7 +113,7 @@ const AlchemistWorkshop = () => {
       }
 
       setJobUrl(url);
-      setAnalysisId(analysisData.analysisId);
+      setAnalysisId(analysisRecord.id);
 
       toast({
         title: "Analysis Started",
