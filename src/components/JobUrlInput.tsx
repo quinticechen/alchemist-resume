@@ -24,50 +24,89 @@ interface JobUrlInputProps {
   setIsProcessing?: (isProcessing: boolean) => void;
 }
 
+// const URL_PATTERNS = {
+//   'linkedin.com': {
+//     valid: /^https:\/\/www\.linkedin\.com\/jobs\/view\/\d+/,
+//     example: 'https://www.linkedin.com/jobs/view/4143525421'
+//   },
+//   'indeed.com': {
+//     valid: /^https:\/\/www\.indeed\.com\/viewjob\?.*?jk=[a-zA-Z0-9]+/,
+//     example: 'https://www.indeed.com/viewjob?jk=723d3d2eaf66b3d6'
+//   },
+//   'glassdoor.com': {
+//     valid: /^https:\/\/www\.glassdoor\.com\/Job\/.*?(?:jobListingId|jl)=\d+/,
+//     example: 'https://www.glassdoor.com/Job/marketing-response-center-intern-jobs-SRCH_KO0,32.htm?jobListingId=1009505372887'
+//   },
+//   'foundit.hk': {
+//     valid: /^https:\/\/www\.foundit\.hk\/job\/.+/,
+//     example: 'https://www.foundit.hk/job/cloud-solution-engineer-database-taiwan-oracle-taiwan-34014328'
+//   },
+//   'ziprecruiter.com': {
+//     valid: /^https:\/\/www\.ziprecruiter\.com\/c\/[^/]+\/Job\/.+?\?.*?jid=[a-zA-Z0-9]+/,
+//     example: 'https://www.ziprecruiter.com/c/TekWissen-LLC/Job/Lynx-Implementation-Specialist/-in-Irving,TX?jid=87dd15916c0ab9fd'
+//   },
+//   'simplyhired.com': {
+//     valid: /^https:\/\/www\.simplyhired\.com\/job\/[a-zA-Z0-9_-]+/,
+//     example: 'https://www.simplyhired.com/job/aaX8W0nMMZnVcWZNZboPTamlBMsvfGKsH2-PJBEINlt_I-ldD6DHsA'
+//   },
+//   '104.com.tw': {
+//     valid: /^https:\/\/www\.104\.com\.tw\/job\/[a-zA-Z0-9]+/,
+//     example: 'https://www.104.com.tw/job/8mq0p'
+//   },
+//   '1111.com.tw': {
+//     valid: /^https:\/\/www\.1111\.com\.tw\/job\/\d+/,
+//     example: 'https://www.1111.com.tw/job/85115614/'
+//   },
+//   'jobsdb.com': {
+//     valid: /^https:\/\/[a-z]+\.jobsdb\.com\/job\/.+?(?:[a-zA-Z0-9]{32}|[^?]+)/,
+//     example: 'https://sg.jobsdb.com/job/VP-Product-bc4e496fb39492b60bdc95d6e4e2d3f5'
+//   },
+//   'next.rikunabi.com': {
+//     valid: /^https:\/\/next\.rikunabi\.com\/company\/[^/]+\/nx\d+_[a-zA-Z0-9]+/,
+//     example: 'https://next.rikunabi.com/company/cmi0167304069/nx1_rq0020358736/'
+//   },
+//   '51job.com': {
+//     valid: /^https:\/\/jobs\.51job\.com\/[^/]+\/\d+\.html/,
+//     example: 'https://jobs.51job.com/shanghai-pdxq/161830554.html'
+//   }
+// };
+
 const URL_PATTERNS = {
   'linkedin.com': {
     valid: /^https:\/\/www\.linkedin\.com\/jobs\/view\/\d+/,
     example: 'https://www.linkedin.com/jobs/view/4143525421'
   },
   'indeed.com': {
-    valid: /^https:\/\/www\.indeed\.com\/viewjob\?.*?jk=[a-zA-Z0-9]+/,
-    example: 'https://www.indeed.com/viewjob?jk=723d3d2eaf66b3d6'
+    valid: /^https:\/\/www\.indeed\.com\/viewjob\?.*?jk=[a-zA-Z0-9]+&.*$/,
+    example: 'https://www.indeed.com/viewjob?jk=723d3d2eaf66b3d6&from=shareddesktop'
   },
   'glassdoor.com': {
-    valid: /^https:\/\/www\.glassdoor\.com\/Job\/.*?(?:jobListingId|jl)=\d+/,
-    example: 'https://www.glassdoor.com/Job/marketing-response-center-intern-jobs-SRCH_KO0,32.htm?jobListingId=1009505372887'
+    valid: /^https:\/\/www\.glassdoor\.com\/Job\/.*?(?:jobListingId|jl)=\d+.*$/,
+    example: 'https://www.glassdoor.com/Job/marketing-response-center-intern-jobs-SRCH_KO0,32.htm?jl=1009505372887&ao=1136043'
   },
   'foundit.hk': {
-    valid: /^https:\/\/www\.foundit\.hk\/job\/.+/,
-    example: 'https://www.foundit.hk/job/cloud-solution-engineer-database-taiwan-oracle-taiwan-34014328'
+    valid: /^https:\/\/www\.foundit\.hk\/job\/.*?\?.*$/,
+    example: 'https://www.foundit.hk/job/cloud-solution-engineer-database-taiwan-oracle-taiwan-34014328?searchId=cbf0ab48-f092-4937-b59a-6980c738bede'
   },
   'ziprecruiter.com': {
-    valid: /^https:\/\/www\.ziprecruiter\.com\/c\/[^/]+\/Job\/.+?\?.*?jid=[a-zA-Z0-9]+/,
+    valid: /^https:\/\/www\.ziprecruiter\.com\/c\/.*?\/Job\/.*?\?.*?jid=[a-zA-Z0-9]+$/,
     example: 'https://www.ziprecruiter.com/c/TekWissen-LLC/Job/Lynx-Implementation-Specialist/-in-Irving,TX?jid=87dd15916c0ab9fd'
   },
-  'simplyhired.com': {
-    valid: /^https:\/\/www\.simplyhired\.com\/job\/[a-zA-Z0-9_-]+/,
-    example: 'https://www.simplyhired.com/job/aaX8W0nMMZnVcWZNZboPTamlBMsvfGKsH2-PJBEINlt_I-ldD6DHsA'
-  },
   '104.com.tw': {
-    valid: /^https:\/\/www\.104\.com\.tw\/job\/[a-zA-Z0-9]+/,
-    example: 'https://www.104.com.tw/job/8mq0p'
-  },
-  '1111.com.tw': {
-    valid: /^https:\/\/www\.1111\.com\.tw\/job\/\d+/,
-    example: 'https://www.1111.com.tw/job/85115614/'
+    valid: /^https:\/\/www\.104\.com\.tw\/job\/[a-zA-Z0-9]+\?.*$/,
+    example: 'https://www.104.com.tw/job/8mq0p?jobsource=index_job_n'
   },
   'jobsdb.com': {
-    valid: /^https:\/\/[a-z]+\.jobsdb\.com\/job\/.+?(?:[a-zA-Z0-9]{32}|[^?]+)/,
-    example: 'https://sg.jobsdb.com/job/VP-Product-bc4e496fb39492b60bdc95d6e4e2d3f5'
+    valid: /^https:\/\/[a-z]+\.jobsdb\.com\/job\/.*?\?.*$/,
+    example: 'https://sg.jobsdb.com/job/VP-Product-bc4e496fb39492b60bdc95d6e4e2d3f5?abstract_type=original'
   },
   'next.rikunabi.com': {
-    valid: /^https:\/\/next\.rikunabi\.com\/company\/[^/]+\/nx\d+_[a-zA-Z0-9]+/,
-    example: 'https://next.rikunabi.com/company/cmi0167304069/nx1_rq0020358736/'
+    valid: /^https:\/\/next\.rikunabi\.com\/company\/.*?\/nx\d+_[a-zA-Z0-9]+\/\?.*$/,
+    example: 'https://next.rikunabi.com/company/cmi0167304069/nx1_rq0020358736/?leadtc=onbcmplist_kibou_btn'
   },
   '51job.com': {
-    valid: /^https:\/\/jobs\.51job\.com\/[^/]+\/\d+\.html/,
-    example: 'https://jobs.51job.com/shanghai-pdxq/161830554.html'
+    valid: /^https:\/\/jobs\.51job\.com\/.*?\/\d+\.html\?.*$/,
+    example: 'https://jobs.51job.com/shanghai-pdxq/161830554.html?s=sou_sou_soulb'
   }
 };
 
