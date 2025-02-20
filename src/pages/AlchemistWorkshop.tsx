@@ -60,7 +60,37 @@ const AlchemistWorkshop = () => {
         return;
       }
 
-      // First, trigger the Make.com webhook
+      // First process the resume through Supabase to get the analysis ID
+      const { data: analysisData, error: analysisError } = await supabase.functions.invoke('process-resume', {
+        body: {
+          resumeId,
+          jobUrl: url,
+        },
+      });
+
+      if (analysisError) {
+        console.error('Error processing resume:', analysisError);
+        throw analysisError;
+      }
+
+      // Get the resume details
+      const { data: resumeData, error: resumeError } = await supabase
+        .from('resumes')
+        .select('file_name, file_path')
+        .eq('id', resumeId)
+        .single();
+
+      if (resumeError) {
+        console.error('Error fetching resume:', resumeError);
+        throw resumeError;
+      }
+
+      // Get the storage URL for the resume
+      const { data: storageData } = supabase.storage
+        .from('resumes')
+        .getPublicUrl(resumeData.file_path);
+
+      // Trigger the Make.com webhook with the correct data format
       const makeWebhookUrl = 'https://hook.eu2.make.com/ug8t2abll9xnyl3zas6d47385y3roa22';
       const webhookResponse = await fetch(makeWebhookUrl, {
         method: 'POST',
@@ -68,10 +98,10 @@ const AlchemistWorkshop = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          resumeId,
+          analysisId: analysisData.analysisId,
+          resumeUrl: storageData.publicUrl,
           jobUrl: url,
-          userId: session?.user?.id,
-          timestamp: new Date().toISOString(),
+          fileName: resumeData.file_name
         }),
       });
 
@@ -79,21 +109,8 @@ const AlchemistWorkshop = () => {
         throw new Error('Failed to trigger Make.com webhook');
       }
 
-      // Then process the resume through Supabase
-      const { data, error } = await supabase.functions.invoke('process-resume', {
-        body: {
-          resumeId,
-          jobUrl: url,
-        },
-      });
-
-      if (error) {
-        console.error('Error processing resume:', error);
-        throw error;
-      }
-
       setJobUrl(url);
-      setAnalysisId(data.analysisId);
+      setAnalysisId(analysisData.analysisId);
 
       toast({
         title: "Analysis Started",
