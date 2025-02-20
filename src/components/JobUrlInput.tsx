@@ -183,68 +183,79 @@ interface JobUrlInputProps {
   isProcessing?: boolean;
   jobUrl?: string;
   setJobUrl?: (url: string) => void;
+  resumeId?: string;
   setIsProcessing?: (isProcessing: boolean) => void;
 }
 
-const JobUrlInput = ({ onUrlSubmit, isProcessing = false, jobUrl = "", setJobUrl, setIsProcessing }: JobUrlInputProps) => {
+const SUPPORTED_JOB_SITES = [
+  "linkedin.com",
+  "indeed.com",
+  "glassdoor.com",
+  "foundit", // foundit.in, foundit.hk
+  "ziprecruiter.com",
+  "simplyhired.com",
+  "104.com.tw",
+  "1111.com.tw",
+  "jobsdb.com",
+  "next.rikunabi.com",
+  "51job.com",
+];
+
+const JobUrlInput = ({
+  onUrlSubmit,
+  isProcessing = false,
+  jobUrl = "",
+  setJobUrl,
+  resumeId,
+  setIsProcessing,
+}: JobUrlInputProps) => {
   const [url, setUrl] = useState(jobUrl);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
-  const cleanUrl = (url: string): string => {
+  const validateAndProcessJobUrl = async (url: string) => {
     try {
+      let processedUrl = url;
       const urlObj = new URL(url);
       const hostname = urlObj.hostname.toLowerCase();
-      
-      // Keep parameters only for Indeed and ZipRecruiter
-      if (!hostname.includes('indeed.com') && !hostname.includes('ziprecruiter.com')) {
-        return `${urlObj.origin}${urlObj.pathname}`;
-      }
-      return url;
-    } catch {
-      return url;
-    }
-  };
 
-  const isValidJobUrl = (url: string): boolean => {
-    try {
-      const urlObj = new URL(url);
-      const pathname = urlObj.pathname.toLowerCase();
-      
-      // Check if URL contains search or has no job information
-      if (pathname.includes('search') || pathname === '/j' || pathname === '/jobs') {
+      if (!hostname.includes("indeed.com") && !hostname.includes("ziprecruiter.com")) {
+        processedUrl = url.split("?")[0];
+      }
+
+      const isValidUrl = SUPPORTED_JOB_SITES.some((site) => hostname.includes(site));
+
+      if (!isValidUrl || url.includes("search")) {
         toast({
           title: "Invalid URL",
-          description: "This URL contains multiple or no job information. Please use a direct job posting URL.",
+          description:
+            "This URL contains multiple or no job information, or search URLs are not allowed.",
           variant: "destructive",
         });
-        return false;
+        return;
       }
 
-      return true;
-    } catch {
+      if (setJobUrl) setJobUrl(processedUrl);
+      if (setIsProcessing) setIsProcessing(true);
+      await onUrlSubmit(processedUrl);
+      setUrl("");
+    } catch (error) {
       toast({
         title: "Invalid URL",
-        description: "Please enter a valid URL",
+        description: "Please enter a valid URL.",
         variant: "destructive",
       });
-      return false;
+      console.error("URL validation error:", error);
+    } finally {
+      setIsSubmitting(false);
+      if (setIsProcessing) setIsProcessing(false);
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const cleanedUrl = cleanUrl(url);
-    if (!isValidJobUrl(cleanedUrl)) {
-      return;
-    }
-
     setIsSubmitting(true);
-    if (setJobUrl) setJobUrl(cleanedUrl);
-    if (setIsProcessing) setIsProcessing(true);
-    await onUrlSubmit(cleanedUrl);
-    setIsSubmitting(false);
-    setUrl("");
+    await validateAndProcessJobUrl(url);
   };
 
   return (
@@ -269,7 +280,7 @@ const JobUrlInput = ({ onUrlSubmit, isProcessing = false, jobUrl = "", setJobUrl
                 Processing
               </>
             ) : (
-              'Cast Alchemy'
+              "Cast Alchemy"
             )}
           </Button>
         </form>
