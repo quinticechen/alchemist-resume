@@ -31,7 +31,7 @@ const SUPPORTED_JOB_SITES = [
   // Unrestricted Platforms (all URLs allowed)
   { domain: "indeed.com", restricted: false },
   { domain: "glassdoor.com", restricted: false },
-  { domain: "foundit.in", restricted: false },
+  { domain: "foundit", restricted: false }, // Changed to just "foundit" to support both .in and .hk
   { domain: "ziprecruiter.com", restricted: false },
   { domain: "simplyhired.com", restricted: false },
   { domain: "104.com.tw", restricted: false },
@@ -51,6 +51,7 @@ const JobUrlInput = ({ onUrlSubmit, isProcessing = false, jobUrl = "", setJobUrl
       const urlObj = new URL(url);
       const urlString = url.toLowerCase();
       const hostname = urlObj.hostname.toLowerCase();
+      const pathname = urlObj.pathname.toLowerCase();
       
       // Find matching site
       const matchingSite = SUPPORTED_JOB_SITES.find(site => hostname.includes(site.domain));
@@ -60,8 +61,8 @@ const JobUrlInput = ({ onUrlSubmit, isProcessing = false, jobUrl = "", setJobUrl
         return false;
       }
 
-      // Check for search URLs in restricted sites
-      if (matchingSite.restricted && urlString.includes('search')) {
+      // Check for search URLs in restricted sites - only check the pathname
+      if (matchingSite.restricted && pathname.includes('search')) {
         toast({
           title: "Invalid URL",
           description: `Search URLs are not allowed for ${matchingSite.domain}. Please use direct job posting URLs.`,
@@ -140,7 +141,7 @@ const JobUrlInput = ({ onUrlSubmit, isProcessing = false, jobUrl = "", setJobUrl
                   <li>LinkedIn (linkedin.com) - No search URLs allowed</li>
                   <li>Indeed (indeed.com)</li>
                   <li>Glassdoor (glassdoor.com)</li>
-                  <li>Foundit (foundit.in)</li>
+                  <li>Foundit (foundit.in, foundit.hk)</li>
                   <li>ZipRecruiter (ziprecruiter.com)</li>
                   <li>SimplyHired (simplyhired.com)</li>
                 </ul>
