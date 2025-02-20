@@ -46,33 +46,12 @@ const AlchemistWorkshop = () => {
     });
   };
 
-  const handleUrlSubmit = async (url: string) => {
+  const handleUrlSubmit = async (url: string) => { // 接收驗證後的 URL
     setIsProcessing(true);
     try {
-      let processedUrl = url;
-      const urlObj = new URL(url);
-      const hostname = urlObj.hostname.toLowerCase();
-
-      if (!hostname.includes("indeed.com") && !hostname.includes("ziprecruiter.com")) {
-        // 移除 "?" 之後的所有內容
-        processedUrl = url.split("?")[0];
-      }
-
-      const isValidUrl = SUPPORTED_JOB_SITES.some((site) => hostname.includes(site));
-
-      if (!isValidUrl || url.includes("search")) {
-        toast({
-          title: "Invalid URL Format",
-          description: "Please use the share button within the job posting to get the correct URL. URLs with search parameters are not supported.",
-          variant: "destructive",
-        });
-        setIsProcessing(false);
-        return;
-      }
-
       console.log('Creating analysis record with data:', {
         resume_id: resumeId,
-        job_url: processedUrl,
+        job_url: url, // 使用驗證後的 URL
         user_id: session?.user?.id
       });
 
@@ -143,7 +122,7 @@ const AlchemistWorkshop = () => {
         throw new Error('Failed to trigger Make.com webhook');
       }
 
-      setJobUrl(processedUrl);
+      setJobUrl(url);
       setAnalysisId(analysisRecord.id);
 
       toast({

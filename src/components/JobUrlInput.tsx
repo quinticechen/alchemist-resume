@@ -179,7 +179,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 
 interface JobUrlInputProps {
-  onUrlSubmit: (url: string) => void;
+  onUrlSubmit: (url: string) => Promise<void>;
   isProcessing?: boolean;
   jobUrl?: string;
   setJobUrl?: (url: string) => void;
@@ -191,7 +191,7 @@ export const SUPPORTED_JOB_SITES = [
   "linkedin.com",
   "indeed.com",
   "glassdoor.com",
-  "foundit.com", // 確保是 foundit.com
+  "foundit.com",
   "ziprecruiter.com",
   "simplyhired.com",
   "104.com.tw",
@@ -238,7 +238,7 @@ const JobUrlInput = ({
 
       if (setJobUrl) setJobUrl(processedUrl);
       if (setIsProcessing) setIsProcessing(true);
-      await onUrlSubmit(processedUrl);
+      await onUrlSubmit(processedUrl); // 傳遞處理後的 URL
       setUrl("");
     } catch (error) {
       toast({
