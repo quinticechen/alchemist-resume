@@ -175,14 +175,13 @@ const Home = () => {
                 featuresSection?.scrollIntoView({ behavior: "smooth" });
               }}
               size="lg"
-              variant="outline"
-              className="bg-gradient-primary-dark hover:opacity-90 transition-opacity"
+              // variant="outline"
+              className="bg-gradient-primary-light hover:opacity-90 transition-opacity"
             >
               Learn More
             </Button>
             <Button
               onClick={handleStartTrial}
-              variant="outline"
               size="lg"
               text-red-500
               className="text-primary bg-light hover:opacity-90 "
