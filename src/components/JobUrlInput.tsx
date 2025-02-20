@@ -95,7 +95,7 @@ const JobUrlInput = ({
         <form onSubmit={handleSubmit} className="flex gap-2">
           <Input
             type="url"
-            placeholder="Paste job posting URL here. Remove all URL parameters after ?"
+            placeholder="Paste job posting URL here. Remove all URL parameters from ?"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             className="flex-1"
