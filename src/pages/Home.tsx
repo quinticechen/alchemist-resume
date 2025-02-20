@@ -5,6 +5,8 @@ import { ArrowRight, Upload, Zap, CheckCircle, Globe, MapPin } from "lucide-reac
 import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
 import { useToast } from "@/hooks/use-toast";
+import Lottie from "react-lottie";
+import animationData from "@/animations/Jellyfish.yellow.money.json"; 
 
 const companies = [
   "Google", "Amazon", "Microsoft", "Apple", "Meta"
@@ -65,6 +67,17 @@ const Home = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  
+  
+  // Lottie 設定 (使用 react-lottie)
+  const defaultOptions = {
+    loop: true,
+    autoplay: true,
+    animationData: animationData,
+    rendererSettings: {
+      preserveAspectRatio: "xMidYMid slice",
+    },
+  };
 
   useEffect(() => {
     const initializeSession = async () => {
@@ -150,10 +163,8 @@ const Home = () => {
           <h1 className="text-6xl font-bold bg-gradient-primary text-transparent bg-clip-text mb-6">
             Transform Your Resume with AI Alchemy 。///。
           </h1>
-          <video width="50%" controls autoPlay loop>s
-              <source src="https://vhofgqmmovjtcnakowlv.supabase.co/storage/v1/object/sign/elements/Jellyfish-Yellow-Money.mp4?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJlbGVtZW50cy9KZWxseWZpc2gtWWVsbG93LU1vbmV5Lm1wNCIsImlhdCI6MTc0MDA0NjY2NSwiZXhwIjozMzI0NDUxMDY2NX0.cdnvOQEZc6gF2DLwfLXcN393IPYCuyAG7IUVW1z1jd0" type="video/mp4" />
-              Your browser does not support the video tag.
-          </video>
+          {/* 移除 <video> 元素，並替換為 Lottie 元件 */}
+          <Lottie options={defaultOptions} height={400} width={400} />
           <p className="text-xl text-neutral-600 mb-8 max-w-3xl mx-auto">
             Turn your ordinary resume into the perfect match for your dream job using our AI-powered optimization technology.
           </p>
