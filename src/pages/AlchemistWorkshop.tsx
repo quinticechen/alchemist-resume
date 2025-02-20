@@ -60,7 +60,7 @@ const AlchemistWorkshop = () => {
         .from('resume_analyses')
         .insert({
           resume_id: resumeId,
-          job_url: processedUrl,
+          job_url: url,
           user_id: session?.user?.id
         })
         .select()
