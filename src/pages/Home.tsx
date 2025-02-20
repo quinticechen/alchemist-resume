@@ -281,6 +281,14 @@ const Home = () => {
               >
                 <h3 className="text-xl font-semibold mb-2">{faq.question}</h3>
                 <p className="text-neutral-600">{faq.answer}</p>
+                <Button
+                  onClick="/faq"
+                  size="lg"
+                  variant="secondary"
+                  className="bg-secondary hover:bg-secondary/90 text-primary"
+                >
+                  More
+                </Button>
               </div>
             ))}
           </div>
