@@ -282,13 +282,12 @@ const Home = () => {
                 <h3 className="text-xl font-semibold mb-2">{faq.question}</h3>
                 <p className="text-neutral-600">{faq.answer}</p>
               </div>
-
-
             ))}
                                           <Button
+                                          
                               onClick="/faq"
                               size="lg"
-                              variant="secondary"
+                              variant="outline"
                               className="bg-secondary hover:bg-secondary/90 text-primary"
                             >
                               More
@@ -299,5 +298,6 @@ const Home = () => {
     </div>
   );
 };
+
 
 export default Home;
