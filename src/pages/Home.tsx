@@ -164,7 +164,9 @@ const Home = () => {
             Transform Your Resume with AI Alchemy 
           </h1>
           {/* 移除 <video> 元素，並替換為 Lottie 元件 */}
-          <Lottie options={defaultOptions} height={400} width={400} />
+          <div style={{ width: '100%' }}>
+            <Lottie options={defaultOptions} height={400} width={'100%'} />
+          </div>
           <p className="text-xl text-light mb-8 max-w-3xl mx-auto">
             Turn your ordinary resume into the perfect match for your dream job using our AI-powered optimization technology.
           </p>
