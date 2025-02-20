@@ -8,8 +8,10 @@ import { Button } from "@/components/ui/button";
 import { History, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 const AlchemistWorkshop = () => {
+  const { session, isLoading } = useAuth();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [filePath, setFilePath] = useState<string>("");
   const [publicUrl, setPublicUrl] = useState<string>("");
@@ -19,6 +21,13 @@ const AlchemistWorkshop = () => {
   const [analysisId, setAnalysisId] = useState<string>("");
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!isLoading && !session) {
+      navigate('/login', { state: { from: '/alchemist-workshop' } });
+    }
+  }, [session, isLoading, navigate]);
 
   const handleFileUploadSuccess = (
     file: File,
@@ -51,6 +60,26 @@ const AlchemistWorkshop = () => {
         return;
       }
 
+      // First, trigger the Make.com webhook
+      const makeWebhookUrl = 'https://hook.eu2.make.com/ug8t2abll9xnyl3zas6d47385y3roa22';
+      const webhookResponse = await fetch(makeWebhookUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          resumeId,
+          jobUrl: url,
+          userId: session?.user?.id,
+          timestamp: new Date().toISOString(),
+        }),
+      });
+
+      if (!webhookResponse.ok) {
+        throw new Error('Failed to trigger Make.com webhook');
+      }
+
+      // Then process the resume through Supabase
       const { data, error } = await supabase.functions.invoke('process-resume', {
         body: {
           resumeId,
@@ -93,6 +122,16 @@ const AlchemistWorkshop = () => {
       window.open(data.publicUrl, '_blank');
     }
   };
+
+  // Show loading state while checking authentication
+  if (isLoading) {
+    return <div className="container mx-auto px-4 py-8">Loading...</div>;
+  }
+
+  // Don't render anything if not authenticated (will redirect)
+  if (!session) {
+    return null;
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
