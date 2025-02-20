@@ -161,7 +161,7 @@ const Home = () => {
       <section className="py-20 px-4">
         <div className="max-w-6xl mx-auto justify-content: center text-center">
           <h1 className="text-6xl font-bold bg-gradient-primary text-transparent bg-clip-text mb-6">
-            Transform Your Resume with AI Alchemy 。///。
+            Transform Your Resume with AI Alchemy 
           </h1>
           {/* 移除 <video> 元素，並替換為 Lottie 元件 */}
           <Lottie options={defaultOptions} height={400} width={400} />
