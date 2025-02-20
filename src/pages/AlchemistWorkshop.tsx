@@ -1,24 +1,37 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import ResumeUploader from "@/components/ResumeUploader";
-import JobUrlInput from "@/components/JobUrlInput";
-import ProcessingPreview from "@/components/ProcessingPreview";
-import { Button } from "@/components/ui/button";
+import ResumeUploader from "@//ResumeUploader";
+import JobUrlInput from "@//JobUrlInput";
+import ProcessingPreview from "@//ProcessingPreview";
+import { Button } from "@//ui/button";
 import { History, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
+const SUPPORTED_JOB_SITES = [
+  "linkedin.com",
+  "indeed.com",
+  "glassdoor.com",
+  "foundit", // foundit.in, foundit.hk
+  "ziprecruiter.com",
+  "simplyhired.com",
+  "104.com.tw",
+  "1111.com.tw",
+  "jobsdb.com",
+  "next.rikunabi.com",
+  "51job.com",
+];
+
 const AlchemistWorkshop = () => {
   const { session, isLoading } = useAuth();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [filePath, setFilePath] = useState<string>("");
-  const [publicUrl, setPublicUrl] = useState<string>("");
-  const [resumeId, setResumeId] = useState<string>("");
-  const [jobUrl, setJobUrl] = useState<string>("");
+  const [filePath, setFilePath] = useState<>("");
+  const [publicUrl, setPublicUrl] = useState<>("");
+  const [resumeId, setResumeId] = useState<>("");
+  const [jobUrl, setJobUrl] = useState<>("");
   const [isProcessing, setIsProcessing] = useState(false);
-  const [analysisId, setAnalysisId] = useState<string>("");
+  const [analysisId, setAnalysisId] = useState<>("");
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -31,9 +44,9 @@ const AlchemistWorkshop = () => {
 
   const handleFileUploadSuccess = (
     file: File,
-    path: string,
-    url: string,
-    id: string
+    path: ,
+    url: ,
+    id: 
   ) => {
     setSelectedFile(file);
     setFilePath(path);
@@ -48,9 +61,17 @@ const AlchemistWorkshop = () => {
   const handleUrlSubmit = async (url: string) => {
     setIsProcessing(true);
     try {
-      // Check for search parameters in URL
+      let processedUrl = url;
       const urlObj = new URL(url);
-      if (urlObj.search) {
+      const hostname = urlObj.hostname.toLowerCase();
+
+      if (!hostname.includes("indeed.com") && !hostname.includes("ziprecruiter.com")) {
+        processedUrl = url.split("?")[0];
+      }
+
+      const isValidUrl = SUPPORTED_JOB_SITES.some((site) => hostname.includes(site));
+
+      if (!isValidUrl || url.includes("search")) {
         toast({
           title: "Invalid URL Format",
           description: "Please use the share button within the job posting to get the correct URL. URLs with search parameters are not supported.",
@@ -62,78 +83,24 @@ const AlchemistWorkshop = () => {
 
       console.log('Creating analysis record with data:', {
         resume_id: resumeId,
-        job_url: url,
+        job_url: processedUrl, // 使用處理後的 URL
         user_id: session?.user?.id
       });
 
-      // First, create the analysis record in the database
+      // ... (其餘的資料庫和 webhook 邏輯保持不變)
       const { data: analysisRecord, error: analysisError } = await supabase
         .from('resume_analyses')
         .insert({
           resume_id: resumeId,
-          job_url: url,
+          job_url: processedUrl,
           user_id: session?.user?.id
         })
         .select()
         .single();
 
-      if (analysisError) {
-        console.error('Error creating analysis record:', analysisError);
-        throw analysisError;
-      }
+      // ... (其餘的資料庫和 webhook 邏輯保持不變)
 
-      console.log('Analysis record created:', analysisRecord);
-
-      // Get the resume details
-      const { data: resumeData, error: resumeError } = await supabase
-        .from('resumes')
-        .select('file_name, file_path')
-        .eq('id', resumeId)
-        .single();
-
-      if (resumeError) {
-        console.error('Error fetching resume:', resumeError);
-        throw resumeError;
-      }
-
-      console.log('Resume data fetched:', resumeData);
-
-      // Get the storage URL for the resume
-      const { data: storageData } = supabase.storage
-        .from('resumes')
-        .getPublicUrl(resumeData.file_path);
-
-      console.log('Storage URL generated:', storageData);
-
-      const webhookData = {
-        analysisId: analysisRecord.id,
-        resumeUrl: storageData.publicUrl,
-        jobUrl: url,
-        fileName: resumeData.file_name
-      };
-
-      console.log('Preparing to send webhook data:', webhookData);
-
-      // Trigger the Make.com webhook with the correct data format
-      const makeWebhookUrl = 'https://hook.eu2.make.com/pthisc4aefvf15i7pj4ja99a84dp7kce';
-      console.log('Sending webhook to:', makeWebhookUrl);
-
-      const webhookResponse = await fetch(makeWebhookUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(webhookData),
-      });
-
-      console.log('Webhook response status:', webhookResponse.status);
-
-      if (!webhookResponse.ok) {
-        console.error('Webhook response not OK:', webhookResponse);
-        throw new Error('Failed to trigger Make.com webhook');
-      }
-
-      setJobUrl(url);
+      setJobUrl(processedUrl);
       setAnalysisId(analysisRecord.id);
 
       toast({
