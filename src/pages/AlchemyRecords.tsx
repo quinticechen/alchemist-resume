@@ -1,10 +1,15 @@
 
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import { useAlchemyRecords } from "@/hooks/use-alchemy-records";
 import UsageStats from "@/components/alchemy-records/UsageStats";
 import AnalysisCard from "@/components/alchemy-records/AnalysisCard";
 import RecordsPagination from "@/components/alchemy-records/RecordsPagination";
 
 const AlchemyRecords = () => {
+  const { session, isLoading } = useAuth();
+  const navigate = useNavigate();
   const {
     analyses,
     loading,
@@ -18,8 +23,21 @@ const AlchemyRecords = () => {
     handleFeedback
   } = useAlchemyRecords();
 
-  if (loading) {
-    return <div>Loading...</div>;
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!isLoading && !session) {
+      navigate('/login', { state: { from: '/alchemy-records' } });
+    }
+  }, [session, isLoading, navigate]);
+
+  // Show loading state while checking authentication or loading data
+  if (isLoading || loading) {
+    return <div className="container mx-auto px-4 py-8">Loading...</div>;
+  }
+
+  // Don't render anything if not authenticated (will redirect)
+  if (!session) {
+    return null;
   }
 
   return (

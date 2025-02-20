@@ -1,12 +1,12 @@
-
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Check, Github, Linkedin, Mail } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 
 interface Profile {
   email: string;
@@ -27,17 +27,26 @@ interface Subscription {
 }
 
 const Account = () => {
+  const { session, isLoading: authLoading } = useAuth();
+  const navigate = useNavigate();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [newFullName, setNewFullName] = useState("");
   const { toast } = useToast();
-  const navigate = useNavigate();
 
   useEffect(() => {
-    fetchProfile();
-  }, []);
+    if (!authLoading && !session) {
+      navigate('/login', { state: { from: '/account' } });
+    }
+  }, [session, authLoading, navigate]);
+
+  useEffect(() => {
+    if (session) {
+      fetchProfile();
+    }
+  }, [session]);
 
   const fetchProfile = async () => {
     try {
@@ -144,12 +153,16 @@ const Account = () => {
     navigate("/pricing");
   };
 
-  if (isLoading) {
+  if (authLoading || isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     );
+  }
+
+  if (!session) {
+    return null;
   }
 
   return (
