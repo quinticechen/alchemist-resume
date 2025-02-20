@@ -175,6 +175,7 @@ const Home = () => {
                 featuresSection?.scrollIntoView({ behavior: "smooth" });
               }}
               size="lg"
+              variant="outline"
               className="bg-gradient-primary-dark hover:opacity-90 transition-opacity"
             >
               Learn More
