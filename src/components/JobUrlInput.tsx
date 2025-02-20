@@ -26,7 +26,7 @@ interface JobUrlInputProps {
 
 const URL_PATTERNS = {
   'linkedin.com': {
-    valid: /^https:\/\/www\.linkedin\.com\/jobs\/view\/\d+$/,
+    valid: /^https:\/\/www\.linkedin\.com\/jobs\/view\/\d+/,
     example: 'https://www.linkedin.com/jobs/view/4143525421'
   },
   'indeed.com': {
@@ -35,18 +35,18 @@ const URL_PATTERNS = {
   },
   'glassdoor.com': {
     valid: /^https:\/\/www\.glassdoor\.com\/Job\/.*?jobListingId=\d+/,
-    example: 'https://www.glassdoor.com/Job/[title]-jobs-SRCH_KO0,32.htm?jobListingId=1009505372887'
+    example: 'https://www.glassdoor.com/Job/marketing-response-center-intern-jobs-SRCH_KO0,32.htm?jobListingId=1009505372887'
   },
   'foundit.hk': {
-    valid: /^https:\/\/www\.foundit\.hk\/job\/.*?\d+$/,
+    valid: /^https:\/\/www\.foundit\.hk\/job\/[^?]+/,
     example: 'https://www.foundit.hk/job/cloud-solution-engineer-database-taiwan-oracle-taiwan-34014328'
   },
   'ziprecruiter.com': {
-    valid: /^https:\/\/www\.ziprecruiter\.com\/c\/.*?\/Job\/.*?\?jid=[a-zA-Z0-9]+$/,
-    example: 'https://www.ziprecruiter.com/c/Company/Job/Position/-in-Location?jid=87dd15916c0ab9fd'
+    valid: /^https:\/\/www\.ziprecruiter\.com\/c\/[^/]+\/Job\/[^?]+\?jid=[a-zA-Z0-9]+/,
+    example: 'https://www.ziprecruiter.com/c/TekWissen-LLC/Job/Lynx-Implementation-Specialist/-in-Irving,TX?jid=87dd15916c0ab9fd'
   },
   'simplyhired.com': {
-    valid: /^https:\/\/www\.simplyhired\.com\/job\/[a-zA-Z0-9_-]+$/,
+    valid: /^https:\/\/www\.simplyhired\.com\/job\/[a-zA-Z0-9_-]+/,
     example: 'https://www.simplyhired.com/job/aaX8W0nMMZnVcWZNZboPTamlBMsvfGKsH2-PJBEINlt_I-ldD6DHsA'
   },
   '104.com.tw': {
@@ -54,19 +54,19 @@ const URL_PATTERNS = {
     example: 'https://www.104.com.tw/job/8mq0p'
   },
   '1111.com.tw': {
-    valid: /^https:\/\/www\.1111\.com\.tw\/job\/\d+\/?$/,
+    valid: /^https:\/\/www\.1111\.com\.tw\/job\/\d+/,
     example: 'https://www.1111.com.tw/job/85115614/'
   },
   'jobsdb.com': {
-    valid: /^https:\/\/[a-z]+\.jobsdb\.com\/job\/.*?[a-zA-Z0-9]{32}/,
-    example: 'https://sg.jobsdb.com/job/[title]-[id]'
+    valid: /^https:\/\/[a-z]+\.jobsdb\.com\/job\/[^?]+/,
+    example: 'https://sg.jobsdb.com/job/VP-Product-bc4e496fb39492b60bdc95d6e4e2d3f5'
   },
   'next.rikunabi.com': {
-    valid: /^https:\/\/next\.rikunabi\.com\/company\/.*?\/nx\d+_[a-zA-Z0-9]+\//,
+    valid: /^https:\/\/next\.rikunabi\.com\/company\/[^/]+\/nx\d+_[a-zA-Z0-9]+/,
     example: 'https://next.rikunabi.com/company/cmi0167304069/nx1_rq0020358736/'
   },
   '51job.com': {
-    valid: /^https:\/\/jobs\.51job\.com\/.*?\/\d+\.html/,
+    valid: /^https:\/\/jobs\.51job\.com\/[^/]+\/\d+\.html/,
     example: 'https://jobs.51job.com/shanghai-pdxq/161830554.html'
   }
 };
@@ -114,8 +114,14 @@ const JobUrlInput = ({ onUrlSubmit, isProcessing = false, jobUrl = "", setJobUrl
         }
       }
       
+      setShowUnsupportedDialog(true);
       return false;
     } catch {
+      toast({
+        title: "Invalid URL",
+        description: "Please enter a valid URL",
+        variant: "destructive",
+      });
       return false;
     }
   };
