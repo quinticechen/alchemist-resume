@@ -30,19 +30,19 @@ const URL_PATTERNS = {
     example: 'https://www.linkedin.com/jobs/view/4143525421'
   },
   'indeed.com': {
-    valid: /^https:\/\/www\.indeed\.com\/viewjob\?jk=[a-zA-Z0-9]+/,
+    valid: /^https:\/\/www\.indeed\.com\/viewjob\?.*?jk=[a-zA-Z0-9]+/,
     example: 'https://www.indeed.com/viewjob?jk=723d3d2eaf66b3d6'
   },
   'glassdoor.com': {
-    valid: /^https:\/\/www\.glassdoor\.com\/Job\/.*?jobListingId=\d+/,
+    valid: /^https:\/\/www\.glassdoor\.com\/Job\/.*?(?:jobListingId|jl)=\d+/,
     example: 'https://www.glassdoor.com/Job/marketing-response-center-intern-jobs-SRCH_KO0,32.htm?jobListingId=1009505372887'
   },
   'foundit.hk': {
-    valid: /^https:\/\/www\.foundit\.hk\/job\/[^?]+/,
+    valid: /^https:\/\/www\.foundit\.hk\/job\/.+/,
     example: 'https://www.foundit.hk/job/cloud-solution-engineer-database-taiwan-oracle-taiwan-34014328'
   },
   'ziprecruiter.com': {
-    valid: /^https:\/\/www\.ziprecruiter\.com\/c\/[^/]+\/Job\/[^?]+\?jid=[a-zA-Z0-9]+/,
+    valid: /^https:\/\/www\.ziprecruiter\.com\/c\/[^/]+\/Job\/.+?\?.*?jid=[a-zA-Z0-9]+/,
     example: 'https://www.ziprecruiter.com/c/TekWissen-LLC/Job/Lynx-Implementation-Specialist/-in-Irving,TX?jid=87dd15916c0ab9fd'
   },
   'simplyhired.com': {
@@ -58,7 +58,7 @@ const URL_PATTERNS = {
     example: 'https://www.1111.com.tw/job/85115614/'
   },
   'jobsdb.com': {
-    valid: /^https:\/\/[a-z]+\.jobsdb\.com\/job\/[^?]+/,
+    valid: /^https:\/\/[a-z]+\.jobsdb\.com\/job\/.+?(?:[a-zA-Z0-9]{32}|[^?]+)/,
     example: 'https://sg.jobsdb.com/job/VP-Product-bc4e496fb39492b60bdc95d6e4e2d3f5'
   },
   'next.rikunabi.com': {
