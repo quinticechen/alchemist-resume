@@ -14,6 +14,7 @@ import Pricing from "@/pages/Pricing";
 import SurveyPage from "@/pages/SurveyPage";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import PaymentSuccess from "@/pages/PaymentSuccess";
 import { Routes, Route } from "react-router-dom";
 
 const App = () => {
