@@ -50,7 +50,7 @@ serve(async (req) => {
 
     let event;
     try {
-      event = stripe.webhooks.constructEvent(
+      event = await stripe.webhooks.constructEventAsync( // 使用 constructEventAsync
         body,
         signature,
         endpointSecret
@@ -65,6 +65,7 @@ serve(async (req) => {
 
     console.log(`Received Stripe webhook event: ${event.type}`);
     console.log('Event data:', JSON.stringify(event.data.object, null, 2));
+
 
     switch (event.type) {
       case 'checkout.session.completed':
