@@ -199,7 +199,7 @@ const Home = () => {
             <Button
               onClick={handleStartTrial}
               size="lg"
-              className="text-primary bg-light hover:opacity-90" // 移除 text-red-500
+              className="text-primary bg-light hover:bg-neutral-300"
             >
               {session ? "Go to Workshop" : "Start Free Trial"}
             </Button>
