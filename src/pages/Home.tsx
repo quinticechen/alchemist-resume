@@ -164,7 +164,7 @@ const Home = () => {
             Transform Your Resume with AI Alchemy 
           </h1>
           {/* 移除 <video> 元素，並替換為 Lottie 元件 */}
-          <div style={{ width: '100%' }}>
+          <div className="w-full md:w-3/4 lg:w-1/2 xl:w-1/3}>
             <Lottie options={defaultOptions} height={400} width={'100%'} />
           </div>
           <p className="text-xl text-light mb-8 max-w-3xl mx-auto">
