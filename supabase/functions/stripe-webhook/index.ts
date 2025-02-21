@@ -67,8 +67,6 @@ serve(async (req) => {
     console.log('Event data:', JSON.stringify(event.data.object, null, 2));
 
     switch (event.type) {
-      case 'customer.subscription.created':
-      case 'customer.subscription.updated':
       case 'checkout.session.completed':
         const session = event.data.object;
         const subscription = session.subscription
@@ -97,68 +95,30 @@ serve(async (req) => {
         }
 
         if (subscription.status === 'active' || subscription.status === 'trialing') {
-          console.log(`Updating subscription for user ${userId} to tier ${tier}`);
-          
-          // Update subscriptions table
-          const { error: subscriptionError } = await supabase
-            .from('subscriptions')
-            .upsert({
-              user_id: userId,
-              stripe_customer_id: customerId,
-              stripe_subscription_id: subscription.id,
-              status: subscription.status,
-              tier: tier,
-              current_period_start: new Date(subscription.current_period_start * 1000),
-              current_period_end: new Date(subscription.current_period_end * 1000),
-              cancel_at_period_end: subscription.cancel_at_period_end,
-            }, {
-              onConflict: 'user_id',
+          // Use database transaction to ensure atomicity
+          try {
+            await supabase.rpc('update_subscription_and_transaction', {
+              p_user_id: userId,
+              p_stripe_customer_id: customerId,
+              p_stripe_subscription_id: subscription.id,
+              p_status: subscription.status,
+              p_tier: tier,
+              p_current_period_start: new Date(subscription.current_period_start * 1000),
+              p_current_period_end: new Date(subscription.current_period_end * 1000),
+              p_cancel_at_period_end: subscription.cancel_at_period_end,
+              p_stripe_session_id: session.id,
+              p_amount: session.amount_total / 100,
+              p_currency: session.currency,
+              p_payment_status: session.payment_status,
             });
-
-          if (subscriptionError) {
-            console.error('Error updating subscription:', subscriptionError);
-            throw subscriptionError;
+            console.log(`Successfully updated subscription and transaction for user ${userId}`);
+          } catch (rpcError) {
+            console.error('Error updating subscription and transaction via RPC:', rpcError);
+            throw rpcError;
           }
-
-          // Update profile's subscription status
-          const { error: profileError } = await supabase
-            .from('profiles')
-            .update({
-              subscription_status: tier,
-              monthly_usage_count: tier === 'apprentice' ? null : 0,
-              monthly_usage_reset_date: tier === 'alchemist' ? new Date(subscription.current_period_start * 1000) : null
-            })
-            .eq('id', userId);
-
-          if (profileError) {
-            console.error('Error updating profile:', profileError);
-            throw profileError;
-          }
-
-          console.log(`Successfully updated subscription and profile for user ${userId}`);
         } else {
           console.log(`Subscription ${subscription.id} status is ${subscription.status}, not updating database`);
         }
-
-        // Insert transaction record
-        const { error: transactionError } = await supabase
-          .from('transactions')
-          .insert({
-            user_id: userId,
-            stripe_session_id: session.id,
-            stripe_subscription_id: subscription.id,
-            amount: session.amount_total / 100, // Stripe amounts are in cents
-            currency: session.currency,
-            status: session.payment_status,
-            subscription_tier: tier,
-          });
-
-        if (transactionError) {
-          console.error('Error inserting transaction record:', transactionError);
-          throw transactionError;
-        }
-
-        console.log(`Successfully inserted transaction record for user ${userId}`);
         break;
 
       case 'customer.subscription.deleted':
