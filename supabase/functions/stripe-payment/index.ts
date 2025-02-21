@@ -5,7 +5,7 @@ import Stripe from "https://esm.sh/stripe@14.18.0?target=deno";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-application-name',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-application-name, x-environment',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
