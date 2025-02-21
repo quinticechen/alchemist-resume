@@ -41,6 +41,7 @@ const App = () => {
               <Route path="/faq" element={<FAQ />} />
               <Route path="/pricing" element={<Pricing />} />
               <Route path="/survey-page" element={<SurveyPage />} />
+              <Route path="/payment-success" element={<PaymentSuccess />} />
             </Routes>
           </main>
           <Footer />
