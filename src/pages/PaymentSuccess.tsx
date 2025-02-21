@@ -104,7 +104,7 @@ const PaymentSuccess: React.FC = () => {
           </p>
 
           {transaction && (
-            <div>
+            <div className="text-m text-light mb-4 max-w-3xl mx-auto">
               <p>Transaction ID: {transaction.stripe_session_id}</p>
               <p>
                 Amount: {transaction.amount} {transaction.currency}
