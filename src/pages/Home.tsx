@@ -178,7 +178,7 @@ const Home = () => {
           <h1 className="text-6xl font-bold bg-light text-transparent bg-clip-text mb-6">
             Transform Your Resume with AI Alchemy
           </h1>
-          <div className="w-full md:w-3/4 lg:w-1/2 xl:w-1/3">
+          <div className="justify-center w-full md:w-2/4 lg:w-1/3 xl:w-1/2">
             {" "}
             {/* 修正了這裡的 className 屬性 */}
             <Lottie options={defaultOptions} height={400} width={"100%"} />
