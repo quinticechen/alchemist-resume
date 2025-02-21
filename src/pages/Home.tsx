@@ -1,16 +1,21 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Upload, Zap, CheckCircle, Globe, MapPin } from "lucide-react";
+import {
+  ArrowRight,
+  Upload,
+  Zap,
+  CheckCircle,
+  Globe,
+  MapPin,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
 import { useToast } from "@/hooks/use-toast";
-import Lottie from 'react-lottie';
-import animationData from "@/animations/Jellyfish.yellow.money.json"; 
+import Lottie from "react-lottie";
+import animationData from "@/animations/Jellyfish.yellow.money.json";
 
-const companies = [
-  "Google", "Amazon", "Microsoft", "Apple", "Meta"
-];
+const companies = ["Google", "Amazon", "Microsoft", "Apple", "Meta"];
 
 const features = [
   {
@@ -67,8 +72,7 @@ const Home = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
-  
-  
+
   // Lottie 設定 (使用 react-lottie)
   const defaultOptions = {
     loop: true,
@@ -82,26 +86,31 @@ const Home = () => {
   useEffect(() => {
     const initializeSession = async () => {
       try {
-        const { data: { session: initialSession }, error: sessionError } = await supabase.auth.getSession();
-        
+        const {
+          data: { session: initialSession },
+          error: sessionError,
+        } = await supabase.auth.getSession();
+
         if (sessionError) {
-          console.error('Session error:', sessionError);
+          console.error("Session error:", sessionError);
           throw sessionError;
         }
 
-        console.log('Initial session check:', initialSession);
+        console.log("Initial session check:", initialSession);
         setSession(initialSession);
 
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, currentSession) => {
-          console.log('Auth state changed:', event, currentSession);
+        const {
+          data: { subscription },
+        } = supabase.auth.onAuthStateChange((event, currentSession) => {
+          console.log("Auth state changed:", event, currentSession);
           setSession(currentSession);
-          
-          if (event === 'SIGNED_IN' && currentSession) {
+
+          if (event === "SIGNED_IN" && currentSession) {
             toast({
               title: "Successfully signed in",
-              description: "Redirecting to workshop..."
+              description: "Redirecting to workshop...",
             });
-            navigate('/alchemist-workshop');
+            navigate("/alchemist-workshop");
           }
         });
 
@@ -109,11 +118,12 @@ const Home = () => {
           subscription.unsubscribe();
         };
       } catch (error) {
-        console.error('Session initialization error:', error);
+        console.error("Session initialization error:", error);
         toast({
           title: "Error",
-          description: "There was a problem checking your login status. Please try again.",
-          variant: "destructive"
+          description:
+            "There was a problem checking your login status. Please try again.",
+          variant: "destructive",
         });
       } finally {
         setIsLoading(false);
@@ -125,22 +135,25 @@ const Home = () => {
 
   const handleStartTrial = async () => {
     try {
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
-      console.log('Current session before navigation:', currentSession);
+      const {
+        data: { session: currentSession },
+      } = await supabase.auth.getSession();
+      console.log("Current session before navigation:", currentSession);
 
       if (currentSession) {
-        console.log('Navigating to workshop (user is logged in)');
+        console.log("Navigating to workshop (user is logged in)");
         navigate("/alchemist-workshop");
       } else {
-        console.log('Navigating to login (user is not logged in)');
+        console.log("Navigating to login (user is not logged in)");
         navigate("/login");
       }
     } catch (error) {
-      console.error('Navigation error:', error);
+      console.error("Navigation error:", error);
       toast({
         title: "Error",
-        description: "There was a problem checking your login status. Please try again.",
-        variant: "destructive"
+        description:
+          "There was a problem checking your login status. Please try again.",
+        variant: "destructive",
       });
     }
   };
@@ -149,7 +162,9 @@ const Home = () => {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center space-y-4">
-          <div className="mb-4 text-xl font-semibold text-primary">Loading...</div>
+          <div className="mb-4 text-xl font-semibold text-primary">
+            Loading...
+          </div>
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
         </div>
       </div>
@@ -159,16 +174,18 @@ const Home = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100">
       <section className="bg-gradient-primary py-20 px-4">
-        <div className="max-w-6xl mx-auto justify-content: center text-center">
+        <div className="max-w-6xl mx-auto justify-center text-center">
           <h1 className="text-6xl font-bold bg-light text-transparent bg-clip-text mb-6">
-            Transform Your Resume with AI Alchemy 
+            Transform Your Resume with AI Alchemy
           </h1>
-          {/* 移除 <video> 元素，並替換為 Lottie 元件 */}
-          <div className="w-full md:w-3/4 lg:w-1/2 xl:w-1/3}>
-            <Lottie options={defaultOptions} height={400} width={'100%'} />
+          <div className="w-full md:w-3/4 lg:w-1/2 xl:w-1/3">
+            {" "}
+            {/* 修正了這裡的 className 屬性 */}
+            <Lottie options={defaultOptions} height={400} width={"100%"} />
           </div>
           <p className="text-xl text-light mb-8 max-w-3xl mx-auto">
-            Turn your ordinary resume into the perfect match for your dream job using our AI-powered optimization technology.
+            Turn your ordinary resume into the perfect match for your dream job
+            using our AI-powered optimization technology.
           </p>
           <div className="flex gap-4 justify-center">
             <Button
@@ -177,7 +194,6 @@ const Home = () => {
                 featuresSection?.scrollIntoView({ behavior: "smooth" });
               }}
               size="lg"
-              // variant="outline"
               className="bg-gradient-primary-light hover:opacity-90 transition-opacity"
             >
               Learn More
@@ -185,8 +201,7 @@ const Home = () => {
             <Button
               onClick={handleStartTrial}
               size="lg"
-              text-red-500
-              className="text-primary bg-light hover:opacity-90 "
+              className="text-primary bg-light hover:opacity-90" // 移除 text-red-500
             >
               {session ? "Go to Workshop" : "Start Free Trial"}
             </Button>
@@ -249,8 +264,10 @@ const Home = () => {
 
       <section id="supported-websites" className="py-20 bg-light">
         <div className="max-w-6xl mx-auto px-4">
-          <h2 className="text-4xl font-bold text-center mb-12">Supported Job Platforms</h2>
-          
+          <h2 className="text-4xl font-bold text-center mb-12">
+            Supported Job Platforms
+          </h2>
+
           <div className="grid md:grid-cols-2 gap-12">
             <div className="space-y-6">
               <div className="flex items-center gap-3 mb-6">
@@ -271,7 +288,9 @@ const Home = () => {
             <div className="space-y-6">
               <div className="flex items-center gap-3 mb-6">
                 <MapPin className="h-6 w-6 text-primary" />
-                <h3 className="text-2xl font-semibold">Asian Regional Platforms</h3>
+                <h3 className="text-2xl font-semibold">
+                  Asian Regional Platforms
+                </h3>
               </div>
               <ul className="space-y-4">
                 {asianPlatforms.map((platform) => (
@@ -318,6 +337,5 @@ const Home = () => {
     </div>
   );
 };
-
 
 export default Home;
