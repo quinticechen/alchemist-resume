@@ -1,4 +1,4 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.145.2/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import Stripe from "https://esm.sh/stripe@14.18.0?target=deno";
 
@@ -84,7 +84,7 @@ serve(async (req) => {
         }
 
         const priceId = subscription.items.data[0].price.id;
-        
+
         // 假設 subscription_tier 類型是 'alchemist' | 'grandmaster' | 'apprentice'
         let tier: "alchemist" | "grandmaster" | "apprentice" = "apprentice";
         switch (priceId) {
