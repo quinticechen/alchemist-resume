@@ -69,21 +69,6 @@ const SurveyPage = () => {
       setIsLoading(false);
       return;
     }
-    // 更新免費試用限制
-    const { error: limitError } = await supabase
-      .from("profiles")
-      .update({ free_trial_limit: (prevLimit: number) => prevLimit + 3 }) // 增加 3 次免費使用
-      .eq("id", session.user.id);
-
-    if (limitError) {
-      toast({
-        title: "Error",
-        description: "Failed to update free trial limit. Please try again.",
-        variant: "destructive",
-      });
-      setIsLoading(false);
-      return;
-    }
 
     setSurveyCompleted(true);
     if (selectedPlan) {
