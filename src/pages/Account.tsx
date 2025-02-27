@@ -138,17 +138,6 @@ const Account = () => {
     }
   };
 
-  const getRemainingUses = () => {
-    if (!profile) return 0;
-    const limit = getUsageLimit();
-    if (limit === '∞') return '∞';
-    
-    if (profile.subscription_status === 'alchemist') {
-      return Math.max(0, Number(limit) - (profile.monthly_usage_count || 0));
-    }
-    
-    return Math.max(0, Number(limit) - (profile.usage_count || 0));
-  };
 
   const getRemainingUses = () => {
     if (!profile) return 0;
