@@ -1,4 +1,3 @@
-
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -16,22 +15,25 @@ const SurveyPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const selectedPlan = location.state?.selectedPlan;
   const isAnnual = location.state?.isAnnual;
-  const googleFormUrl = "https://docs.google.com/forms/d/e/1FAIpQLScBhsrd96t2TZT-CfJv5yPfyP50L42BYAy2ATJOJsFF5FYOZA/viewform?embedded=true";
+  const googleFormUrl =
+    "https://docs.google.com/forms/d/e/1FAIpQLScBhsrd96t2TZT-CfJv5yPfyP50L42BYAy2ATJOJsFF5FYOZA/viewform?embedded=true";
 
   useEffect(() => {
     const getUserEmail = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (session?.user?.email) {
         setUserEmail(session.user.email);
 
         const { data: profile, error } = await supabase
-          .from('profiles')
-          .select('has_completed_survey')
-          .eq('id', session.user.id)
+          .from("profiles")
+          .select("has_completed_survey")
+          .eq("id", session.user.id)
           .single();
 
         if (error) {
-          console.error('Error fetching profile:', error);
+          console.error("Error fetching profile:", error);
           return;
         }
 
@@ -39,7 +41,7 @@ const SurveyPage = () => {
           setSurveyCompleted(true);
         }
       } else {
-        navigate('/login');
+        navigate("/login");
       }
     };
     getUserEmail();
@@ -47,18 +49,36 @@ const SurveyPage = () => {
 
   const handleSurveyCompletion = async () => {
     setIsLoading(true);
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
     if (!session?.user) return;
 
-    const { error } = await supabase
-      .from('profiles')
+    // 更新調查完成狀態
+    const { error: surveyError } = await supabase
+      .from("profiles")
       .update({ has_completed_survey: true })
-      .eq('id', session.user.id);
+      .eq("id", session.user.id);
 
-    if (error) {
+    if (surveyError) {
       toast({
         title: "Error",
         description: "Failed to update survey status. Please try again.",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+      return;
+    }
+    // 更新免費試用限制
+    const { error: limitError } = await supabase
+      .from("profiles")
+      .update({ free_trial_limit: (prevLimit: number) => prevLimit + 3 }) // 增加 3 次免費使用
+      .eq("id", session.user.id);
+
+    if (limitError) {
+      toast({
+        title: "Error",
+        description: "Failed to update free trial limit. Please try again.",
         variant: "destructive",
       });
       setIsLoading(false);
@@ -71,27 +91,33 @@ const SurveyPage = () => {
     } else {
       toast({
         title: "Thank you!",
-        description: "Your feedback has been recorded. You now have 3 more free uses available.",
+        description:
+          "Your feedback has been recorded. You now have 3 more free uses available.",
       });
-      navigate('/alchemist-workshop');
+      navigate("/alchemist-workshop");
     }
   };
 
   const proceedToPayment = async (planId: string) => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error('Not authenticated');
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session) throw new Error("Not authenticated");
 
-      const { data, error } = await supabase.functions.invoke('stripe-payment', {
-        body: { planId, isAnnual },
-      });
+      const { data, error } = await supabase.functions.invoke(
+        "stripe-payment",
+        {
+          body: { planId, isAnnual },
+        }
+      );
 
       if (error) throw error;
-      if (!data.sessionUrl) throw new Error('No checkout URL received');
+      if (!data.sessionUrl) throw new Error("No checkout URL received");
 
       window.location.href = data.sessionUrl;
     } catch (error: any) {
-      console.error('Payment error:', error);
+      console.error("Payment error:", error);
       toast({
         title: "Error",
         description: "Failed to initiate payment. Please try again.",
@@ -106,11 +132,11 @@ const SurveyPage = () => {
     if (selectedPlan) {
       proceedToPayment(selectedPlan);
     } else {
-      navigate('/alchemist-workshop');
+      navigate("/alchemist-workshop");
     }
   };
 
-  const formUrl = userEmail 
+  const formUrl = userEmail
     ? `${googleFormUrl}&entry.1234567890=${encodeURIComponent(userEmail)}`
     : googleFormUrl;
 
@@ -134,7 +160,9 @@ const SurveyPage = () => {
             <ul className="space-y-4 text-neutral-600">
               <li className="flex items-start">
                 <span className="text-2xl mr-2">✨</span>
-                <span>Complete our quick survey to unlock additional free uses</span>
+                <span>
+                  Complete our quick survey to unlock additional free uses
+                </span>
               </li>
               <li className="flex items-start">
                 <span className="text-2xl mr-2">🎯</span>
