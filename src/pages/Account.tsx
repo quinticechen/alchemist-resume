@@ -13,6 +13,7 @@ interface Profile {
   full_name: string | null;
   avatar_url: string | null;
   usage_count: number;
+  free_trial_limit: number;
   monthly_usage_count: number;
   provider: string;
   has_completed_survey: boolean;
@@ -147,6 +148,22 @@ const Account = () => {
     }
     
     return Math.max(0, Number(limit) - (profile.usage_count || 0));
+  };
+
+  const getRemainingUses = () => {
+    if (!profile) return 0;
+    const limit = getUsageLimit();
+    if (limit === '∞') return '∞';
+    
+    if (profile.subscription_status === 'alchemist') {
+      return Math.max(0, Number(limit) - (profile.monthly_usage_count || 0));
+    }
+    
+    if (profile.subscription_status === 'apprentice') {
+      return Math.max(0, (profile.free_trial_limit || Number(limit)) - (profile.usage_count || 0));
+    }
+
+    return 0; // 如果是其他方案，返回0
   };
 
   const handleSubscribe = () => {
