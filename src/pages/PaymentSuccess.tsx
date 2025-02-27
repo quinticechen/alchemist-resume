@@ -88,7 +88,7 @@ const PaymentSuccess: React.FC = () => {
 
   return (
     <div
-      className="bg-gradient-primary py-20 px-4"
+      className="max-w-6xl mx-auto justify-center text-center bg-gradient-primary py-20 px-4"
       style={{ textAlign: "center" }}
     >
       <div className="w-full mx-auto flex justify-center items-center md:w-2/4 lg:w-1/3 xl:w-1/2">
