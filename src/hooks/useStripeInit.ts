@@ -6,59 +6,59 @@ import { toast } from "../hooks/use-toast";
 
 export const useStripeInit = () => {
   const [stripePromise, setStripePromise] = useState<Promise<Stripe | null> | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [isStripeInitializing, setIsStripeInitializing] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [attempts, setAttempts] = useState<number>(0);
+  const maxAttempts = 3;
 
   useEffect(() => {
     const initStripe = async () => {
       try {
-        console.info("Initiating request to get-stripe-key function");
-        setLoading(true);
+        console.info(`Initiating request to get-stripe-key function (attempt ${attempts + 1}/${maxAttempts})`);
+        setIsStripeInitializing(true);
         
-        const { data, error } = await supabase.functions.invoke("get-stripe-key");
+        const { data, error: funcError } = await supabase.functions.invoke("get-stripe-key");
         
-        if (error) {
-          console.error("Error invoking get-stripe-key function:", error);
-          setError("Failed to initialize payment system");
-          toast({
-            title: "Payment System Error",
-            description: "Unable to initialize payment system. Please try again later.",
-            variant: "destructive",
-          });
-          return;
+        if (funcError) {
+          console.error("Error invoking get-stripe-key function:", funcError);
+          throw new Error(funcError.message || "Failed to initialize payment system");
         }
         
         if (!data || !data.key) {
-          console.error("No Stripe key returned from function");
-          setError("Payment system configuration error");
-          toast({
-            title: "Payment System Error",
-            description: "Payment system is not properly configured. Please try again later.",
-            variant: "destructive",
-          });
-          return;
+          console.error("No Stripe key returned from function:", data);
+          throw new Error("Payment system configuration error: No key returned");
         }
         
         const stripeInstance = loadStripe(data.key);
         setStripePromise(stripeInstance);
-        console.info("Stripe initialized successfully");
-      } catch (err) {
+        setError(null);
+        console.info("Stripe initialized successfully with key:", data.key.substring(0, 8) + "...");
+      } catch (err: any) {
         console.error("Error initializing Stripe:", err);
-        setError("Failed to initialize payment system");
-        toast({
-          title: "Payment System Error",
-          description: "An unexpected error occurred. Please try again later.",
-          variant: "destructive",
-        });
+        setError(err.message || "Failed to initialize payment system");
+        
+        // Only show toast on final attempt
+        if (attempts >= maxAttempts - 1) {
+          toast({
+            title: "Payment System Error",
+            description: "Unable to initialize payment system. Please ensure you have set up your Stripe configuration.",
+            variant: "destructive",
+          });
+        } else {
+          // Try again if we haven't reached max attempts
+          setAttempts(prev => prev + 1);
+        }
       } finally {
-        setLoading(false);
+        setIsStripeInitializing(false);
       }
     };
 
-    initStripe();
-  }, []);
+    if (attempts < maxAttempts && !stripePromise && error === null) {
+      initStripe();
+    }
+  }, [attempts]);
 
-  return { stripePromise, loading, error, isStripeInitializing: loading };
+  return { stripePromise, isStripeInitializing, error };
 };
 
 export default useStripeInit;

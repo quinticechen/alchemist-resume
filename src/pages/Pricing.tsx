@@ -48,6 +48,18 @@ const Pricing = () => {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Show toast if there's a Stripe initialization error
+  useEffect(() => {
+    if (stripeError) {
+      console.error('Stripe initialization error:', stripeError);
+      toast({
+        title: "Payment System Issue",
+        description: "There was a problem initializing the payment system. Please try again later.",
+        variant: "destructive",
+      });
+    }
+  }, [stripeError, toast]);
+
   const fetchUsageInfo = async (userId: string) => {
     const { data, error } = await supabase
       .from('profiles')
@@ -96,9 +108,13 @@ const Pricing = () => {
     }
 
     if (!stripePromise) {
+      console.error('Stripe not initialized, current status:', { 
+        isInitializing: isStripeInitializing, 
+        error: stripeError 
+      });
       toast({
         title: "Payment System Error",
-        description: "Unable to initialize payment system. Please ensure you have set up your Stripe configuration.",
+        description: "Unable to initialize payment system. Please try again later or contact support.",
         variant: "destructive",
       });
       return;
@@ -112,7 +128,7 @@ const Pricing = () => {
         throw new Error('No valid session found');
       }
 
-      console.log('Making request with access token:', session.access_token);
+      console.log('Making request to stripe-payment function with access token');
       
       const { data, error } = await supabase.functions.invoke('stripe-payment', {
         body: { planId, isAnnual },
@@ -127,9 +143,10 @@ const Pricing = () => {
       }
 
       if (!data?.sessionUrl) {
-        throw new Error('No checkout URL received');
+        throw new Error('No checkout URL received from payment function');
       }
 
+      console.log('Redirecting to Stripe checkout URL');
       window.location.href = data.sessionUrl;
     } catch (error: any) {
       console.error('Payment error:', error);
@@ -180,7 +197,7 @@ const Pricing = () => {
                 key={plan.planId}
                 plan={plan}
                 isAnnual={isAnnual}
-                isLoading={isLoading}
+                isLoading={isLoading || isStripeInitializing}
                 onSelect={handlePlanSelection}
               />
             ))}
