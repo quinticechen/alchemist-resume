@@ -31,7 +31,7 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ error: 'Stripe signature is missing' }), 
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      ); 
     }
 
     const stripe = new Stripe(stripeSecretKey, {
@@ -74,33 +74,44 @@ serve(async (req) => {
         const userId = session.client_reference_id;
         const stripeCustomerId = session.customer;
         const stripeSubscriptionId = session.subscription;
-        
+    
         if (!userId || !stripeCustomerId || !stripeSubscriptionId) {
-          console.error('Missing required fields in checkout.session.completed event');
-          break;
+            console.error('Missing required fields in checkout.session.completed event');
+            break;
         }
-        
+    
         // Get subscription details from Stripe
         const subscription = await stripe.subscriptions.retrieve(stripeSubscriptionId);
-        
+    
         // Determine the subscription tier from metadata
         const tier = session.metadata?.planId || 'alchemist'; // Default to 'alchemist' if not specified
-        
+    
+        // Validate tier value
+        const validTiers = ['apprentice', 'alchemist', 'grandmaster'];
+        if (!validTiers.includes(tier)) {
+            console.error(`Invalid tier value: ${tier}`);
+            break; // Stop processing if tier is invalid
+        }
+    
         // Update user subscription status in the database
         await supabase.rpc('update_subscription_and_transaction', {
-          p_user_id: userId,
-          p_stripe_customer_id: stripeCustomerId,
-          p_stripe_subscription_id: stripeSubscriptionId,
-          p_status: subscription.status,
-          p_tier: tier,
-          p_current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-          p_current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-          p_cancel_at_period_end: subscription.cancel_at_period_end,
-          p_stripe_session_id: session.id,
-          p_amount: session.amount_total / 100, // Convert from cents to dollars
-          p_currency: session.currency,
-          p_payment_status: 'paid'
+            p_user_id: userId,
+            p_stripe_customer_id: stripeCustomerId,
+            p_stripe_subscription_id: stripeSubscriptionId,
+            p_status: subscription.status,
+            p_tier: tier,
+            p_current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
+            p_current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+            p_cancel_at_period_end: subscription.cancel_at_period_end,
+            p_stripe_session_id: session.id,
+            p_amount: session.amount_total / 100, // Convert from cents to dollars
+            p_currency: session.currency,
+            p_payment_status: 'paid'
         });
+    
+        console.log(`Updated subscription for user ${userId} to tier ${tier}`);
+        break;
+    }
         
         console.log(`Updated subscription for user ${userId} to tier ${tier}`);
         break;
