@@ -1,6 +1,6 @@
 
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
-import Stripe from "stripe";
+import Stripe from "https://esm.sh/stripe@12.6.0?target=deno";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',

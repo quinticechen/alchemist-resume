@@ -10,3 +10,15 @@ verify_jwt = true
 
 [functions.stripe-webhook]
 verify_jwt = false
+
+[functions.verify-stripe-session]
+verify_jwt = false
+
+[functions.update-google-doc]
+verify_jwt = true
+
+[functions.process-resume]
+verify_jwt = true
+
+[functions.auto-save]
+verify_jwt = true

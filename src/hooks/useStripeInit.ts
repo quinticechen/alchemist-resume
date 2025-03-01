@@ -58,7 +58,7 @@ export const useStripeInit = () => {
     initStripe();
   }, []);
 
-  return { stripePromise, loading, error };
+  return { stripePromise, loading, error, isStripeInitializing: loading };
 };
 
 export default useStripeInit;
