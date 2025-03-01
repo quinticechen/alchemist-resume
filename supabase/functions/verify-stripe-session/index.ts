@@ -16,7 +16,7 @@ const supabase = createClient(
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-application-name, x-environment",
+    "authorization, x-client-info, apikey, content-type, x-environment",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
