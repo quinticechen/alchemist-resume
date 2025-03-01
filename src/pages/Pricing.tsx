@@ -25,7 +25,7 @@ const Pricing = () => {
     free_trial_limit: number;
   } | null>(null);
   
-  const { stripePromise, loading: isStripeInitializing, error: stripeError } = useStripeInit();
+  const { stripePromise, isStripeInitializing, error: stripeError } = useStripeInit();
   const { isAuthenticated, hasCompletedSurvey } = useAuthAndSurvey();
 
   useEffect(() => {
