@@ -71,23 +71,28 @@ serve(async (req) => {
       case "customer.subscription.created":
       case "customer.subscription.updated":
       case "checkout.session.completed": {
-        const session = event.data.object;
-        const userId = session.client_reference_id;
-        const stripeCustomerId = session.customer;
-        const stripeSubscriptionId = session.subscription;
-
-        const subscription =
-          event.type === "checkout.session.completed"
-            ? await stripe.subscriptions.retrieve(
-                event.data.object.subscription
-              )
-            : event.data.object;
-
-        const customerId = subscription.customer;
-
-        const customer = await stripe.customers.retrieve(customerId);
-        const tier = session.metadata?.planId || "alchemist";
-
+        let subscription;
+        let customer;
+        let userId;
+        let customerId;
+    
+        if (event.type === "checkout.session.completed") {
+          const session = event.data.object;
+          subscription = await stripe.subscriptions.retrieve(
+            event.data.object.subscription
+          );
+          customerId = subscription.customer;
+          customer = await stripe.customers.retrieve(customerId);
+          userId = customer.metadata.supabase_uid;
+        } else {
+          subscription = event.data.object;
+          customerId = subscription.customer;
+          customer = await stripe.customers.retrieve(customerId);
+          userId = customer.metadata.supabase_uid;
+        }
+    
+        const tier = subscription.metadata?.planId || "alchemist";
+    
         if (!userId) {
           console.error("No user ID found in customer metadata");
           throw new Error("No user ID found in customer metadata");
