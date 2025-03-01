@@ -3,8 +3,8 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  // 'Access-Control-Allow-Headers': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-application-name, x-environment',
+  'Access-Control-Allow-Headers': '*',
+  // 'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-environment',
   'Access-Control-Allow-Methods': 'GET, OPTIONS',
   'Access-Control-Max-Age': '86400',
   'Access-Control-Allow-Credentials': 'true',
