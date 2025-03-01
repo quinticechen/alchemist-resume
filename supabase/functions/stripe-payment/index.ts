@@ -103,6 +103,7 @@ serve(async (req) => {
     // Create Stripe checkout session
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
+      // client_reference_id: 
       line_items: [
         {
           price: PLANS[planId][isAnnual ? 'annual' : 'monthly'],
