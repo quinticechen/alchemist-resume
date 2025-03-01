@@ -72,7 +72,9 @@ serve(async (req) => {
       case "customer.subscription.updated":
       case "checkout.session.completed": {
         const session = event.data.object;
-        const userId = session.customer;
+        const userId = session.client_reference_id;
+        const stripeCustomerId = session.customer;
+        const stripeSubscriptionId = session.subscription;
 
         const subscription =
           event.type === "checkout.session.completed"
@@ -97,7 +99,7 @@ serve(async (req) => {
           .insert({
             user_id: userId,
             stripe_session_id: session.id,
-            stripe_subscription_id: subscription.id,
+            stripe_subscription_id: stripeSubscriptionId,
             amount: session.amount_total / 100, // 將 cents 轉換為 dollars
             currency: session.currency,
             status: "paid", // 假設交易成功
@@ -157,7 +159,7 @@ serve(async (req) => {
         }
 
         console.log(
-          `Successfully updated transaction, subscription and profile for user ${userId}`
+          `Successfully updated subscription and profile for user ${userId}`
         );
 
         break;
