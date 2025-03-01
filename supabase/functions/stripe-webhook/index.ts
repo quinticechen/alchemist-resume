@@ -72,8 +72,7 @@ serve(async (req) => {
       case "customer.subscription.updated":
       case "checkout.session.completed": {
         const session = event.data.object;
-        const userId = session.client_reference_id;
-        const stripeCustomerId = session.customer;
+        const userId = session.customer;
 
         const subscription =
           event.type === "checkout.session.completed"
@@ -158,7 +157,7 @@ serve(async (req) => {
         }
 
         console.log(
-          `Successfully updated subscription and profile for user ${userId}`
+          `Successfully updated transaction, subscription and profile for user ${userId}`
         );
 
         break;
