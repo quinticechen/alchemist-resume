@@ -17,12 +17,7 @@ export const useStripeInit = () => {
         console.info(`Initiating request to get-stripe-key function (attempt ${attempts + 1}/${maxAttempts})`);
         setIsStripeInitializing(true);
         
-        const { data, error: funcError } = await supabase.functions.invoke("get-stripe-key", {
-          // Explicitly avoid sending any headers that might cause CORS issues
-          headers: {
-            'Content-Type': 'application/json',
-          }
-        });
+        const { data, error: funcError } = await supabase.functions.invoke("get-stripe-key";
         
         if (funcError) {
           console.error("Error invoking get-stripe-key function:", funcError);
