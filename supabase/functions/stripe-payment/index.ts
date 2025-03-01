@@ -102,7 +102,7 @@ serve(async (req) => {
 
     // Create Stripe checkout session
     const session = await stripe.checkout.sessions.create({
-      customer: customerId,
+      client_reference_id: customerId,
       line_items: [
         {
           price: PLANS[planId][isAnnual ? 'annual' : 'monthly'],
@@ -140,6 +140,8 @@ serve(async (req) => {
   }
 });
 
+//－－－
+// // 
 // import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 // import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 // import Stripe from "https://esm.sh/stripe@12.6.0?target=deno";
