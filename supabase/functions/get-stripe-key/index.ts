@@ -13,40 +13,36 @@ serve(async (req) => {
   }
 
   try {
-    // Get the Stripe publishable key from environment variables
-    const stripeKey = Deno.env.get('STRIPE_PUBLISHABLE_KEY');
+    // Get publishable key from environment
+    const stripePublishableKey = Deno.env.get('STRIPE_PUBLISHABLE_KEY');
     
-    if (!stripeKey) {
-      console.error('Stripe publishable key is not set in environment variables');
+    if (!stripePublishableKey) {
+      console.error('STRIPE_PUBLISHABLE_KEY is not set in environment variables');
       return new Response(
         JSON.stringify({ 
-          error: 'Stripe key not configured',
-          message: 'STRIPE_PUBLISHABLE_KEY environment variable is not set'
+          error: 'Stripe publishable key is not configured' 
         }),
         { 
-          status: 500,
+          status: 500, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         }
       );
     }
 
-    // Return the key
+    // Return the publishable key
     return new Response(
-      JSON.stringify({ key: stripeKey }),
+      JSON.stringify({ key: stripePublishableKey }),
       { 
-        status: 200,
+        status: 200, 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     );
   } catch (error) {
-    console.error('Error in get-stripe-key function:', error.message);
+    console.error('Error in get-stripe-key function:', error);
     return new Response(
-      JSON.stringify({ 
-        error: 'Server error',
-        message: error.message
-      }),
+      JSON.stringify({ error: error.message || 'An unexpected error occurred' }),
       { 
-        status: 500,
+        status: 500, 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     );

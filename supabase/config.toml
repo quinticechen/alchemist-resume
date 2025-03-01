@@ -22,4 +22,3 @@ verify_jwt = true
 
 [functions.auto-save]
 verify_jwt = true
-
