@@ -1,610 +1,152 @@
-import { serve } from "https://deno.land/std@0.145.2/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import Stripe from "https://esm.sh/stripe@14.18.0?target=deno";
+import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
+import { createClient } from "@supabase/supabase-js";
+import Stripe from "stripe";
 
-const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
-  apiVersion: "2023-10-16",
-  httpClient: Stripe.createFetchHttpClient(),
-});
-
-const supabase = createClient(
-  Deno.env.get("SUPABASE_URL") ?? "",
-  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-);
-
-// Add CORS headers
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-application-name, x-environment",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
 serve(async (req) => {
   // Handle CORS preflight requests
-  if (req.method === "OPTIONS") {
+  if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // For Stripe webhooks, we don't need to check authorization header
-  // Instead, we verify the request using the Stripe signature
-  const signature = req.headers.get("stripe-signature");
-  if (!signature) {
-    console.error("No Stripe signature found in webhook request");
-    return new Response("No signature", {
-      status: 400,
-      headers: corsHeaders,
-    });
-  }
-
   try {
-    const body = await req.text();
-    const endpointSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET");
-
-    if (!endpointSecret) {
-      console.error("No webhook secret found");
-      return new Response("No webhook secret configured", {
-        status: 500,
-        headers: corsHeaders,
+    // Get the signature from the header
+    const signature = req.headers.get('stripe-signature');
+    if (!signature) {
+      return new Response(JSON.stringify({ error: 'No signature provided' }), { 
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
+    // Get the raw request body
+    const body = await req.text();
+    
+    // Initialize Stripe with secret key
+    const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
+      apiVersion: '2023-10-16',
+    });
+    
+    // Verify the webhook signature
     let event;
     try {
-      event = await stripe.webhooks.constructEventAsync(
-        // 使用 constructEventAsync
-        body,
-        signature,
-        endpointSecret
-      );
+      const webhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET') || '';
+      event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
     } catch (err) {
       console.error(`Webhook signature verification failed: ${err.message}`);
-      return new Response(`Webhook Error: ${err.message}`, {
+      return new Response(JSON.stringify({ error: `Webhook Error: ${err.message}` }), {
         status: 400,
-        headers: corsHeaders,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
-    console.log(`Received Stripe webhook event: ${event.type}`);
-    console.log("Event data:", JSON.stringify(event.data.object, null, 2));
+    // Create Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    console.log(`Processing webhook event: ${event.type}`);
 
     switch (event.type) {
-      case "checkout.session.completed":
+      case 'checkout.session.completed': {
         const session = event.data.object;
-        const subscription = session.subscription
-          ? await stripe.subscriptions.retrieve(session.subscription)
-          : await stripe.subscriptions.retrieve(session.subscription);
-        const customerId = session.customer;
-        const customer = await stripe.customers.retrieve(customerId);
-        const userId = customer.metadata.supabase_uid;
+        console.log('Checkout session completed:', session);
+
+        // Extract customer and subscription info
+        const { customer, subscription, metadata } = session;
+        const userId = metadata?.user_id;
 
         if (!userId) {
-          console.error("No user ID found in customer metadata");
-          throw new Error("No user ID found in customer metadata");
+          console.error('No user_id in session metadata');
+          return new Response(JSON.stringify({ error: 'No user_id in session metadata' }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
         }
 
-        const priceId = subscription.items.data[0].price.id;
-
-        // 假設 subscription_tier 類型是 'alchemist' | 'grandmaster' | 'apprentice'
-        let tier: "alchemist" | "grandmaster" | "apprentice" = "apprentice";
-        switch (priceId) {
-          case "price_1Qs0CVGYVYFmwG4FmEwa1iWO":
-          case "price_1Qs0ECGYVYFmwG4FluFhUdQH":
-            tier = "alchemist";
-            break;
-          case "price_1Qs0BTGYVYFmwG4FFDbYpi5v":
-          case "price_1Qs0BtGYVYFmwG4FrtkMrNNx":
-            tier = "grandmaster";
-            break;
+        // Get subscription details from Stripe
+        const subscriptionData = await stripe.subscriptions.retrieve(subscription);
+        const plan = subscriptionData.items.data[0]?.plan;
+        
+        if (!plan) {
+          console.error('No plan found in subscription');
+          return new Response(JSON.stringify({ error: 'No plan found in subscription' }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
         }
 
-        if (
-          subscription.status === "active" ||
-          subscription.status === "trialing"
-        ) {
-          // Use database transaction to ensure atomicity
-          try {
-            const rpcResult = await supabase.rpc(
-              "update_subscription_and_transaction",
-              {
-                p_user_id: userId,
-                p_stripe_customer_id: customerId,
-                p_stripe_subscription_id: subscription.id,
-                p_status: subscription.status,
-                p_tier: tier,
-                p_current_period_start: new Date(
-                  subscription.current_period_start * 1000
-                ).toISOString(),
-                p_current_period_end: new Date(
-                  subscription.current_period_end * 1000
-                ).toISOString(),
-                p_cancel_at_period_end: subscription.cancel_at_period_end,
-                p_stripe_session_id: session.id,
-                p_amount: session.amount_total / 100,
-                p_currency: session.currency,
-                p_payment_status: session.payment_status,
-              }
-            );
-            console.log(`RPC Result:`, rpcResult);
-            console.log(
-              `Successfully updated subscription and transaction for user ${userId}`
-            );
-          } catch (rpcError) {
-            console.error(
-              "Error updating subscription and transaction via RPC:",
-              rpcError
-            );
-            throw rpcError;
-          }
-        } else {
-          console.log(
-            `Subscription ${subscription.id} status is ${subscription.status}, not updating database`
-          );
+        // Determine subscription tier based on product ID
+        let tier = 'apprentice';
+        if (plan.product === 'prod_alchemist') {
+          tier = 'alchemist';
+        } else if (plan.product === 'prod_grandmaster') {
+          tier = 'grandmaster';
         }
+
+        // Call the database function to update subscription and transaction
+        const { data, error } = await supabase.rpc('update_subscription_and_transaction', {
+          p_user_id: userId,
+          p_stripe_customer_id: customer,
+          p_stripe_subscription_id: subscription,
+          p_status: 'active',
+          p_tier: tier,
+          p_current_period_start: new Date(subscriptionData.current_period_start * 1000).toISOString(),
+          p_current_period_end: new Date(subscriptionData.current_period_end * 1000).toISOString(),
+          p_cancel_at_period_end: subscriptionData.cancel_at_period_end,
+          p_stripe_session_id: session.id,
+          p_amount: session.amount_total / 100,
+          p_currency: session.currency,
+          p_payment_status: session.payment_status
+        });
+
+        if (error) {
+          console.error('Error updating subscription:', error);
+          return new Response(JSON.stringify({ error: 'Database update failed' }), {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+
+        console.log('Subscription updated successfully');
         break;
-
-      case "customer.subscription.deleted":
-        const deletedSubscription = event.data.object;
-        const deletedCustomer = await stripe.customers.retrieve(
-          deletedSubscription.customer
-        );
-        const deletedUserId = deletedCustomer.metadata.supabase_uid;
-
-        if (deletedUserId) {
-          console.log(`Cancelling subscription for user ${deletedUserId}`);
-
-          // Update subscription status
-          const { error: deleteSubError } = await supabase
-            .from("subscriptions")
-            .update({
-              status: "canceled",
-              cancel_at_period_end: true,
-            })
-            .eq("user_id", deletedUserId);
-
-          if (deleteSubError) {
-            console.error(
-              "Error updating subscription on deletion:",
-              deleteSubError
-            );
-            throw deleteSubError;
-          }
-
-          // Reset profile subscription status
-          const { error: deleteProfileError } = await supabase
-            .from("profiles")
-            .update({
-              subscription_status: "apprentice",
-              monthly_usage_count: null,
-              monthly_usage_reset_date: null,
-            })
-            .eq("id", deletedUserId);
-
-          if (deleteProfileError) {
-            console.error(
-              "Error updating profile on deletion:",
-              deleteProfileError
-            );
-            throw deleteProfileError;
-          }
-
-          console.log(
-            `Successfully cancelled subscription for user ${deletedUserId}`
-          );
-        }
+      }
+      
+      case 'customer.subscription.updated': {
+        const subscription = event.data.object;
+        console.log('Subscription updated:', subscription);
+        
+        // Handle subscription updates (status changes, plan changes, etc.)
+        // Implement similar logic to checkout.session.completed
         break;
-
+      }
+      
+      case 'customer.subscription.deleted': {
+        const subscription = event.data.object;
+        console.log('Subscription cancelled:', subscription);
+        
+        // Handle subscription cancellation
+        // Update user's subscription status to 'cancelled' or 'apprentice'
+        break;
+      }
+      
       default:
         console.log(`Unhandled event type: ${event.type}`);
     }
 
     return new Response(JSON.stringify({ received: true }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
-  } catch (err) {
-    console.error("Webhook error:", err);
-    return new Response(JSON.stringify({ error: err.message }), {
-      status: 400,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+  } catch (error) {
+    console.error('Webhook error:', error.message);
+    return new Response(JSON.stringify({ error: `Webhook error: ${error.message}` }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
   }
 });
-
-// ----------
-
-// import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-// import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-// import Stripe from "https://esm.sh/stripe@14.18.0?target=deno";
-
-// const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
-//   apiVersion: '2023-10-16',
-//   httpClient: Stripe.createFetchHttpClient(),
-// });
-
-// const supabase = createClient(
-//   Deno.env.get('SUPABASE_URL') ?? '',
-//   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-// );
-
-// // Add CORS headers
-// const corsHeaders = {
-//   'Access-Control-Allow-Origin': '*',
-//   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-application-name, x-environment',
-//   'Access-Control-Allow-Methods': 'POST, OPTIONS',
-// };
-
-// serve(async (req) => {
-//   // Handle CORS preflight requests
-//   if (req.method === 'OPTIONS') {
-//     return new Response(null, { headers: corsHeaders });
-//   }
-
-//   // For Stripe webhooks, we don't need to check authorization header
-//   // Instead, we verify the request using the Stripe signature
-//   const signature = req.headers.get('stripe-signature');
-//   if (!signature) {
-//     console.error('No Stripe signature found in webhook request');
-//     return new Response('No signature', {
-//       status: 400,
-//       headers: corsHeaders
-//     });
-//   }
-
-//   try {
-//     const body = await req.text();
-//     const endpointSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET');
-
-//     if (!endpointSecret) {
-//       console.error('No webhook secret found');
-//       return new Response('No webhook secret configured', {
-//         status: 500,
-//         headers: corsHeaders
-//       });
-//     }
-
-//     let event;
-//     try {
-//       event = await stripe.webhooks.constructEventAsync(
-//         body,
-//         signature,
-//         endpointSecret
-//       );
-//     } catch (err) {
-//       console.error(`Webhook signature verification failed: ${err.message}`);
-//       return new Response(`Webhook Error: ${err.message}`, {
-//         status: 400,
-//         headers: corsHeaders
-//       });
-//     }
-
-//     console.log(`Received Stripe webhook event: ${event.type}`);
-//     console.log('Event data:', JSON.stringify(event.data.object, null, 2));
-
-//     switch (event.type) {
-//       case 'checkout.session.completed':
-//         const session = event.data.object;
-//         const subscription = session.subscription
-//           ? await stripe.subscriptions.retrieve(session.subscription)
-//           : await stripe.subscriptions.retrieve(session.subscription);
-//         const customerId = session.customer;
-//         const customer = await stripe.customers.retrieve(customerId);
-//         const userId = customer.metadata.supabase_uid;
-
-//         if (!userId) {
-//           console.error('No user ID found in customer metadata');
-//           throw new Error('No user ID found in customer metadata');
-//         }
-
-//         const priceId = subscription.items.data[0].price.id;
-//         let tier = 'apprentice';
-//         switch (priceId) {
-//           case 'price_1Qs0CVGYVYFmwG4FmEwa1iWO':
-//           case 'price_1Qs0ECGYVYFmwG4FluFhUdQH':
-//             tier = 'alchemist';
-//             break;
-//           case 'price_1Qs0BTGYVYFmwG4FFDbYpi5v':
-//           case 'price_1Qs0BtGYVYFmwG4FrtkMrNNx':
-//             tier = 'grandmaster';
-//             break;
-//         }
-
-//         if (subscription.status === 'active' || subscription.status === 'trialing') {
-//           // Use database transaction to ensure atomicity
-//           try {
-//             await supabase.rpc('update_subscription_and_transaction', {
-//               p_user_id: userId,
-//               p_stripe_customer_id: customerId,
-//               p_stripe_subscription_id: subscription.id,
-//               p_status: subscription.status,
-//               p_tier: tier,
-//               p_current_period_start: new Date(subscription.current_period_start * 1000),
-//               p_current_period_end: new Date(subscription.current_period_end * 1000),
-//               p_cancel_at_period_end: subscription.cancel_at_period_end,
-//               p_stripe_session_id: session.id,
-//               p_amount: session.amount_total / 100,
-//               p_currency: session.currency,
-//               p_payment_status: session.payment_status,
-//             });
-//             console.log(`Successfully updated subscription and transaction for user ${userId}`);
-//           } catch (rpcError) {
-//             console.error('Error updating subscription and transaction via RPC:', rpcError);
-//             throw rpcError;
-//           }
-//         } else {
-//           console.log(`Subscription ${subscription.id} status is ${subscription.status}, not updating database`);
-//         }
-//         break;
-
-//       case 'customer.subscription.deleted':
-//         const deletedSubscription = event.data.object;
-//         const deletedCustomer = await stripe.customers.retrieve(deletedSubscription.customer);
-//         const deletedUserId = deletedCustomer.metadata.supabase_uid;
-
-//         if (deletedUserId) {
-//           console.log(`Cancelling subscription for user ${deletedUserId}`);
-
-//           // Update subscription status
-//           const { error: deleteSubError } = await supabase
-//             .from('subscriptions')
-//             .update({
-//               status: 'canceled',
-//               cancel_at_period_end: true,
-//             })
-//             .eq('user_id', deletedUserId);
-
-//           if (deleteSubError) {
-//             console.error('Error updating subscription on deletion:', deleteSubError);
-//             throw deleteSubError;
-//           }
-
-//           // Reset profile subscription status
-//           const { error: deleteProfileError } = await supabase
-//             .from('profiles')
-//             .update({
-//               subscription_status: 'apprentice',
-//               monthly_usage_count: null,
-//               monthly_usage_reset_date: null
-//             })
-//             .eq('id', deletedUserId);
-
-//           if (deleteProfileError) {
-//             console.error('Error updating profile on deletion:', deleteProfileError);
-//             throw deleteProfileError;
-//           }
-
-//           console.log(`Successfully cancelled subscription for user ${deletedUserId}`);
-//         }
-//         break;
-
-//       default:
-//         console.log(`Unhandled event type: ${event.type}`);
-//     }
-
-//     return new Response(JSON.stringify({ received: true }), {
-//       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-//       status: 200,
-//     });
-//   } catch (err) {
-//     console.error('Webhook error:', err);
-//     return new Response(
-//       JSON.stringify({ error: err.message }),
-//       {
-//         status: 400,
-//         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-//       }
-//     );
-//   }
-// });
-
-// ---------
-
-// import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-// import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-// import Stripe from "https://esm.sh/stripe@14.18.0?target=deno";
-
-// const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
-//   apiVersion: '2023-10-16',
-//   httpClient: Stripe.createFetchHttpClient(),
-// });
-
-// const supabase = createClient(
-//   Deno.env.get('SUPABASE_URL') ?? '',
-//   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-// );
-
-// // Add CORS headers
-// const corsHeaders = {
-//   'Access-Control-Allow-Origin': '*',
-//   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-application-name, x-environment',
-//   'Access-Control-Allow-Methods': 'POST, OPTIONS',
-// };
-
-// serve(async (req) => {
-//   // Handle CORS preflight requests
-//   if (req.method === 'OPTIONS') {
-//     return new Response(null, { headers: corsHeaders });
-//   }
-
-//   // For Stripe webhooks, we don't need to check authorization header
-//   // Instead, we verify the request using the Stripe signature
-//   const signature = req.headers.get('stripe-signature');
-//   if (!signature) {
-//     console.error('No Stripe signature found in webhook request');
-//     return new Response('No signature', {
-//       status: 400,
-//       headers: corsHeaders
-//     });
-//   }
-
-//   try {
-//     const body = await req.text();
-//     const endpointSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET');
-
-//     if (!endpointSecret) {
-//       console.error('No webhook secret found');
-//       return new Response('No webhook secret configured', {
-//         status: 500,
-//         headers: corsHeaders
-//       });
-//     }
-
-//     let event;
-//     try {
-//       event = await stripe.webhooks.constructEventAsync(
-//         body,
-//         signature,
-//         endpointSecret
-//       );
-//     } catch (err) {
-//       console.error(`Webhook signature verification failed: ${err.message}`);
-//       return new Response(`Webhook Error: ${err.message}`, {
-//         status: 400,
-//         headers: corsHeaders
-//       });
-//     }
-
-//     console.log(`Received Stripe webhook event: ${event.type}`);
-//     console.log('Event data:', JSON.stringify(event.data.object, null, 2));
-
-//     switch (event.type) {
-//       case 'customer.subscription.created':
-//       case 'customer.subscription.updated':
-//       case 'checkout.session.completed':
-//         const subscription = event.type === 'checkout.session.completed'
-//           ? await stripe.subscriptions.retrieve(event.data.object.subscription)
-//           : event.data.object;
-
-//         const customerId = subscription.customer;
-
-//         // Get customer to find Supabase user ID
-//         const customer = await stripe.customers.retrieve(customerId);
-//         const userId = customer.metadata.supabase_uid;
-
-//         if (!userId) {
-//           console.error('No user ID found in customer metadata');
-//           throw new Error('No user ID found in customer metadata');
-//         }
-
-//         // Get the price ID to determine the tier
-//         const priceId = subscription.items.data[0].price.id;
-//         let tier = 'apprentice';
-
-//         // Map price IDs to subscription tiers
-//         switch (priceId) {
-//           case 'price_1Qs0CVGYVYFmwG4FmEwa1iWO':
-//           case 'price_1Qs0ECGYVYFmwG4FluFhUdQH':
-//             tier = 'alchemist';
-//             break;
-//           case 'price_1Qs0BTGYVYFmwG4FFDbYpi5v':
-//           case 'price_1Qs0BtGYVYFmwG4FrtkMrNNx':
-//             tier = 'grandmaster';
-//             break;
-//         }
-
-//         // Only update if subscription is active
-//         if (subscription.status === 'active' || subscription.status === 'trialing') {
-//           console.log(`Updating subscription for user ${userId} to tier ${tier}`);
-
-//           // Update subscriptions table
-//           const { error: subscriptionError } = await supabase
-//             .from('subscriptions')
-//             .upsert({
-//               user_id: userId,
-//               stripe_customer_id: customerId,
-//               stripe_subscription_id: subscription.id,
-//               status: subscription.status,
-//               tier: tier,
-//               current_period_start: new Date(subscription.current_period_start * 1000),
-//               current_period_end: new Date(subscription.current_period_end * 1000),
-//               cancel_at_period_end: subscription.cancel_at_period_end,
-//             }, {
-//               onConflict: 'user_id',
-//             });
-
-//           if (subscriptionError) {
-//             console.error('Error updating subscription:', subscriptionError);
-//             throw subscriptionError;
-//           }
-
-//           // Update profile's subscription status
-//           const { error: profileError } = await supabase
-//             .from('profiles')
-//             .update({
-//               subscription_status: tier,
-//               monthly_usage_count: tier === 'apprentice' ? null : 0,
-//               monthly_usage_reset_date: tier === 'alchemist' ? new Date(subscription.current_period_start * 1000) : null
-//             })
-//             .eq('id', userId);
-
-//           if (profileError) {
-//             console.error('Error updating profile:', profileError);
-//             throw profileError;
-//           }
-
-//           console.log(`Successfully updated subscription and profile for user ${userId}`);
-//         } else {
-//           console.log(`Subscription ${subscription.id} status is ${subscription.status}, not updating database`);
-//         }
-//         break;
-
-//       case 'customer.subscription.deleted':
-//         const deletedSubscription = event.data.object;
-//         const deletedCustomer = await stripe.customers.retrieve(deletedSubscription.customer);
-//         const deletedUserId = deletedCustomer.metadata.supabase_uid;
-
-//         if (deletedUserId) {
-//           console.log(`Cancelling subscription for user ${deletedUserId}`);
-
-//           // Update subscription status
-//           const { error: deleteSubError } = await supabase
-//             .from('subscriptions')
-//             .update({
-//               status: 'canceled',
-//               cancel_at_period_end: true,
-//             })
-//             .eq('user_id', deletedUserId);
-
-//           if (deleteSubError) {
-//             console.error('Error updating subscription on deletion:', deleteSubError);
-//             throw deleteSubError;
-//           }
-
-//           // Reset profile subscription status
-//           const { error: deleteProfileError } = await supabase
-//             .from('profiles')
-//             .update({
-//               subscription_status: 'apprentice',
-//               monthly_usage_count: null,
-//               monthly_usage_reset_date: null
-//             })
-//             .eq('id', deletedUserId);
-
-//           if (deleteProfileError) {
-//             console.error('Error updating profile on deletion:', deleteProfileError);
-//             throw deleteProfileError;
-//           }
-
-//           console.log(`Successfully cancelled subscription for user ${deletedUserId}`);
-//         }
-//         break;
-
-//       default:
-//         console.log(`Unhandled event type: ${event.type}`);
-//     }
-
-//     return new Response(JSON.stringify({ received: true }), {
-//       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-//       status: 200,
-//     });
-//   } catch (err) {
-//     console.error('Webhook error:', err);
-//     return new Response(
-//       JSON.stringify({ error: err.message }),
-//       {
-//         status: 400,
-//         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-//       }
-//     );
-//   }
-// });
