@@ -25,7 +25,7 @@ const Pricing = () => {
     free_trial_limit: number;
   } | null>(null);
   
-  const { loading: isStripeInitializing, stripePromise, error: stripeError } = useStripeInit();
+  const { stripePromise, loading, error: stripeError } = useStripeInit();
   const { isAuthenticated, hasCompletedSurvey } = useAuthAndSurvey();
 
   useEffect(() => {
@@ -87,7 +87,7 @@ const Pricing = () => {
       return;
     }
 
-    if (isStripeInitializing) {
+    if (loading) {
       toast({
         title: "Please Wait",
         description: "Payment system is initializing. Please try again in a moment.",
