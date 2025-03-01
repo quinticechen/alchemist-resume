@@ -62,6 +62,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     },
   },
   global: {
+    // We'll leave the headers in but not send them for specific function calls that have CORS issues
     headers: {
       'x-application-name': 'resume-alchemist',
       'x-environment': getEnvironment(), // Add environment to headers
