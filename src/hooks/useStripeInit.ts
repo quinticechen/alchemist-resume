@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { loadStripe, Stripe } from "@stripe/stripe-js";
 import { supabase } from "../integrations/supabase/client";
@@ -17,7 +16,7 @@ export const useStripeInit = () => {
         console.info(`Initiating request to get-stripe-key function (attempt ${attempts + 1}/${maxAttempts})`);
         setIsStripeInitializing(true);
         
-        const { data, error: funcError } = await supabase.functions.invoke("get-stripe-key";
+        const { data, error: funcError } = await supabase.functions.invoke("get-stripe-key");
         
         if (funcError) {
           console.error("Error invoking get-stripe-key function:", funcError);
