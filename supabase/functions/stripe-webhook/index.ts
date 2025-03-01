@@ -70,7 +70,11 @@ serve(async (req) => {
     switch (event.type) {
       case "customer.subscription.created":
       case "customer.subscription.updated":
-      case "checkout.session.completed":
+      case "checkout.session.completed": {
+        const session = event.data.object;
+        const userId = session.client_reference_id;
+        const stripeCustomerId = session.customer;
+
         const subscription =
           event.type === "checkout.session.completed"
             ? await stripe.subscriptions.retrieve(
@@ -80,95 +84,85 @@ serve(async (req) => {
 
         const customerId = subscription.customer;
 
-        // Get customer to find Supabase user ID
         const customer = await stripe.customers.retrieve(customerId);
-        const userId = customer.metadata.supabase_uid;
+        const tier = session.metadata?.planId || "alchemist";
 
         if (!userId) {
           console.error("No user ID found in customer metadata");
           throw new Error("No user ID found in customer metadata");
         }
 
-        // Get the price ID to determine the tier
-        const priceId = subscription.items.data[0].price.id;
-        let tier = "apprentice";
+        // 插入交易記錄到 transactions 資料表
+        const { error: transactionError } = await supabase
+          .from("transactions")
+          .insert({
+            user_id: userId,
+            stripe_session_id: session.id,
+            stripe_subscription_id: subscription.id,
+            amount: session.amount_total / 100, // 將 cents 轉換為 dollars
+            currency: session.currency,
+            status: "paid", // 假設交易成功
+            created_at: new Date().toISOString(),
+            tier: tier,
+          });
 
-        // Map price IDs to subscription tiers
-        switch (priceId) {
-          case "price_1Qs0CVGYVYFmwG4FmEwa1iWO":
-          case "price_1Qs0ECGYVYFmwG4FluFhUdQH":
-            tier = "alchemist";
-            break;
-          case "price_1Qs0BTGYVYFmwG4FFDbYpi5v":
-          case "price_1Qs0BtGYVYFmwG4FrtkMrNNx":
-            tier = "grandmaster";
-            break;
+        if (transactionError) {
+          console.error("Error inserting transaction:", transactionError);
+          throw transactionError;
         }
 
-        // Only update if subscription is active
-        if (
-          subscription.status === "active" ||
-          subscription.status === "trialing"
-        ) {
-          console.log(
-            `Updating subscription for user ${userId} to tier ${tier}`
+        // 更新 subscriptions table
+        const { error: subscriptionError } = await supabase
+          .from("subscriptions")
+          .upsert(
+            {
+              user_id: userId,
+              stripe_customer_id: customerId,
+              stripe_subscription_id: subscription.id,
+              status: subscription.status,
+              tier: tier,
+              current_period_start: new Date(
+                subscription.current_period_start * 1000
+              ),
+              current_period_end: new Date(
+                subscription.current_period_end * 1000
+              ),
+              cancel_at_period_end: subscription.cancel_at_period_end,
+            },
+            {
+              onConflict: "user_id",
+            }
           );
 
-          // Update subscriptions table
-          const { error: subscriptionError } = await supabase
-            .from("subscriptions")
-            .upsert(
-              {
-                user_id: userId,
-                stripe_customer_id: customerId,
-                stripe_subscription_id: subscription.id,
-                status: subscription.status,
-                tier: tier,
-                current_period_start: new Date(
-                  subscription.current_period_start * 1000
-                ),
-                current_period_end: new Date(
-                  subscription.current_period_end * 1000
-                ),
-                cancel_at_period_end: subscription.cancel_at_period_end,
-              },
-              {
-                onConflict: "user_id",
-              }
-            );
-
-          if (subscriptionError) {
-            console.error("Error updating subscription:", subscriptionError);
-            throw subscriptionError;
-          }
-
-          // Update profile's subscription status
-          const { error: profileError } = await supabase
-            .from("profiles")
-            .update({
-              subscription_status: tier,
-              monthly_usage_count: tier === "apprentice" ? null : 0,
-              monthly_usage_reset_date:
-                tier === "alchemist"
-                  ? new Date(subscription.current_period_start * 1000)
-                  : null,
-            })
-            .eq("id", userId);
-
-          if (profileError) {
-            console.error("Error updating profile:", profileError);
-            throw profileError;
-          }
-
-          console.log(
-            `Successfully updated subscription and profile for user ${userId}`
-          );
-        } else {
-          console.log(
-            `Subscription ${subscription.id} status is ${subscription.status}, not updating database`
-          );
+        if (subscriptionError) {
+          console.error("Error updating subscription:", subscriptionError);
+          throw subscriptionError;
         }
+
+        // 更新 profile's subscription status
+        const { error: profileError } = await supabase
+          .from("profiles")
+          .update({
+            subscription_status: tier,
+            monthly_usage_count: tier === "apprentice" ? null : 0,
+            monthly_usage_reset_date:
+              tier === "alchemist"
+                ? new Date(subscription.current_period_start * 1000)
+                : null,
+          })
+          .eq("id", userId);
+
+        if (profileError) {
+          console.error("Error updating profile:", profileError);
+          throw profileError;
+        }
+
+        console.log(
+          `Successfully updated subscription and profile for user ${userId}`
+        );
+
         break;
+      }
 
       case "customer.subscription.deleted":
         const deletedSubscription = event.data.object;
@@ -237,7 +231,6 @@ serve(async (req) => {
     });
   }
 });
-
 
 // import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 // import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
