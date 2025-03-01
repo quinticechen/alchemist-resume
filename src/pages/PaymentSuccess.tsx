@@ -87,11 +87,8 @@ const PaymentSuccess: React.FC = () => {
   }
 
   return (
-    <div
-      className="max-w-6xl mx-auto justify-center text-center bg-gradient-primary py-20 px-4"
-      style={{ textAlign: "center" }}
-    >
-      <div className="w-full mx-auto flex justify-center items-center md:w-2/4 lg:w-1/3 xl:w-1/2">
+    <div className="mx-auto text-center bg-gradient-primary py-20 px-4">
+      <div className="w-full mx-auto flex items-center md:w-2/4 lg:w-1/3 xl:w-1/2">
         <Lottie options={defaultOptions} height={"100%"} width={"100%"} />
       </div>
       {verificationSuccess ? (

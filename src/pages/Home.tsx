@@ -178,7 +178,7 @@ const Home = () => {
           <h1 className="text-6xl font-bold bg-light text-transparent bg-clip-text mb-6">
             Transform Your Resume with AI Alchemy
           </h1>
-          <div className="w-full mx-auto flex justify-center items-center md:w-2/4 lg:w-1/3 xl:w-1/2">
+          <div className="w-full mx-auto flex items-center md:w-2/4 lg:w-1/3 xl:w-1/2">
             <Lottie options={defaultOptions} height={"100%"} width={"100%"} />
           </div>
           <p className="text-xl text-light mb-8 max-w-3xl mx-auto">
