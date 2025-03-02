@@ -1,22 +1,9 @@
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Check } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-
-interface PricingPlan {
-  name: string;
-  planId: string;
-  price: {
-    monthly: string;
-    annual: string;
-  };
-  features: string[];
-  buttonText: string;
-  highlighted: boolean;
-  showButton: boolean;
-  isCurrentPlan?: boolean;
-  mostPopular?: boolean;
-}
+import { PricingPlan } from "@/data/pricingPlans";
 
 interface PricingCardProps {
   plan: PricingPlan;
@@ -25,7 +12,7 @@ interface PricingCardProps {
   onSelect: (planId: string) => void;
 }
 
-const PricingCard = ({ plan, isAnnual, isLoading, onSelect }: PricingCardProps) => {
+export const PricingCard = ({ plan, isAnnual, isLoading, onSelect }: PricingCardProps) => {
   const price = isAnnual ? plan.price.annual : plan.price.monthly;
   const billingPeriod = isAnnual ? "/year" : "/month";
   

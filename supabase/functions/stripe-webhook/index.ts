@@ -1,405 +1,342 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import Stripe from "https://esm.sh/stripe@14.18.0?target=deno";
 
-// Define the price IDs as constants
-const PLANS = {
-  alchemist: {
-    monthly: 'price_1Qs0CVGYVYFmwG4FmEwa1iWO',
-    annual: 'price_1Qs0ECGYVYFmwG4FluFhUdQH',
-  },
-  grandmaster: {
-    monthly: 'price_1Qs0BTGYVYFmwG4FFDbYpi5v',
-    annual: 'price_1Qs0BtGYVYFmwG4FrtkMrNNx',
-  },
-};
-
-const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
-  apiVersion: "2023-10-16",
-  httpClient: Stripe.createFetchHttpClient(),
-});
-
-const supabase = createClient(
-  Deno.env.get("SUPABASE_URL") ?? "",
-  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-);
-
-// Add CORS headers
+// Define CORS headers for cross-origin requests
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-application-name, x-environment",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+console.log("Hello from stripe-webhook Edge Function!");
+
+// Get environment variables
+const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY');
+const stripeWebhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET');
+const supabaseUrl = Deno.env.get('SUPABASE_URL');
+const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+
+if (!stripeSecretKey || !stripeWebhookSecret) {
+  console.error("STRIPE_SECRET_KEY or STRIPE_WEBHOOK_SECRET is not set");
+}
+
+if (!supabaseUrl || !supabaseServiceKey) {
+  console.error("SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is not set");
+}
 
 serve(async (req) => {
+  console.log(`Received ${req.method} request to stripe-webhook function`);
+  
   // Handle CORS preflight requests
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
-
-  // For Stripe webhooks, we don't need to check authorization header
-  // Instead, we verify the request using the Stripe signature
-  const signature = req.headers.get("stripe-signature");
-  if (!signature) {
-    console.error("No Stripe signature found in webhook request");
-    return new Response("No signature", {
-      status: 400,
-      headers: corsHeaders,
-    });
+  if (req.method === 'OPTIONS') {
+    console.log("Handling CORS preflight request");
+    return new Response(null, { status: 200, headers: corsHeaders });
   }
 
   try {
-    const body = await req.text();
-    const endpointSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET");
-
-    if (!endpointSecret) {
-      console.error("No webhook secret found");
-      return new Response("No webhook secret configured", {
-        status: 500,
-        headers: corsHeaders,
+    if (req.method !== 'POST') {
+      console.error(`Invalid method: ${req.method}`);
+      return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+        status: 405,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
+    // Get the request body
+    const payload = await req.text();
+    const signature = req.headers.get('stripe-signature');
+
+    if (!signature) {
+      console.error("No Stripe signature in request headers");
+      return new Response(JSON.stringify({ error: 'No Stripe signature' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Import Stripe only when needed
+    const { default: Stripe } = await import("https://esm.sh/stripe@13.2.0?target=deno");
+    const stripe = new Stripe(stripeSecretKey, {
+      httpClient: Stripe.createFetchHttpClient(),
+    });
+
+    // Construct the event from payload and signature
     let event;
     try {
-      event = await stripe.webhooks.constructEventAsync(
-        body,
+      event = stripe.webhooks.constructEvent(
+        payload,
         signature,
-        endpointSecret
+        stripeWebhookSecret
       );
     } catch (err) {
       console.error(`Webhook signature verification failed: ${err.message}`);
-      return new Response(`Webhook Error: ${err.message}`, {
+      return new Response(JSON.stringify({ error: `Webhook Error: ${err.message}` }), {
         status: 400,
-        headers: corsHeaders,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    console.log(`Received Stripe webhook event: ${event.type}`);
+    console.log(`Processing Stripe event: ${event.type}`);
 
+    // Handle different event types
     switch (event.type) {
-      case "checkout.session.completed": {
+      case 'checkout.session.completed': {
         const session = event.data.object;
-        console.log("Checkout session completed:", session);
+        console.log(`Checkout session completed: ${session.id}`);
         
-        // Extract user ID from client_reference_id
-        const userId = session.client_reference_id;
+        const userId = session.metadata?.user_id;
+        const planId = session.metadata?.plan_id;
+        const isAnnual = session.metadata?.is_annual === 'true';
+        
         if (!userId) {
-          console.error("No user ID found in client_reference_id");
-          return new Response(JSON.stringify({ error: "No user ID found" }), {
-            status: 400,
-            headers: corsHeaders,
-          });
+          throw new Error('No user ID found in session metadata');
         }
-
+        
+        if (!planId) {
+          throw new Error('No plan ID found in session metadata');
+        }
+        
         // Get subscription details
-        const stripeCustomerId = session.customer;
-        const stripeSubscriptionId = session.subscription;
+        const subscription = await stripe.subscriptions.retrieve(session.subscription);
         
-        if (!stripeSubscriptionId) {
-          console.error("No subscription ID in checkout session");
-          return new Response(JSON.stringify({ error: "No subscription found" }), {
-            status: 400,
-            headers: corsHeaders,
-          });
-        }
-        
-        const subscription = await stripe.subscriptions.retrieve(
-          stripeSubscriptionId
+        // Update subscription and transaction in database
+        await updateSubscriptionAndTransaction(
+          userId,
+          session.customer,
+          subscription.id,
+          subscription.status,
+          planId,
+          new Date(subscription.current_period_start * 1000),
+          new Date(subscription.current_period_end * 1000),
+          subscription.cancel_at_period_end,
+          session.id,
+          session.amount_total / 100, // Convert from cents to dollars
+          session.currency,
+          'completed'
         );
         
-        // Determine the tier from the price ID
-        const priceId = subscription.items.data[0].price.id;
-        let tier = null;
-        let isAnnual = false;
-        
-        Object.entries(PLANS).forEach(([plan, prices]) => {
-          if (prices.monthly === priceId) {
-            tier = plan;
-            isAnnual = false;
-          } else if (prices.annual === priceId) {
-            tier = plan;
-            isAnnual = true;
-          }
-        });
-        
-        if (!tier) {
-          tier = "alchemist"; // Default tier
-          console.error(`Could not find tier for price ID ${priceId}, using default`);
-        }
-        
-        console.log(`Determined plan: ${tier}, isAnnual: ${isAnnual}`);
-
-        // Calculate the next reset date for monthly usage count
-        // For alchemist tier: reset every month, for grandmaster: no reset (unlimited)
-        let nextResetDate = null;
-        if (tier === 'alchemist') {
-          // For monthly reset, set to one month from current period start
-          const startDate = new Date(subscription.current_period_start * 1000);
-          nextResetDate = new Date(startDate);
-          nextResetDate.setMonth(nextResetDate.getMonth() + 1);
-        }
-        
-        // Insert transaction record
-        const { error: transactionError } = await supabase
-          .from("transactions")
-          .insert({
-            user_id: userId,
-            stripe_session_id: session.id,
-            stripe_subscription_id: stripeSubscriptionId,
-            amount: session.amount_total / 100, // Convert from cents to dollars
-            currency: session.currency,
-            status: session.payment_status,
-            tier: tier,
-            created_at: new Date().toISOString(),
-          });
-
-        if (transactionError) {
-          console.error("Error inserting transaction:", transactionError);
-          return new Response(JSON.stringify({ error: "Transaction error" }), {
-            status: 500,
-            headers: corsHeaders,
-          });
-        }
-
-        // Update subscriptions table
-        const { error: subscriptionUpdateError } = await supabase
-          .from("subscriptions")
-          .upsert(
-            {
-              user_id: userId,
-              stripe_customer_id: stripeCustomerId,
-              stripe_subscription_id: stripeSubscriptionId,
-              status: subscription.status,
-              tier: tier,
-              current_period_start: new Date(
-                subscription.current_period_start * 1000
-              ).toISOString(),
-              current_period_end: new Date(
-                subscription.current_period_end * 1000
-              ).toISOString(),
-              cancel_at_period_end: subscription.cancel_at_period_end,
-            },
-            { onConflict: "user_id" }
-          );
-
-        if (subscriptionUpdateError) {
-          console.error(
-            "Error updating subscription:",
-            subscriptionUpdateError
-          );
-          return new Response(
-            JSON.stringify({ error: "Subscription update error" }),
-            { status: 500, headers: corsHeaders }
-          );
-        }
-
-        // Update profile's subscription status
-        const { error: profileUpdateError } = await supabase
-          .from("profiles")
-          .update({
-            subscription_status: tier,
-            monthly_usage_count: 0, // Reset when new subscription begins
-            monthly_usage_reset_date: nextResetDate ? nextResetDate.toISOString() : null,
-          })
-          .eq("id", userId);
-
-        if (profileUpdateError) {
-          console.error("Error updating profile:", profileUpdateError);
-          return new Response(
-            JSON.stringify({ error: "Profile update error" }),
-            { status: 500, headers: corsHeaders }
-          );
-        }
-
-        console.log(
-          `Successfully updated subscription and profile for user ${userId}`
-        );
+        console.log(`Successfully processed checkout.session.completed for user ${userId}`);
         break;
       }
       
-      case "customer.subscription.updated": {
+      case 'customer.subscription.updated': {
         const subscription = event.data.object;
-        const customerId = subscription.customer;
+        console.log(`Subscription updated: ${subscription.id}`);
         
-        // Get the user ID from customer metadata
-        const customer = await stripe.customers.retrieve(customerId);
-        const userId = customer.metadata.supabase_uid;
+        // Get user ID from metadata
+        const userId = subscription.metadata?.user_id;
         
         if (!userId) {
-          // Try to find the user from the subscriptions table
-          const { data: subscriptionData } = await supabase
-            .from("subscriptions")
-            .select("user_id")
-            .eq("stripe_subscription_id", subscription.id)
-            .single();
-            
-          if (subscriptionData) {
-            console.log(`Found user ${subscriptionData.user_id} from subscription`);
-            // Update the subscription
-            await handleSubscriptionUpdate(subscription, subscriptionData.user_id);
-          } else {
-            console.error("Could not find user for subscription:", subscription.id);
+          // Try to get user ID from customer metadata
+          const customer = await stripe.customers.retrieve(subscription.customer);
+          if (!customer.metadata?.user_id) {
+            throw new Error('No user ID found in customer metadata');
           }
+          
+          // Use user ID from customer metadata
+          await updateSubscriptionStatus(
+            customer.metadata.user_id,
+            subscription.customer,
+            subscription.id,
+            subscription.status,
+            subscription.items.data[0]?.price?.metadata?.tier || 'unknown',
+            new Date(subscription.current_period_start * 1000),
+            new Date(subscription.current_period_end * 1000),
+            subscription.cancel_at_period_end
+          );
         } else {
-          // Update the subscription using the user ID from metadata
-          await handleSubscriptionUpdate(subscription, userId);
+          // Use user ID from subscription metadata
+          await updateSubscriptionStatus(
+            userId,
+            subscription.customer,
+            subscription.id,
+            subscription.status,
+            subscription.items.data[0]?.price?.metadata?.tier || 'unknown',
+            new Date(subscription.current_period_start * 1000),
+            new Date(subscription.current_period_end * 1000),
+            subscription.cancel_at_period_end
+          );
         }
+        
+        console.log(`Successfully processed customer.subscription.updated`);
         break;
       }
-
-      case "customer.subscription.deleted": {
+      
+      case 'customer.subscription.deleted': {
         const subscription = event.data.object;
-        const customerId = subscription.customer;
+        console.log(`Subscription deleted: ${subscription.id}`);
         
-        // Get the user ID from customer metadata
-        const customer = await stripe.customers.retrieve(customerId);
-        const userId = customer.metadata.supabase_uid;
+        // Get user ID from metadata
+        let userId = subscription.metadata?.user_id;
         
         if (!userId) {
-          // Try to find the user from the subscriptions table
-          const { data: subscriptionData } = await supabase
-            .from("subscriptions")
-            .select("user_id")
-            .eq("stripe_subscription_id", subscription.id)
-            .single();
-            
-          if (subscriptionData) {
-            await handleSubscriptionCancellation(subscription, subscriptionData.user_id);
-          } else {
-            console.error("Could not find user for cancelled subscription:", subscription.id);
+          // Try to get user ID from customer metadata
+          const customer = await stripe.customers.retrieve(subscription.customer);
+          userId = customer.metadata?.user_id;
+          
+          if (!userId) {
+            throw new Error('No user ID found in customer or subscription metadata');
           }
-        } else {
-          await handleSubscriptionCancellation(subscription, userId);
         }
+        
+        // Update subscription in database
+        await updateSubscriptionStatus(
+          userId,
+          subscription.customer,
+          subscription.id,
+          'canceled',
+          'apprentice', // Revert to free tier
+          new Date(subscription.current_period_start * 1000),
+          new Date(subscription.current_period_end * 1000),
+          true
+        );
+        
+        console.log(`Successfully processed customer.subscription.deleted`);
         break;
       }
-
+      
       default:
         console.log(`Unhandled event type: ${event.type}`);
     }
 
     return new Response(JSON.stringify({ received: true }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
-  } catch (err) {
-    console.error("Webhook error:", err);
-    return new Response(JSON.stringify({ error: err.message }), {
+  } catch (error) {
+    console.error(`Webhook error: ${error.message}`);
+    return new Response(JSON.stringify({ error: `Webhook error: ${error.message}` }), {
       status: 400,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 });
 
-// Helper function to update subscription information
-async function handleSubscriptionUpdate(subscription, userId) {
-  // Determine the tier from the price ID
-  const priceId = subscription.items.data[0].price.id;
-  let tier = null;
-  let isAnnual = false;
+// Function to update subscription status in database
+async function updateSubscriptionStatus(
+  userId: string,
+  stripeCustomerId: string,
+  stripeSubscriptionId: string,
+  status: string,
+  tier: string,
+  currentPeriodStart: Date,
+  currentPeriodEnd: Date,
+  cancelAtPeriodEnd: boolean
+) {
+  console.log(`Updating subscription status for user ${userId} to ${tier}`);
   
-  Object.entries(PLANS).forEach(([plan, prices]) => {
-    if (prices.monthly === priceId) {
-      tier = plan;
-      isAnnual = false;
-    } else if (prices.annual === priceId) {
-      tier = plan;
-      isAnnual = true;
-    }
-  });
-  
-  if (!tier) {
-    tier = "alchemist"; // Default tier
-    console.error(`Could not find tier for price ID ${priceId}, using default`);
-  }
-  
-  // Calculate the next reset date for monthly usage count
-  let nextResetDate = null;
-  if (tier === 'alchemist') {
-    // For monthly reset, set to one month from current period start
-    const startDate = new Date(subscription.current_period_start * 1000);
-    nextResetDate = new Date(startDate);
-    nextResetDate.setMonth(nextResetDate.getMonth() + 1);
-  }
-  
-  // Update subscriptions table
-  const { error: subscriptionUpdateError } = await supabase
-    .from("subscriptions")
-    .upsert(
-      {
-        user_id: userId,
-        stripe_customer_id: subscription.customer,
-        stripe_subscription_id: subscription.id,
-        status: subscription.status,
-        tier: tier,
-        current_period_start: new Date(
-          subscription.current_period_start * 1000
-        ).toISOString(),
-        current_period_end: new Date(
-          subscription.current_period_end * 1000
-        ).toISOString(),
-        cancel_at_period_end: subscription.cancel_at_period_end,
+  try {
+    // Update subscriptions table
+    const subscriptionResponse = await fetch(`${supabaseUrl}/rest/v1/subscriptions`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${supabaseServiceKey}`,
+        'apikey': supabaseServiceKey,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
       },
-      { onConflict: "user_id" }
-    );
-
-  if (subscriptionUpdateError) {
-    console.error("Error updating subscription:", subscriptionUpdateError);
-    return;
+      body: JSON.stringify({
+        user_id: userId,
+        stripe_customer_id: stripeCustomerId,
+        stripe_subscription_id: stripeSubscriptionId,
+        status: status,
+        tier: tier,
+        current_period_start: currentPeriodStart.toISOString(),
+        current_period_end: currentPeriodEnd.toISOString(),
+        cancel_at_period_end: cancelAtPeriodEnd,
+      }),
+    });
+    
+    if (!subscriptionResponse.ok) {
+      console.error(`Failed to update subscription: ${subscriptionResponse.status} ${subscriptionResponse.statusText}`);
+      throw new Error('Failed to update subscription');
+    }
+    
+    // Update profiles table with subscription status
+    const profilesResponse = await fetch(`${supabaseUrl}/rest/v1/profiles?id=eq.${userId}`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${supabaseServiceKey}`,
+        'apikey': supabaseServiceKey,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({
+        subscription_status: tier,
+        monthly_usage_reset_date: currentPeriodEnd.toISOString(),
+        monthly_usage_count: tier === 'alchemist' || tier === 'grandmaster' ? 0 : null
+      }),
+    });
+    
+    if (!profilesResponse.ok) {
+      console.error(`Failed to update profile: ${profilesResponse.status} ${profilesResponse.statusText}`);
+      throw new Error('Failed to update profile');
+    }
+    
+    console.log(`Successfully updated subscription status for user ${userId}`);
+  } catch (error) {
+    console.error(`Error updating subscription status: ${error.message}`);
+    throw error;
   }
-
-  // Update profile's subscription status
-  const { error: profileUpdateError } = await supabase
-    .from("profiles")
-    .update({
-      subscription_status: tier,
-      monthly_usage_count: 0, // Reset when subscription renews
-      monthly_usage_reset_date: nextResetDate ? nextResetDate.toISOString() : null,
-    })
-    .eq("id", userId);
-
-  if (profileUpdateError) {
-    console.error("Error updating profile:", profileUpdateError);
-    return;
-  }
-
-  console.log(`Successfully updated subscription for user ${userId}`);
 }
 
-// Helper function to handle subscription cancellation
-async function handleSubscriptionCancellation(subscription, userId) {
-  console.log(`Handling subscription cancellation for user ${userId}`);
+// Function to update subscription and transaction in database
+async function updateSubscriptionAndTransaction(
+  userId: string,
+  stripeCustomerId: string,
+  stripeSubscriptionId: string,
+  status: string,
+  tier: string,
+  currentPeriodStart: Date,
+  currentPeriodEnd: Date,
+  cancelAtPeriodEnd: boolean,
+  stripeSessionId: string,
+  amount: number,
+  currency: string,
+  paymentStatus: string
+) {
+  console.log(`Updating subscription and transaction for user ${userId}`);
   
-  // Update subscription status
-  const { error: deleteSubError } = await supabase
-    .from("subscriptions")
-    .update({
-      status: "canceled",
-      cancel_at_period_end: true,
-    })
-    .eq("user_id", userId);
-
-  if (deleteSubError) {
-    console.error("Error updating subscription on deletion:", deleteSubError);
-    return;
+  try {
+    // Update subscription status
+    await updateSubscriptionStatus(
+      userId,
+      stripeCustomerId,
+      stripeSubscriptionId,
+      status,
+      tier,
+      currentPeriodStart,
+      currentPeriodEnd,
+      cancelAtPeriodEnd
+    );
+    
+    // Create transaction record
+    const transactionResponse = await fetch(`${supabaseUrl}/rest/v1/transactions`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${supabaseServiceKey}`,
+        'apikey': supabaseServiceKey,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({
+        user_id: userId,
+        stripe_session_id: stripeSessionId,
+        stripe_subscription_id: stripeSubscriptionId,
+        amount: amount,
+        currency: currency,
+        status: paymentStatus,
+        subscription_tier: tier
+      }),
+    });
+    
+    if (!transactionResponse.ok) {
+      console.error(`Failed to create transaction: ${transactionResponse.status} ${transactionResponse.statusText}`);
+      throw new Error('Failed to create transaction');
+    }
+    
+    console.log(`Successfully created transaction record for user ${userId}`);
+  } catch (error) {
+    console.error(`Error updating subscription and transaction: ${error.message}`);
+    throw error;
   }
-
-  // Reset profile subscription status
-  const { error: deleteProfileError } = await supabase
-    .from("profiles")
-    .update({
-      subscription_status: "apprentice",
-      monthly_usage_count: null,
-      monthly_usage_reset_date: null,
-    })
-    .eq("id", userId);
-
-  if (deleteProfileError) {
-    console.error("Error updating profile on deletion:", deleteProfileError);
-    return;
-  }
-
-  console.log(`Successfully cancelled subscription for user ${userId}`);
 }
