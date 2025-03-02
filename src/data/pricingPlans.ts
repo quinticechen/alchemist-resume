@@ -60,6 +60,7 @@ export const pricingPlans: PricingPlan[] = [
     buttonText: "Get Alchemist",
     highlighted: false,
     showButton: true,
+    mostPopular: true,
   },
   {
     name: "Grandmaster",
@@ -82,6 +83,5 @@ export const pricingPlans: PricingPlan[] = [
     buttonText: "Get Grandmaster",
     highlighted: true,
     showButton: true,
-    mostPopular: true,
   },
 ];
