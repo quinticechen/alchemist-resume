@@ -1,3 +1,4 @@
+
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -47,7 +48,6 @@ const Pricing = () => {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Show toast if there's a Stripe initialization error
   useEffect(() => {
     if (stripeError) {
       console.error('Stripe initialization error:', stripeError);
@@ -60,18 +60,24 @@ const Pricing = () => {
   }, [stripeError, toast]);
 
   const fetchUsageInfo = async (userId: string) => {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('subscription_status, usage_count, monthly_usage_count, free_trial_limit')
-      .eq('id', userId)
-      .single();
+    try {
+      console.log('Fetching usage info for user:', userId);
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('subscription_status, usage_count, monthly_usage_count, free_trial_limit')
+        .eq('id', userId)
+        .single();
 
-    if (error) {
-      console.error('Error fetching usage info:', error);
-      return;
+      if (error) {
+        console.error('Error fetching usage info:', error);
+        return;
+      }
+
+      console.log('Usage info fetched:', data);
+      setUsageInfo(data);
+    } catch (err) {
+      console.error('Unexpected error fetching usage info:', err);
     }
-
-    setUsageInfo(data);
   };
 
   const getRemainingUses = () => {
@@ -123,29 +129,45 @@ const Pricing = () => {
     try {
       trackBeginCheckout(planId, isAnnual);
 
-      if (!session?.access_token) {
-        throw new Error('No valid session found');
+      // Get a fresh access token
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      
+      if (!currentSession?.access_token) {
+        throw new Error('No valid access token found. Please log in again.');
+      }
+      
+      const selectedPlan = pricingPlans.find(p => p.planId === planId);
+      if (!selectedPlan) {
+        throw new Error('Invalid plan selected');
+      }
+      
+      const priceId = isAnnual ? selectedPlan.priceId.annual : selectedPlan.priceId.monthly;
+      if (!priceId) {
+        throw new Error('No price ID available for the selected plan');
       }
 
-      console.log('Making request to stripe-payment function with access token');
+      console.log('Making request to stripe-payment function with:', { planId, priceId, isAnnual });
+      console.log('Using access token:', currentSession.access_token.substring(0, 10) + '...');
       
       const { data, error } = await supabase.functions.invoke('stripe-payment', {
-        body: { planId, isAnnual },
+        body: { planId, priceId, isAnnual },
         headers: {
-          Authorization: `Bearer ${session.access_token}`,
+          Authorization: `Bearer ${currentSession.access_token}`,
+          'Content-Type': 'application/json',
         },
       });
 
       if (error) {
         console.error('Stripe payment function error:', error);
-        throw error;
+        throw new Error(error.message || 'Failed to contact payment service');
       }
 
       if (!data?.sessionUrl) {
+        console.error('No checkout URL received from payment function:', data);
         throw new Error('No checkout URL received from payment function');
       }
 
-      console.log('Redirecting to Stripe checkout URL');
+      console.log('Redirecting to Stripe checkout URL:', data.sessionUrl);
       window.location.href = data.sessionUrl;
     } catch (error: any) {
       console.error('Payment error:', error);
