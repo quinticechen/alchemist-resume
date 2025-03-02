@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
-import Stripe from "stripe";
+import Stripe from "https://esm.sh/stripe@14.18.0?target=deno";
+
 
 // Define CORS headers for cross-origin requests
 const corsHeaders = {
@@ -30,7 +31,6 @@ if (!supabaseUrl || !supabaseServiceKey) {
 // });
 
 // Import Stripe
-const { Stripe } = await import("https://esm.sh/stripe@13.2.0?target=deno");
 const stripe = new Stripe(stripeSecretKey, {
   apiVersion: "2025-01-27",
   httpClient: Stripe.createFetchHttpClient(),
