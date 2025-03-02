@@ -1,4 +1,3 @@
-
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,7 +5,7 @@ import { useState, useEffect } from "react";
 import { useStripeInit } from "@/hooks/useStripeInit";
 import { useAuthAndSurvey } from "@/hooks/useAuthAndSurvey";
 import { PricingToggle } from "@/components/pricing/PricingToggle";
-import PricingCard from "@/components/pricing/PricingCard";
+import { PricingCard } from "@/components/pricing/PricingCard";
 import { pricingPlans } from "@/data/pricingPlans";
 import { Session } from "@supabase/supabase-js";
 import { Badge } from "@/components/ui/badge";
@@ -48,7 +47,6 @@ const Pricing = () => {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Show toast if there's a Stripe initialization error
   useEffect(() => {
     if (stripeError) {
       console.error('Stripe initialization error:', stripeError);
@@ -124,17 +122,17 @@ const Pricing = () => {
     try {
       trackBeginCheckout(planId, isAnnual);
 
-      if (!session?.access_token) {
-        throw new Error('No valid session found');
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      
+      if (!currentSession?.access_token) {
+        throw new Error('No valid access token found. Please log in again.');
       }
-
-      // Find the selected plan and get the correct price ID
+      
       const selectedPlan = pricingPlans.find(p => p.planId === planId);
       if (!selectedPlan) {
         throw new Error('Invalid plan selected');
       }
       
-      // Use the correct price ID based on annual or monthly selection
       const priceId = isAnnual ? selectedPlan.priceId.annual : selectedPlan.priceId.monthly;
       if (!priceId) {
         throw new Error('No price ID available for the selected plan');
@@ -145,20 +143,21 @@ const Pricing = () => {
       const { data, error } = await supabase.functions.invoke('stripe-payment', {
         body: { planId, priceId, isAnnual },
         headers: {
-          Authorization: `Bearer ${session.access_token}`,
+          Authorization: `Bearer ${currentSession.access_token}`,
+          'Content-Type': 'application/json',
         },
       });
 
       if (error) {
         console.error('Stripe payment function error:', error);
-        throw error;
+        throw new Error(error.message || 'Failed to contact payment service');
       }
 
       if (!data?.sessionUrl) {
         throw new Error('No checkout URL received from payment function');
       }
 
-      console.log('Redirecting to Stripe checkout URL');
+      console.log('Redirecting to Stripe checkout URL:', data.sessionUrl);
       window.location.href = data.sessionUrl;
     } catch (error: any) {
       console.error('Payment error:', error);

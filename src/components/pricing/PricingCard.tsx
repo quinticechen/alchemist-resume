@@ -12,7 +12,7 @@ interface PricingCardProps {
   onSelect: (planId: string) => void;
 }
 
-const PricingCard = ({ plan, isAnnual, isLoading, onSelect }: PricingCardProps) => {
+export const PricingCard = ({ plan, isAnnual, isLoading, onSelect }: PricingCardProps) => {
   const price = isAnnual ? plan.price.annual : plan.price.monthly;
   const billingPeriod = isAnnual ? "/year" : "/month";
   
