@@ -75,51 +75,61 @@ serve(async (req) => {
         const userId = session.client_reference_id; // 從 client_reference_id 獲取 user.id
         const stripeCustomerId = session.customer;
         const stripeSubscriptionId = session.subscription;
-
-        const subscription =
-          event.type === "checkout.session.completed"
-            ? await stripe.subscriptions.retrieve(
-                event.data.object.subscription
-              )
-            : event.data.object;
-
-        const customerId = subscription.customer;
-
-        const customer = await stripe.customers.retrieve(customerId);
-        const tier = session.metadata?.planId || "alchemist";
+        const subscription = await stripe.subscriptions.retrieve(
+          stripeSubscriptionId
+        );
+        const priceId = subscription.items.data[0].price.id;
 
         if (!userId) {
-          console.error("No user ID found in customer metadata");
-          throw new Error("No user ID found in customer metadata");
+          console.error("No user ID found in client_reference_id");
+          return new Response(JSON.stringify({ error: "No user ID found" }), {
+            status: 400,
+            headers: corsHeaders,
+          });
         }
 
-        // 插入交易記錄到 transactions 資料表
+        let tier;
+        for (const [plan, prices] of Object.entries(PLANS)) {
+          if (prices.monthly === priceId || prices.annual === priceId) {
+            tier = plan;
+            break;
+          }
+        }
+        if (!tier) {
+          tier = "alchemist"; // 預設 tier
+          console.error(`Could not find tier for price ID ${priceId}`);
+        }
+
+        // 插入交易記錄
         const { error: transactionError } = await supabase
           .from("transactions")
           .insert({
             user_id: userId,
             stripe_session_id: session.id,
             stripe_subscription_id: stripeSubscriptionId,
-            amount: session.amount_total / 100, // 將 cents 轉換為 dollars
+            amount: session.amount_total / 100,
             currency: session.currency,
-            status: "paid", // 假設交易成功
+            status: session.payment_status,
             created_at: new Date().toISOString(),
             tier: tier,
           });
 
         if (transactionError) {
           console.error("Error inserting transaction:", transactionError);
-          throw transactionError;
+          return new Response(JSON.stringify({ error: "Transaction error" }), {
+            status: 500,
+            headers: corsHeaders,
+          });
         }
 
         // 更新 subscriptions table
-        const { error: subscriptionError } = await supabase
+        const { error: subscriptionUpdateError } = await supabase
           .from("subscriptions")
           .upsert(
             {
               user_id: userId,
-              stripe_customer_id: customerId,
-              stripe_subscription_id: subscription.id,
+              stripe_customer_id: stripeCustomerId,
+              stripe_subscription_id: stripeSubscriptionId,
               status: subscription.status,
               tier: tier,
               current_period_start: new Date(
@@ -130,18 +140,22 @@ serve(async (req) => {
               ),
               cancel_at_period_end: subscription.cancel_at_period_end,
             },
-            {
-              onConflict: "user_id",
-            }
+            { onConflict: "user_id" }
           );
 
-        if (subscriptionError) {
-          console.error("Error updating subscription:", subscriptionError);
-          throw subscriptionError;
+        if (subscriptionUpdateError) {
+          console.error(
+            "Error updating subscription:",
+            subscriptionUpdateError
+          );
+          return new Response(
+            JSON.stringify({ error: "Subscription update error" }),
+            { status: 500, headers: corsHeaders }
+          );
         }
 
         // 更新 profile's subscription status
-        const { error: profileError } = await supabase
+        const { error: profileUpdateError } = await supabase
           .from("profiles")
           .update({
             subscription_status: tier,
@@ -153,19 +167,21 @@ serve(async (req) => {
           })
           .eq("id", userId);
 
-        if (profileError) {
-          console.error("Error updating profile:", profileError);
-          throw profileError;
+        if (profileUpdateError) {
+          console.error("Error updating profile:", profileUpdateError);
+          return new Response(
+            JSON.stringify({ error: "Profile update error" }),
+            { status: 500, headers: corsHeaders }
+          );
         }
 
         console.log(
           `Successfully updated subscription and profile for user ${userId}`
         );
-
         break;
       }
 
-      case "customer.subscription.deleted":
+      case "customer.subscription.deleted": {
         const deletedSubscription = event.data.object;
         const deletedCustomer = await stripe.customers.retrieve(
           deletedSubscription.customer
@@ -175,7 +191,7 @@ serve(async (req) => {
         if (deletedUserId) {
           console.log(`Cancelling subscription for user ${deletedUserId}`);
 
-          // Update subscription status
+          // 更新 subscription status
           const { error: deleteSubError } = await supabase
             .from("subscriptions")
             .update({
@@ -189,7 +205,10 @@ serve(async (req) => {
               "Error updating subscription on deletion:",
               deleteSubError
             );
-            throw deleteSubError;
+            return new Response(
+              JSON.stringify({ error: "Subscription deletion error" }),
+              { status: 500, headers: corsHeaders }
+            );
           }
 
           // Reset profile subscription status
@@ -207,7 +226,10 @@ serve(async (req) => {
               "Error updating profile on deletion:",
               deleteProfileError
             );
-            throw deleteProfileError;
+            return new Response(
+              JSON.stringify({ error: "Profile deletion error" }),
+              { status: 500, headers: corsHeaders }
+            );
           }
 
           console.log(
@@ -215,6 +237,7 @@ serve(async (req) => {
           );
         }
         break;
+      }
 
       default:
         console.log(`Unhandled event type: ${event.type}`);
@@ -232,282 +255,3 @@ serve(async (req) => {
     });
   }
 });
-
-// import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
-// import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-// import Stripe from "https://esm.sh/stripe@latest?target=deno";
-
-// const corsHeaders = {
-//   "Access-Control-Allow-Origin": "*",
-//   "Access-Control-Allow-Headers":
-//     "authorization, x-client-info, apikey, content-type, x-environment",
-// };
-
-// serve(async (req) => {
-//   // Handle CORS preflight requests
-//   if (req.method === "OPTIONS") {
-//     return new Response(null, { headers: corsHeaders });
-//   }
-
-//   try {
-//     const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
-//     const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET");
-
-//     if (!stripeSecretKey || !webhookSecret) {
-//       console.error("Required environment variables are not set");
-//       return new Response(
-//         JSON.stringify({ error: "Server configuration error" }),
-//         {
-//           status: 500,
-//           headers: { ...corsHeaders, "Content-Type": "application/json" },
-//         }
-//       );
-//     }
-
-//     const signature = req.headers.get("stripe-signature");
-//     if (!signature) {
-//       return new Response(
-//         JSON.stringify({ error: "Stripe signature is missing" }),
-//         {
-//           status: 400,
-//           headers: { ...corsHeaders, "Content-Type": "application/json" },
-//         }
-//       );
-//     }
-
-//     const stripe = new Stripe(stripeSecretKey, {
-//       apiVersion: "2023-10-16",
-//     });
-
-//     const body = await req.text();
-//     let event;
-
-//     try {
-//       event = await stripe.webhooks.constructEventAsync(
-//         body,
-//         signature,
-//         webhookSecret
-//       );
-//     } catch (err) {
-//       console.error(`Webhook signature verification failed: ${err.message}`);
-//       return new Response(
-//         JSON.stringify({
-//           error: `Webhook signature verification failed: ${err.message}`,
-//         }),
-//         {
-//           status: 400,
-//           headers: { ...corsHeaders, "Content-Type": "application/json" },
-//         }
-//       );
-//     }
-
-//     // Create Supabase client
-//     const supabaseUrl = Deno.env.get("SUPABASE_URL");
-//     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-
-//     if (!supabaseUrl || !supabaseServiceKey) {
-//       return new Response(
-//         JSON.stringify({ error: "Supabase configuration error" }),
-//         {
-//           status: 500,
-//           headers: { ...corsHeaders, "Content-Type": "application/json" },
-//         }
-//       );
-//     }
-
-//     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-//     // Handle the event
-//     console.log(`Processing event: ${event.type}`);
-
-//     // Process webhook events
-//     switch (event.type) {
-//       case "checkout.session.completed": {
-//         const session = event.data.object;
-//         // const userId = session.client_reference_id;
-//         const customer = await stripe.customers.retrieve(customerId);
-//         const userId = customer.metadata.supabase_uid;
-//         const stripeCustomerId = session.customer;
-//         const stripeSubscriptionId = session.subscription;
-
-//         if (!userId || !stripeCustomerId || !stripeSubscriptionId) {
-//           console.error(
-//             "Missing required fields in checkout.session.completed event"
-//           );
-//           break;
-//         }
-
-//         // Get subscription details from Stripe
-//         const subscription = await stripe.subscriptions.retrieve(
-//           stripeSubscriptionId
-//         );
-
-//         // Determine the subscription tier from metadata
-//         const tier = session.metadata?.planId || "alchemist"; // Default to 'alchemist' if not specified
-
-//         // Validate tier value
-//         const validTiers = ["apprentice", "alchemist", "grandmaster"];
-//         if (!validTiers.includes(tier)) {
-//           console.error(`Invalid tier value: ${tier}`);
-//           break; // Stop processing if tier is invalid
-//         }
-
-//         // Update user subscription status in the database
-//         await supabase.rpc("update_subscription_and_transaction", {
-//           p_user_id: userId,
-//           p_stripe_customer_id: stripeCustomerId,
-//           p_stripe_subscription_id: stripeSubscriptionId,
-//           p_status: subscription.status,
-//           p_tier: tier,
-//           p_current_period_start: new Date(
-//             subscription.current_period_start * 1000
-//           ).toISOString(),
-//           p_current_period_end: new Date(
-//             subscription.current_period_end * 1000
-//           ).toISOString(),
-//           p_cancel_at_period_end: subscription.cancel_at_period_end,
-//           p_stripe_session_id: session.id,
-//           p_amount: session.amount_total / 100, // Convert from cents to dollars
-//           p_currency: session.currency,
-//           p_payment_status: "paid",
-//         });
-
-//         console.log(`Updated subscription for user ${userId} to tier ${tier}`);
-//         break;
-//       }
-
-//       case "customer.subscription.updated": {
-//         const subscription = event.data.object;
-//         const stripeSubscriptionId = subscription.id;
-
-//         // Find the user by subscription ID
-//         const { data: subscriptionData, error: subError } = await supabase
-//           .from("subscriptions")
-//           .select("user_id")
-//           .eq("stripe_subscription_id", stripeSubscriptionId)
-//           .single();
-
-//         if (subError || !subscriptionData) {
-//           console.error(
-//             `No user found for subscription ${stripeSubscriptionId}`
-//           );
-//           break;
-//         }
-
-//         const userId = subscriptionData.user_id;
-
-//         // Get the tier from the product metadata or existing records
-//         let tier;
-//         if (
-//           subscription.items &&
-//           subscription.items.data &&
-//           subscription.items.data.length > 0
-//         ) {
-//           const priceId = subscription.items.data[0].price.id;
-
-//           // Get the product for this price to determine the tier
-//           try {
-//             const price = await stripe.prices.retrieve(priceId);
-//             const product = await stripe.products.retrieve(
-//               price.product as string
-//             );
-//             tier = product.metadata.tier || null;
-//           } catch (err) {
-//             console.error(`Error retrieving product info: ${err.message}`);
-//           }
-//         }
-
-//         if (!tier) {
-//           // If tier not found from Stripe, use existing tier from database
-//           const { data: existingSubscription, error: existingError } =
-//             await supabase
-//               .from("subscriptions")
-//               .select("tier")
-//               .eq("stripe_subscription_id", stripeSubscriptionId)
-//               .single();
-
-//           tier = existingError ? "alchemist" : existingSubscription.tier;
-//         }
-
-//         // Update the subscription in the database
-//         await supabase
-//           .from("subscriptions")
-//           .update({
-//             status: subscription.status,
-//             current_period_start: new Date(
-//               subscription.current_period_start * 1000
-//             ).toISOString(),
-//             current_period_end: new Date(
-//               subscription.current_period_end * 1000
-//             ).toISOString(),
-//             cancel_at_period_end: subscription.cancel_at_period_end,
-//             updated_at: new Date().toISOString(),
-//           })
-//           .eq("stripe_subscription_id", stripeSubscriptionId);
-
-//         console.log(
-//           `Updated subscription ${stripeSubscriptionId} status to ${subscription.status}`
-//         );
-//         break;
-//       }
-
-//       case "customer.subscription.deleted": {
-//         const subscription = event.data.object;
-//         const stripeSubscriptionId = subscription.id;
-
-//         // Find the user by subscription ID
-//         const { data: subscriptionData, error: subError } = await supabase
-//           .from("subscriptions")
-//           .select("user_id")
-//           .eq("stripe_subscription_id", stripeSubscriptionId)
-//           .single();
-
-//         if (subError || !subscriptionData) {
-//           console.error(
-//             `No user found for subscription ${stripeSubscriptionId}`
-//           );
-//           break;
-//         }
-
-//         const userId = subscriptionData.user_id;
-
-//         // Update the subscription status
-//         await supabase
-//           .from("subscriptions")
-//           .update({
-//             status: "canceled",
-//             updated_at: new Date().toISOString(),
-//           })
-//           .eq("stripe_subscription_id", stripeSubscriptionId);
-
-//         // Update the user's profile to revert to free tier
-//         await supabase
-//           .from("profiles")
-//           .update({
-//             subscription_status: "apprentice",
-//             updated_at: new Date().toISOString(),
-//           })
-//           .eq("id", userId);
-
-//         console.log(
-//           `Subscription ${stripeSubscriptionId} canceled for user ${userId}`
-//         );
-//         break;
-//       }
-//     }
-
-//     return new Response(JSON.stringify({ received: true }), {
-//       status: 200,
-//       headers: { ...corsHeaders, "Content-Type": "application/json" },
-//     });
-//   } catch (error) {
-//     console.error(`Webhook error: ${error.message}`);
-//     return new Response(
-//       JSON.stringify({ error: `Webhook error: ${error.message}` }),
-//       {
-//         status: 500,
-//         headers: { ...corsHeaders, "Content-Type": "application/json" },
-//       }
-//     );
-//   }
-// });
