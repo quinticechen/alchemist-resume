@@ -1,4 +1,3 @@
-
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,7 +5,7 @@ import { useState, useEffect } from "react";
 import { useStripeInit } from "@/hooks/useStripeInit";
 import { useAuthAndSurvey } from "@/hooks/useAuthAndSurvey";
 import { PricingToggle } from "@/components/pricing/PricingToggle";
-import { PricingCard } from "@/components/pricing/PricingCard";
+import PricingCard from "@/components/pricing/PricingCard";
 import { pricingPlans } from "@/data/pricingPlans";
 import { Session } from "@supabase/supabase-js";
 import { Badge } from "@/components/ui/badge";
