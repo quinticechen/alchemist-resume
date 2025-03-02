@@ -1,7 +1,6 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.18.0?target=deno";
 
-
 // Define CORS headers for cross-origin requests
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -26,13 +25,9 @@ if (!supabaseUrl || !supabaseServiceKey) {
   );
 }
 
-// const stripe = new Stripe(stripeSecretKey, {
-//   apiVersion: "2025-01-27",
-// });
-
 // Import Stripe
 const stripe = new Stripe(stripeSecretKey, {
-  apiVersion: "2025-01-27",
+  apiVersion: '2023-10-16',
   httpClient: Stripe.createFetchHttpClient(),
 });
 
@@ -46,6 +41,10 @@ serve(async (req) => {
       status: 200,
       headers: corsHeaders,
     });
+  }
+
+  if (req.method === "OPTIONS") {
+    return new Response(null, { status: 204, headers: corsHeaders });
   }
 
   try {
