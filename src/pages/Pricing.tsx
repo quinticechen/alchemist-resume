@@ -129,6 +129,7 @@ const Pricing = () => {
     try {
       trackBeginCheckout(planId, isAnnual);
 
+      // Get a fresh access token
       const { data: { session: currentSession } } = await supabase.auth.getSession();
       
       if (!currentSession?.access_token) {

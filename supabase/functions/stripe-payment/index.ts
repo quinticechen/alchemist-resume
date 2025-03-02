@@ -1,5 +1,5 @@
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 
 // Define CORS headers for cross-origin requests
 const corsHeaders = {
@@ -28,7 +28,10 @@ serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     console.log("Handling CORS preflight request");
-    return new Response(null, { status: 200, headers: corsHeaders });
+    return new Response(null, { 
+      status: 200, 
+      headers: corsHeaders 
+    });
   }
 
   try {
@@ -52,10 +55,19 @@ serve(async (req) => {
     }
 
     // Parse request body
-    const requestData = await req.json();
-    const { planId, priceId, isAnnual } = requestData;
+    let requestData;
+    try {
+      requestData = await req.json();
+      console.log(`Request data:`, JSON.stringify(requestData));
+    } catch (err) {
+      console.error("Error parsing request body:", err);
+      return new Response(JSON.stringify({ error: 'Invalid request body' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
     
-    console.log(`Request data:`, requestData);
+    const { planId, priceId, isAnnual } = requestData;
     
     if (!planId || !priceId) {
       console.error("Missing planId or priceId in request");
@@ -87,6 +99,8 @@ serve(async (req) => {
 
     if (!userResponse.ok) {
       console.error(`Failed to authenticate user: ${userResponse.status} ${userResponse.statusText}`);
+      const userRespBody = await userResponse.text();
+      console.error(`Response body: ${userRespBody}`);
       return new Response(JSON.stringify({ error: 'Failed to authenticate user' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -94,7 +108,7 @@ serve(async (req) => {
     }
 
     const userData = await userResponse.json();
-    if (!userData.user || !userData.user.id) {
+    if (!userData.id) {
       console.error("User not found in response", userData);
       return new Response(JSON.stringify({ error: 'User not found' }), {
         status: 404,
@@ -102,7 +116,7 @@ serve(async (req) => {
       });
     }
 
-    const userId = userData.user.id;
+    const userId = userData.id;
     console.log(`Authenticated user ID: ${userId}`);
 
     // Get user profile information
@@ -124,14 +138,15 @@ serve(async (req) => {
     }
 
     const profile = profiles[0];
-    const userEmail = profile.email;
+    const userEmail = userData.email || profile.email;
     let stripeCustomerId = profile.stripe_customer_id;
 
     console.log(`Processing payment for user: ${userId}, email: ${userEmail}, plan: ${planId} (${isAnnual ? 'annual' : 'monthly'})`);
 
-    // Import Stripe only when needed
-    const { default: Stripe } = await import("https://esm.sh/stripe@13.2.0?target=deno");
+    // Import Stripe
+    const { Stripe } = await import("https://esm.sh/stripe@13.2.0?target=deno");
     const stripe = new Stripe(stripeSecretKey, {
+      apiVersion: '2025-01-27',
       httpClient: Stripe.createFetchHttpClient(),
     });
 
@@ -190,40 +205,51 @@ serve(async (req) => {
     console.log(`Success URL: ${successUrl.toString()}`);
     console.log(`Creating checkout session with price ID: ${priceId}`);
 
-    // Create Stripe Checkout Session
-    const session = await stripe.checkout.sessions.create({
-      customer: stripeCustomerId,
-      payment_method_types: ['card'],
-      line_items: [
-        {
-          price: priceId,
-          quantity: 1,
-        },
-      ],
-      mode: 'subscription',
-      success_url: successUrl.toString(),
-      cancel_url: `${origin}/pricing?canceled=true`,
-      metadata: {
-        user_id: userId,
-        plan_id: planId,
-        is_annual: isAnnual.toString(),
-      },
-      subscription_data: {
+    try {
+      // Create Stripe Checkout Session
+      const session = await stripe.checkout.sessions.create({
+        customer: stripeCustomerId,
+        payment_method_types: ['card'],
+        line_items: [
+          {
+            price: priceId,
+            quantity: 1,
+          },
+        ],
+        mode: 'subscription',
+        success_url: successUrl.toString(),
+        cancel_url: `${origin}/pricing?canceled=true`,
         metadata: {
           user_id: userId,
           plan_id: planId,
           is_annual: isAnnual.toString(),
         },
-      },
-    });
+        subscription_data: {
+          metadata: {
+            user_id: userId,
+            plan_id: planId,
+            is_annual: isAnnual.toString(),
+          },
+        },
+      });
 
-    console.log(`Created checkout session with ID: ${session.id}`);
+      console.log(`Created checkout session with ID: ${session.id}`);
 
-    return new Response(JSON.stringify({ sessionUrl: session.url }), {
-      status: 200,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
-  } catch (error) {
+      return new Response(JSON.stringify({ sessionUrl: session.url }), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    } catch (stripeError: any) {
+      console.error('Stripe error creating checkout session:', stripeError);
+      return new Response(JSON.stringify({ 
+        error: stripeError.message || 'Error creating checkout session',
+        code: stripeError.code || 'unknown'
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+  } catch (error: any) {
     console.error('Error in stripe-payment edge function:', error);
     return new Response(JSON.stringify({ error: error.message || 'Unknown error occurred' }), {
       status: 500,
