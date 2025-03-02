@@ -1,158 +1,121 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import Stripe from "https://esm.sh/stripe@14.18.0?target=deno";
 
-const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
-  apiVersion: "2023-10-16",
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { corsHeaders } from "../_shared/cors.ts";
+import Stripe from "https://esm.sh/stripe@13.2.0?target=deno";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
+
+console.log("Hello from verify-stripe-session Edge Function!");
+
+// Initialize Stripe
+const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') as string, {
   httpClient: Stripe.createFetchHttpClient(),
 });
 
-const supabase = createClient(
-  Deno.env.get("SUPABASE_URL") ?? "",
-  Deno.env.get("SUPABASE_ANON_KEY") ?? ""
-);
-
-// Add CORS headers
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-environment",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+// Initialize Supabase client
+const supabaseUrl = Deno.env.get('SUPABASE_URL') as string;
+const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') as string;
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 serve(async (req) => {
-  // Handle CORS preflight requests
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+  // Handle CORS for preflight requests
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { status: 200, headers: corsHeaders });
   }
 
   try {
-    const { sessionId } = await req.json();
-
-    // 1. 獲取 Stripe 結帳會話資訊
-    const session = await stripe.checkout.sessions.retrieve(sessionId);
-    const customerId = session.customer;
-
-    // 2. 獲取使用者 ID
-    const customer = await stripe.customers.retrieve(customerId);
-    const userId = customer.metadata.supabase_uid;
-
-    if (!userId) {
-      console.error("No user ID found in customer metadata");
-      return new Response(JSON.stringify({ error: "No user ID found" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 400,
+    // Only handle POST requests
+    if (req.method !== 'POST') {
+      return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+        status: 405,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // 3. 獲取交易資料
-    const transactionData = {
-      user_id: userId,
-      stripe_session_id: session.id,
-      stripe_subscription_id: session.subscription,
-      amount: session.amount_total / 100, // Stripe amounts are in cents
-      currency: session.currency,
-      status: session.payment_status,
-      subscription_tier: session.subscription
-        ? (await stripe.subscriptions.retrieve(session.subscription)).items
-            .data[0].price.id
-        : null,
-    };
+    // Get the session ID from the request body
+    const { sessionId } = await req.json();
+    if (!sessionId) {
+      return new Response(JSON.stringify({ error: 'Missing session ID' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
-    return new Response(
-      JSON.stringify({ success: true, transaction: transactionData }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+    console.log(`Verifying Stripe checkout session: ${sessionId}`);
+
+    // Retrieve the checkout session from Stripe
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
+    if (!session) {
+      return new Response(JSON.stringify({ error: 'Invalid session ID' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Check if the session was paid
+    if (session.payment_status !== 'paid') {
+      return new Response(JSON.stringify({ success: false, error: 'Payment not completed' }), {
         status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Get additional information from the session
+    const planId = session.metadata?.plan_id || 'unknown';
+    const isAnnual = session.metadata?.is_annual === 'true';
+    const customerId = session.customer as string;
+    const subscriptionId = session.subscription as string;
+
+    console.log(`Session verified: plan=${planId}, isAnnual=${isAnnual}, customer=${customerId}, subscription=${subscriptionId}`);
+
+    // Retrieve the user ID from the customer metadata or from our database
+    let userId;
+    try {
+      const customer = await stripe.customers.retrieve(customerId);
+      if (customer && !customer.deleted && customer.metadata && customer.metadata.user_id) {
+        userId = customer.metadata.user_id;
+      } else {
+        // Look up the user from our database
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('stripe_customer_id', customerId)
+          .single();
+
+        if (error || !data) {
+          throw new Error('Could not find user associated with Stripe customer');
+        }
+
+        userId = data.id;
+
+        // Update the customer metadata for future reference
+        await stripe.customers.update(customerId, {
+          metadata: { user_id: userId }
+        });
       }
-    );
+    } catch (error) {
+      console.error('Error getting user ID:', error);
+      return new Response(JSON.stringify({ success: false, error: 'Could not verify user' }), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Return success with additional information
+    return new Response(JSON.stringify({
+      success: true,
+      plan: planId,
+      isAnnual: isAnnual,
+      userId: userId,
+      sessionId: sessionId,
+    }), {
+      status: 200,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   } catch (error) {
-    console.error("Error verifying Stripe session:", error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    console.error(`Error verifying Stripe session: ${error.message}`);
+    return new Response(JSON.stringify({ success: false, error: error.message }), {
       status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 });
-
-// import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-// import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-// import Stripe from "https://esm.sh/stripe@14.18.0?target=deno";
-
-// const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
-//   apiVersion: '2023-10-16',
-//   httpClient: Stripe.createFetchHttpClient(),
-// });
-
-// const supabase = createClient(
-//   Deno.env.get('SUPABASE_URL') ?? '',
-//   Deno.env.get('SUPABASE_ANON_KEY') ?? ''
-// );
-
-// // Add CORS headers
-// const corsHeaders = {
-//   'Access-Control-Allow-Origin': '*',
-//   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-application-name, x-environment',
-//   'Access-Control-Allow-Methods': 'POST, OPTIONS',
-// };
-
-// serve(async (req) => {
-//   // Handle CORS preflight requests
-//   if (req.method === 'OPTIONS') {
-//     return new Response(null, { headers: corsHeaders });
-//   }
-
-//   try {
-//     const { sessionId } = await req.json();
-
-//     // 1. 獲取 Stripe 結帳會話資訊
-//     const session = await stripe.checkout.sessions.retrieve(sessionId);
-//     const customerId = session.customer;
-
-//     // 2. 獲取使用者 ID
-//     const customer = await stripe.customers.retrieve(customerId);
-//     const userId = customer.metadata.supabase_uid;
-
-//     if (!userId) {
-//       console.error('No user ID found in customer metadata');
-//       return new Response(JSON.stringify({ error: 'No user ID found' }), {
-//         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-//         status: 400,
-//       });
-//     }
-
-//     // 3. 插入交易記錄
-//     const { error: transactionError } = await supabase
-//       .from('transactions')
-//       .insert({
-//         user_id: userId,
-//         stripe_session_id: session.id,
-//         stripe_subscription_id: session.subscription,
-//         amount: session.amount_total / 100, // Stripe amounts are in cents
-//         currency: session.currency,
-//         status: session.payment_status,
-//         subscription_tier: session.subscription
-//           ? (await stripe.subscriptions.retrieve(session.subscription)).items.data[0].price.id
-//           : null,
-//       });
-
-//     if (transactionError) {
-//       console.error('Error inserting transaction record:', transactionError);
-//       return new Response(JSON.stringify({ error: 'Database error' }), {
-//         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-//         status: 500,
-//       });
-//     }
-
-//     return new Response(JSON.stringify({ success: true }), {
-//       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-//       status: 200,
-//     });
-//   } catch (error) {
-//     console.error('Error verifying Stripe session:', error);
-//     return new Response(JSON.stringify({ error: error.message }), {
-//       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-//       status: 500,
-//     });
-//   }
-// });

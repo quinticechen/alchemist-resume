@@ -3,21 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Check } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-
-interface PricingPlan {
-  name: string;
-  planId: string;
-  price: {
-    monthly: string;
-    annual: string;
-  };
-  features: string[];
-  buttonText: string;
-  highlighted: boolean;
-  showButton: boolean;
-  isCurrentPlan?: boolean;
-  mostPopular?: boolean;
-}
+import { PricingPlan } from "@/data/pricingPlans";
 
 interface PricingCardProps {
   plan: PricingPlan;

@@ -1,11 +1,34 @@
 
-export const pricingPlans = [
+export interface PricingPlan {
+  name: string;
+  planId: string;
+  price: {
+    monthly: string;
+    annual: string;
+  };
+  priceId: {
+    monthly: string;
+    annual: string;
+  };
+  features: string[];
+  buttonText: string;
+  highlighted: boolean;
+  showButton: boolean;
+  isCurrentPlan?: boolean;
+  mostPopular?: boolean;
+}
+
+export const pricingPlans: PricingPlan[] = [
   {
     name: "Apprentice",
     planId: "apprentice",
     price: {
       monthly: "$0",
       annual: "$0",
+    },
+    priceId: {
+      monthly: "",
+      annual: "",
     },
     features: [
       "3 Resume Customizations",
@@ -22,6 +45,10 @@ export const pricingPlans = [
     price: {
       monthly: "$39.99",
       annual: "$359.99",
+    },
+    priceId: {
+      monthly: "price_1Qs0CVGYVYFmwG4FmEwa1iWO",
+      annual: "price_1Qs0ECGYVYFmwG4FluFhUdQH",
     },
     features: [
       "Everything in Apprentice plan",
@@ -40,6 +67,10 @@ export const pricingPlans = [
     price: {
       monthly: "$99.99",
       annual: "$899.99",
+    },
+    priceId: {
+      monthly: "price_1Qs0BTGYVYFmwG4FFDbYpi5v",
+      annual: "price_1Qs0BtGYVYFmwG4FrtkMrNNx",
     },
     features: [
       "Everything in Alchemist plan",

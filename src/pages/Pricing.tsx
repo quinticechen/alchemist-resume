@@ -1,3 +1,4 @@
+
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -127,10 +128,22 @@ const Pricing = () => {
         throw new Error('No valid session found');
       }
 
-      console.log('Making request to stripe-payment function with access token');
+      // Find the selected plan and get the correct price ID
+      const selectedPlan = pricingPlans.find(p => p.planId === planId);
+      if (!selectedPlan) {
+        throw new Error('Invalid plan selected');
+      }
+      
+      // Use the correct price ID based on annual or monthly selection
+      const priceId = isAnnual ? selectedPlan.priceId.annual : selectedPlan.priceId.monthly;
+      if (!priceId) {
+        throw new Error('No price ID available for the selected plan');
+      }
+
+      console.log('Making request to stripe-payment function with:', { planId, priceId, isAnnual });
       
       const { data, error } = await supabase.functions.invoke('stripe-payment', {
-        body: { planId, isAnnual },
+        body: { planId, priceId, isAnnual },
         headers: {
           Authorization: `Bearer ${session.access_token}`,
         },
