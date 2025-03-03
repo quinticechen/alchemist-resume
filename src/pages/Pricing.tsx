@@ -151,8 +151,8 @@ const Pricing = () => {
       const { data, error } = await supabase.functions.invoke('stripe-payment', {
         body: { planId, priceId, isAnnual },
         headers: {
-          Authorization: `Bearer ${currentSession.access_token}`,
-        },
+          Authorization: `Bearer ${currentSession.access_token}`
+        }
       });
 
       if (error) {

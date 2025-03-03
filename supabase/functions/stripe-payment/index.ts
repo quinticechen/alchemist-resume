@@ -133,7 +133,7 @@ serve(async (req) => {
       // Import Stripe
       const { Stripe } = await import("https://esm.sh/stripe@13.2.0?target=deno");
       const stripe = new Stripe(stripeSecretKey, {
-        apiVersion: '2025-01-27',
+        apiVersion: '2022-11-15',
         httpClient: Stripe.createFetchHttpClient(),
       });
 
