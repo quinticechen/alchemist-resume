@@ -1,6 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { corsHeaders } from "../_shared/cors.ts";
+import Stripe from "stripe";
 
 // Define CORS headers for cross-origin requests
 // const corsHeaders = {
@@ -23,6 +24,10 @@ if (!stripeSecretKey || !stripeWebhookSecret) {
 if (!supabaseUrl || !supabaseServiceKey) {
   console.error("SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is not set");
 }
+
+const stripe = new Stripe(stripeSecretKey, {
+  apiVersion: "2020-08-27",
+});
 
 serve(async (req) => {
   console.log(`Received ${req.method} request to stripe-webhook function`);
@@ -54,16 +59,10 @@ serve(async (req) => {
       });
     }
 
-    // Import Stripe only when needed
-    const { default: Stripe } = await import("https://esm.sh/stripe@13.2.0?target=deno");
-    const stripe = new Stripe(stripeSecretKey, {
-      httpClient: Stripe.createFetchHttpClient(),
-    });
-
     // Construct the event from payload and signature
     let event;
     try {
-      event = stripe.webhooks.constructEvent(
+      event = await stripe.webhooks.constructEventAsync(
         payload,
         signature,
         stripeWebhookSecret
