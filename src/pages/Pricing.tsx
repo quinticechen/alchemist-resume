@@ -147,19 +147,17 @@ const Pricing = () => {
       }
 
       console.log('Making request to stripe-payment function with:', { planId, priceId, isAnnual });
-      console.log('Using access token:', currentSession.access_token.substring(0, 10) + '...');
       
       const { data, error } = await supabase.functions.invoke('stripe-payment', {
         body: { planId, priceId, isAnnual },
         headers: {
           Authorization: `Bearer ${currentSession.access_token}`,
-          'Content-Type': 'application/json',
         },
       });
 
       if (error) {
         console.error('Stripe payment function error:', error);
-        throw new Error(error.message || 'Failed to contact payment service');
+        throw error;
       }
 
       if (!data?.sessionUrl) {

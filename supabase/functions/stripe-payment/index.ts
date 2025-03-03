@@ -1,26 +1,16 @@
 
+// @ts-ignore
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.47.0";
 
 // Define CORS headers for cross-origin requests
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
 console.log("Hello from stripe-payment Edge Function!");
-
-// Get environment variables
-const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY');
-const supabaseUrl = Deno.env.get('SUPABASE_URL');
-const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-
-if (!stripeSecretKey) {
-  console.error("STRIPE_SECRET_KEY is not set in environment variables");
-}
-
-if (!supabaseUrl || !supabaseServiceKey) {
-  console.error("SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is not set in environment variables");
-}
 
 serve(async (req) => {
   console.log(`Received ${req.method} request to stripe-payment function`);
@@ -77,11 +67,23 @@ serve(async (req) => {
       });
     }
 
-    // Validate planId
-    if (!['alchemist', 'grandmaster'].includes(planId)) {
-      console.error(`Invalid planId: ${planId}`);
-      return new Response(JSON.stringify({ error: 'Invalid plan ID' }), {
-        status: 400,
+    // Get Supabase URL and service role key from environment variables
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY');
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error("Missing Supabase environment variables");
+      return new Response(JSON.stringify({ error: 'Server configuration error' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (!stripeSecretKey) {
+      console.error("STRIPE_SECRET_KEY is not set in environment variables");
+      return new Response(JSON.stringify({ error: 'Stripe configuration error' }), {
+        status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
@@ -90,122 +92,81 @@ serve(async (req) => {
     const token = authHeader.replace('Bearer ', '');
     console.log(`Authenticating user with token: ${token.substring(0, 15)}...`);
     
-    const userResponse = await fetch(`${supabaseUrl}/auth/v1/user`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!userResponse.ok) {
-      console.error(`Failed to authenticate user: ${userResponse.status} ${userResponse.statusText}`);
-      const userRespBody = await userResponse.text();
-      console.error(`Response body: ${userRespBody}`);
-      return new Response(JSON.stringify({ error: 'Failed to authenticate user' }), {
+    // Create a Supabase client with the service role key
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    
+    // Verify the token and get user data
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    
+    if (authError || !user) {
+      console.error("Auth error:", authError);
+      return new Response(JSON.stringify({ error: 'Invalid authentication token' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    const userData = await userResponse.json();
-    if (!userData.id) {
-      console.error("User not found in response", userData);
-      return new Response(JSON.stringify({ error: 'User not found' }), {
-        status: 404,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    const userId = userData.id;
+    const userId = user.id;
     console.log(`Authenticated user ID: ${userId}`);
 
     // Get user profile information
-    const profileResponse = await fetch(`${supabaseUrl}/rest/v1/profiles?id=eq.${userId}&select=email,stripe_customer_id`, {
-      headers: {
-        'Authorization': `Bearer ${supabaseServiceKey}`,
-        'apikey': supabaseServiceKey,
-        'Content-Type': 'application/json',
-      },
-    });
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('email, stripe_customer_id')
+      .eq('id', userId)
+      .single();
 
-    const profiles = await profileResponse.json();
-    if (!profileResponse.ok || profiles.length === 0) {
-      console.error("User profile not found", profiles);
-      return new Response(JSON.stringify({ error: 'User profile not found' }), {
-        status: 404,
+    if (profileError) {
+      console.error("Error fetching profile:", profileError);
+      return new Response(JSON.stringify({ error: 'Error fetching user profile' }), {
+        status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    const profile = profiles[0];
-    const userEmail = userData.email || profile.email;
-    let stripeCustomerId = profile.stripe_customer_id;
+    const userEmail = user.email;
+    let stripeCustomerId = profile?.stripe_customer_id;
 
     console.log(`Processing payment for user: ${userId}, email: ${userEmail}, plan: ${planId} (${isAnnual ? 'annual' : 'monthly'})`);
 
-    // Import Stripe
-    const { Stripe } = await import("https://esm.sh/stripe@13.2.0?target=deno");
-    const stripe = new Stripe(stripeSecretKey, {
-      apiVersion: '2025-01-27',
-      httpClient: Stripe.createFetchHttpClient(),
-    });
-
-    // Create Stripe customer if not exists
-    if (!stripeCustomerId) {
-      console.log("Creating new Stripe customer");
-      const customer = await stripe.customers.create({
-        email: userEmail,
-        metadata: {
-          user_id: userId
-        }
-      });
-      stripeCustomerId = customer.id;
-
-      // Update profile with Stripe customer ID
-      await fetch(`${supabaseUrl}/rest/v1/profiles?id=eq.${userId}`, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${supabaseServiceKey}`,
-          'apikey': supabaseServiceKey,
-          'Content-Type': 'application/json',
-          'Prefer': 'return=minimal'
-        },
-        body: JSON.stringify({ stripe_customer_id: stripeCustomerId }),
-      });
-
-      console.log(`Created new Stripe customer with ID: ${stripeCustomerId}`);
-    } else {
-      console.log(`Using existing Stripe customer ID: ${stripeCustomerId}`);
-      
-      // Update customer metadata
-      await stripe.customers.update(stripeCustomerId, {
-        metadata: {
-          user_id: userId
-        }
-      });
-    }
-
-    // Set up product details
-    let productName, productDescription;
-    if (planId === 'alchemist') {
-      productName = 'Alchemist Plan';
-      productDescription = isAnnual ? 'Annual Alchemist Subscription' : 'Monthly Alchemist Subscription';
-    } else {
-      productName = 'Grandmaster Plan';
-      productDescription = isAnnual ? 'Annual Grandmaster Subscription' : 'Monthly Grandmaster Subscription';
-    }
-
-    // Calculate success URL
-    const origin = req.headers.get('origin') || 'https://resumealchemist.qwizai.com';
-    const successUrl = new URL(`${origin}/payment-success`);
-    successUrl.searchParams.append('session_id', '{CHECKOUT_SESSION_ID}');
-    successUrl.searchParams.append('plan', planId);
-    successUrl.searchParams.append('is_annual', isAnnual.toString());
-
-    console.log(`Success URL: ${successUrl.toString()}`);
-    console.log(`Creating checkout session with price ID: ${priceId}`);
-
     try {
+      // Import Stripe
+      const { Stripe } = await import("https://esm.sh/stripe@13.2.0?target=deno");
+      const stripe = new Stripe(stripeSecretKey, {
+        apiVersion: '2025-01-27',
+        httpClient: Stripe.createFetchHttpClient(),
+      });
+
+      // Create Stripe customer if not exists
+      if (!stripeCustomerId) {
+        console.log("Creating new Stripe customer");
+        const customer = await stripe.customers.create({
+          email: userEmail,
+          metadata: {
+            user_id: userId
+          }
+        });
+        stripeCustomerId = customer.id;
+
+        // Update profile with Stripe customer ID
+        await supabase
+          .from('profiles')
+          .update({ stripe_customer_id: stripeCustomerId })
+          .eq('id', userId);
+
+        console.log(`Created new Stripe customer with ID: ${stripeCustomerId}`);
+      }
+
+      // Calculate success URL
+      const origin = req.headers.get('origin') || 'https://resumealchemist.qwizai.com';
+      const successUrl = new URL(`${origin}/payment-success`);
+      successUrl.searchParams.append('session_id', '{CHECKOUT_SESSION_ID}');
+      successUrl.searchParams.append('plan', planId);
+      successUrl.searchParams.append('is_annual', isAnnual.toString());
+
+      console.log(`Success URL: ${successUrl.toString()}`);
+      console.log(`Creating checkout session with price ID: ${priceId}`);
+
       // Create Stripe Checkout Session
       const session = await stripe.checkout.sessions.create({
         customer: stripeCustomerId,
@@ -239,19 +200,18 @@ serve(async (req) => {
         status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
-    } catch (stripeError: any) {
-      console.error('Stripe error creating checkout session:', stripeError);
+    } catch (stripeError) {
+      console.error('Stripe error:', stripeError);
       return new Response(JSON.stringify({ 
         error: stripeError.message || 'Error creating checkout session',
-        code: stripeError.code || 'unknown'
       }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
-  } catch (error: any) {
-    console.error('Error in stripe-payment edge function:', error);
-    return new Response(JSON.stringify({ error: error.message || 'Unknown error occurred' }), {
+  } catch (error) {
+    console.error('Unexpected error in stripe-payment edge function:', error);
+    return new Response(JSON.stringify({ error: 'An unexpected error occurred' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
