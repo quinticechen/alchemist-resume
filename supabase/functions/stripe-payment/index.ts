@@ -1,4 +1,3 @@
-
 // @ts-ignore
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.47.0";
@@ -6,7 +5,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.47.0";
 // Define CORS headers for cross-origin requests
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-environment',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
@@ -19,7 +18,7 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') {
     console.log("Handling CORS preflight request");
     return new Response(null, { 
-      status: 200, 
+      status: 204, 
       headers: corsHeaders 
     });
   }
