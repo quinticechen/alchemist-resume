@@ -65,7 +65,7 @@ serve(async (req) => {
       event = await stripe.webhooks.constructEventAsync(
         payload,
         signature,
-        stripeWebhookSecret
+        Deno.env.get("STRIPE_WEBHOOK_SECRET")
       );
     } catch (err) {
       console.error(`Webhook signature verification failed: ${err.message}`);

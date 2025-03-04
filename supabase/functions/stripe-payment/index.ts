@@ -163,6 +163,7 @@ serve(async (req) => {
       successUrl.searchParams.append('session_id', '{CHECKOUT_SESSION_ID}');
       successUrl.searchParams.append('plan', planId);
       successUrl.searchParams.append('is_annual', isAnnual.toString());
+      // https://staging.resumealchemist.qwizai.com/payment-success?session_id=%7BCHECKOUT_SESSION_ID%7D&plan=grandmaster&is_annual=false
 
       console.log(`Success URL: ${successUrl.toString()}`);
       console.log(`Creating checkout session with price ID: ${priceId}`);
@@ -178,7 +179,7 @@ serve(async (req) => {
           },
         ],
         mode: 'subscription',
-        success_url: successUrl.toString(),
+        success_url: successUrl.toString().replace('{CHECKOUT_SESSION_ID}', session.id),
         cancel_url: `${origin}/pricing?canceled=true`,
         metadata: {
           user_id: userId,
