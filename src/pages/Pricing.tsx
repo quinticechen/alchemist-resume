@@ -253,6 +253,14 @@ const Pricing = () => {
               />
             ))}
           </div>
+          <div>
+            <script async src="https://js.stripe.com/v3/buy-button.js"></script>
+
+            <stripe-buy-button
+              buy-button-id="buy_btn_1Qyl4ZGYVYFmwG4FG2AQZ2rS"
+              publishable-key="pk_test_51QoMVlGYVYFmwG4FYQ68QZ4salYBAwr7cSFzqypObpzyEDTZg9woA7v2xoUdwFFY9aks19KioxyCy3GTBAFUzMOd00N0xm7sdi"
+            ></stripe-buy-button>
+          </div>
         </div>
       </div>
     </div>
