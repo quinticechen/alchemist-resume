@@ -133,7 +133,7 @@ serve(async (req) => {
     try {
       // Import Stripe
       const stripe = new Stripe(stripeSecretKey, {
-        apiVersion: '2022-11-15',
+        apiVersion: '2025-01-27.acacia',
         httpClient: Stripe.createFetchHttpClient(),
       });
 
