@@ -15,8 +15,6 @@ const SurveyPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const isAnnual = location.state?.isAnnual;
-  
-
 
   const googleFormUrl =
     "https://docs.google.com/forms/d/e/1FAIpQLScBhsrd96t2TZT-CfJv5yPfyP50L42BYAy2ATJOJsFF5FYOZA/viewform?embedded=true";
@@ -93,7 +91,6 @@ const SurveyPage = () => {
     } = await supabase.auth.getSession();
     if (!session?.user) return;
 
-    // 更新調查完成狀態
     const { error: surveyError } = await supabase
       .from("profiles")
       .update({ has_completed_survey: true })
@@ -120,12 +117,17 @@ const SurveyPage = () => {
 
   const proceedToPayment = async (planId: string) => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (!session) throw new Error("Not authenticated");
 
-      const { data, error } = await supabase.functions.invoke("stripe-payment", {
-        body: { planId, isAnnual },
-      });
+      const { data, error } = await supabase.functions.invoke(
+        "stripe-payment",
+        {
+          body: { planId, isAnnual },
+        }
+      );
       console.log("Received planId:", planId);
       console.log("Received isAnnual:", isAnnual);
 
@@ -144,16 +146,26 @@ const SurveyPage = () => {
     }
   };
 
-  const handleSkipSurvey = () => {
-    if (selectedPlan) {
-      proceedToPayment(selectedPlan);
-    } else {
-      toast({
-        title: "Error",
-        description: "Please select a plan before proceeding.",
-        variant: "destructive",
-      });
-      navigate("/pricing"); // 如果沒有選擇計劃，導航到定價頁面
+  const handleSkipSurvey = async () => {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (!session?.user) return;
+
+    await supabase
+      .from("profiles")
+      .update({ has_completed_survey: false })
+      .eq("id", session.user.id);
+
+    // if (selectedPlan) {
+    //   proceedToPayment(selectedPlan);
+    // } else {
+    //   toast({
+    //     title: "Error",
+    //     description: "Please select a plan before proceeding.",
+    //     variant: "destructive",
+    //   });
+    //   navigate("/pricing"); // 如果沒有選擇計劃，導航到定價頁面
     }
   };
 
