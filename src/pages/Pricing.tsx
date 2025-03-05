@@ -122,7 +122,12 @@ const Pricing = () => {
       return;
     }
 
-    if (!hasCompletedSurvey) {
+    // if (!hasCompletedSurvey) {
+    //   navigate("/survey-page", { state: { selectedPlan: planId, isAnnual } });
+    //   return;
+    // }
+
+    if (hasCompletedSurvey === null) {
       navigate("/survey-page", { state: { selectedPlan: planId, isAnnual } });
       return;
     }
