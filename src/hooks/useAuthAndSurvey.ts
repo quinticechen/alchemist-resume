@@ -22,7 +22,7 @@ export const useAuthAndSurvey = () => {
         .single();
 
       if (profile) {
-        setHasCompletedSurvey(profile.has_completed_survey || false);
+        setHasCompletedSurvey(profile.has_completed_survey || null);
       }
     }
   };
