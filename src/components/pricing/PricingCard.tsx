@@ -4,6 +4,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Check } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { PricingPlan } from "@/data/pricingPlans";
+import { useEffect, useRef } from "react";
 
 interface PricingCardProps {
   plan: PricingPlan;
@@ -15,6 +16,7 @@ interface PricingCardProps {
 export const PricingCard = ({ plan, isAnnual, isLoading, onSelect }: PricingCardProps) => {
   const price = isAnnual ? plan.price.annual : plan.price.monthly;
   const billingPeriod = isAnnual ? "/year" : "/month";
+  const stripeBuyButtonRef = useRef<HTMLDivElement>(null);
   
   // Get the appropriate Buy Button ID based on the plan and billing cycle
   const getBuyButtonId = () => {
@@ -28,6 +30,20 @@ export const PricingCard = ({ plan, isAnnual, isLoading, onSelect }: PricingCard
   
   const buyButtonId = getBuyButtonId();
   const showStripeDirect = plan.planId !== 'apprentice' && buyButtonId;
+
+  // Load Stripe Buy Button script dynamically
+  useEffect(() => {
+    if (showStripeDirect && stripeBuyButtonRef.current) {
+      const script = document.createElement('script');
+      script.src = 'https://js.stripe.com/v3/buy-button.js';
+      script.async = true;
+      
+      // Only add the script if it doesn't already exist
+      if (!document.querySelector('script[src="https://js.stripe.com/v3/buy-button.js"]')) {
+        document.body.appendChild(script);
+      }
+    }
+  }, [showStripeDirect]);
   
   return (
     <Card className={`flex flex-col h-full relative ${plan.highlighted ? 'border-primary shadow-lg' : ''}`}>
@@ -69,11 +85,15 @@ export const PricingCard = ({ plan, isAnnual, isLoading, onSelect }: PricingCard
         )}
         
         {showStripeDirect && (
-          <div className="w-full">
-            <stripe-buy-button
-              buy-button-id={buyButtonId}
-              publishable-key="pk_test_51QoMVlGYVYFmwG4FYQ68QZ4salYBAwr7cSFzqypObpzyEDTZg9woA7v2xoUdwFFY9aks19KioxyCy3GTBAFUzMOd00N0xm7sdi"
-            ></stripe-buy-button>
+          <div className="w-full" ref={stripeBuyButtonRef}>
+            {/* Stripe Buy Button will be rendered here by the script */}
+            {typeof document !== 'undefined' && document.querySelector('script[src="https://js.stripe.com/v3/buy-button.js"]') && (
+              // @ts-ignore - Using custom element that's defined in the stripe-elements.d.ts file
+              <stripe-buy-button
+                buy-button-id={buyButtonId}
+                publishable-key="pk_test_51QoMVlGYVYFmwG4FYQ68QZ4salYBAwr7cSFzqypObpzyEDTZg9woA7v2xoUdwFFY9aks19KioxyCy3GTBAFUzMOd00N0xm7sdi"
+              ></stripe-buy-button>
+            )}
           </div>
         )}
       </CardFooter>

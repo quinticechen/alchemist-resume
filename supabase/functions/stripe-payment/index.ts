@@ -1,15 +1,9 @@
+
 // @ts-ignore
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.47.0";
-import Stripe from "stripe";
+import Stripe from "https://esm.sh/stripe@12.18.0";
 import { corsHeaders } from "../_shared/cors.ts";
-
-// Define CORS headers for cross-origin requests
-// const corsHeaders = {
-//   'Access-Control-Allow-Origin': '*',
-//   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-environment',
-//   'Access-Control-Allow-Methods': 'POST, OPTIONS',
-// };
 
 console.log("Hello from stripe-payment Edge Function!");
 
@@ -131,9 +125,9 @@ serve(async (req) => {
     console.log(`Processing payment for user: ${userId}, email: ${userEmail}, plan: ${planId} (${isAnnual ? 'annual' : 'monthly'})`);
 
     try {
-      // Import Stripe
+      // Initialize Stripe with a compatible API version
       const stripe = new Stripe(stripeSecretKey, {
-        apiVersion: '2025-01-27.acacia',
+        apiVersion: '2023-10-16',
         httpClient: Stripe.createFetchHttpClient(),
       });
 
@@ -163,7 +157,6 @@ serve(async (req) => {
       successUrl.searchParams.append('session_id', '{CHECKOUT_SESSION_ID}');
       successUrl.searchParams.append('plan', planId);
       successUrl.searchParams.append('is_annual', isAnnual.toString());
-      // https://staging.resumealchemist.qwizai.com/payment-success?session_id=%7BCHECKOUT_SESSION_ID%7D&plan=grandmaster&is_annual=false
 
       console.log(`Success URL: ${successUrl.toString()}`);
       console.log(`Creating checkout session with price ID: ${priceId}`);
@@ -179,7 +172,7 @@ serve(async (req) => {
           },
         ],
         mode: 'subscription',
-        success_url: successUrl.toString().replace('{CHECKOUT_SESSION_ID}', session.id),
+        success_url: successUrl.toString(),
         cancel_url: `${origin}/pricing?canceled=true`,
         metadata: {
           user_id: userId,

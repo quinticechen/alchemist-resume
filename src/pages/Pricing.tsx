@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useStripeInit } from "@/hooks/useStripeInit";
 import { useAuthAndSurvey } from "@/hooks/useAuthAndSurvey";
 import { PricingToggle } from "@/components/pricing/PricingToggle";
@@ -30,6 +30,8 @@ const Pricing = () => {
     error: stripeError,
   } = useStripeInit();
   const { isAuthenticated, hasCompletedSurvey } = useAuthAndSurvey();
+
+  const stripeBuyButtonRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -62,6 +64,18 @@ const Pricing = () => {
       });
     }
   }, [stripeError, toast]);
+
+  useEffect(() => {
+    if (stripeBuyButtonRef.current) {
+      const script = document.createElement('script');
+      script.src = 'https://js.stripe.com/v3/buy-button.js';
+      script.async = true;
+      
+      if (!document.querySelector('script[src="https://js.stripe.com/v3/buy-button.js"]')) {
+        document.body.appendChild(script);
+      }
+    }
+  }, []);
 
   const fetchUsageInfo = async (userId: string) => {
     try {
@@ -140,7 +154,6 @@ const Pricing = () => {
     try {
       trackBeginCheckout(planId, isAnnual);
 
-      // Get a fresh access token
       const {
         data: { session: currentSession },
       } = await supabase.auth.getSession();
@@ -253,14 +266,8 @@ const Pricing = () => {
               />
             ))}
           </div>
-          <div>
-            <script async src="https://js.stripe.com/v3/buy-button.js"></script>
-
-            <stripe-buy-button
-              buy-button-id="buy_btn_1Qyl4ZGYVYFmwG4FG2AQZ2rS"
-              publishable-key="pk_test_51QoMVlGYVYFmwG4FYQ68QZ4salYBAwr7cSFzqypObpzyEDTZg9woA7v2xoUdwFFY9aks19KioxyCy3GTBAFUzMOd00N0xm7sdi"
-            ></stripe-buy-button>
-          </div>
+          
+          <div className="hidden" ref={stripeBuyButtonRef}></div>
         </div>
       </div>
     </div>
