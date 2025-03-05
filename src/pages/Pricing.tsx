@@ -122,15 +122,15 @@ const Pricing = () => {
       return;
     }
 
-    if (!hasCompletedSurvey) {
-      navigate("/survey-page", { state: { selectedPlan: planId, isAnnual } });
-      return;
-    }
-
-    // if (isAuthenticated && hasCompletedSurvey === null) {
+    // if (!hasCompletedSurvey) {
     //   navigate("/survey-page", { state: { selectedPlan: planId, isAnnual } });
     //   return;
     // }
+
+    if (hasCompletedSurvey === null) {
+      navigate("/survey-page", { state: { selectedPlan: planId, isAnnual } });
+      return;
+    }
 
     if (isStripeInitializing) {
       toast({
