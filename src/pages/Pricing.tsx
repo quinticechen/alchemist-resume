@@ -263,6 +263,7 @@ const Pricing = () => {
                 isAnnual={isAnnual}
                 isLoading={isLoading || isStripeInitializing}
                 onSelect={handlePlanSelection}
+                buttonLabel={plan.isCurrentPlan ? "Current Subscription" : "Get Grandmaster"}
               />
             ))}
           </div>

@@ -1,5 +1,4 @@
-
-import { BrowserRouter as Router } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Home from "@/pages/Home";
@@ -15,11 +14,12 @@ import SurveyPage from "@/pages/SurveyPage";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import PaymentSuccess from "@/pages/PaymentSuccess";
-import { Routes, Route } from "react-router-dom";
+import ScrollToTop from './components/ScrollToTop';
 
 const App = () => {
   return (
     <Router>
+      <ScrollToTop />
       <AuthProvider>
         <div className="min-h-screen flex flex-col">
           <Header />

@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import Lottie from "react-lottie";
 import animationData from "@/animations/Jellyfish.yellow.money.json";
@@ -20,7 +19,7 @@ interface Transaction {
 
 const PaymentSuccess: React.FC = () => {
   const [searchParams] = useSearchParams();
-  const sessionId = searchParams.get("session_id");
+  const sessionId = Transaction.stripe_session_id;
   const plan = searchParams.get("plan");
   const isAnnual = searchParams.get("is_annual") === "true";
 

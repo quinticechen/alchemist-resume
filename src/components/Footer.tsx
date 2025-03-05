@@ -5,7 +5,7 @@ import Logo from "./header/Logo";
 
 const Footer = () => {
   const { toast } = useToast();
-  const supportEmail = "resume-alchemist@gmail.com";
+  const supportEmail = "resumealchemist.qwizai@gmail.com";
 
   const handleEmailClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -17,22 +17,28 @@ const Footer = () => {
   };
 
   const socialLinks = [
-    {
-      name: "Facebook",
-      icon: <Facebook className="h-5 w-5" />,
-      url: "https://facebook.com/resumealchemist",
-    },
-    {
-      name: "Twitter",
-      icon: <Twitter className="h-5 w-5" />,
-      url: "https://twitter.com/resumealchemist",
-    },
+    // {
+    //   name: "Facebook",
+    //   icon: <Facebook className="h-5 w-5" />,
+    //   url: "https://facebook.com/resumealchemist",
+    // },
+    // {
+    //   name: "Twitter",
+    //   icon: <Twitter className="h-5 w-5" />,
+    //   url: "https://twitter.com/resumealchemist",
+    // },
     {
       name: "Instagram",
       icon: <Instagram className="h-5 w-5" />,
-      url: "https://instagram.com/resumealchemist",
+      url: "https://instagram.com/resume.alchemist",
+    },
+    {
+      name: "Link",
+      icon: <Link className="h-5 w-5" />,
+      url: "https://linkedin.com/company/qwizai",
     },
   ];
+  
 
   return (
     <footer className="bg-[#ffffff] border-t border-neutral-200">
