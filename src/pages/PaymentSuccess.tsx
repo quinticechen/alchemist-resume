@@ -33,6 +33,28 @@ const PaymentSuccess: React.FC = () => {
     const verifyPayment = async () => {
       if (sessionId) {
         try {
+          console.log("Verifying payment session:", sessionId);
+          
+          // First check if transaction already exists in database
+          const { data: existingTransaction, error: txError } = await supabase
+            .from("transactions")
+            .select("*")
+            .eq("stripe_session_id", sessionId)
+            .single();
+          
+          if (existingTransaction) {
+            console.log("Transaction already exists:", existingTransaction);
+            setVerificationSuccess(true);
+            setTransaction(existingTransaction);
+            setIsLoading(false);
+            toast({
+              title: "Payment Verified",
+              description: "Your payment has been successfully verified.",
+            });
+            return;
+          }
+          
+          // If transaction doesn't exist, verify with the function
           const { data, error } = await supabase.functions.invoke(
             "verify-stripe-session",
             {
@@ -40,15 +62,22 @@ const PaymentSuccess: React.FC = () => {
             }
           );
 
-          if (error || !data.success) {
+          if (error) {
             console.error("Payment verification error:", error);
             toast({
               title: "Payment Verification Failed",
               description: "Unable to verify payment. Please contact support.",
               variant: "destructive",
             });
+          } else if (!data || !data.success) {
+            console.error("Verification failed with data:", data);
+            toast({
+              title: "Payment Verification Failed",
+              description: data?.error || "Unable to verify payment. Please contact support.",
+              variant: "destructive",
+            });
           } else {
-            console.log("Payment verified", data);
+            console.log("Payment verified successfully:", data);
             setVerificationSuccess(true);
 
             // Fetch transaction data from the database

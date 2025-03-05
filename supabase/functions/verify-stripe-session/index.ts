@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 import Stripe from "https://esm.sh/stripe@13.2.0?target=deno";
@@ -14,12 +15,6 @@ const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') as string, {
 const supabaseUrl = Deno.env.get('SUPABASE_URL') as string;
 const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') as string;
 const supabase = createClient(supabaseUrl, supabaseKey);
-
-// const corsHeaders = {
-//   'Access-Control-Allow-Origin': '*',
-//   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-environment',
-//   'Access-Control-Allow-Methods': 'POST, OPTIONS',
-// };
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -45,6 +40,28 @@ serve(async (req) => {
     }
 
     console.log(`Verifying Stripe checkout session: ${sessionId}`);
+
+    // First check if we already have a transaction record for this session
+    const { data: existingTransaction, error: txError } = await supabase
+      .from('transactions')
+      .select('*')
+      .eq('stripe_session_id', sessionId)
+      .single();
+
+    if (existingTransaction) {
+      console.log(`Transaction already exists for session: ${sessionId}`);
+      return new Response(JSON.stringify({ 
+        success: true, 
+        message: 'Transaction already recorded',
+        plan: existingTransaction.tier,
+        isAnnual: existingTransaction.is_annual,
+        userId: existingTransaction.user_id,
+        sessionId: sessionId
+      }), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     // Retrieve the checkout session from Stripe
     const session = await stripe.checkout.sessions.retrieve(sessionId);
