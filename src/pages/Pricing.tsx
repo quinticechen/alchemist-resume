@@ -127,7 +127,7 @@ const Pricing = () => {
     //   return;
     // }
 
-    if (hasCompletedSurvey === null) {
+    if (isAuthenticated && hasCompletedSurvey === null) {
       navigate("/survey-page", { state: { selectedPlan: planId, isAnnual } });
       return;
     }
