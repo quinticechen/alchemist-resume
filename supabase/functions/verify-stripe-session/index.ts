@@ -39,6 +39,18 @@ serve(async (req) => {
       });
     }
 
+    // Check if session ID is the placeholder value and return a helpful error
+    if (sessionId === '{CHECKOUT_SESSION_ID}') {
+      console.error("Received placeholder session ID instead of actual value");
+      return new Response(JSON.stringify({ 
+        success: false, 
+        error: 'Invalid session ID: received placeholder {CHECKOUT_SESSION_ID} instead of actual session ID' 
+      }), {
+        status: 200, // Use 200 to ensure frontend receives the error
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     console.log(`Verifying Stripe checkout session: ${sessionId}`);
 
     // First check if we already have a transaction record for this session

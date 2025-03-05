@@ -154,11 +154,14 @@ serve(async (req) => {
       // Calculate success URL
       const origin = req.headers.get('origin') || 'https://resumealchemist.qwizai.com';
       const successUrl = new URL(`${origin}/payment-success`);
+      
+      // Generate a clean URL without placeholders to avoid the {CHECKOUT_SESSION_ID} error
       successUrl.searchParams.append('session_id', '{CHECKOUT_SESSION_ID}');
       successUrl.searchParams.append('plan', planId);
       successUrl.searchParams.append('is_annual', isAnnual.toString());
 
-      console.log(`Success URL: ${successUrl.toString()}`);
+      const successUrlString = successUrl.toString();
+      console.log(`Success URL: ${successUrlString}`);
       console.log(`Creating checkout session with price ID: ${priceId}`);
 
       // Create Stripe Checkout Session
@@ -172,7 +175,7 @@ serve(async (req) => {
           },
         ],
         mode: 'subscription',
-        success_url: successUrl.toString(),
+        success_url: successUrlString,
         cancel_url: `${origin}/pricing?canceled=true`,
         metadata: {
           user_id: userId,
