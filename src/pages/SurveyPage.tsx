@@ -71,13 +71,12 @@ const SurveyPage = () => {
     }
 
     setSurveyCompleted(true);
-      toast({
-        title: "Thank you!",
-        description:
-          "Your feedback has been recorded. You now have 3 more free uses available.",
-      });
-      navigate("/alchemist-workshop");
-    }
+    toast({
+      title: "Thank you!",
+      description:
+        "Your feedback has been recorded. You now have 3 more free uses available.",
+    });
+    navigate("/alchemist-workshop");
   };
 
   const proceedToPayment = async (planId: string) => {
