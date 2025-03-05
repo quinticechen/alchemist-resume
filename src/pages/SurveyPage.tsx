@@ -13,8 +13,7 @@ const SurveyPage = () => {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [surveyCompleted, setSurveyCompleted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
-  const isAnnual = location.state?.isAnnual;
+  const { selectedPlan, isAnnual } = location.state || {};
   const googleFormUrl =
     "https://docs.google.com/forms/d/e/1FAIpQLScBhsrd96t2TZT-CfJv5yPfyP50L42BYAy2ATJOJsFF5FYOZA/viewform?embedded=true";
 
@@ -49,7 +48,9 @@ const SurveyPage = () => {
 
   useEffect(() => {
     const checkSurveyCompletion = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (!session?.user) return;
 
       const { data: profile, error } = await supabase
@@ -73,6 +74,13 @@ const SurveyPage = () => {
 
     checkSurveyCompletion();
   }, [navigate]);
+
+  useEffect(() => {
+    const { selectedPlan, isAnnual } = location.state || {};
+    if (selectedPlan) {
+      setSelectedPlan(selectedPlan);
+    }
+  }, [location.state]);
 
   const handleSurveyCompletion = async () => {
     setIsLoading(true);
