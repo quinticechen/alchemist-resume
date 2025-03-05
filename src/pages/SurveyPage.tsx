@@ -12,8 +12,8 @@ const SurveyPage = () => {
   const { toast } = useToast();
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [surveyCompleted, setSurveyCompleted] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const selectedPlan = location.state?.selectedPlan;
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const isAnnual = location.state?.isAnnual;
   const googleFormUrl =
     "https://docs.google.com/forms/d/e/1FAIpQLScBhsrd96t2TZT-CfJv5yPfyP50L42BYAy2ATJOJsFF5FYOZA/viewform?embedded=true";
@@ -45,6 +45,33 @@ const SurveyPage = () => {
       }
     };
     getUserEmail();
+  }, [navigate]);
+
+  useEffect(() => {
+    const checkSurveyCompletion = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) return;
+
+      const { data: profile, error } = await supabase
+        .from("profiles")
+        .select("has_completed_survey")
+        .eq("id", session.user.id)
+        .single();
+
+      if (error) {
+        console.error("Error fetching profile:", error);
+        setIsLoading(false);
+        return;
+      }
+
+      if (profile?.has_completed_survey) {
+        navigate("/alchemist-workshop");
+      } else {
+        setIsLoading(false);
+      }
+    };
+
+    checkSurveyCompletion();
   }, [navigate]);
 
   const handleSurveyCompletion = async () => {
@@ -120,6 +147,10 @@ const SurveyPage = () => {
   const formUrl = userEmail
     ? `${googleFormUrl}&entry.1234567890=${encodeURIComponent(userEmail)}`
     : googleFormUrl;
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100">
