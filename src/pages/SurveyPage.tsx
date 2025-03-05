@@ -126,6 +126,8 @@ const SurveyPage = () => {
       const { data, error } = await supabase.functions.invoke("stripe-payment", {
         body: { planId, isAnnual },
       });
+      console.log("Received planId:", planId);
+      console.log("Received isAnnual:", isAnnual);
 
       if (error) throw error;
 
