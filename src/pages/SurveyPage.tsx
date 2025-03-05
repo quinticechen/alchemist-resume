@@ -71,9 +71,6 @@ const SurveyPage = () => {
     }
 
     setSurveyCompleted(true);
-    if (selectedPlan) {
-      proceedToPayment(selectedPlan);
-    } else {
       toast({
         title: "Thank you!",
         description:
