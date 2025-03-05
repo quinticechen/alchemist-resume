@@ -131,11 +131,8 @@ serve(async (req) => {
         
         console.log(`Determined tier: ${tier}`);
 
-        // Convert user's Stripe customer ID to your user ID from your database
-        // This requires that you've previously stored the mapping
-        const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2.39.4");
-        
         // Create Supabase client
+        const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2.39.4");
         const supabaseUrl = Deno.env.get('SUPABASE_URL');
         const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
         
@@ -156,6 +153,7 @@ serve(async (req) => {
           .eq('stripe_customer_id', subscription.customer)
           .single();
         
+        let userData;
         if (profileError || !profileData) {
           console.error("Error fetching user profile:", profileError);
           
@@ -174,18 +172,20 @@ serve(async (req) => {
             });
           }
           
-          profileData = { id: subData.user_id };
-          console.log("Found user ID from subscriptions table:", profileData.id);
+          userData = { id: subData.user_id };
+          console.log("Found user ID from subscriptions table:", userData.id);
         } else {
-          console.log("Found user ID from profiles table:", profileData.id);
+          userData = profileData;
+          console.log("Found user ID from profiles table:", userData.id);
         }
         
         // Record the transaction and update subscription details
         try {
+          // Use the RPC call with the updated function
           const { data: functionCallData, error: functionCallError } = await supabase.rpc(
             'update_subscription_and_transaction',
             {
-              p_user_id: profileData.id,
+              p_user_id: userData.id,
               p_stripe_customer_id: subscription.customer.toString(),
               p_stripe_subscription_id: subscription.id,
               p_status: subscription.status,

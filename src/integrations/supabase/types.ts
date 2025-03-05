@@ -287,41 +287,23 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
-      update_subscription_and_transaction:
-        | {
-            Args: {
-              p_user_id: string
-              p_stripe_customer_id: string
-              p_stripe_subscription_id: string
-              p_status: string
-              p_tier: Database["public"]["Enums"]["subscription_tier"]
-              p_current_period_start: string
-              p_current_period_end: string
-              p_cancel_at_period_end: boolean
-              p_stripe_session_id: string
-              p_amount: number
-              p_currency: string
-              p_payment_status: string
-            }
-            Returns: undefined
-          }
-        | {
-            Args: {
-              p_user_id: string
-              p_stripe_customer_id: string
-              p_stripe_subscription_id: string
-              p_status: string
-              p_tier: string
-              p_current_period_start: string
-              p_current_period_end: string
-              p_cancel_at_period_end: boolean
-              p_stripe_session_id: string
-              p_amount: number
-              p_currency: string
-              p_payment_status: string
-            }
-            Returns: undefined
-          }
+      update_subscription_and_transaction: {
+        Args: {
+          p_user_id: string
+          p_stripe_customer_id: string
+          p_stripe_subscription_id: string
+          p_status: string
+          p_tier: string
+          p_current_period_start: string
+          p_current_period_end: string
+          p_cancel_at_period_end: boolean
+          p_stripe_session_id: string
+          p_amount: number
+          p_currency: string
+          p_payment_status: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       subscription_tier: "apprentice" | "alchemist" | "grandmaster"

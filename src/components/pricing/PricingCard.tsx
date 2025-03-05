@@ -42,8 +42,33 @@ export const PricingCard = ({ plan, isAnnual, isLoading, onSelect }: PricingCard
       if (!document.querySelector('script[src="https://js.stripe.com/v3/buy-button.js"]')) {
         document.body.appendChild(script);
       }
+      
+      // Clean up
+      return () => {
+        // Do not remove the script as it might be used by other components
+      };
     }
   }, [showStripeDirect]);
+  
+  // Function to render Stripe Buy Button once the script is loaded
+  const renderStripeBuyButton = () => {
+    if (!showStripeDirect || !buyButtonId) return null;
+    
+    const scriptLoaded = typeof document !== 'undefined' && 
+      document.querySelector('script[src="https://js.stripe.com/v3/buy-button.js"]');
+    
+    if (scriptLoaded) {
+      return (
+        // @ts-ignore - TypeScript doesn't know about this custom element
+        <stripe-buy-button
+          buy-button-id={buyButtonId}
+          publishable-key="pk_test_51QoMVlGYVYFmwG4FYQ68QZ4salYBAwr7cSFzqypObpzyEDTZg9woA7v2xoUdwFFY9aks19KioxyCy3GTBAFUzMOd00N0xm7sdi"
+        />
+      );
+    }
+    
+    return null;
+  };
   
   return (
     <Card className={`flex flex-col h-full relative ${plan.highlighted ? 'border-primary shadow-lg' : ''}`}>
@@ -86,14 +111,7 @@ export const PricingCard = ({ plan, isAnnual, isLoading, onSelect }: PricingCard
         
         {showStripeDirect && (
           <div className="w-full" ref={stripeBuyButtonRef}>
-            {/* Stripe Buy Button will be rendered here by the script */}
-            {typeof document !== 'undefined' && document.querySelector('script[src="https://js.stripe.com/v3/buy-button.js"]') && (
-              // @ts-ignore - Using custom element that's defined in the stripe-elements.d.ts file
-              <stripe-buy-button
-                buy-button-id={buyButtonId}
-                publishable-key="pk_test_51QoMVlGYVYFmwG4FYQ68QZ4salYBAwr7cSFzqypObpzyEDTZg9woA7v2xoUdwFFY9aks19KioxyCy3GTBAFUzMOd00N0xm7sdi"
-              ></stripe-buy-button>
-            )}
+            {renderStripeBuyButton()}
           </div>
         )}
       </CardFooter>
