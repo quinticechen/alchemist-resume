@@ -13,7 +13,11 @@ const SurveyPage = () => {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [surveyCompleted, setSurveyCompleted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const { selectedPlan, isAnnual } = location.state || {};
+  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  const isAnnual = location.state?.isAnnual;
+  
+
+
   const googleFormUrl =
     "https://docs.google.com/forms/d/e/1FAIpQLScBhsrd96t2TZT-CfJv5yPfyP50L42BYAy2ATJOJsFF5FYOZA/viewform?embedded=true";
 
