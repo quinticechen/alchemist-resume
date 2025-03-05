@@ -165,7 +165,7 @@ const SurveyPage = () => {
     //     description: "Please select a plan before proceeding.",
     //     variant: "destructive",
     //   });
-    //   navigate("/pricing"); // 如果沒有選擇計劃，導航到定價頁面
+      navigate("/pricing"); // 如果沒有選擇計劃，導航到定價頁面
     // }
   };
 
