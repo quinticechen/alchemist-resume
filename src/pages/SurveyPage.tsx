@@ -166,7 +166,7 @@ const SurveyPage = () => {
     //     variant: "destructive",
     //   });
     //   navigate("/pricing"); // 如果沒有選擇計劃，導航到定價頁面
-    }
+    // }
   };
 
   const formUrl = userEmail
