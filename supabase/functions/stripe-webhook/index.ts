@@ -1,196 +1,240 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { corsHeaders } from "../_shared/cors.ts";
-import Stripe from "stripe";
+import Stripe from 'https://esm.sh/stripe@12.18.0';
 
-// Define CORS headers for cross-origin requests
-// const corsHeaders = {
-//   'Access-Control-Allow-Origin': '*',
-//   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-environment',
-// };
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
 
-console.log("Hello from stripe-webhook Edge Function!");
-
-// Get environment variables
-const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY');
-const stripeWebhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET');
-const supabaseUrl = Deno.env.get('SUPABASE_URL');
-const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-
-if (!stripeSecretKey || !stripeWebhookSecret) {
-  console.error("STRIPE_SECRET_KEY or STRIPE_WEBHOOK_SECRET is not set");
-}
-
-if (!supabaseUrl || !supabaseServiceKey) {
-  console.error("SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is not set");
-}
-
-const stripe = new Stripe(stripeSecretKey, {
-  apiVersion: '2025-01-27.acacia',
-});
+console.log("Stripe webhook function loaded");
 
 serve(async (req) => {
-  console.log(`Received ${req.method} request to stripe-webhook function`);
-  
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    console.log("Handling CORS preflight request");
-    return new Response(null, { status: 200, headers: corsHeaders });
+    return new Response(null, {
+      headers: corsHeaders,
+      status: 200,
+    });
   }
 
   try {
-    if (req.method !== 'POST') {
-      console.error(`Invalid method: ${req.method}`);
-      return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-        status: 405,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
+    const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
+      apiVersion: '2023-10-16', // Use a stable API version
+      httpClient: Stripe.createFetchHttpClient(),
+    });
 
-    // Get the request body
-    const payload = await req.text();
+    // Get the signature from the header
     const signature = req.headers.get('stripe-signature');
-
     if (!signature) {
-      console.error("No Stripe signature in request headers");
-      return new Response(JSON.stringify({ error: 'No Stripe signature' }), {
-        status: 400,
+      console.error("No Stripe signature found in request headers");
+      return new Response(JSON.stringify({ error: 'No Stripe signature found' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 400,
       });
     }
 
-    // Construct the event from payload and signature
+    // Get the webhook secret
+    const webhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET');
+    if (!webhookSecret) {
+      console.error("Stripe webhook secret not configured");
+      return new Response(JSON.stringify({ error: 'Webhook secret missing' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500,
+      });
+    }
+
+    const body = await req.text();
+    console.log("Request body received, length:", body.length);
+
+    // IMPORTANT: Use constructEventAsync instead of constructEvent
     let event;
     try {
       event = await stripe.webhooks.constructEventAsync(
-        payload,
+        body,
         signature,
-        Deno.env.get("STRIPE_WEBHOOK_SECRET")
+        webhookSecret
       );
+      console.log("Webhook event constructed successfully:", event.type);
     } catch (err) {
       console.error(`Webhook signature verification failed: ${err.message}`);
-      return new Response(JSON.stringify({ error: `Webhook Error: ${err.message}` }), {
-        status: 400,
+      return new Response(JSON.stringify({ error: `Webhook signature verification failed: ${err.message}` }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 400,
       });
     }
 
-    console.log(`Processing Stripe event: ${event.type}`);
-
-    // Handle different event types
+    // Handle the event
     switch (event.type) {
       case 'checkout.session.completed': {
+        console.log("Processing checkout.session.completed event");
         const session = event.data.object;
-        console.log(`Checkout session completed: ${session.id}`);
         
-        const userId = session.metadata?.user_id;
-        const planId = session.metadata?.plan_id;
-        const isAnnual = session.metadata?.is_annual === 'true';
+        // Retrieve more details about the session
+        const checkoutSession = await stripe.checkout.sessions.retrieve(session.id, {
+          expand: ['line_items', 'subscription', 'customer'],
+        });
         
-        if (!userId) {
-          throw new Error('No user ID found in session metadata');
+        console.log("Checkout session details:", JSON.stringify({
+          id: checkoutSession.id,
+          customerId: checkoutSession.customer?.id,
+          subscriptionId: checkoutSession.subscription?.id,
+          status: checkoutSession.status,
+        }));
+
+        // Check if all required data is available
+        if (!checkoutSession.customer || !checkoutSession.subscription) {
+          console.error("Missing customer or subscription data in session");
+          return new Response(JSON.stringify({ error: 'Missing customer or subscription data' }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 400,
+          });
         }
-        
-        if (!planId) {
-          throw new Error('No plan ID found in session metadata');
-        }
-        
-        // Get subscription details
-        const subscription = await stripe.subscriptions.retrieve(session.subscription);
-        
-        // Update subscription and transaction in database
-        await updateSubscriptionAndTransaction(
-          userId,
-          session.customer,
-          subscription.id,
-          subscription.status,
-          planId,
-          new Date(subscription.current_period_start * 1000),
-          new Date(subscription.current_period_end * 1000),
-          subscription.cancel_at_period_end,
-          session.id,
-          session.amount_total / 100, // Convert from cents to dollars
-          session.currency,
-          'completed'
+
+        // Get the subscription details
+        const subscription = await stripe.subscriptions.retrieve(
+          checkoutSession.subscription.id
         );
         
-        console.log(`Successfully processed checkout.session.completed for user ${userId}`);
+        console.log("Subscription details:", JSON.stringify({
+          id: subscription.id,
+          customerId: subscription.customer,
+          status: subscription.status,
+          currentPeriod: {
+            start: subscription.current_period_start,
+            end: subscription.current_period_end,
+          },
+        }));
+
+        // Determine the tier from the product ID
+        const priceId = subscription.items.data[0]?.price.id;
+        const productId = subscription.items.data[0]?.price.product;
+        
+        let tier = 'apprentice';
+        if (productId) {
+          const product = await stripe.products.retrieve(productId.toString());
+          console.log("Product details:", JSON.stringify({
+            id: product.id,
+            name: product.name,
+            metadata: product.metadata,
+          }));
+          
+          // Extract tier from product metadata or name
+          if (product.metadata.tier) {
+            tier = product.metadata.tier;
+          } else if (product.name.toLowerCase().includes('alchemist')) {
+            tier = 'alchemist';
+          } else if (product.name.toLowerCase().includes('grandmaster')) {
+            tier = 'grandmaster';
+          }
+        }
+        
+        console.log(`Determined tier: ${tier}`);
+
+        // Convert user's Stripe customer ID to your user ID from your database
+        // This requires that you've previously stored the mapping
+        const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2.39.4");
+        
+        // Create Supabase client
+        const supabaseUrl = Deno.env.get('SUPABASE_URL');
+        const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+        
+        if (!supabaseUrl || !supabaseServiceKey) {
+          console.error("Supabase credentials not configured");
+          return new Response(JSON.stringify({ error: 'Database connection failed' }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 500,
+          });
+        }
+        
+        const supabase = createClient(supabaseUrl, supabaseServiceKey);
+        
+        // Get user ID from Stripe customer ID
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('stripe_customer_id', subscription.customer)
+          .single();
+        
+        if (profileError || !profileData) {
+          console.error("Error fetching user profile:", profileError);
+          
+          // Try to find user by querying existing subscriptions
+          const { data: subData, error: subError } = await supabase
+            .from('subscriptions')
+            .select('user_id')
+            .eq('stripe_customer_id', subscription.customer)
+            .single();
+          
+          if (subError || !subData) {
+            console.error("Could not find user for this customer:", subscription.customer);
+            return new Response(JSON.stringify({ error: 'User not found' }), {
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              status: 404,
+            });
+          }
+          
+          profileData = { id: subData.user_id };
+          console.log("Found user ID from subscriptions table:", profileData.id);
+        } else {
+          console.log("Found user ID from profiles table:", profileData.id);
+        }
+        
+        // Record the transaction and update subscription details
+        try {
+          const { data: functionCallData, error: functionCallError } = await supabase.rpc(
+            'update_subscription_and_transaction',
+            {
+              p_user_id: profileData.id,
+              p_stripe_customer_id: subscription.customer.toString(),
+              p_stripe_subscription_id: subscription.id,
+              p_status: subscription.status,
+              p_tier: tier,
+              p_current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
+              p_current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+              p_cancel_at_period_end: subscription.cancel_at_period_end,
+              p_stripe_session_id: session.id,
+              p_amount: session.amount_total / 100, // Convert from cents to dollars
+              p_currency: session.currency.toUpperCase(),
+              p_payment_status: session.payment_status
+            }
+          );
+          
+          if (functionCallError) {
+            console.error("Error updating subscription and transaction:", functionCallError);
+            return new Response(JSON.stringify({ error: 'Database update failed' }), {
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              status: 500,
+            });
+          }
+          
+          console.log("Successfully updated subscription and transaction data");
+        } catch (dbError) {
+          console.error("Exception during database update:", dbError);
+          return new Response(JSON.stringify({ error: `Database exception: ${dbError.message}` }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 500,
+          });
+        }
         break;
       }
       
       case 'customer.subscription.updated': {
+        console.log("Processing customer.subscription.updated event");
+        // Handle subscription updates (status changes, plan changes, etc.)
         const subscription = event.data.object;
-        console.log(`Subscription updated: ${subscription.id}`);
         
-        // Get user ID from metadata
-        const userId = subscription.metadata?.user_id;
-        
-        if (!userId) {
-          // Try to get user ID from customer metadata
-          const customer = await stripe.customers.retrieve(subscription.customer);
-          if (!customer.metadata?.user_id) {
-            throw new Error('No user ID found in customer metadata');
-          }
-          
-          // Use user ID from customer metadata
-          await updateSubscriptionStatus(
-            customer.metadata.user_id,
-            subscription.customer,
-            subscription.id,
-            subscription.status,
-            subscription.items.data[0]?.price?.metadata?.tier || 'unknown',
-            new Date(subscription.current_period_start * 1000),
-            new Date(subscription.current_period_end * 1000),
-            subscription.cancel_at_period_end
-          );
-        } else {
-          // Use user ID from subscription metadata
-          await updateSubscriptionStatus(
-            userId,
-            subscription.customer,
-            subscription.id,
-            subscription.status,
-            subscription.items.data[0]?.price?.metadata?.tier || 'unknown',
-            new Date(subscription.current_period_start * 1000),
-            new Date(subscription.current_period_end * 1000),
-            subscription.cancel_at_period_end
-          );
-        }
-        
-        console.log(`Successfully processed customer.subscription.updated`);
+        // Similar logic to checkout.session.completed but for updates
+        // Update the subscription record in your database
         break;
       }
       
       case 'customer.subscription.deleted': {
+        console.log("Processing customer.subscription.deleted event");
+        // Handle subscription cancellation or expiration
         const subscription = event.data.object;
-        console.log(`Subscription deleted: ${subscription.id}`);
         
-        // Get user ID from metadata
-        let userId = subscription.metadata?.user_id;
-        
-        if (!userId) {
-          // Try to get user ID from customer metadata
-          const customer = await stripe.customers.retrieve(subscription.customer);
-          userId = customer.metadata?.user_id;
-          
-          if (!userId) {
-            throw new Error('No user ID found in customer or subscription metadata');
-          }
-        }
-        
-        // Update subscription in database
-        await updateSubscriptionStatus(
-          userId,
-          subscription.customer,
-          subscription.id,
-          'canceled',
-          'apprentice', // Revert to free tier
-          new Date(subscription.current_period_start * 1000),
-          new Date(subscription.current_period_end * 1000),
-          true
-        );
-        
-        console.log(`Successfully processed customer.subscription.deleted`);
+        // Update the user's subscription status in your database
         break;
       }
       
@@ -199,144 +243,14 @@ serve(async (req) => {
     }
 
     return new Response(JSON.stringify({ received: true }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
-  } catch (error) {
-    console.error(`Webhook error: ${error.message}`);
-    return new Response(JSON.stringify({ error: `Webhook error: ${error.message}` }), {
-      status: 400,
+  } catch (err) {
+    console.error(`Webhook processing error: ${err.message}`);
+    return new Response(JSON.stringify({ error: `Webhook processing error: ${err.message}` }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 500,
     });
   }
 });
-
-// Function to update subscription status in database
-async function updateSubscriptionStatus(
-  userId: string,
-  stripeCustomerId: string,
-  stripeSubscriptionId: string,
-  status: string,
-  tier: string,
-  currentPeriodStart: Date,
-  currentPeriodEnd: Date,
-  cancelAtPeriodEnd: boolean
-) {
-  console.log(`Updating subscription status for user ${userId} to ${tier}`);
-  
-  try {
-    // Update subscriptions table
-    const subscriptionResponse = await fetch(`${supabaseUrl}/rest/v1/subscriptions`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${supabaseServiceKey}`,
-        'apikey': supabaseServiceKey,
-        'Content-Type': 'application/json',
-        'Prefer': 'return=minimal'
-      },
-      body: JSON.stringify({
-        user_id: userId,
-        stripe_customer_id: stripeCustomerId,
-        stripe_subscription_id: stripeSubscriptionId,
-        status: status,
-        tier: tier,
-        current_period_start: currentPeriodStart.toISOString(),
-        current_period_end: currentPeriodEnd.toISOString(),
-        cancel_at_period_end: cancelAtPeriodEnd,
-      }),
-    });
-    
-    if (!subscriptionResponse.ok) {
-      console.error(`Failed to update subscription: ${subscriptionResponse.status} ${subscriptionResponse.statusText}`);
-      throw new Error('Failed to update subscription');
-    }
-    
-    // Update profiles table with subscription status
-    const profilesResponse = await fetch(`${supabaseUrl}/rest/v1/profiles?id=eq.${userId}`, {
-      method: 'PATCH',
-      headers: {
-        'Authorization': `Bearer ${supabaseServiceKey}`,
-        'apikey': supabaseServiceKey,
-        'Content-Type': 'application/json',
-        'Prefer': 'return=minimal'
-      },
-      body: JSON.stringify({
-        subscription_status: tier,
-        monthly_usage_reset_date: currentPeriodEnd.toISOString(),
-        monthly_usage_count: tier === 'alchemist' || tier === 'grandmaster' ? 0 : null
-      }),
-    });
-    
-    if (!profilesResponse.ok) {
-      console.error(`Failed to update profile: ${profilesResponse.status} ${profilesResponse.statusText}`);
-      throw new Error('Failed to update profile');
-    }
-    
-    console.log(`Successfully updated subscription status for user ${userId}`);
-  } catch (error) {
-    console.error(`Error updating subscription status: ${error.message}`);
-    throw error;
-  }
-}
-
-// Function to update subscription and transaction in database
-async function updateSubscriptionAndTransaction(
-  userId: string,
-  stripeCustomerId: string,
-  stripeSubscriptionId: string,
-  status: string,
-  tier: string,
-  currentPeriodStart: Date,
-  currentPeriodEnd: Date,
-  cancelAtPeriodEnd: boolean,
-  stripeSessionId: string,
-  amount: number,
-  currency: string,
-  paymentStatus: string
-) {
-  console.log(`Updating subscription and transaction for user ${userId}`);
-  
-  try {
-    // Update subscription status
-    await updateSubscriptionStatus(
-      userId,
-      stripeCustomerId,
-      stripeSubscriptionId,
-      status,
-      tier,
-      currentPeriodStart,
-      currentPeriodEnd,
-      cancelAtPeriodEnd
-    );
-    
-    // Create transaction record
-    const transactionResponse = await fetch(`${supabaseUrl}/rest/v1/transactions`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${supabaseServiceKey}`,
-        'apikey': supabaseServiceKey,
-        'Content-Type': 'application/json',
-        'Prefer': 'return=minimal'
-      },
-      body: JSON.stringify({
-        user_id: userId,
-        stripe_session_id: stripeSessionId,
-        stripe_subscription_id: stripeSubscriptionId,
-        amount: amount,
-        currency: currency,
-        status: paymentStatus,
-        subscription_tier: tier
-      }),
-    });
-    
-    if (!transactionResponse.ok) {
-      console.error(`Failed to create transaction: ${transactionResponse.status} ${transactionResponse.statusText}`);
-      throw new Error('Failed to create transaction');
-    }
-    
-    console.log(`Successfully created transaction record for user ${userId}`);
-  } catch (error) {
-    console.error(`Error updating subscription and transaction: ${error.message}`);
-    throw error;
-  }
-}
