@@ -15,6 +15,7 @@ interface Transaction {
   status: string;
   tier: string;
   created_at: string;
+  is_annual?: boolean;
 }
 
 const PaymentSuccess: React.FC = () => {
@@ -28,6 +29,7 @@ const PaymentSuccess: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [verificationSuccess, setVerificationSuccess] = useState(false);
   const [transaction, setTransaction] = useState<Transaction | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const verifyPayment = async () => {
@@ -55,6 +57,7 @@ const PaymentSuccess: React.FC = () => {
           }
           
           // If transaction doesn't exist, verify with the function
+          console.log("No existing transaction found, calling verify-stripe-session function");
           const { data, error } = await supabase.functions.invoke(
             "verify-stripe-session",
             {
@@ -62,25 +65,53 @@ const PaymentSuccess: React.FC = () => {
             }
           );
 
+          console.log("Function response:", data, "Error:", error);
+
           if (error) {
             console.error("Payment verification error:", error);
+            setError(`Function error: ${error.message || "Unknown error"}`);
             toast({
               title: "Payment Verification Failed",
               description: "Unable to verify payment. Please contact support.",
               variant: "destructive",
             });
-          } else if (!data || !data.success) {
-            console.error("Verification failed with data:", data);
+            setIsLoading(false);
+            return;
+          } 
+          
+          if (!data) {
+            console.error("No data returned from verification function");
+            setError("No data returned from verification function");
             toast({
               title: "Payment Verification Failed",
-              description: data?.error || "Unable to verify payment. Please contact support.",
+              description: "No data returned from verification. Please contact support.",
               variant: "destructive",
             });
-          } else {
-            console.log("Payment verified successfully:", data);
-            setVerificationSuccess(true);
+            setIsLoading(false);
+            return;
+          }
+          
+          if (!data.success) {
+            console.error("Verification failed with data:", data);
+            setError(data.error || "Unknown verification error");
+            toast({
+              title: "Payment Verification Failed",
+              description: data.error || "Unable to verify payment. Please contact support.",
+              variant: "destructive",
+            });
+            setIsLoading(false);
+            return;
+          }
+          
+          console.log("Payment verified successfully:", data);
+          setVerificationSuccess(true);
 
+          // Check if we need to fetch transaction data or if it came with the response
+          if (data.transactionData) {
+            setTransaction(data.transactionData);
+          } else {
             // Fetch transaction data from the database
+            console.log("Fetching transaction data from database");
             const { data: transactionData, error: transactionError } =
               await supabase
                 .from("transactions")
@@ -90,22 +121,25 @@ const PaymentSuccess: React.FC = () => {
 
             if (transactionError) {
               console.error("Error fetching transaction:", transactionError);
+              setError(`Transaction fetch error: ${transactionError.message}`);
               toast({
                 title: "Transaction Fetch Failed",
                 description: "Unable to fetch transaction details.",
                 variant: "destructive",
               });
             } else {
+              console.log("Transaction data fetched:", transactionData);
               setTransaction(transactionData);
             }
-
-            toast({
-              title: "Payment Verified",
-              description: "Your payment has been successfully verified.",
-            });
           }
-        } catch (error) {
+
+          toast({
+            title: "Payment Verified",
+            description: "Your payment has been successfully verified.",
+          });
+        } catch (error: any) {
           console.error("Error verifying payment:", error);
+          setError(`General error: ${error.message || "Unknown error"}`);
           toast({
             title: "Payment Verification Error",
             description:
@@ -116,6 +150,7 @@ const PaymentSuccess: React.FC = () => {
           setIsLoading(false);
         }
       } else {
+        setError("Missing session ID");
         toast({
           title: "Missing Session ID",
           description:
@@ -196,7 +231,7 @@ const PaymentSuccess: React.FC = () => {
                 <div className="text-light/80">Plan:</div>
                 <div className="capitalize">
                   {transaction.tier}
-                  {isAnnual ? " Annual" : " Monthly"}
+                  {transaction.is_annual || isAnnual ? " Annual" : " Monthly"}
                 </div>
                 <div className="text-light/80">Date:</div>
                 <div>
@@ -221,13 +256,18 @@ const PaymentSuccess: React.FC = () => {
           <h1 className="text-4xl font-bold text-white mb-6">
             Payment Verification Failed
           </h1>
-          <p className="text-light mb-8">
+          <p className="text-light mb-2">
             We couldn't verify your payment. Please contact our support team for
             assistance.
           </p>
+          {error && (
+            <p className="text-red-300 mb-8 max-w-xl mx-auto text-sm">
+              Error details: {error}
+            </p>
+          )}
           <Button
             onClick={() => navigate("/pricing")}
-            className="text-primary bg-light hover:bg-neutral-300"
+            className="text-primary bg-light hover:bg-neutral-300 mt-4"
           >
             Return to Pricing
           </Button>

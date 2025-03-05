@@ -50,11 +50,16 @@ serve(async (req) => {
 
     if (existingTransaction) {
       console.log(`Transaction already exists for session: ${sessionId}`);
+      // Make sure we pass all necessary data and indicate success
+      const isAnnual = existingTransaction.is_annual === true || 
+                       (existingTransaction.stripe_subscription_id && 
+                        existingTransaction.stripe_subscription_id.toLowerCase().includes('year'));
+      
       return new Response(JSON.stringify({ 
         success: true, 
         message: 'Transaction already recorded',
         plan: existingTransaction.tier,
-        isAnnual: existingTransaction.is_annual,
+        isAnnual: isAnnual,
         userId: existingTransaction.user_id,
         sessionId: sessionId
       }), {
@@ -63,79 +68,87 @@ serve(async (req) => {
       });
     }
 
-    // Retrieve the checkout session from Stripe
-    const session = await stripe.checkout.sessions.retrieve(sessionId);
-    if (!session) {
-      return new Response(JSON.stringify({ error: 'Invalid session ID' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    // Check if the session was paid
-    if (session.payment_status !== 'paid') {
-      return new Response(JSON.stringify({ success: false, error: 'Payment not completed' }), {
-        status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    // Get additional information from the session
-    const planId = session.metadata?.plan_id || 'unknown';
-    const isAnnual = session.metadata?.is_annual === 'true';
-    const customerId = session.customer as string;
-    const subscriptionId = session.subscription as string;
-
-    console.log(`Session verified: plan=${planId}, isAnnual=${isAnnual}, customer=${customerId}, subscription=${subscriptionId}`);
-
-    // Retrieve the user ID from the customer metadata or from our database
-    let userId;
     try {
-      const customer = await stripe.customers.retrieve(customerId);
-      if (customer && !customer.deleted && customer.metadata && customer.metadata.user_id) {
-        userId = customer.metadata.user_id;
-      } else {
-        // Look up the user from our database
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('stripe_customer_id', customerId)
-          .single();
-
-        if (error || !data) {
-          throw new Error('Could not find user associated with Stripe customer');
-        }
-
-        userId = data.id;
-
-        // Update the customer metadata for future reference
-        await stripe.customers.update(customerId, {
-          metadata: { user_id: userId }
+      // Retrieve the checkout session from Stripe
+      const session = await stripe.checkout.sessions.retrieve(sessionId);
+      if (!session) {
+        return new Response(JSON.stringify({ success: false, error: 'Invalid session ID' }), {
+          status: 200, // Use 200 to ensure frontend receives the error
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
-    } catch (error) {
-      console.error('Error getting user ID:', error);
-      return new Response(JSON.stringify({ success: false, error: 'Could not verify user' }), {
+
+      // Check if the session was paid
+      if (session.payment_status !== 'paid') {
+        return new Response(JSON.stringify({ success: false, error: 'Payment not completed' }), {
+          status: 200, // Use 200 to ensure frontend receives the error
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      // Get additional information from the session
+      const planId = session.metadata?.plan_id || 'unknown';
+      const isAnnual = session.metadata?.is_annual === 'true';
+      const customerId = session.customer as string;
+      const subscriptionId = session.subscription as string;
+
+      console.log(`Session verified: plan=${planId}, isAnnual=${isAnnual}, customer=${customerId}, subscription=${subscriptionId}`);
+
+      // Retrieve the user ID from the customer metadata or from our database
+      let userId;
+      try {
+        const customer = await stripe.customers.retrieve(customerId);
+        if (customer && !customer.deleted && customer.metadata && customer.metadata.user_id) {
+          userId = customer.metadata.user_id;
+        } else {
+          // Look up the user from our database
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('stripe_customer_id', customerId)
+            .single();
+
+          if (error || !data) {
+            throw new Error('Could not find user associated with Stripe customer');
+          }
+
+          userId = data.id;
+
+          // Update the customer metadata for future reference
+          await stripe.customers.update(customerId, {
+            metadata: { user_id: userId }
+          });
+        }
+      } catch (error) {
+        console.error('Error getting user ID:', error);
+        return new Response(JSON.stringify({ success: false, error: 'Could not verify user' }), {
+          status: 200, // Use 200 to ensure frontend receives the error
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      // Return success with additional information
+      return new Response(JSON.stringify({
+        success: true,
+        plan: planId,
+        isAnnual: isAnnual,
+        userId: userId,
+        sessionId: sessionId,
+      }), {
         status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
+    } catch (stripeError) {
+      console.error(`Stripe API error: ${stripeError.message}`);
+      return new Response(JSON.stringify({ success: false, error: `Stripe API error: ${stripeError.message}` }), {
+        status: 200, // Use 200 to ensure frontend receives the error
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
-
-    // Return success with additional information
-    return new Response(JSON.stringify({
-      success: true,
-      plan: planId,
-      isAnnual: isAnnual,
-      userId: userId,
-      sessionId: sessionId,
-    }), {
-      status: 200,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
   } catch (error) {
     console.error(`Error verifying Stripe session: ${error.message}`);
     return new Response(JSON.stringify({ success: false, error: error.message }), {
-      status: 500,
+      status: 200, // Use 200 to ensure frontend receives the error
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
