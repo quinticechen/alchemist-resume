@@ -140,7 +140,12 @@ const SurveyPage = () => {
     if (selectedPlan) {
       proceedToPayment(selectedPlan);
     } else {
-      navigate("/alchemist-workshop");
+      toast({
+        title: "Error",
+        description: "Please select a plan before proceeding.",
+        variant: "destructive",
+      });
+      navigate("/pricing"); // 如果沒有選擇計劃，導航到定價頁面
     }
   };
 
