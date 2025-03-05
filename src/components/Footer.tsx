@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { Mail, Facebook, Twitter, Instagram, Link as LinkIcon, Copyright } from "lucide-react";
+import { Mail, Facebook, Twitter, Instagram, Linkedin, Copyright } from "lucide-react";
 import Logo from "./header/Logo";
 
 const Footer = () => {
@@ -33,8 +33,8 @@ const Footer = () => {
       url: "https://instagram.com/resume.alchemist",
     },
     {
-      name: "Link",
-      icon: <Link className="h-5 w-5" />,
+      name: "Linkedin",
+      icon: <Linkedin className="h-5 w-5" />,
       url: "https://linkedin.com/company/qwizai",
     },
   ];
