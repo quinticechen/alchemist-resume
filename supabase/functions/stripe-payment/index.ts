@@ -155,7 +155,7 @@ serve(async (req) => {
       const successUrl = new URL(`${origin}/payment-success`);
       
       // Generate a clean URL without placeholders to avoid the {CHECKOUT_SESSION_ID} error
-      successUrl.searchParams.append('session_id', '{CHECKOUT_SESSION_ID}');
+      // successUrl.searchParams.append('session_id', '{CHECKOUT_SESSION_ID}');
       successUrl.searchParams.append('plan', planId);
       successUrl.searchParams.append('is_annual', isAnnual.toString());
 
