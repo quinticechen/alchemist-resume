@@ -109,11 +109,11 @@ export const PricingCard = ({ plan, isAnnual, isLoading, onSelect }: PricingCard
           </Button>
         )}
         
-        {showStripeDirect && (
+        {/* {showStripeDirect && (
           <div className="w-full" ref={stripeBuyButtonRef}>
             {renderStripeBuyButton()}
           </div>
-        )}
+        )} */}
       </CardFooter>
     </Card>
   );
