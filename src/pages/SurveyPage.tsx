@@ -120,19 +120,15 @@ const SurveyPage = () => {
 
   const proceedToPayment = async (planId: string) => {
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("Not authenticated");
 
-      const { data, error } = await supabase.functions.invoke(
-        "stripe-payment",
-        {
-          body: { planId, isAnnual },
-        }
-      );
+      const { data, error } = await supabase.functions.invoke("stripe-payment", {
+        body: { planId, isAnnual },
+      });
 
       if (error) throw error;
+
       if (!data.sessionUrl) throw new Error("No checkout URL received");
 
       window.location.href = data.sessionUrl;
@@ -143,8 +139,6 @@ const SurveyPage = () => {
         description: "Failed to initiate payment. Please try again.",
         variant: "destructive",
       });
-    } finally {
-      setIsLoading(false);
     }
   };
 
