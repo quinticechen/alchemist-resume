@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import Lottie from "react-lottie";
 import animationData from "@/animations/Jellyfish.yellow.money.json";
@@ -15,7 +14,7 @@ interface Transaction {
   status: string;
   tier: string;
   created_at: string;
-  is_annual?: boolean;
+  payment_period?: string;
 }
 
 const PaymentSuccess: React.FC = () => {
@@ -26,15 +25,10 @@ const PaymentSuccess: React.FC = () => {
   const [verificationSuccess, setVerificationSuccess] = useState(false);
   const [transaction, setTransaction] = useState<Transaction | null>(null);
   const [error, setError] = useState<string | null>(null);
-  
-  // Special handling for malformed URL parameters
+
   const getSessionId = () => {
-    // First try normal parameter retrieval
     let sessionId = searchParams.get("session_id");
-    
-    // If not found, check for unusual URL format with ?session_id instead of &session_id
     if (!sessionId) {
-      // Check each parameter to see if it contains a nested session_id
       for (const [key, value] of searchParams.entries()) {
         if (value.includes("?session_id=")) {
           const parts = value.split("?session_id=");
@@ -44,10 +38,9 @@ const PaymentSuccess: React.FC = () => {
         }
       }
     }
-    
     return sessionId;
   };
-  
+
   const plan = searchParams.get("plan");
   const isAnnual = searchParams.get("is_annual") === "true";
   const sessionId = getSessionId();
@@ -60,7 +53,7 @@ const PaymentSuccess: React.FC = () => {
         isAnnual,
         searchParams: Object.fromEntries(searchParams.entries())
       });
-      
+
       if (!sessionId) {
         setError("Missing session ID");
         toast({
@@ -73,7 +66,6 @@ const PaymentSuccess: React.FC = () => {
         return;
       }
 
-      // Check if session ID contains placeholder
       if (sessionId === '{CHECKOUT_SESSION_ID}') {
         console.error("Session ID is still a placeholder: {CHECKOUT_SESSION_ID}");
         setError("Invalid session ID format. The session ID is still a placeholder.");
@@ -88,14 +80,13 @@ const PaymentSuccess: React.FC = () => {
 
       try {
         console.log("Verifying payment session:", sessionId);
-        
-        // First check if transaction already exists in database
+
         const { data: existingTransaction, error: txError } = await supabase
           .from("transactions")
           .select("*")
           .eq("stripe_session_id", sessionId)
           .single();
-        
+
         if (existingTransaction) {
           console.log("Transaction already exists:", existingTransaction);
           setVerificationSuccess(true);
@@ -107,8 +98,7 @@ const PaymentSuccess: React.FC = () => {
           });
           return;
         }
-        
-        // If transaction doesn't exist, verify with the function
+
         console.log("No existing transaction found, calling verify-stripe-session function");
         const { data, error } = await supabase.functions.invoke(
           "verify-stripe-session",
@@ -158,11 +148,9 @@ const PaymentSuccess: React.FC = () => {
         console.log("Payment verified successfully:", data);
         setVerificationSuccess(true);
 
-        // Check if we need to fetch transaction data or if it came with the response
         if (data.transactionData) {
           setTransaction(data.transactionData);
         } else {
-          // Fetch transaction data from the database
           console.log("Fetching transaction data from database");
           const { data: transactionData, error: transactionError } =
             await supabase
@@ -205,7 +193,6 @@ const PaymentSuccess: React.FC = () => {
 
     verifyPayment();
   }, [sessionId, toast]);
-
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -269,8 +256,10 @@ const PaymentSuccess: React.FC = () => {
                 <div className="capitalize">{transaction.status}</div>
                 <div className="text-light/80">Plan:</div>
                 <div className="capitalize">
-                  {transaction.tier}
-                  {transaction.is_annual || isAnnual ? " Annual" : " Monthly"}
+                  {transaction.tier}{" "}
+                  {transaction.payment_period 
+                    ? (transaction.payment_period === 'annual' ? 'Annual' : 'Monthly') 
+                    : (isAnnual ? 'Annual' : 'Monthly')}
                 </div>
                 <div className="text-light/80">Date:</div>
                 <div>

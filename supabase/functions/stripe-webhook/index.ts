@@ -223,7 +223,7 @@ serve(async (req) => {
           // First update the subscription with payment period
           await updateSubscriptionWithPaymentPeriod();
           
-          // Then create the transaction record
+          // Then create the transaction record with payment_period
           const { data: transactionData, error: transactionError } = await supabase
             .from('transactions')
             .insert({
@@ -233,7 +233,8 @@ serve(async (req) => {
               amount: session.amount_total / 100, // Convert from cents to dollars
               currency: session.currency.toUpperCase(),
               status: session.payment_status,
-              tier: tier
+              tier: tier,
+              payment_period: payment_period // Add payment period to transaction record
             });
             
           if (transactionError) {
