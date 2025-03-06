@@ -57,7 +57,7 @@ const FAQ = () => {
                 <AccordionContent className="px-6 pb-4 text-neutral-600">
                   {faq.answer.split("\n").map((line, index) => (
                     <p key={index} className="mb-2 text-sm text-gray-700">
-                      {faq.answer}
+                      {line}
                     </p>
                   ))}
                 </AccordionContent>
