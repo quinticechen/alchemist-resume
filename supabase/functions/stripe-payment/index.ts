@@ -155,8 +155,7 @@ serve(async (req) => {
       const origin = req.headers.get('origin') || 'https://resumealchemist.qwizai.com';
       const successUrl = new URL(`${origin}/payment-success`);
       
-      // Don't add the session_id parameter with the placeholder
-      // Instead, use Stripe's automatic conversion of the {CHECKOUT_SESSION_ID} placeholder
+      // Add plan and is_annual as query parameters
       successUrl.searchParams.append('plan', planId);
       successUrl.searchParams.append('is_annual', isAnnual.toString());
 
@@ -174,7 +173,7 @@ serve(async (req) => {
           },
         ],
         mode: 'subscription',
-        success_url: `${successUrlString}?session_id={CHECKOUT_SESSION_ID}`, // Let Stripe handle the placeholder replacement
+        success_url: `${successUrlString}&session_id={CHECKOUT_SESSION_ID}`, // Use & instead of ? for proper URL params
         cancel_url: `${origin}/pricing?canceled=true`,
         metadata: {
           user_id: userId,

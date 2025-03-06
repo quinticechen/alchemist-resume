@@ -20,19 +20,47 @@ interface Transaction {
 
 const PaymentSuccess: React.FC = () => {
   const [searchParams] = useSearchParams();
-  const sessionId = searchParams.get("session_id");
-  const plan = searchParams.get("plan");
-  const isAnnual = searchParams.get("is_annual") === "true";
-
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
   const [verificationSuccess, setVerificationSuccess] = useState(false);
   const [transaction, setTransaction] = useState<Transaction | null>(null);
   const [error, setError] = useState<string | null>(null);
+  
+  // Special handling for malformed URL parameters
+  const getSessionId = () => {
+    // First try normal parameter retrieval
+    let sessionId = searchParams.get("session_id");
+    
+    // If not found, check for unusual URL format with ?session_id instead of &session_id
+    if (!sessionId) {
+      // Check each parameter to see if it contains a nested session_id
+      for (const [key, value] of searchParams.entries()) {
+        if (value.includes("?session_id=")) {
+          const parts = value.split("?session_id=");
+          sessionId = parts[1];
+          console.log("Found session ID in malformed URL:", sessionId);
+          break;
+        }
+      }
+    }
+    
+    return sessionId;
+  };
+  
+  const plan = searchParams.get("plan");
+  const isAnnual = searchParams.get("is_annual") === "true";
+  const sessionId = getSessionId();
 
   useEffect(() => {
     const verifyPayment = async () => {
+      console.log("URL parameters:", {
+        sessionId,
+        plan,
+        isAnnual,
+        searchParams: Object.fromEntries(searchParams.entries())
+      });
+      
       if (!sessionId) {
         setError("Missing session ID");
         toast({
