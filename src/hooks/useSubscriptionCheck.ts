@@ -36,6 +36,7 @@ export const useSubscriptionCheck = () => {
           localStorage.setItem("userProfile", JSON.stringify(profile));
         }
       }
+      
 
       console.log("Full profile data:", profile);
 
