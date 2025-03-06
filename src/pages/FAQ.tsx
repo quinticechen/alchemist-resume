@@ -51,15 +51,8 @@ const FAQ = () => {
                 <AccordionTrigger className="px-6 py-4 text-lg font-semibold hover:text-primary">
                   {faq.question}
                 </AccordionTrigger>
-                {/* <AccordionContent className="px-6 pb-4 text-neutral-600">
-                  {faq.answer}
-                </AccordionContent> */}
                 <AccordionContent className="px-6 pb-4 text-neutral-600">
-                  {faq.answer.split("\n").map((line, index) => (
-                    <p key={index} className="mb-2 text-sm text-gray-700">
-                      {line}
-                    </p>
-                  ))}
+                  {faq.answer}
                 </AccordionContent>
               </AccordionItem>
             ))}
