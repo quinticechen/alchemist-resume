@@ -1,3 +1,4 @@
+
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,18 +12,21 @@ import { Session } from "@supabase/supabase-js";
 import { Badge } from "@/components/ui/badge";
 import { trackBeginCheckout } from "@/utils/gtm";
 
+interface SubscriptionInfo {
+  subscription_status: "apprentice" | "alchemist" | "grandmaster";
+  payment_period?: "monthly" | "annual";
+  usage_count: number;
+  monthly_usage_count: number | null;
+  free_trial_limit: number;
+}
+
 const Pricing = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isAnnual, setIsAnnual] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [session, setSession] = useState<Session | null>(null);
-  const [usageInfo, setUsageInfo] = useState<{
-    subscription_status: "apprentice" | "alchemist" | "grandmaster";
-    usage_count: number;
-    monthly_usage_count: number | null;
-    free_trial_limit: number;
-  } | null>(null);
+  const [usageInfo, setUsageInfo] = useState<SubscriptionInfo | null>(null);
 
   const {
     stripePromise,
@@ -80,7 +84,9 @@ const Pricing = () => {
   const fetchUsageInfo = async (userId: string) => {
     try {
       console.log("Fetching usage info for user:", userId);
-      const { data, error } = await supabase
+      
+      // First get profile info
+      const { data: profileData, error: profileError } = await supabase
         .from("profiles")
         .select(
           "subscription_status, usage_count, monthly_usage_count, free_trial_limit"
@@ -88,13 +94,36 @@ const Pricing = () => {
         .eq("id", userId)
         .single();
 
-      if (error) {
-        console.error("Error fetching usage info:", error);
+      if (profileError) {
+        console.error("Error fetching profile info:", profileError);
         return;
       }
+      
+      // Then get subscription info for payment period
+      const { data: subscriptionData, error: subscriptionError } = await supabase
+        .from("subscriptions")
+        .select("payment_period")
+        .eq("user_id", userId)
+        .single();
+        
+      if (subscriptionError && subscriptionError.code !== 'PGRST116') {
+        // PGRST116 is "Results contain 0 rows" - this is expected for users without subscriptions
+        console.error("Error fetching subscription info:", subscriptionError);
+      }
+      
+      // Combine the data
+      const combinedData: SubscriptionInfo = {
+        ...profileData,
+        payment_period: subscriptionData?.payment_period || 'monthly'
+      };
 
-      console.log("Usage info fetched:", data);
-      setUsageInfo(data);
+      console.log("Usage and subscription info fetched:", combinedData);
+      setUsageInfo(combinedData);
+      
+      // Set isAnnual based on current subscription
+      if (combinedData.payment_period === 'annual') {
+        setIsAnnual(true);
+      }
     } catch (err) {
       console.error("Unexpected error fetching usage info:", err);
     }
@@ -121,11 +150,6 @@ const Pricing = () => {
       navigate("/login", { state: { from: "/pricing" } });
       return;
     }
-
-    // if (!hasCompletedSurvey) {
-    //   navigate("/survey-page", { state: { selectedPlan: planId, isAnnual } });
-    //   return;
-    // }
 
     if (hasCompletedSurvey === null) {
       navigate("/survey-page", { state: { selectedPlan: planId, isAnnual } });
@@ -219,12 +243,31 @@ const Pricing = () => {
       setIsLoading(false);
     }
   };
+  
+  // Check if a plan is the current plan based on both tier and payment period
+  const isCurrentPlan = (planId: string, planIsAnnual: boolean) => {
+    if (!usageInfo) return false;
+    
+    const tierMatch = usageInfo.subscription_status === planId;
+    
+    if (!tierMatch) return false;
+    
+    // For apprentice tier, always consider it a match since there's no payment period
+    if (planId === 'apprentice') return true;
+    
+    // For paid tiers, check payment period match
+    const periodMatch = planIsAnnual ? 
+      usageInfo.payment_period === 'annual' : 
+      usageInfo.payment_period === 'monthly';
+      
+    return tierMatch && periodMatch;
+  };
 
   const plans = pricingPlans.map((plan) => ({
     ...plan,
     showButton:
       plan.planId === "apprentice" ? !isAuthenticated : plan.showButton,
-    isCurrentPlan: usageInfo?.subscription_status === plan.planId,
+    isCurrentPlan: isCurrentPlan(plan.planId, isAnnual),
   }));
 
   return (
@@ -247,6 +290,8 @@ const Pricing = () => {
                   Current Plan:{" "}
                   {usageInfo.subscription_status.charAt(0).toUpperCase() +
                     usageInfo.subscription_status.slice(1)}
+                  {usageInfo.payment_period && usageInfo.subscription_status !== 'apprentice' && 
+                    ` (${usageInfo.payment_period === 'annual' ? 'Annual' : 'Monthly'})`}
                 </Badge>
                 <Badge
                   variant="outline"

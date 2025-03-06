@@ -130,6 +130,16 @@ serve(async (req) => {
         }
         
         console.log(`Determined tier: ${tier}`);
+        
+        // Determine payment period (monthly or annual)
+        let payment_period = 'monthly';
+        const interval = subscription.items.data[0]?.price.recurring?.interval;
+        
+        if (interval === 'year') {
+          payment_period = 'annual';
+        }
+        
+        console.log(`Determined payment period: ${payment_period}`);
 
         // Create Supabase client
         const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2.39.4");
@@ -179,33 +189,71 @@ serve(async (req) => {
           console.log("Found user ID from profiles table:", userData.id);
         }
         
+        // Create a custom function to update subscription with payment period
+        const updateSubscriptionWithPaymentPeriod = async () => {
+          try {
+            const { data, error } = await supabase
+              .from('subscriptions')
+              .upsert({
+                user_id: userData.id,
+                stripe_customer_id: subscription.customer.toString(),
+                stripe_subscription_id: subscription.id,
+                status: subscription.status,
+                tier: tier,
+                payment_period: payment_period,
+                current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
+                current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+                cancel_at_period_end: subscription.cancel_at_period_end
+              }, { onConflict: 'user_id' });
+              
+            if (error) {
+              console.error("Error updating subscription:", error);
+              throw error;
+            }
+            
+            return data;
+          } catch (err) {
+            console.error("Exception updating subscription:", err);
+            throw err;
+          }
+        };
+        
         // Record the transaction and update subscription details
         try {
-          // Use the RPC call with the updated function
-          const { data: functionCallData, error: functionCallError } = await supabase.rpc(
-            'update_subscription_and_transaction',
-            {
-              p_user_id: userData.id,
-              p_stripe_customer_id: subscription.customer.toString(),
-              p_stripe_subscription_id: subscription.id,
-              p_status: subscription.status,
-              p_tier: tier,
-              p_current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-              p_current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-              p_cancel_at_period_end: subscription.cancel_at_period_end,
-              p_stripe_session_id: session.id,
-              p_amount: session.amount_total / 100, // Convert from cents to dollars
-              p_currency: session.currency.toUpperCase(),
-              p_payment_status: session.payment_status
-            }
-          );
+          // First update the subscription with payment period
+          await updateSubscriptionWithPaymentPeriod();
           
-          if (functionCallError) {
-            console.error("Error updating subscription and transaction:", functionCallError);
-            return new Response(JSON.stringify({ error: 'Database update failed' }), {
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-              status: 500,
+          // Then create the transaction record
+          const { data: transactionData, error: transactionError } = await supabase
+            .from('transactions')
+            .insert({
+              user_id: userData.id,
+              stripe_session_id: session.id,
+              stripe_subscription_id: subscription.id,
+              amount: session.amount_total / 100, // Convert from cents to dollars
+              currency: session.currency.toUpperCase(),
+              status: session.payment_status,
+              tier: tier
             });
+            
+          if (transactionError) {
+            console.error("Error inserting transaction:", transactionError);
+            // Continue execution even if transaction insert fails
+          }
+          
+          // Update profiles table
+          const { error: profileUpdateError } = await supabase
+            .from('profiles')
+            .update({
+              subscription_status: tier,
+              monthly_usage_reset_date: new Date(subscription.current_period_end * 1000).toISOString(),
+              monthly_usage_count: tier === 'apprentice' ? null : 0  // Reset monthly usage count for paid tiers
+            })
+            .eq('id', userData.id);
+            
+          if (profileUpdateError) {
+            console.error("Error updating profile:", profileUpdateError);
+            // Continue execution even if profile update fails
           }
           
           console.log("Successfully updated subscription and transaction data");
@@ -221,20 +269,133 @@ serve(async (req) => {
       
       case 'customer.subscription.updated': {
         console.log("Processing customer.subscription.updated event");
-        // Handle subscription updates (status changes, plan changes, etc.)
         const subscription = event.data.object;
         
-        // Similar logic to checkout.session.completed but for updates
-        // Update the subscription record in your database
+        // Determine payment period (monthly or annual)
+        let payment_period = 'monthly';
+        const interval = subscription.items.data[0]?.price.recurring?.interval;
+        
+        if (interval === 'year') {
+          payment_period = 'annual';
+        }
+        
+        console.log(`Subscription updated - Payment period: ${payment_period}`);
+        
+        // Create Supabase client
+        const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2.39.4");
+        const supabaseUrl = Deno.env.get('SUPABASE_URL');
+        const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+        
+        if (!supabaseUrl || !supabaseServiceKey) {
+          console.error("Supabase credentials not configured");
+          return new Response(JSON.stringify({ error: 'Database connection failed' }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 500,
+          });
+        }
+        
+        const supabase = createClient(supabaseUrl, supabaseServiceKey);
+        
+        // Find the subscription in the database
+        const { data: subData, error: subError } = await supabase
+          .from('subscriptions')
+          .select('user_id')
+          .eq('stripe_subscription_id', subscription.id)
+          .single();
+          
+        if (subError || !subData) {
+          console.error("Could not find subscription:", subscription.id);
+          return new Response(JSON.stringify({ error: 'Subscription not found' }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 404,
+          });
+        }
+        
+        // Update the subscription
+        const { error: updateError } = await supabase
+          .from('subscriptions')
+          .update({
+            status: subscription.status,
+            payment_period: payment_period,
+            current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
+            current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+            cancel_at_period_end: subscription.cancel_at_period_end,
+            updated_at: new Date().toISOString()
+          })
+          .eq('stripe_subscription_id', subscription.id);
+          
+        if (updateError) {
+          console.error("Error updating subscription:", updateError);
+          return new Response(JSON.stringify({ error: 'Error updating subscription' }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 500,
+          });
+        }
+        
+        console.log("Successfully updated subscription");
         break;
       }
       
       case 'customer.subscription.deleted': {
         console.log("Processing customer.subscription.deleted event");
-        // Handle subscription cancellation or expiration
         const subscription = event.data.object;
         
-        // Update the user's subscription status in your database
+        // Create Supabase client
+        const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2.39.4");
+        const supabaseUrl = Deno.env.get('SUPABASE_URL');
+        const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+        
+        if (!supabaseUrl || !supabaseServiceKey) {
+          console.error("Supabase credentials not configured");
+          return new Response(JSON.stringify({ error: 'Database connection failed' }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 500,
+          });
+        }
+        
+        const supabase = createClient(supabaseUrl, supabaseServiceKey);
+        
+        // Find the subscription in the database
+        const { data: subData, error: subError } = await supabase
+          .from('subscriptions')
+          .select('user_id')
+          .eq('stripe_subscription_id', subscription.id)
+          .single();
+          
+        if (subError || !subData) {
+          console.error("Could not find subscription:", subscription.id);
+          return new Response(JSON.stringify({ error: 'Subscription not found' }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 404,
+          });
+        }
+        
+        // Update the subscription status
+        const { error: updateError } = await supabase
+          .from('subscriptions')
+          .update({
+            status: 'canceled',
+            updated_at: new Date().toISOString()
+          })
+          .eq('stripe_subscription_id', subscription.id);
+          
+        if (updateError) {
+          console.error("Error updating subscription status:", updateError);
+        }
+        
+        // Reset user to apprentice tier
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update({
+            subscription_status: 'apprentice'
+          })
+          .eq('id', subData.user_id);
+          
+        if (profileError) {
+          console.error("Error updating profile subscription status:", profileError);
+        }
+        
+        console.log("Successfully processed subscription cancellation");
         break;
       }
       
