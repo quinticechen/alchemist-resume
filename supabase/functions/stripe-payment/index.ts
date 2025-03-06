@@ -1,3 +1,4 @@
+
 // @ts-ignore
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.47.0";
@@ -154,16 +155,15 @@ serve(async (req) => {
       const origin = req.headers.get('origin') || 'https://resumealchemist.qwizai.com';
       const successUrl = new URL(`${origin}/payment-success`);
       
-      // Generate a clean URL without placeholders to avoid the {CHECKOUT_SESSION_ID} error
-      // successUrl.searchParams.append('session_id', '{CHECKOUT_SESSION_ID}');
+      // Don't add the session_id parameter with the placeholder
+      // Instead, use Stripe's automatic conversion of the {CHECKOUT_SESSION_ID} placeholder
       successUrl.searchParams.append('plan', planId);
       successUrl.searchParams.append('is_annual', isAnnual.toString());
 
       const successUrlString = successUrl.toString();
-      console.log(`Success URL: ${successUrlString}`);
-      console.log(`Creating checkout session with price ID: ${priceId}`);
+      console.log(`Success URL base: ${successUrlString}`);
 
-      // Create Stripe Checkout Session
+      // Create Stripe Checkout Session with the session_id parameter automatically handled by Stripe
       const session = await stripe.checkout.sessions.create({
         customer: stripeCustomerId,
         payment_method_types: ['card'],
@@ -174,7 +174,7 @@ serve(async (req) => {
           },
         ],
         mode: 'subscription',
-        success_url: successUrlString,
+        success_url: `${successUrlString}?session_id={CHECKOUT_SESSION_ID}`, // Let Stripe handle the placeholder replacement
         cancel_url: `${origin}/pricing?canceled=true`,
         metadata: {
           user_id: userId,

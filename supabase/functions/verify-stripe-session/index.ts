@@ -33,8 +33,11 @@ serve(async (req) => {
     // Get the session ID from the request body
     const { sessionId } = await req.json();
     if (!sessionId) {
-      return new Response(JSON.stringify({ error: 'Missing session ID' }), {
-        status: 400,
+      return new Response(JSON.stringify({ 
+        success: false,
+        error: 'Missing session ID' 
+      }), {
+        status: 200, // Use 200 status for all responses to ensure client sees the message
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
@@ -73,7 +76,8 @@ serve(async (req) => {
         plan: existingTransaction.tier,
         isAnnual: isAnnual,
         userId: existingTransaction.user_id,
-        sessionId: sessionId
+        sessionId: sessionId,
+        transactionData: existingTransaction
       }), {
         status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -84,7 +88,10 @@ serve(async (req) => {
       // Retrieve the checkout session from Stripe
       const session = await stripe.checkout.sessions.retrieve(sessionId);
       if (!session) {
-        return new Response(JSON.stringify({ success: false, error: 'Invalid session ID' }), {
+        return new Response(JSON.stringify({ 
+          success: false, 
+          error: 'Invalid session ID' 
+        }), {
           status: 200, // Use 200 to ensure frontend receives the error
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
@@ -92,7 +99,10 @@ serve(async (req) => {
 
       // Check if the session was paid
       if (session.payment_status !== 'paid') {
-        return new Response(JSON.stringify({ success: false, error: 'Payment not completed' }), {
+        return new Response(JSON.stringify({ 
+          success: false, 
+          error: 'Payment not completed' 
+        }), {
           status: 200, // Use 200 to ensure frontend receives the error
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
@@ -133,7 +143,10 @@ serve(async (req) => {
         }
       } catch (error) {
         console.error('Error getting user ID:', error);
-        return new Response(JSON.stringify({ success: false, error: 'Could not verify user' }), {
+        return new Response(JSON.stringify({ 
+          success: false, 
+          error: 'Could not verify user' 
+        }), {
           status: 200, // Use 200 to ensure frontend receives the error
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
@@ -152,14 +165,20 @@ serve(async (req) => {
       });
     } catch (stripeError) {
       console.error(`Stripe API error: ${stripeError.message}`);
-      return new Response(JSON.stringify({ success: false, error: `Stripe API error: ${stripeError.message}` }), {
+      return new Response(JSON.stringify({ 
+        success: false, 
+        error: `Stripe API error: ${stripeError.message}` 
+      }), {
         status: 200, // Use 200 to ensure frontend receives the error
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
   } catch (error) {
     console.error(`Error verifying Stripe session: ${error.message}`);
-    return new Response(JSON.stringify({ success: false, error: error.message }), {
+    return new Response(JSON.stringify({ 
+      success: false, 
+      error: error.message 
+    }), {
       status: 200, // Use 200 to ensure frontend receives the error
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

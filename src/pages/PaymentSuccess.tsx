@@ -20,7 +20,7 @@ interface Transaction {
 
 const PaymentSuccess: React.FC = () => {
   const [searchParams] = useSearchParams();
-  // const sessionId = searchParams.get("session_id");
+  const sessionId = searchParams.get("session_id");
   const plan = searchParams.get("plan");
   const isAnnual = searchParams.get("is_annual") === "true";
 
