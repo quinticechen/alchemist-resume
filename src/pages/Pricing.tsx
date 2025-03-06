@@ -1,4 +1,3 @@
-
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -85,11 +84,10 @@ const Pricing = () => {
     try {
       console.log("Fetching usage info for user:", userId);
       
-      // First get profile info
       const { data: profileData, error: profileError } = await supabase
         .from("profiles")
         .select(
-          "subscription_status, usage_count, monthly_usage_count, free_trial_limit"
+          "subscription_status, usage_count, monthly_usage_count, free_trial_limit, payment_period"
         )
         .eq("id", userId)
         .single();
@@ -99,29 +97,10 @@ const Pricing = () => {
         return;
       }
       
-      // Then get subscription info for payment period
-      const { data: subscriptionData, error: subscriptionError } = await supabase
-        .from("subscriptions")
-        .select("payment_period")
-        .eq("user_id", userId)
-        .single();
-        
-      if (subscriptionError && subscriptionError.code !== 'PGRST116') {
-        // PGRST116 is "Results contain 0 rows" - this is expected for users without subscriptions
-        console.error("Error fetching subscription info:", subscriptionError);
-      }
+      console.log("Usage and subscription info fetched:", profileData);
+      setUsageInfo(profileData);
       
-      // Combine the data
-      const combinedData: SubscriptionInfo = {
-        ...profileData,
-        payment_period: subscriptionData?.payment_period || 'monthly'
-      };
-
-      console.log("Usage and subscription info fetched:", combinedData);
-      setUsageInfo(combinedData);
-      
-      // Set isAnnual based on current subscription
-      if (combinedData.payment_period === 'annual') {
+      if (profileData.payment_period === 'annual') {
         setIsAnnual(true);
       }
     } catch (err) {
@@ -243,8 +222,7 @@ const Pricing = () => {
       setIsLoading(false);
     }
   };
-  
-  // Check if a plan is the current plan based on both tier and payment period
+
   const isCurrentPlan = (planId: string, planIsAnnual: boolean) => {
     if (!usageInfo) return false;
     
@@ -252,10 +230,8 @@ const Pricing = () => {
     
     if (!tierMatch) return false;
     
-    // For apprentice tier, always consider it a match since there's no payment period
     if (planId === 'apprentice') return true;
     
-    // For paid tiers, check payment period match
     const periodMatch = planIsAnnual ? 
       usageInfo.payment_period === 'annual' : 
       usageInfo.payment_period === 'monthly';

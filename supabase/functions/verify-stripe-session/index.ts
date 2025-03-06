@@ -66,15 +66,12 @@ serve(async (req) => {
     if (existingTransaction) {
       console.log(`Transaction already exists for session: ${sessionId}`);
       // Make sure we pass all necessary data and indicate success
-      const isAnnual = existingTransaction.is_annual === true || 
-                       (existingTransaction.stripe_subscription_id && 
-                        existingTransaction.stripe_subscription_id.toLowerCase().includes('year'));
       
       return new Response(JSON.stringify({ 
         success: true, 
         message: 'Transaction already recorded',
         plan: existingTransaction.tier,
-        isAnnual: isAnnual,
+        isAnnual: existingTransaction.payment_period === 'annual',
         userId: existingTransaction.user_id,
         sessionId: sessionId,
         transactionData: existingTransaction

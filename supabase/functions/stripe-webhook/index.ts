@@ -242,11 +242,12 @@ serve(async (req) => {
             // Continue execution even if transaction insert fails
           }
           
-          // Update profiles table
+          // Update profiles table with payment_period
           const { error: profileUpdateError } = await supabase
             .from('profiles')
             .update({
               subscription_status: tier,
+              payment_period: payment_period,
               monthly_usage_reset_date: new Date(subscription.current_period_end * 1000).toISOString(),
               monthly_usage_count: tier === 'apprentice' ? null : 0  // Reset monthly usage count for paid tiers
             })
@@ -333,6 +334,19 @@ serve(async (req) => {
           });
         }
         
+        // Also update the profile with payment_period
+        const { error: profileUpdateError } = await supabase
+          .from('profiles')
+          .update({
+            payment_period: payment_period
+          })
+          .eq('id', subData.user_id);
+          
+        if (profileUpdateError) {
+          console.error("Error updating profile payment period:", profileUpdateError);
+          // Continue execution even if profile update fails
+        }
+        
         console.log("Successfully updated subscription");
         break;
       }
@@ -384,11 +398,12 @@ serve(async (req) => {
           console.error("Error updating subscription status:", updateError);
         }
         
-        // Reset user to apprentice tier
+        // Reset user to apprentice tier and clear payment_period
         const { error: profileError } = await supabase
           .from('profiles')
           .update({
-            subscription_status: 'apprentice'
+            subscription_status: 'apprentice',
+            payment_period: null
           })
           .eq('id', subData.user_id);
           

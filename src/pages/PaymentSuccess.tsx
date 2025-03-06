@@ -6,7 +6,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 
-// Define the interface for transaction data
 interface Transaction {
   stripe_session_id: string;
   amount: number;
@@ -14,7 +13,7 @@ interface Transaction {
   status: string;
   tier: string;
   created_at: string;
-  payment_period?: string;
+  payment_period?: "monthly" | "annual";
 }
 
 const PaymentSuccess: React.FC = () => {
@@ -257,9 +256,7 @@ const PaymentSuccess: React.FC = () => {
                 <div className="text-light/80">Plan:</div>
                 <div className="capitalize">
                   {transaction.tier}{" "}
-                  {transaction.payment_period 
-                    ? (transaction.payment_period === 'annual' ? 'Annual' : 'Monthly') 
-                    : (isAnnual ? 'Annual' : 'Monthly')}
+                  {transaction.payment_period ? transaction.payment_period.charAt(0).toUpperCase() + transaction.payment_period.slice(1) : (isAnnual ? 'Annual' : 'Monthly')}
                 </div>
                 <div className="text-light/80">Date:</div>
                 <div>

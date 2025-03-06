@@ -20,6 +20,9 @@ export type Database = {
           id: string
           monthly_usage_count: number | null
           monthly_usage_reset_date: string | null
+          payment_period:
+            | Database["public"]["Enums"]["payment_period_type"]
+            | null
           provider: string | null
           stripe_customer_id: string | null
           subscription_status:
@@ -38,6 +41,9 @@ export type Database = {
           id: string
           monthly_usage_count?: number | null
           monthly_usage_reset_date?: string | null
+          payment_period?:
+            | Database["public"]["Enums"]["payment_period_type"]
+            | null
           provider?: string | null
           stripe_customer_id?: string | null
           subscription_status?:
@@ -56,6 +62,9 @@ export type Database = {
           id?: string
           monthly_usage_count?: number | null
           monthly_usage_reset_date?: string | null
+          payment_period?:
+            | Database["public"]["Enums"]["payment_period_type"]
+            | null
           provider?: string | null
           stripe_customer_id?: string | null
           subscription_status?:
@@ -159,7 +168,9 @@ export type Database = {
           current_period_end: string | null
           current_period_start: string | null
           id: string
-          payment_period: string | null
+          payment_period:
+            | Database["public"]["Enums"]["payment_period_type"]
+            | null
           status: string
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
@@ -173,7 +184,9 @@ export type Database = {
           current_period_end?: string | null
           current_period_start?: string | null
           id?: string
-          payment_period?: string | null
+          payment_period?:
+            | Database["public"]["Enums"]["payment_period_type"]
+            | null
           status?: string
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
@@ -187,7 +200,9 @@ export type Database = {
           current_period_end?: string | null
           current_period_start?: string | null
           id?: string
-          payment_period?: string | null
+          payment_period?:
+            | Database["public"]["Enums"]["payment_period_type"]
+            | null
           status?: string
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
@@ -203,7 +218,9 @@ export type Database = {
           created_at: string | null
           currency: string | null
           id: string
-          payment_period: string | null
+          payment_period:
+            | Database["public"]["Enums"]["payment_period_type"]
+            | null
           status: string | null
           stripe_session_id: string | null
           stripe_subscription_id: string | null
@@ -215,7 +232,9 @@ export type Database = {
           created_at?: string | null
           currency?: string | null
           id?: string
-          payment_period?: string | null
+          payment_period?:
+            | Database["public"]["Enums"]["payment_period_type"]
+            | null
           status?: string | null
           stripe_session_id?: string | null
           stripe_subscription_id?: string | null
@@ -227,7 +246,9 @@ export type Database = {
           created_at?: string | null
           currency?: string | null
           id?: string
-          payment_period?: string | null
+          payment_period?:
+            | Database["public"]["Enums"]["payment_period_type"]
+            | null
           status?: string | null
           stripe_session_id?: string | null
           stripe_subscription_id?: string | null
@@ -312,6 +333,7 @@ export type Database = {
       }
     }
     Enums: {
+      payment_period_type: "monthly" | "annual"
       subscription_tier: "apprentice" | "alchemist" | "grandmaster"
     }
     CompositeTypes: {

@@ -179,12 +179,14 @@ serve(async (req) => {
           user_id: userId,
           plan_id: planId,
           is_annual: isAnnual.toString(),
+          payment_period: isAnnual ? 'annual' : 'monthly'
         },
         subscription_data: {
           metadata: {
             user_id: userId,
             plan_id: planId,
             is_annual: isAnnual.toString(),
+            payment_period: isAnnual ? 'annual' : 'monthly'
           },
         },
       });

@@ -86,7 +86,7 @@ export const useAuth = () => {
         if (data.user) {
           const { data: profile } = await supabase
             .from('profiles')
-            .select('*')
+            .select('*, payment_period')
             .eq('id', data.user.id)
             .single();
 
