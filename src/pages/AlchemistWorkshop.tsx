@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import ResumeUploader from "@/components/ResumeUploader";
@@ -9,7 +8,8 @@ import { History, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-
+import { useSubscriptionCheck } from "@/hooks/useSubscriptionCheck"; 
+  
 
 const AlchemistWorkshop = () => {
   const { session, isLoading } = useAuth();
@@ -22,13 +22,19 @@ const AlchemistWorkshop = () => {
   const [analysisId, setAnalysisId] = useState<string>("");
   const { toast } = useToast();
   const navigate = useNavigate();
-
-  // Redirect to login if not authenticated
+  const { checkSubscriptionAndRedirect } = useSubscriptionCheck(); 
+  
+  // Redirect to login if not authenticated or check subscription
   useEffect(() => {
-    if (!isLoading && !session) {
-      navigate('/login', { state: { from: '/alchemist-workshop' } });
-    }
-  }, [session, isLoading, navigate]);
+    const checkAuthAndSubscription = async () => {
+      if (!isLoading && !session) {
+        navigate('/login', { state: { from: '/alchemist-workshop' } });
+      } else if (session) {
+        await checkSubscriptionAndRedirect(session.user.id);
+      }
+    };
+    checkAuthAndSubscription();
+  }, [session, isLoading, navigate, checkSubscriptionAndRedirect]);
 
   const handleFileUploadSuccess = (
     file: File,
