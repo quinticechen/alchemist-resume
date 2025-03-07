@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -11,17 +10,20 @@ import { useNavigate } from "react-router-dom";
 interface ProcessingPreviewProps {
   analysisId?: string;
   jobUrl?: string;
-  // resumeId?: string;
+  resumeId?: string;
   setIsProcessing?: (isProcessing: boolean) => void;
   onGenerationComplete?: () => void;
 }
 
-const ProcessingPreview = ({ 
+//Add ProcessingStatus
+type ProcessingStatus = "idle" | "loading" | "error" | "success";
+
+const ProcessingPreview = ({
   analysisId,
   jobUrl,
-  // resumeId,
+  resumeId,
   setIsProcessing,
-  onGenerationComplete
+  onGenerationComplete,
 }: ProcessingPreviewProps) => {
   const [progress, setProgress] = useState(10);
   const [googleDocUrl, setGoogleDocUrl] = useState<string | null>(null);
@@ -29,89 +31,136 @@ const ProcessingPreview = ({
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  //Add ProcessingStatus
+  const [status, setStatus] = React.useState<ProcessingStatus>("idle");
+
   useEffect(() => {
     if (!analysisId) return;
 
-    console.log('Setting up ProcessingPreview for analysis:', analysisId);
+    console.log("Setting up ProcessingPreview for analysis:", analysisId);
+    //Add ProcessingStatus
+    setStatus("loading");
 
     // Initial fetch of the analysis
     const fetchAnalysis = async () => {
-      console.log('Fetching initial analysis data...');
-      const { data, error } = await supabase
-        .from("resume_analyses")
-        .select("google_doc_url")
-        .eq("id", analysisId)
-        .single();
+      try {
+        console.log("Fetching initial analysis data...");
+        const { data, error } = await supabase
+          .from("resume_analyses")
+          .select("google_doc_url")
+          .eq("id", analysisId)
+          .single();
 
-      if (error) {
+        if (error) {
+          console.error("Error fetching analysis:", error);
+          return;
+        }
+
+        console.log("Initial analysis data:", data);
+        if (data?.google_doc_url) {
+          console.log("Found existing Google Doc URL:", data.google_doc_url);
+          setGoogleDocUrl(data.google_doc_url);
+          //Add ProcessingStatus
+          setStatus("success");
+          setProgress(100);
+          setIsGenerationDone(true);
+          if (onGenerationComplete) onGenerationComplete();
+          toast({
+            // 添加這裡，如果 googleDocUrl 已經存在，則直接顯示成功通知
+            title: "Analysis Complete!",
+            description: "Your customized resume is now ready",
+          });
+        }
+      } catch (error) {
         console.error("Error fetching analysis:", error);
-        return;
-      }
-
-      console.log('Initial analysis data:', data);
-      if (data?.google_doc_url) {
-        console.log('Found existing Google Doc URL:', data.google_doc_url);
-        setGoogleDocUrl(data.google_doc_url);
-        setProgress(100);
-        setIsGenerationDone(true);
-        if (onGenerationComplete) onGenerationComplete();
-        toast({ // 添加這裡，如果 googleDocUrl 已經存在，則直接顯示成功通知
-          title: "Analysis Complete!",
-          description: "Your customized resume is now ready",
+        setStatus("error");
+        toast({
+          title: "Error",
+          description: "Failed to fetch analysis results",
+          variant: "destructive",
         });
       }
     };
 
     fetchAnalysis();
 
+    // Set up timeout for error state
+    const timeoutId = setTimeout(() => {
+      if (status === "loading") {
+        console.log("Processing timeout reached");
+        setStatus("error");
+        toast({
+          title: "Processing Timeout",
+          description: "Update failed, please try again later",
+          variant: "destructive",
+        });
+      }
+    }, 300000); // 5 minute timeout
+
     // Subscribe to real-time updates
     const channel = supabase
       .channel(`analysis-${analysisId}`)
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: '*',
-          schema: 'public',
-          table: 'resume_analyses',
+          event: "*",
+          schema: "public",
+          table: "resume_analyses",
           filter: `id=eq.${analysisId}`,
         },
         (payload) => {
-          console.log('Received real-time update:', payload);
-          
-          if (payload.eventType === 'UPDATE') {
+          console.log("Received real-time update:", payload);
+
+          if (payload.eventType === "UPDATE") {
             const newData = payload.new;
-            console.log('Analysis update received:', newData);
+            console.log("Analysis update received:", newData);
 
             if (newData.google_doc_url && !googleDocUrl) {
               setGoogleDocUrl(newData.google_doc_url);
+              //Add ProcessingStatus
+              setStatus("success");
               setProgress(100);
               setIsGenerationDone(true);
               if (onGenerationComplete) onGenerationComplete();
               toast({
-                title: "Analysis Complete!",
+                title: "Alcehmist Complete!",
                 description: "Your customized resume is now ready",
               });
             }
-            
+
             if (newData.analysis_data) {
               setProgress(90);
-              console.log('Analysis data received:', newData.analysis_data);
+              console.log("Analysis data received:", newData.analysis_data);
             }
           }
         }
       )
       .subscribe((status) => {
-        console.log('Subscription status:', status);
-        if (status === 'SUBSCRIBED') {
-          console.log('Successfully subscribed to updates');
+        console.log("Subscription status:", status);
+        if (status === "SUBSCRIBED") {
+          console.log("Successfully subscribed to updates");
         }
       });
 
     return () => {
-      console.log('Cleaning up subscription');
+      console.log("Cleaning up subscription");
+      clearTimeout(timeoutId);
       supabase.removeChannel(channel);
     };
-}, [analysisId, toast, googleDocUrl, onGenerationComplete]);
+  }, [analysisId, toast, googleDocUrl, onGenerationComplete]);
+
+  const getStatusMessage = () => {
+    switch (status) {
+      case "loading":
+        return "Processing your resume...";
+      case "error":
+        return "Update failed, please try again later";
+      case "success":
+        return "Your enhanced resume is ready! Click below to view it in Google Docs.";
+      default:
+        return "Waiting to process your resume...";
+    }
+  };
 
   // Continuous progress updates while waiting for the result
   useEffect(() => {
@@ -128,7 +177,7 @@ const ProcessingPreview = ({
   }, [googleDocUrl, progress]);
 
   const viewAllRecords = () => {
-    navigate('/alchemy-records');
+    navigate("/alchemy-records");
   };
 
   return (
@@ -151,11 +200,12 @@ const ProcessingPreview = ({
       <CardContent>
         <div className="space-y-4">
           <Progress value={progress} className="h-2" />
-          
+
           {googleDocUrl ? (
             <div className="space-y-4">
               <p className="text-sm text-gray-600">
-                Your customized resume is ready! Click below to view and edit it in Google Docs.
+                Your customized resume is ready! Click below to view and edit it
+                in Google Docs.
               </p>
               <div className="flex flex-wrap gap-4">
                 <a
@@ -167,7 +217,7 @@ const ProcessingPreview = ({
                   <FileText className="h-4 w-4" />
                   Open in Google Docs/Golden Resume
                 </a>
-                
+
                 <Button
                   variant="outline"
                   onClick={viewAllRecords}

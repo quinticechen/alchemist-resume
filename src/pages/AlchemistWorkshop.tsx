@@ -139,17 +139,17 @@ const AlchemistWorkshop = () => {
       });
 
       // 設定五分鐘計時器
-      timeoutId.current = setTimeout(() => {
-        toast({
-          title: "Generate Failed",
-          description:
-            "Resume generation took too long. Please try again later.",
-          variant: "destructive",
-        });
-        <p>Your resume is generation took too long. Please try again later.</p>;
-        setIsProcessing(false);
-        setIsTimeout(true);
-      }, 5 * 60 * 1000); // 五分鐘
+      // timeoutId.current = setTimeout(() => {
+      //   toast({
+      //     title: "Generate Failed",
+      //     description:
+      //       "Resume generation took too long. Please try again later.",
+      //     variant: "destructive",
+      //   });
+      //   <p>Your resume is generation took too long. Please try again later.</p>;
+      //   setIsProcessing(false);
+      //   setIsTimeout(true);
+      // }, 5 * 60 * 1000); // 五分鐘
     } catch (error) {
       console.error("Error processing resume:", error);
       toast({
