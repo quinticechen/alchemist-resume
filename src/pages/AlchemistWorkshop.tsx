@@ -10,7 +10,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscriptionCheck } from "@/hooks/useSubscriptionCheck";
 import Lottie from "react-lottie";
-import animationData from "@/animations/Loading.json";
+import Loading from "@/animations/Loading.json";
+import Failed from "@/animations/Failed.json";
 
 const AlchemistWorkshop = () => {
   const { session, isLoading } = useAuth();
@@ -147,12 +148,11 @@ const AlchemistWorkshop = () => {
             "Resume generation took too long. Please try again later.",
           variant: "destructive",
         });
-        setIsProcessing(false);
         setIsTimeout(true);
         setTimeoutMessage(
           "Resume generation took too long. Please try again later."
         ); // 設定超時訊息
-      }, 5 * 60 * 1000); // 五分鐘
+      }, 0.5 * 60 * 1000); // 五分鐘
     } catch (error) {
       console.error("Error processing resume:", error);
       toast({
@@ -185,10 +185,19 @@ const AlchemistWorkshop = () => {
     return null;
   }
   // Lottie 設定 (使用 react-lottie)
-  const defaultOptions = {
+  const loading = {
     loop: true,
     autoplay: true,
-    animationData: animationData,
+    animationData: Loading,
+    rendererSettings: {
+      preserveAspectRatio: "xMidYMid slice",
+    },
+  };
+
+  const failed = {
+    loop: true,
+    autoplay: true,
+    animationData: Failed,
     rendererSettings: {
       preserveAspectRatio: "xMidYMid slice",
     },
@@ -245,7 +254,7 @@ const AlchemistWorkshop = () => {
             <div className="flex justify-center pt-8">
               <div className="w-full h-300p mx-auto items-center md:w-2/4 lg:w-1/3 xl:w-1/2">
                 <Lottie
-                  options={defaultOptions}
+                  options={loading}
                   height={"100%"}
                   width={"100%"}
                 />
@@ -257,12 +266,20 @@ const AlchemistWorkshop = () => {
           </section>
         )}
 
-        {isTimeout &&
-          timeoutMessage && (
+        {isTimeout && timeoutMessage && (
+          <section>
             <div className="flex justify-center pt-8">
+              <div className="w-full h-300p mx-auto items-center md:w-2/4 lg:w-1/3 xl:w-1/2">
+                <Lottie
+                  options={failed}
+                  height={"100%"}
+                  width={"100%"}
+                />
+              </div>
               <p>{timeoutMessage}</p>
             </div>
-          )}
+          </section>
+        )}
       </div>
     </div>
   );
