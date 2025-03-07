@@ -139,17 +139,18 @@ const AlchemistWorkshop = () => {
       });
 
       // 設定五分鐘計時器
-      // timeoutId.current = setTimeout(() => {
-      //   toast({
-      //     title: "Generate Failed",
-      //     description:
-      //       "Resume generation took too long. Please try again later.",
-      //     variant: "destructive",
-      //   });
-      //   <p>Your resume is generation took too long. Please try again later.</p>;
-      //   setIsProcessing(false);
-      //   setIsTimeout(true);
-      // }, 5 * 60 * 1000); // 五分鐘
+      timeoutId.current = setTimeout(() => {
+        toast({
+          title: "Generate Failed",
+          description:
+            "Resume generation took too long. Please try again later.",
+          variant: "destructive",
+        });
+        <p>Your resume is generation took too long. Please try again later.</p>;
+        setIsProcessing(false);
+        setIsTimeout(true);
+      }, 5 * 60 * 1000); // 五分鐘
+
     } catch (error) {
       console.error("Error processing resume:", error);
       toast({
@@ -238,23 +239,18 @@ const AlchemistWorkshop = () => {
         )}
 
         {analysisId && !isTimeout && (
-          <div className="flex justify-center pt-8">
-            <div className="w-full mx-auto flex items-center md:w-2/4 lg:w-1/3 xl:w-1/2">
-              <Lottie options={defaultOptions} height={"100%"} width={"100%"} />
-              Your resume is being alchemized. Please wait a few minutes...
+          <section>
+            <div className="flex justify-center pt-8">
+              <div className="w-full mx-auto flex items-center md:w-2/4 lg:w-1/3 xl:w-1/2">
+                <Lottie
+                  options={defaultOptions}
+                  height={"100%"}
+                  width={"100%"}
+                />
+              </div>
             </div>
-            {/* <div>
-              Your resume is being alchemized. Please wait a few minutes...
-            </div> */}
-            {/* <Button
-              variant="outline"
-              onClick={viewAllRecords}
-              className="flex items-center gap-2"
-            >
-              <History className="h-4 w-4" />
-              View All Records
-            </Button> */}
-          </div>
+            <p>Your resume is being alchemized. Please wait a few minutes...</p>
+          </section>
         )}
       </div>
     </div>

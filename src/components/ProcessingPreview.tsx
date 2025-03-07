@@ -85,17 +85,17 @@ const ProcessingPreview = ({
     fetchAnalysis();
 
     // Set up timeout for error state
-    const timeoutId = setTimeout(() => {
-      if (status === "loading") {
-        console.log("Processing timeout reached");
-        setStatus("error");
-        toast({
-          title: "Processing Timeout",
-          description: "Update failed, please try again later",
-          variant: "destructive",
-        });
-      }
-    }, 300000); // 5 minute timeout
+    // const timeoutId = setTimeout(() => {
+    //   if (status === "loading") {
+    //     console.log("Processing timeout reached");
+    //     setStatus("error");
+    //     toast({
+    //       title: "Processing Timeout",
+    //       description: "Update failed, please try again later",
+    //       variant: "destructive",
+    //     });
+    //   }
+    // }, 300000); // 5 minute timeout
 
     // Subscribe to real-time updates
     const channel = supabase
@@ -144,7 +144,7 @@ const ProcessingPreview = ({
 
     return () => {
       console.log("Cleaning up subscription");
-      clearTimeout(timeoutId);
+      // clearTimeout(timeoutId);
       supabase.removeChannel(channel);
     };
   }, [analysisId, toast, googleDocUrl, onGenerationComplete]);
@@ -230,7 +230,8 @@ const ProcessingPreview = ({
             </div>
           ) : (
             <p className="text-sm text-gray-600">
-              Your resume is being analyzed and customized. This may take a few minutes...
+              Your resume is being analyzed and customized.
+              This may take a few minutes...
             </p>
           )}
         </div>
