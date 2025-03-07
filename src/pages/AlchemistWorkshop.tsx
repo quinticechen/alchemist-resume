@@ -1,4 +1,3 @@
-// import { useState, useEffect, useRef } from "react";
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import ResumeUploader from "@/components/ResumeUploader";
@@ -10,7 +9,8 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscriptionCheck } from "@/hooks/useSubscriptionCheck";
-import { DotLottieReact } from "@lottiefiles/dotlottie-react";
+import Lottie from "react-lottie";
+import animationData from "@/animations/Loading.json";
 
 const AlchemistWorkshop = () => {
   const { session, isLoading } = useAuth();
@@ -26,6 +26,7 @@ const AlchemistWorkshop = () => {
   const { checkSubscriptionAndRedirect } = useSubscriptionCheck();
   const timeoutId = useRef<NodeJS.Timeout | null>(null);
   const [isTimeout, setIsTimeout] = useState(false);
+
   // Redirect to login if not authenticated
   useEffect(() => {
     if (!isLoading && !session) {
@@ -180,6 +181,15 @@ const AlchemistWorkshop = () => {
   if (!session) {
     return null;
   }
+  // Lottie 設定 (使用 react-lottie)
+  const defaultOptions = {
+    loop: true,
+    autoplay: true,
+    animationData: animationData,
+    rendererSettings: {
+      preserveAspectRatio: "xMidYMid slice",
+    },
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -229,11 +239,9 @@ const AlchemistWorkshop = () => {
 
         {analysisId && !isTimeout && (
           <div className="flex justify-center pt-8">
-            <DotLottieReact
-              src="https://lottie.host/9b2ca5c1-4f07-4f86-9bbc-1dbaf5cada3c/QWiSI0bo7A.lottie"
-              loop
-              autoplay
-            />
+            <div className="w-full mx-auto flex items-center md:w-2/4 lg:w-1/3 xl:w-1/2">
+              <Lottie options={defaultOptions} height={"100%"} width={"100%"} />
+            </div>
             <p>Your resume is being alchemized. Please wait a few minutes.</p>
             <br />
             {/* <Button
