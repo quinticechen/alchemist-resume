@@ -204,18 +204,18 @@ const AlchemistWorkshop = () => {
           />
         )}
 
-        {analysisId && (
-          // <div className="flex justify-center pt-8">
-          //   <Button
-          //     variant="outline"
-          //     onClick={viewAllRecords}
-          //     className="flex items-center gap-2"
-          //   >
-          //     <History className="h-4 w-4" />
-          //     View All Records
-          //   </Button>
-          // </div>
-        )}
+        {/* {analysisId && (
+          <div className="flex justify-center pt-8">
+            <Button
+              variant="outline"
+              onClick={viewAllRecords}
+              className="flex items-center gap-2"
+            >
+              <History className="h-4 w-4" />
+              View All Records
+            </Button>
+          </div>
+        )} */}
       </div>
     </div>
   );
