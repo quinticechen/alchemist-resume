@@ -26,7 +26,7 @@ const AlchemistWorkshop = () => {
   const navigate = useNavigate();
   const { checkSubscriptionAndRedirect } = useSubscriptionCheck();
   const timeoutId = useRef<NodeJS.Timeout | null>(null);
-  const [isTimeout, setIsTimeout] = useState(false);
+  // const [isTimeout, setIsTimeout] = useState(false);
   const [timeoutMessage, setTimeoutMessage] = useState<string | null>(null);
 
   // Redirect to login if not authenticated
@@ -148,7 +148,8 @@ const AlchemistWorkshop = () => {
             "Resume generation took too long. Please try again later.",
           variant: "destructive",
         });
-        setIsTimeout(true);
+        setIsProcessing(false);
+        // setIsTimeout(true);
         setTimeoutMessage(
           "Resume generation took too long. Please try again later."
         ); // 設定超時訊息
