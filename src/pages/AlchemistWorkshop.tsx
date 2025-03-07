@@ -1,16 +1,14 @@
-
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import ResumeUploader from "@/components/ResumeUploader";
-import JobUrlInput, { SUPPORTED_JOB_SITES } from "@/components/JobUrlInput"; 
+import JobUrlInput, { SUPPORTED_JOB_SITES } from "@/components/JobUrlInput";
 import ProcessingPreview from "@/components/ProcessingPreview";
 import { Button } from "@/components/ui/button";
 import { History, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { useSubscriptionCheck } from "@/hooks/useSubscriptionCheck"; 
-  
+import { useSubscriptionCheck } from "@/hooks/useSubscriptionCheck";
 
 const AlchemistWorkshop = () => {
   const { session, isLoading } = useAuth();
@@ -23,11 +21,12 @@ const AlchemistWorkshop = () => {
   const [analysisId, setAnalysisId] = useState<string>("");
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { checkSubscriptionAndRedirect } = useSubscriptionCheck(); 
+  const { checkSubscriptionAndRedirect } = useSubscriptionCheck();
+  const timeoutId = useRef<NodeJS.Timeout | null>(null);
   // Redirect to login if not authenticated
   useEffect(() => {
     if (!isLoading && !session) {
-      navigate('/login', { state: { from: '/alchemist-workshop' } });
+      navigate("/login", { state: { from: "/alchemist-workshop" } });
     }
   }, [session, isLoading, navigate]);
 
@@ -36,7 +35,7 @@ const AlchemistWorkshop = () => {
     path: string,
     url: string,
     id: string
-) => {
+  ) => {
     setSelectedFile(file);
     setFilePath(path);
     setPublicUrl(url);
@@ -47,80 +46,83 @@ const AlchemistWorkshop = () => {
     });
   };
 
-  const handleUrlSubmit = async (url: string) => { // 接收驗證後的 URL
+  const handleUrlSubmit = async (url: string) => {
+    // 接收驗證後的 URL
     setIsProcessing(true);
+
     try {
-      console.log('Creating analysis record with data:', {
+      console.log("Creating analysis record with data:", {
         resume_id: resumeId,
         job_url: url, // 使用驗證後的 URL
-        user_id: session?.user?.id
+        user_id: session?.user?.id,
       });
 
       // First, create the analysis record in the database
       const { data: analysisRecord, error: analysisError } = await supabase
-        .from('resume_analyses')
+        .from("resume_analyses")
         .insert({
           resume_id: resumeId,
           job_url: url,
-          user_id: session?.user?.id
+          user_id: session?.user?.id,
         })
         .select()
         .single();
 
       if (analysisError) {
-        console.error('Error creating analysis record:', analysisError);
+        console.error("Error creating analysis record:", analysisError);
         throw analysisError;
       }
 
-      console.log('Analysis record created:', analysisRecord);
+      console.log("Analysis record created:", analysisRecord);
 
       // Get the resume details
       const { data: resumeData, error: resumeError } = await supabase
-        .from('resumes')
-        .select('file_name, file_path')
-        .eq('id', resumeId)
+        .from("resumes")
+        .select("file_name, file_path")
+        .eq("id", resumeId)
         .single();
 
       if (resumeError) {
-        console.error('Error fetching resume:', resumeError);
+        console.error("Error fetching resume:", resumeError);
         throw resumeError;
       }
 
-      console.log('Resume data fetched:', resumeData);
+      console.log("Resume data fetched:", resumeData);
 
       // Get the storage URL for the resume
       const { data: storageData } = supabase.storage
-        .from('resumes')
+        .from("resumes")
         .getPublicUrl(resumeData.file_path);
 
-      console.log('Storage URL generated:', storageData);
+      console.log("Storage URL generated:", storageData);
 
       const webhookData = {
         analysisId: analysisRecord.id,
         resumeUrl: storageData.publicUrl,
         jobUrl: url,
-        fileName: resumeData.file_name
+        fileName: resumeData.file_name,
       };
 
-      console.log('Preparing to send webhook data:', webhookData);
+      console.log("Preparing to send webhook data:", webhookData);
 
       // Trigger the Make.com webhook with the correct data format
-      const makeWebhookUrl = 'https://hook.eu2.make.com/pthisc4aefvf15i7pj4ja99a84dp7kce';
-      console.log('Sending webhook to:', makeWebhookUrl);
+      const makeWebhookUrl =
+        "https://hook.eu2.make.com/pthisc4aefvf15i7pj4ja99a84dp7kce";
+      console.log("Sending webhook to:", makeWebhookUrl);
 
       const webhookResponse = await fetch(makeWebhookUrl, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(webhookData),
       });
 
-      console.log('Webhook response status:', webhookResponse.status);
+      console.log("Webhook response status:", webhookResponse.status);
 
       if (!webhookResponse.ok) {
-        console.error('Webhook response not OK:', webhookResponse);
-        throw new Error('Failed to trigger Make.com webhook');
+        console.error("Webhook response not OK:", webhookResponse);
+        throw new Error("Failed to trigger Make.com webhook");
       }
 
       setJobUrl(url);
@@ -128,10 +130,22 @@ const AlchemistWorkshop = () => {
 
       toast({
         title: "Analysis Started",
-        description: "Your resume is being analyzed. Results will be available soon.",
+        description:
+          "Your resume is being analyzed. Results will be available soon.",
       });
+
+      // 設定五分鐘計時器
+      timeoutId.current = setTimeout(() => {
+        toast({
+          title: "Generate Failed",
+          description:
+            "Resume generation took too long. Please try again later.",
+          variant: "destructive",
+        });
+        setIsProcessing(false);
+      }, 5 * 60 * 1000); // 五分鐘
     } catch (error) {
-      console.error('Error processing resume:', error);
+      console.error("Error processing resume:", error);
       toast({
         title: "Error",
         description: "Failed to process resume. Please try again later.",
@@ -142,15 +156,13 @@ const AlchemistWorkshop = () => {
   };
 
   const viewAllRecords = () => {
-    navigate('/alchemy-records');
+    navigate("/alchemy-records");
   };
 
   const previewOriginalResume = () => {
     if (filePath) {
-      const { data } = supabase.storage
-        .from('resumes')
-        .getPublicUrl(filePath);
-      window.open(data.publicUrl, '_blank');
+      const { data } = supabase.storage.from("resumes").getPublicUrl(filePath);
+      window.open(data.publicUrl, "_blank");
     }
   };
 
@@ -201,21 +213,28 @@ const AlchemistWorkshop = () => {
             jobUrl={jobUrl}
             resumeId={resumeId}
             setIsProcessing={setIsProcessing}
+            onGenerationComplete={() => {
+              // 清除計時器
+              if (timeoutId.current) {
+                clearTimeout(timeoutId.current);
+              }
+            }}
           />
         )}
 
-        {/* {analysisId && (
+        {analysisId && (
           <div className="flex justify-center pt-8">
-            <Button
+            <p>Your resume is being alchemized. Please wait a few minutes.</p>
+            {/* <Button
               variant="outline"
               onClick={viewAllRecords}
               className="flex items-center gap-2"
             >
               <History className="h-4 w-4" />
               View All Records
-            </Button>
+            </Button> */}
           </div>
-        )} */}
+        )}
       </div>
     </div>
   );
