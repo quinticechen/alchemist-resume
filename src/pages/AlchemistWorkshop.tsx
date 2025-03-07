@@ -26,6 +26,7 @@ const AlchemistWorkshop = () => {
   const { checkSubscriptionAndRedirect } = useSubscriptionCheck();
   const timeoutId = useRef<NodeJS.Timeout | null>(null);
   const [isTimeout, setIsTimeout] = useState(false);
+  const [timeoutMessage, setTimeoutMessage] = useState<string | null>(null);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -146,11 +147,12 @@ const AlchemistWorkshop = () => {
             "Resume generation took too long. Please try again later.",
           variant: "destructive",
         });
-        <p>Your resume is generation took too long. Please try again later.</p>;
         setIsProcessing(false);
         setIsTimeout(true);
+        setTimeoutMessage(
+          "Resume generation took too long. Please try again later."
+        ); // 設定超時訊息
       }, 5 * 60 * 1000); // 五分鐘
-
     } catch (error) {
       console.error("Error processing resume:", error);
       toast({
@@ -248,10 +250,19 @@ const AlchemistWorkshop = () => {
                   width={"100%"}
                 />
               </div>
+              <p>
+                Your resume is being alchemized. Please wait a few minutes...
+              </p>
             </div>
-            <p>Your resume is being alchemized. Please wait a few minutes...</p>
           </section>
         )}
+
+        {isTimeout &&
+          timeoutMessage && (
+            <div className="flex justify-center pt-8">
+              <p>{timeoutMessage}</p>
+            </div>
+          )}
       </div>
     </div>
   );
