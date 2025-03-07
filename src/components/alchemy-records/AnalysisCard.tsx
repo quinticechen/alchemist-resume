@@ -1,6 +1,7 @@
+
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { FileText, Eye, Link as LinkIcon } from "lucide-react";
+import { FileText, Link as LinkIcon, Crown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import AnalysisTitle from './AnalysisTitle';
 import FeedbackButtons from './FeedbackButtons';
@@ -54,6 +55,7 @@ const AnalysisCard = ({
         <FeedbackButtons
           feedback={feedback}
           onFeedback={(value) => onFeedback(id, value)}
+          analysisId={id}
         />
       </div>
 
@@ -72,6 +74,18 @@ const AnalysisCard = ({
       </div>
 
       <div className="mt-4 flex flex-wrap gap-4">
+        {job_url && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => window.open(job_url, '_blank')}
+            className="text-accent-2 border-accent-2/20 hover:bg-accent-2/5"
+          >
+            <LinkIcon className="h-4 w-4 mr-2" />
+            Job Post
+          </Button>
+        )}
+        
         <Button
           variant="outline"
           size="sm"
@@ -85,9 +99,10 @@ const AnalysisCard = ({
           }}
           className="text-primary border-primary/20 hover:bg-primary/5"
         >
-          <Eye className="h-4 w-4 mr-2" />
-          Preview Original Resume
+          <FileText className="h-4 w-4 mr-2" />
+          Original Resume
         </Button>
+        
         {google_doc_url && (
           <Button
             variant="outline"
@@ -95,19 +110,8 @@ const AnalysisCard = ({
             onClick={() => window.open(google_doc_url, '_blank')}
             className="text-info border-info/20 hover:bg-info/5"
           >
-            <Eye className="h-4 w-4 mr-2" />
-            Preview Golden Resume
-          </Button>
-        )}
-        {job_url && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => window.open(job_url, '_blank')}
-            className="text-accent-2 border-accent-2/20 hover:bg-accent-2/5"
-          >
-            <LinkIcon className="h-4 w-4 mr-2" />
-            View Original Job Post
+            <Crown className="h-4 w-4 mr-2" />
+            Golden Resume
           </Button>
         )}
       </div>

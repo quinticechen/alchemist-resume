@@ -2,6 +2,7 @@
 import React from 'react';
 import { useEffect, useState } from 'react';
 import { supabase } from "@/integrations/supabase/client";
+import { FileText } from "lucide-react";
 
 interface UsageStatsProps {
   usageCount: number;
@@ -10,12 +11,14 @@ interface UsageStatsProps {
 const UsageStats = ({ usageCount }: UsageStatsProps) => {
   const [subscriptionStatus, setSubscriptionStatus] = useState<string>('apprentice');
   const [remainingUses, setRemainingUses] = useState<string | number>(0);
+  const [totalResumes, setTotalResumes] = useState<number>(0);
 
   useEffect(() => {
     const fetchSubscriptionStatus = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) return;
 
+      // Get user profile
       const { data: profile } = await supabase
         .from('profiles')
         .select('subscription_status, monthly_usage_count')
@@ -34,6 +37,16 @@ const UsageStats = ({ usageCount }: UsageStatsProps) => {
           setRemainingUses(Math.max(0, 3 - usageCount));
         }
       }
+      
+      // Get total number of resumes
+      const { count } = await supabase
+        .from('resume_analyses')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', session.user.id);
+      
+      if (count !== null) {
+        setTotalResumes(count);
+      }
     };
 
     fetchSubscriptionStatus();
@@ -42,15 +55,21 @@ const UsageStats = ({ usageCount }: UsageStatsProps) => {
   return (
     <div className="bg-white rounded-xl p-6 shadow-apple mb-8">
       <h2 className="text-xl font-semibold mb-4">Usage Statistics</h2>
-      <p className="text-neutral-600">
-        {subscriptionStatus === 'apprentice' ? (
-          `Remaining Free Uses: ${remainingUses}`
-        ) : subscriptionStatus === 'alchemist' ? (
-          `Remaining Monthly Uses: ${remainingUses}`
-        ) : (
-          'Unlimited Uses Available'
-        )}
-      </p>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="flex items-center gap-2">
+          <FileText className="h-5 w-5 text-primary" />
+          <span className="text-neutral-600">Total Resumes Generated: <strong>{totalResumes}</strong></span>
+        </div>
+        <div className="text-neutral-600">
+          {subscriptionStatus === 'apprentice' ? (
+            `Remaining Free Uses: ${remainingUses}`
+          ) : subscriptionStatus === 'alchemist' ? (
+            `Remaining Monthly Uses: ${remainingUses}`
+          ) : (
+            'Unlimited Uses Available'
+          )}
+        </div>
+      </div>
     </div>
   );
 };

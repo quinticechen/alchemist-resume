@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import ResumeUploader from "@/components/ResumeUploader";
@@ -202,19 +203,6 @@ const AlchemistWorkshop = () => {
             setIsProcessing={setIsProcessing}
             onGenerationComplete={() => setIsGenerationComplete(true)}
           />
-        )}
-
-        {isGenerationComplete && (
-          <div className="flex justify-center pt-8">
-            <Button
-              variant="outline"
-              onClick={viewAllRecords}
-              className="flex items-center gap-2"
-            >
-              <History className="h-4 w-4" />
-              View All Records
-            </Button>
-          </div>
         )}
       </div>
     </div>

@@ -14,6 +14,7 @@ export type Database = {
           avatar_url: string | null
           created_at: string
           email: string
+          feedback_popup_count: number | null
           free_trial_limit: number
           full_name: string | null
           has_completed_survey: boolean | null
@@ -35,6 +36,7 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           email: string
+          feedback_popup_count?: number | null
           free_trial_limit?: number
           full_name?: string | null
           has_completed_survey?: boolean | null
@@ -56,6 +58,7 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           email?: string
+          feedback_popup_count?: number | null
           free_trial_limit?: number
           full_name?: string | null
           has_completed_survey?: boolean | null
@@ -304,6 +307,44 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_feedback: {
+        Row: {
+          analysis_id: string
+          created_at: string
+          feedback_text: string | null
+          id: string
+          quick_feedback_option: string | null
+          rating: number
+          user_id: string
+        }
+        Insert: {
+          analysis_id: string
+          created_at?: string
+          feedback_text?: string | null
+          id?: string
+          quick_feedback_option?: string | null
+          rating: number
+          user_id: string
+        }
+        Update: {
+          analysis_id?: string
+          created_at?: string
+          feedback_text?: string | null
+          id?: string
+          quick_feedback_option?: string | null
+          rating?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_feedback_analysis_id_fkey"
+            columns: ["analysis_id"]
+            isOneToOne: false
+            referencedRelation: "resume_analyses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
