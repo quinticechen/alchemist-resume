@@ -1,3 +1,4 @@
+
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -37,7 +38,6 @@ export const useSubscriptionCheck = () => {
         }
       }
       
-
       console.log("Full profile data:", profile);
 
       if (!profile) {
@@ -45,8 +45,9 @@ export const useSubscriptionCheck = () => {
         throw new Error("No profile found");
       }
 
-      // First check subscription status
+      // Check for grandmaster subscription - always allow access
       if (profile.subscription_status === "grandmaster") {
+        console.log("User has Grandmaster subscription - granting access");
         toast({
           title: "Welcome back!",
           description: "You've successfully signed in.",
@@ -54,8 +55,9 @@ export const useSubscriptionCheck = () => {
         return;
       }
 
+      // For Alchemist, check monthly usage
       if (profile.subscription_status === "alchemist") {
-        // For Alchemist, check monthly usage
+        console.log("Alchemist user check - monthly usage:", profile.monthly_usage_count);
         if ((profile.monthly_usage_count || 0) < 30) {
           toast({
             title: "Welcome back!",
@@ -73,25 +75,25 @@ export const useSubscriptionCheck = () => {
       }
 
       // Handle free trial cases only for apprentice users
-      if (
-        profile.subscription_status === "apprentice" &&
-        profile.usage_count >= profile.free_trial_limit
-      ) {
-        if (!profile.has_completed_survey) {
-          toast({
-            title: "Survey Required",
-            description:
-              "Please complete the survey to continue using our services.",
-          });
-          navigate("/survey-page");
-          return;
-        } else {
-          toast({
-            title: "Free Trial Completed",
-            description: "Please upgrade to continue using our services.",
-          });
-          navigate("/pricing");
-          return;
+      if (profile.subscription_status === "apprentice") {
+        console.log("Apprentice user check - usage count:", profile.usage_count, "limit:", profile.free_trial_limit);
+        if (profile.usage_count >= profile.free_trial_limit) {
+          if (!profile.has_completed_survey) {
+            toast({
+              title: "Survey Required",
+              description:
+                "Please complete the survey to continue using our services.",
+            });
+            navigate("/survey-page");
+            return;
+          } else {
+            toast({
+              title: "Free Trial Completed",
+              description: "Please upgrade to continue using our services.",
+            });
+            navigate("/pricing");
+            return;
+          }
         }
       }
 
