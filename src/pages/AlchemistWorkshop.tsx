@@ -242,7 +242,8 @@ const AlchemistWorkshop = () => {
             <div className="w-full mx-auto flex items-center md:w-2/4 lg:w-1/3 xl:w-1/2">
               <Lottie options={defaultOptions} height={"100%"} width={"100%"} />
             </div>
-            <p>Your resume is being alchemized. Please wait a few minutes.</p>
+            Your resume is being alchemized.
+            Please wait a few minutes...
             <br />
             {/* <Button
               variant="outline"
