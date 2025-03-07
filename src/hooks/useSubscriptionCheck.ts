@@ -7,7 +7,7 @@ export const useSubscriptionCheck = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const checkSubscriptionAndRedirect = async (userId: string) => {
+  const checkSubscriptionAndRedirect = async (userId: string, showWelcomeToast = true) => {
     console.log("Checking subscription for user:", userId);
 
     try {
@@ -63,10 +63,12 @@ export const useSubscriptionCheck = () => {
       // Check for grandmaster subscription - always allow access (highest priority)
       if (subscriptionStatus === "grandmaster") {
         console.log("User has Grandmaster subscription - granting unlimited access");
-        toast({
-          title: "Welcome back!",
-          description: "You've successfully signed in.",
-        });
+        if (showWelcomeToast) {
+          toast({
+            title: "Welcome back!",
+            description: "You've successfully signed in.",
+          });
+        }
         return;
       }
 
@@ -84,10 +86,12 @@ export const useSubscriptionCheck = () => {
           return;
         } else {
           console.log("Alchemist user within monthly limit");
-          toast({
-            title: "Welcome back!",
-            description: "You've successfully signed in.",
-          });
+          if (showWelcomeToast) {
+            toast({
+              title: "Welcome back!",
+              description: "You've successfully signed in.",
+            });
+          }
           return;
         }
       }
@@ -116,10 +120,12 @@ export const useSubscriptionCheck = () => {
       }
 
       // User is within free trial limits or has valid subscription
-      toast({
-        title: "Welcome back!",
-        description: "You've successfully signed in.",
-      });
+      if (showWelcomeToast) {
+        toast({
+          title: "Welcome back!",
+          description: "You've successfully signed in.",
+        });
+      }
     } catch (error) {
       console.error("Detailed subscription check error:", error);
       toast({

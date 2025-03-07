@@ -24,13 +24,14 @@ const AlchemistWorkshop = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { checkSubscriptionAndRedirect } = useSubscriptionCheck(); 
+  const [initialCheckDone, setInitialCheckDone] = useState(false);
   
   // Redirect to login if not authenticated or check subscription
   useEffect(() => {
     const checkAuthAndSubscription = async () => {
       if (!isLoading && !session) {
         navigate('/login', { state: { from: '/alchemist-workshop' } });
-      } else if (session) {
+      } else if (session && !initialCheckDone) {
         console.log("Session found, checking subscription status");
         
         // Force a fresh check of subscription status to ensure we have the latest data
@@ -40,12 +41,14 @@ const AlchemistWorkshop = () => {
           localStorage.removeItem("userProfile");
           console.log("Removed cached profile to ensure fresh subscription status check");
           
-          await checkSubscriptionAndRedirect(session.user.id);
+          // Only show welcome toast on initial load
+          await checkSubscriptionAndRedirect(session.user.id, !initialCheckDone);
+          setInitialCheckDone(true);
         }
       }
     };
     checkAuthAndSubscription();
-  }, [session, isLoading, navigate, checkSubscriptionAndRedirect]);
+  }, [session, isLoading, navigate, checkSubscriptionAndRedirect, initialCheckDone]);
 
   const handleFileUploadSuccess = (
     file: File,
