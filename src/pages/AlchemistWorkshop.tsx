@@ -21,42 +21,22 @@ const AlchemistWorkshop = () => {
   const [jobUrl, setJobUrl] = useState<string>("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [analysisId, setAnalysisId] = useState<string>("");
-  const [isGenerationComplete, setIsGenerationComplete] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
   const { checkSubscriptionAndRedirect } = useSubscriptionCheck(); 
-  const [initialCheckDone, setInitialCheckDone] = useState(false);
-  
-  // Redirect to login if not authenticated or check subscription
+  // Redirect to login if not authenticated
   useEffect(() => {
-    const checkAuthAndSubscription = async () => {
-      if (!isLoading && !session) {
-        navigate('/login', { state: { from: '/alchemist-workshop' } });
-      } else if (session && !initialCheckDone) {
-        console.log("Session found, checking subscription status");
-        
-        // Force a fresh check of subscription status to ensure we have the latest data
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          // Clear the cached profile to force a fresh check
-          localStorage.removeItem("userProfile");
-          console.log("Removed cached profile to ensure fresh subscription status check");
-          
-          // Only show welcome toast on initial load
-          await checkSubscriptionAndRedirect(session.user.id, !initialCheckDone);
-          setInitialCheckDone(true);
-        }
-      }
-    };
-    checkAuthAndSubscription();
-  }, [session, isLoading, navigate, checkSubscriptionAndRedirect, initialCheckDone]);
+    if (!isLoading && !session) {
+      navigate('/login', { state: { from: '/alchemist-workshop' } });
+    }
+  }, [session, isLoading, navigate]);
 
   const handleFileUploadSuccess = (
     file: File,
     path: string,
     url: string,
     id: string
-  ) => {
+) => {
     setSelectedFile(file);
     setFilePath(path);
     setPublicUrl(url);
@@ -67,13 +47,12 @@ const AlchemistWorkshop = () => {
     });
   };
 
-  const handleUrlSubmit = async (url: string) => {
+  const handleUrlSubmit = async (url: string) => { // 接收驗證後的 URL
     setIsProcessing(true);
-    setIsGenerationComplete(false);
     try {
       console.log('Creating analysis record with data:', {
         resume_id: resumeId,
-        job_url: url,
+        job_url: url, // 使用驗證後的 URL
         user_id: session?.user?.id
       });
 
@@ -166,6 +145,15 @@ const AlchemistWorkshop = () => {
     navigate('/alchemy-records');
   };
 
+  const previewOriginalResume = () => {
+    if (filePath) {
+      const { data } = supabase.storage
+        .from('resumes')
+        .getPublicUrl(filePath);
+      window.open(data.publicUrl, '_blank');
+    }
+  };
+
   // Show loading state while checking authentication
   if (isLoading) {
     return <div className="container mx-auto px-4 py-8">Loading...</div>;
@@ -186,23 +174,47 @@ const AlchemistWorkshop = () => {
         <ResumeUploader onUploadSuccess={handleFileUploadSuccess} />
 
         {selectedFile && (
-          <JobUrlInput
-            onUrlSubmit={handleUrlSubmit}
-            isProcessing={isProcessing}
-            jobUrl={jobUrl}
-            setJobUrl={setJobUrl}
-            resumeId={resumeId}
-            setIsProcessing={setIsProcessing}
-          />
+          <>
+            <Button
+              variant="outline"
+              onClick={previewOriginalResume}
+              className="w-full flex items-center justify-center gap-2 text-primary border-primary/20 hover:bg-primary/5"
+            >
+              <FileText className="h-4 w-4" />
+              Preview Original Resume
+            </Button>
+
+            <JobUrlInput
+              onUrlSubmit={handleUrlSubmit}
+              isProcessing={isProcessing}
+              jobUrl={jobUrl}
+              setJobUrl={setJobUrl}
+              resumeId={resumeId}
+              setIsProcessing={setIsProcessing}
+            />
+          </>
         )}
 
         {isProcessing && analysisId && (
           <ProcessingPreview
             analysisId={analysisId}
             jobUrl={jobUrl}
+            resumeId={resumeId}
             setIsProcessing={setIsProcessing}
-            onGenerationComplete={() => setIsGenerationComplete(true)}
           />
+        )}
+
+        {analysisId && (
+          <div className="flex justify-center pt-8">
+            <Button
+              variant="outline"
+              onClick={viewAllRecords}
+              className="flex items-center gap-2"
+            >
+              <History className="h-4 w-4" />
+              View All Records
+            </Button>
+          </div>
         )}
       </div>
     </div>

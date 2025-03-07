@@ -161,7 +161,7 @@ const ProcessingPreview = ({
                   className="inline-flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800"
                 >
                   <FileText className="h-4 w-4" />
-                  Open in Google Docs
+                  Open in Google Docs/Golden Resume
                 </a>
                 
                 <Button
