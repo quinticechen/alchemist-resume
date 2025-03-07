@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import ResumeUploader from "@/components/ResumeUploader";
@@ -20,6 +21,7 @@ const AlchemistWorkshop = () => {
   const [jobUrl, setJobUrl] = useState<string>("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [analysisId, setAnalysisId] = useState<string>("");
+  const [isGenerationComplete, setIsGenerationComplete] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
   const { checkSubscriptionAndRedirect } = useSubscriptionCheck(); 
@@ -41,7 +43,7 @@ const AlchemistWorkshop = () => {
     path: string,
     url: string,
     id: string
-) => {
+  ) => {
     setSelectedFile(file);
     setFilePath(path);
     setPublicUrl(url);
@@ -52,12 +54,13 @@ const AlchemistWorkshop = () => {
     });
   };
 
-  const handleUrlSubmit = async (url: string) => { // 接收驗證後的 URL
+  const handleUrlSubmit = async (url: string) => {
     setIsProcessing(true);
+    setIsGenerationComplete(false);
     try {
       console.log('Creating analysis record with data:', {
         resume_id: resumeId,
-        job_url: url, // 使用驗證後的 URL
+        job_url: url,
         user_id: session?.user?.id
       });
 
@@ -150,15 +153,6 @@ const AlchemistWorkshop = () => {
     navigate('/alchemy-records');
   };
 
-  const previewOriginalResume = () => {
-    if (filePath) {
-      const { data } = supabase.storage
-        .from('resumes')
-        .getPublicUrl(filePath);
-      window.open(data.publicUrl, '_blank');
-    }
-  };
-
   // Show loading state while checking authentication
   if (isLoading) {
     return <div className="container mx-auto px-4 py-8">Loading...</div>;
@@ -179,25 +173,14 @@ const AlchemistWorkshop = () => {
         <ResumeUploader onUploadSuccess={handleFileUploadSuccess} />
 
         {selectedFile && (
-          <>
-            <Button
-              variant="outline"
-              onClick={previewOriginalResume}
-              className="w-full flex items-center justify-center gap-2 text-primary border-primary/20 hover:bg-primary/5"
-            >
-              <FileText className="h-4 w-4" />
-              Preview Original Resume
-            </Button>
-
-            <JobUrlInput
-              onUrlSubmit={handleUrlSubmit}
-              isProcessing={isProcessing}
-              jobUrl={jobUrl}
-              setJobUrl={setJobUrl}
-              resumeId={resumeId}
-              setIsProcessing={setIsProcessing}
-            />
-          </>
+          <JobUrlInput
+            onUrlSubmit={handleUrlSubmit}
+            isProcessing={isProcessing}
+            jobUrl={jobUrl}
+            setJobUrl={setJobUrl}
+            resumeId={resumeId}
+            setIsProcessing={setIsProcessing}
+          />
         )}
 
         {isProcessing && analysisId && (
@@ -205,10 +188,11 @@ const AlchemistWorkshop = () => {
             analysisId={analysisId}
             jobUrl={jobUrl}
             setIsProcessing={setIsProcessing}
+            onGenerationComplete={() => setIsGenerationComplete(true)}
           />
         )}
 
-        {analysisId && (
+        {isGenerationComplete && (
           <div className="flex justify-center pt-8">
             <Button
               variant="outline"

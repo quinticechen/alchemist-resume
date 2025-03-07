@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -10,13 +11,15 @@ interface ProcessingPreviewProps {
   jobUrl?: string;
   resumeId?: string;
   setIsProcessing?: (isProcessing: boolean) => void;
+  onGenerationComplete?: () => void;
 }
 
 const ProcessingPreview = ({ 
   analysisId,
   jobUrl,
   resumeId,
-  setIsProcessing 
+  setIsProcessing,
+  onGenerationComplete
 }: ProcessingPreviewProps) => {
   const [progress, setProgress] = useState(33);
   const [googleDocUrl, setGoogleDocUrl] = useState<string | null>(null);
@@ -46,6 +49,7 @@ const ProcessingPreview = ({
         console.log('Found existing Google Doc URL:', data.google_doc_url);
         setGoogleDocUrl(data.google_doc_url);
         setProgress(100);
+        if (onGenerationComplete) onGenerationComplete();
       }
     };
 
@@ -72,6 +76,7 @@ const ProcessingPreview = ({
             if (newData.google_doc_url && !googleDocUrl) {
               setGoogleDocUrl(newData.google_doc_url);
               setProgress(100);
+              if (onGenerationComplete) onGenerationComplete();
               toast({
                 title: "Analysis Complete!",
                 description: "Your customized resume is now ready",
@@ -97,7 +102,7 @@ const ProcessingPreview = ({
       supabase.removeChannel(channel);
       if (setIsProcessing) setIsProcessing(false);
     };
-  }, [analysisId, resumeId, toast, googleDocUrl, setIsProcessing]);
+  }, [analysisId, resumeId, toast, googleDocUrl, setIsProcessing, onGenerationComplete]);
 
   useEffect(() => {
     if (!googleDocUrl && progress < 90) {

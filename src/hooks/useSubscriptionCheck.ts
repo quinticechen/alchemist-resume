@@ -45,9 +45,9 @@ export const useSubscriptionCheck = () => {
         throw new Error("No profile found");
       }
 
-      // Check for grandmaster subscription - always allow access
+      // Check for grandmaster subscription - always allow access (highest priority)
       if (profile.subscription_status === "grandmaster") {
-        console.log("User has Grandmaster subscription - granting access");
+        console.log("User has Grandmaster subscription - granting unlimited access");
         toast({
           title: "Welcome back!",
           description: "You've successfully signed in.",
@@ -55,21 +55,24 @@ export const useSubscriptionCheck = () => {
         return;
       }
 
-      // For Alchemist, check monthly usage
+      // For Alchemist, check monthly usage - strict comparison to ensure correct limit
       if (profile.subscription_status === "alchemist") {
         console.log("Alchemist user check - monthly usage:", profile.monthly_usage_count);
-        if ((profile.monthly_usage_count || 0) < 30) {
-          toast({
-            title: "Welcome back!",
-            description: "You've successfully signed in.",
-          });
-          return;
-        } else {
+        // Check if user has reached or exceeded the 30 usage limit
+        if ((profile.monthly_usage_count || 0) >= 30) {
+          console.log("Alchemist user has reached monthly limit");
           toast({
             title: "Monthly Limit Reached",
             description: "You've reached your monthly usage limit.",
           });
           navigate("/account");
+          return;
+        } else {
+          console.log("Alchemist user within monthly limit");
+          toast({
+            title: "Welcome back!",
+            description: "You've successfully signed in.",
+          });
           return;
         }
       }
