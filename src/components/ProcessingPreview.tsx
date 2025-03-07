@@ -204,8 +204,7 @@ const ProcessingPreview = ({
           {googleDocUrl ? (
             <div className="space-y-4">
               <p className="text-sm text-gray-600">
-                Your customized resume is ready! Click below to view and edit it
-                in Google Docs.
+                Your customized resume is ready! Click below to view and edit it in Google Docs.
               </p>
               <div className="flex flex-wrap gap-4">
                 <a

@@ -138,6 +138,7 @@ const AlchemistWorkshop = () => {
         title: "Analysis Started",
         description:
           "Your resume is being analyzed. Results will be available soon.",
+        variant: "destructive",
       });
 
       // 設定五分鐘計時器
@@ -214,15 +215,6 @@ const AlchemistWorkshop = () => {
 
         {selectedFile && (
           <>
-            {/* <Button
-              variant="outline"
-              onClick={previewOriginalResume}
-              className="w-full flex items-center justify-center gap-2 text-primary border-primary/20 hover:bg-primary/5"
-            >
-              <FileText className="h-4 w-4" />
-              Preview Original Resume
-            </Button> */}
-
             <JobUrlInput
               onUrlSubmit={handleUrlSubmit}
               isProcessing={isProcessing}
@@ -253,13 +245,9 @@ const AlchemistWorkshop = () => {
           <section>
             <div className="justify-center pt-8">
               <div className="w-full h-300p mx-auto items-center md:w-2/4 lg:w-1/3 xl:w-1/2">
-                <Lottie
-                  options={loading}
-                  height={"100%"}
-                  width={"100%"}
-                />
+                <Lottie options={loading} height={"100%"} width={"100%"} />
               </div>
-              <p>
+              <p className="justify-center">
                 Your resume is being alchemized. Please wait a few minutes...
               </p>
             </div>
@@ -270,13 +258,9 @@ const AlchemistWorkshop = () => {
           <section>
             <div className="justify-center pt-8">
               <div className="w-full mx-auto items-center md:w-2/4 lg:w-1/3 xl:w-1/2">
-                <Lottie
-                  options={failed}
-                  height={"30%"}
-                  width={"30%"}
-                />
+                <Lottie options={failed} height={"30%"} width={"30%"} />
               </div>
-              <p>{timeoutMessage}</p>
+              <p className="justify-center">{timeoutMessage}</p>
             </div>
           </section>
         )}
