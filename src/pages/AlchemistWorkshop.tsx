@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscriptionCheck } from "@/hooks/useSubscriptionCheck";
+import { DotLottieReact } from "@lottiefiles/dotlottie-react";
 
 const AlchemistWorkshop = () => {
   const { session, isLoading } = useAuth();
@@ -23,6 +24,7 @@ const AlchemistWorkshop = () => {
   const navigate = useNavigate();
   const { checkSubscriptionAndRedirect } = useSubscriptionCheck();
   const timeoutId = useRef<NodeJS.Timeout | null>(null);
+  const [isTimeout, setIsTimeout] = useState(false);
   // Redirect to login if not authenticated
   useEffect(() => {
     if (!isLoading && !session) {
@@ -142,7 +144,9 @@ const AlchemistWorkshop = () => {
             "Resume generation took too long. Please try again later.",
           variant: "destructive",
         });
+        <p>Your resume is generation took too long. Please try again later.</p>;
         setIsProcessing(false);
+        setIsTimeout(true);
       }, 5 * 60 * 1000); // 五分鐘
     } catch (error) {
       console.error("Error processing resume:", error);
@@ -222,9 +226,15 @@ const AlchemistWorkshop = () => {
           />
         )}
 
-        {analysisId && (
+        {analysisId && !isTimeout && (
           <div className="flex justify-center pt-8">
+            <DotLottieReact
+              src="https://lottie.host/9b2ca5c1-4f07-4f86-9bbc-1dbaf5cada3c/QWiSI0bo7A.lottie"
+              loop
+              autoplay
+            />
             <p>Your resume is being alchemized. Please wait a few minutes.</p>
+            <br />
             {/* <Button
               variant="outline"
               onClick={viewAllRecords}
