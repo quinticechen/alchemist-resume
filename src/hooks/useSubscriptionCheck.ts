@@ -14,9 +14,19 @@ export const useSubscriptionCheck = () => {
       // First check cached profile data
       const cachedProfile = localStorage.getItem("userProfile");
       let profile = cachedProfile ? JSON.parse(cachedProfile) : null;
+      let isCacheValid = false;
 
-      // If no cached data or cache is old (>1 hour), fetch fresh data
-      if (!profile || Date.now() - (profile.cachedAt || 0) > 3600000) {
+      // Validate cache freshness (less than 5 minutes old)
+      if (profile && profile.cachedAt && Date.now() - profile.cachedAt < 300000) {
+        console.log("Using cached profile data (less than 5 minutes old)");
+        isCacheValid = true;
+      } else {
+        console.log("Cache invalid or expired, fetching fresh profile data");
+      }
+
+      // If no valid cached data, fetch fresh data
+      if (!isCacheValid) {
+        console.log("Fetching fresh profile data from database");
         const { data: freshProfile, error: profileError } = await supabase
           .from("profiles")
           .select("*")
@@ -35,6 +45,7 @@ export const useSubscriptionCheck = () => {
             cachedAt: Date.now(),
           };
           localStorage.setItem("userProfile", JSON.stringify(profile));
+          console.log("Updated profile cache with fresh data");
         }
       }
       
@@ -45,8 +56,12 @@ export const useSubscriptionCheck = () => {
         throw new Error("No profile found");
       }
 
+      // Check subscription_status directly as a string since that's how it's stored in the database
+      const subscriptionStatus = profile.subscription_status;
+      console.log("User subscription status:", subscriptionStatus);
+
       // Check for grandmaster subscription - always allow access (highest priority)
-      if (profile.subscription_status === "grandmaster") {
+      if (subscriptionStatus === "grandmaster") {
         console.log("User has Grandmaster subscription - granting unlimited access");
         toast({
           title: "Welcome back!",
@@ -56,7 +71,7 @@ export const useSubscriptionCheck = () => {
       }
 
       // For Alchemist, check monthly usage - strict comparison to ensure correct limit
-      if (profile.subscription_status === "alchemist") {
+      if (subscriptionStatus === "alchemist") {
         console.log("Alchemist user check - monthly usage:", profile.monthly_usage_count);
         // Check if user has reached or exceeded the 30 usage limit
         if ((profile.monthly_usage_count || 0) >= 30) {
@@ -78,7 +93,7 @@ export const useSubscriptionCheck = () => {
       }
 
       // Handle free trial cases only for apprentice users
-      if (profile.subscription_status === "apprentice") {
+      if (subscriptionStatus === "apprentice") {
         console.log("Apprentice user check - usage count:", profile.usage_count, "limit:", profile.free_trial_limit);
         if (profile.usage_count >= profile.free_trial_limit) {
           if (!profile.has_completed_survey) {

@@ -88,6 +88,39 @@ const PaymentSuccess: React.FC = () => {
 
         if (existingTransaction) {
           console.log("Transaction already exists:", existingTransaction);
+          
+          if (plan) {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+              console.log("Ensuring user profile has correct subscription status:", plan);
+              const { error: profileUpdateError } = await supabase
+                .from("profiles")
+                .update({
+                  subscription_status: plan,
+                  payment_period: isAnnual ? "annual" : "monthly",
+                  monthly_usage_count: 0,
+                })
+                .eq("id", user.id);
+                
+              if (profileUpdateError) {
+                console.error("Error updating profile:", profileUpdateError);
+              } else {
+                console.log("Successfully updated user profile subscription status");
+                
+                const cachedProfile = localStorage.getItem("userProfile");
+                if (cachedProfile) {
+                  const updatedProfile = JSON.parse(cachedProfile);
+                  updatedProfile.subscription_status = plan;
+                  updatedProfile.payment_period = isAnnual ? "annual" : "monthly";
+                  updatedProfile.monthly_usage_count = 0;
+                  updatedProfile.cachedAt = Date.now();
+                  localStorage.setItem("userProfile", JSON.stringify(updatedProfile));
+                  console.log("Updated local profile cache with new subscription data");
+                }
+              }
+            }
+          }
+          
           setVerificationSuccess(true);
           setTransaction(existingTransaction);
           setIsLoading(false);

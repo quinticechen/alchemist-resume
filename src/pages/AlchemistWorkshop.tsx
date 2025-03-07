@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import ResumeUploader from "@/components/ResumeUploader";
@@ -32,7 +31,17 @@ const AlchemistWorkshop = () => {
       if (!isLoading && !session) {
         navigate('/login', { state: { from: '/alchemist-workshop' } });
       } else if (session) {
-        await checkSubscriptionAndRedirect(session.user.id);
+        console.log("Session found, checking subscription status");
+        
+        // Force a fresh check of subscription status to ensure we have the latest data
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          // Clear the cached profile to force a fresh check
+          localStorage.removeItem("userProfile");
+          console.log("Removed cached profile to ensure fresh subscription status check");
+          
+          await checkSubscriptionAndRedirect(session.user.id);
+        }
       }
     };
     checkAuthAndSubscription();
