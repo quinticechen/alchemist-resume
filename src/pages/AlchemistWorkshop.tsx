@@ -175,14 +175,14 @@ const AlchemistWorkshop = () => {
 
         {selectedFile && (
           <>
-            <Button
+            {/* <Button
               variant="outline"
               onClick={previewOriginalResume}
               className="w-full flex items-center justify-center gap-2 text-primary border-primary/20 hover:bg-primary/5"
             >
               <FileText className="h-4 w-4" />
               Preview Original Resume
-            </Button>
+            </Button> */}
 
             <JobUrlInput
               onUrlSubmit={handleUrlSubmit}
@@ -205,16 +205,16 @@ const AlchemistWorkshop = () => {
         )}
 
         {analysisId && (
-          <div className="flex justify-center pt-8">
-            <Button
-              variant="outline"
-              onClick={viewAllRecords}
-              className="flex items-center gap-2"
-            >
-              <History className="h-4 w-4" />
-              View All Records
-            </Button>
-          </div>
+          // <div className="flex justify-center pt-8">
+          //   <Button
+          //     variant="outline"
+          //     onClick={viewAllRecords}
+          //     className="flex items-center gap-2"
+          //   >
+          //     <History className="h-4 w-4" />
+          //     View All Records
+          //   </Button>
+          // </div>
         )}
       </div>
     </div>

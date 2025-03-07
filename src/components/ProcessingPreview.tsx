@@ -11,7 +11,7 @@ import { useNavigate } from "react-router-dom";
 interface ProcessingPreviewProps {
   analysisId?: string;
   jobUrl?: string;
-  resumeId?: string;
+  // resumeId?: string;
   setIsProcessing?: (isProcessing: boolean) => void;
   onGenerationComplete?: () => void;
 }
@@ -19,7 +19,7 @@ interface ProcessingPreviewProps {
 const ProcessingPreview = ({ 
   analysisId,
   jobUrl,
-  resumeId,
+  // resumeId,
   setIsProcessing,
   onGenerationComplete
 }: ProcessingPreviewProps) => {
@@ -30,9 +30,9 @@ const ProcessingPreview = ({
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!analysisId && !resumeId) return;
+    if (!analysisId) return;
 
-    console.log('Setting up ProcessingPreview for analysis:', analysisId || resumeId);
+    console.log('Setting up ProcessingPreview for analysis:', analysisId);
 
     // Initial fetch of the analysis
     const fetchAnalysis = async () => {
@@ -40,7 +40,7 @@ const ProcessingPreview = ({
       const { data, error } = await supabase
         .from("resume_analyses")
         .select("google_doc_url")
-        .eq("id", analysisId || resumeId)
+        .eq("id", analysisId)
         .single();
 
       if (error) {
@@ -55,6 +55,10 @@ const ProcessingPreview = ({
         setProgress(100);
         setIsGenerationDone(true);
         if (onGenerationComplete) onGenerationComplete();
+        toast({ // 添加這裡，如果 googleDocUrl 已經存在，則直接顯示成功通知
+          title: "Analysis Complete!",
+          description: "Your customized resume is now ready",
+        });
       }
     };
 
@@ -62,14 +66,14 @@ const ProcessingPreview = ({
 
     // Subscribe to real-time updates
     const channel = supabase
-      .channel(`analysis-${analysisId || resumeId}`)
+      .channel(`analysis-${analysisId}`)
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
           table: 'resume_analyses',
-          filter: `id=eq.${analysisId || resumeId}`,
+          filter: `id=eq.${analysisId}`,
         },
         (payload) => {
           console.log('Received real-time update:', payload);
@@ -107,7 +111,7 @@ const ProcessingPreview = ({
       console.log('Cleaning up subscription');
       supabase.removeChannel(channel);
     };
-  }, [analysisId, resumeId, toast, googleDocUrl, onGenerationComplete]);
+}, [analysisId, toast, googleDocUrl, onGenerationComplete]);
 
   // Continuous progress updates while waiting for the result
   useEffect(() => {
