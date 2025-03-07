@@ -241,7 +241,7 @@ const AlchemistWorkshop = () => {
         {analysisId && !isTimeout && (
           <section>
             <div className="flex justify-center pt-8">
-              <div className="w-full mx-auto flex items-center md:w-2/4 lg:w-1/3 xl:w-1/2">
+              <div className="w-full h-300p mx-auto items-center md:w-2/4 lg:w-1/3 xl:w-1/2">
                 <Lottie
                   options={defaultOptions}
                   height={"100%"}
