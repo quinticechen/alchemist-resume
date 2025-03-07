@@ -152,7 +152,7 @@ const AlchemistWorkshop = () => {
         setTimeoutMessage(
           "Resume generation took too long. Please try again later."
         ); // 設定超時訊息
-      }, 0.5 * 60 * 1000); // 五分鐘
+      }, 5 * 60 * 1000); // 五分鐘
     } catch (error) {
       console.error("Error processing resume:", error);
       toast({
@@ -251,7 +251,7 @@ const AlchemistWorkshop = () => {
 
         {analysisId && !isTimeout && (
           <section>
-            <div className="flex justify-center pt-8">
+            <div className="justify-center pt-8">
               <div className="w-full h-300p mx-auto items-center md:w-2/4 lg:w-1/3 xl:w-1/2">
                 <Lottie
                   options={loading}
@@ -268,12 +268,12 @@ const AlchemistWorkshop = () => {
 
         {isTimeout && timeoutMessage && (
           <section>
-            <div className="flex justify-center pt-8">
-              <div className="w-full h-300p mx-auto items-center md:w-2/4 lg:w-1/3 xl:w-1/2">
+            <div className="justify-center pt-8">
+              <div className="w-full mx-auto items-center md:w-2/4 lg:w-1/3 xl:w-1/2">
                 <Lottie
                   options={failed}
-                  height={"100%"}
-                  width={"100%"}
+                  height={"30%"}
+                  width={"30%"}
                 />
               </div>
               <p>{timeoutMessage}</p>
