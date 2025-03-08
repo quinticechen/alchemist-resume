@@ -12,6 +12,7 @@ interface ProcessingPreviewProps {
   analysisId?: string;
   jobUrl?: string;
   resumeId?: string;
+  isProcessing?:
   setIsProcessing?: (isProcessing: boolean) => void;
   onGenerationComplete?: () => void;
 }
@@ -22,6 +23,7 @@ const ProcessingPreview = ({
   analysisId,
   jobUrl,
   resumeId,
+  isProcessing,
   setIsProcessing,
   onGenerationComplete,
 }: ProcessingPreviewProps) => {
@@ -42,8 +44,6 @@ const ProcessingPreview = ({
 
   useEffect(() => {
     if (!analysisId) return;
-
-    console.log("Setting up ProcessingPreview for analysis:", analysisId);
     setStatus("loading");
 
     // Initial fetch of the analysis
@@ -207,6 +207,10 @@ const ProcessingPreview = ({
   const viewAllRecords = () => {
     navigate("/alchemy-records");
   };
+
+  if (!isProcessing) {
+    return null;
+  }
 
   return (
     <Card className="w-full animate-fade-up">

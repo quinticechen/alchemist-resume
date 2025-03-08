@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import ResumeUploader from "@/components/ResumeUploader";
@@ -31,7 +30,7 @@ const AlchemistWorkshop = () => {
   const [timeoutMessage, setTimeoutMessage] = useState<string | null>(null);
   const [isGenerationComplete, setIsGenerationComplete] = useState(false);
   const [showLoadingAnimation, setShowLoadingAnimation] = useState(false);
-  
+
   // Track if we've already checked the subscription in this session
   const hasCheckedSubscription = useRef(false);
 
@@ -42,15 +41,16 @@ const AlchemistWorkshop = () => {
     } else if (!isLoading && session && !hasCheckedSubscription.current) {
       // Only check subscription once per session/component mount
       hasCheckedSubscription.current = true;
-      
+
       // Check if this is a fresh login or returning visit
-      const isReturningVisit = sessionStorage.getItem('hasVisitedWorkshop') === 'true';
-      
+      const isReturningVisit =
+        sessionStorage.getItem("hasVisitedWorkshop") === "true";
+
       // Only show welcome toast on first visit after login, not on subsequent visits
       checkSubscriptionAndRedirect(session.user.id, !isReturningVisit);
-      
+
       // Mark that user has visited the workshop in this session
-      sessionStorage.setItem('hasVisitedWorkshop', 'true');
+      sessionStorage.setItem("hasVisitedWorkshop", "true");
     }
   }, [session, isLoading, navigate, checkSubscriptionAndRedirect]);
 
@@ -77,7 +77,7 @@ const AlchemistWorkshop = () => {
     setTimeoutMessage(null);
     setIsGenerationComplete(false);
     setShowLoadingAnimation(true);
-    
+
     if (timeoutId.current) {
       clearTimeout(timeoutId.current);
     }
@@ -174,17 +174,18 @@ const AlchemistWorkshop = () => {
             try {
               await supabase
                 .from("resume_analyses")
-                .update({ 
-                  error: "Resume generation took too long. Please try again later." 
+                .update({
+                  error:
+                    "Resume generation took too long. Please try again later.",
                 })
                 .eq("id", analysisRecord.id);
-              
+
               console.log("Updated analysis with timeout error");
             } catch (err) {
               console.error("Error updating analysis with timeout:", err);
             }
           };
-          
+
           // Execute the async function
           updateAnalysis();
 
@@ -288,6 +289,7 @@ const AlchemistWorkshop = () => {
             analysisId={analysisId}
             jobUrl={jobUrl}
             resumeId={resumeId}
+            isProcessing={isProcessing} 
             setIsProcessing={setIsProcessing}
             onGenerationComplete={handleGenerationComplete}
           />
@@ -307,6 +309,17 @@ const AlchemistWorkshop = () => {
           </section>
         )}
 
+        {/* Received section */}
+        {isGenerationComplete && (
+          <section className="text-center">
+            <div className="py-8">
+              <div className="w-64 h-64 mx-auto">
+                <Lottie options={failedOptions} />
+              </div>
+              <p className="mt-4 text-gray-600">{timeoutMessage}</p>
+            </div>
+          </section>
+        )}
         {/* Error/Timeout section */}
         {isTimeout && timeoutMessage && (
           <section className="text-center">
