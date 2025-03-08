@@ -8,9 +8,8 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
 interface ProcessingPreviewProps {
-  analysisId?: string;
+  analysisId: string;
   jobUrl?: string;
-  resumeId?: string;
   isProcessing?: boolean;
   setIsProcessing?: (isProcessing: boolean) => void;
   onGenerationComplete?: () => void;
@@ -21,7 +20,6 @@ type ProcessingStatus = "idle" | "loading" | "error" | "success";
 const ProcessingPreview = ({
   analysisId,
   jobUrl,
-  resumeId,
   isProcessing,
   setIsProcessing,
   onGenerationComplete,
@@ -44,7 +42,7 @@ const ProcessingPreview = ({
   useEffect(() => {
     if (!analysisId) return;
     setStatus("loading");
-    console.log("all id:", analysisId, jobUrl, resumeId, isProcessing);
+    console.log("all id:", analysisId, jobUrl, isProcessing);
     // Initial fetch of the analysis
     const fetchAnalysis = async () => {
       try {

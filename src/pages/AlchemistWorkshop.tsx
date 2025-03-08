@@ -170,24 +170,24 @@ const AlchemistWorkshop = () => {
       timeoutId.current = setTimeout(() => {
         if (!isGenerationComplete) {
           // Update the analysis record with an error message using async/await
-          const updateAnalysis = async () => {
-            try {
-              await supabase
-                .from("resume_analyses")
-                .update({
-                  error:
-                    "Resume generation took too long. Please try again later.",
-                })
-                .eq("id", analysisRecord.id);
+          // const updateAnalysis = async () => {
+          //   try {
+          //     await supabase
+          //       .from("resume_analyses")
+          //       .update({
+          //         error:
+          //           "Resume generation took too long. Please try again later.",
+          //       })
+          //       .eq("id", analysisRecord.id);
 
-              console.log("Updated analysis with timeout error");
-            } catch (err) {
-              console.error("Error updating analysis with timeout:", err);
-            }
-          };
+          //     console.log("Updated analysis with timeout error");
+          //   } catch (err) {
+          //     console.error("Error updating analysis with timeout:", err);
+          //   }
+          // };
 
-          // Execute the async function
-          updateAnalysis();
+          // // Execute the async function
+          // updateAnalysis();
 
           toast({
             title: "Generation Failed",
@@ -285,14 +285,19 @@ const AlchemistWorkshop = () => {
         )}
 
         {isProcessing && analysisId && (
-          <ProcessingPreview
-            analysisId={analysisId}
-            jobUrl={jobUrl}
-            resumeId={resumeId}
-            isProcessing={isProcessing} 
-            setIsProcessing={setIsProcessing}
-            onGenerationComplete={handleGenerationComplete}
-          />
+          <>
+            {console.log(
+              "Rendering ProcessingPreview with analysisId:",
+              analysisId
+            )}
+            <ProcessingPreview
+              analysisId={analysisId}
+              jobUrl={jobUrl}
+              isProcessing={isProcessing}
+              setIsProcessing={setIsProcessing}
+              onGenerationComplete={handleGenerationComplete}
+            />
+          </>
         )}
 
         {/* Loading animation section - show when processing and not complete or timed out */}
