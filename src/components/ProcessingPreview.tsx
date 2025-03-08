@@ -33,6 +33,13 @@ const ProcessingPreview = ({
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  // Debug logging for props
+  useEffect(() => {
+    if (analysisId) {
+      console.log("ProcessingPreview initialized with analysisId:", analysisId);
+    }
+  }, [analysisId]);
+
   useEffect(() => {
     if (!analysisId) return;
 
@@ -124,12 +131,17 @@ const ProcessingPreview = ({
               return;
             }
 
+            // Check if google_doc_url is now available
             if (newData.google_doc_url && !googleDocUrl) {
+              console.log("Google Doc URL updated:", newData.google_doc_url);
               setGoogleDocUrl(newData.google_doc_url);
               setStatus("success");
               setProgress(100);
               setIsGenerationDone(true);
-              if (onGenerationComplete) onGenerationComplete();
+              if (onGenerationComplete) {
+                console.log("Calling onGenerationComplete callback");
+                onGenerationComplete();
+              }
               toast({
                 title: "Resume Alchemist Complete!",
                 description: "Your customized resume is now ready",
@@ -219,10 +231,10 @@ const ProcessingPreview = ({
             {getStatusMessage()}
           </p>
 
-          {status === "success" && (
+          {status === "success" && googleDocUrl && (
             <div className="flex flex-wrap gap-4">
               <a
-                href={googleDocUrl || "#"}
+                href={googleDocUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-md border border-blue-500 text-blue-600 hover:bg-blue-50 transition-colors"

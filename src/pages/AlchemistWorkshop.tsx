@@ -31,13 +31,28 @@ const AlchemistWorkshop = () => {
   const [timeoutMessage, setTimeoutMessage] = useState<string | null>(null);
   const [isGenerationComplete, setIsGenerationComplete] = useState(false);
   const [showLoadingAnimation, setShowLoadingAnimation] = useState(false);
+  
+  // Track if we've already checked the subscription in this session
+  const hasCheckedSubscription = useRef(false);
 
   // Redirect to login if not authenticated
   useEffect(() => {
     if (!isLoading && !session) {
       navigate("/login", { state: { from: "/alchemist-workshop" } });
+    } else if (!isLoading && session && !hasCheckedSubscription.current) {
+      // Only check subscription once per session/component mount
+      hasCheckedSubscription.current = true;
+      
+      // Check if this is a fresh login or returning visit
+      const isReturningVisit = sessionStorage.getItem('hasVisitedWorkshop') === 'true';
+      
+      // Only show welcome toast on first visit after login, not on subsequent visits
+      checkSubscriptionAndRedirect(session.user.id, !isReturningVisit);
+      
+      // Mark that user has visited the workshop in this session
+      sessionStorage.setItem('hasVisitedWorkshop', 'true');
     }
-  }, [session, isLoading, navigate]);
+  }, [session, isLoading, navigate, checkSubscriptionAndRedirect]);
 
   const handleFileUploadSuccess = (
     file: File,
@@ -200,6 +215,7 @@ const AlchemistWorkshop = () => {
   };
 
   const handleGenerationComplete = () => {
+    console.log("Generation complete callback triggered");
     setIsGenerationComplete(true);
     setShowLoadingAnimation(false);
     if (timeoutId.current) {
