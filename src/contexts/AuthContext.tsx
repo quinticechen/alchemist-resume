@@ -6,11 +6,13 @@ import { Session } from "@supabase/supabase-js";
 interface AuthContextType {
   session: Session | null;
   isLoading: boolean;
+  signOut: () => Promise<void>; // Add signOut method to the interface
 }
 
 const AuthContext = createContext<AuthContextType>({
   session: null,
   isLoading: true,
+  signOut: async () => {}, // Provide a default implementation
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -18,6 +20,18 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Implement the signOut method
+  const signOut = async () => {
+    try {
+      await supabase.auth.signOut();
+      // Clear any user-related data from local storage when signing out
+      localStorage.removeItem('userProfile');
+      sessionStorage.removeItem('userAuthenticated');
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
 
   useEffect(() => {
     console.log("Initial session check:", session);
@@ -65,7 +79,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   return (
-    <AuthContext.Provider value={{ session, isLoading }}>
+    <AuthContext.Provider value={{ session, isLoading, signOut }}>
       {children}
     </AuthContext.Provider>
   );
