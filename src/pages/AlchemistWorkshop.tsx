@@ -161,7 +161,6 @@ const AlchemistWorkshop = () => {
 
       setJobUrl(url);
       setAnalysisId(analysisRecord.id);
-      setRenderCount((prevCount) => prevCount + 1);
       console.log("analysisId set to:", analysisRecord.id);
 
       toast({
