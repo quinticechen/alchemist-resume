@@ -1,10 +1,10 @@
 import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@//ui/card";
-import { Progress } from "@//ui/progress";
+import { Progress } from "@/components/ui/progress";
 import { Loader2, FileText, History, Crown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Button } from "@//ui/button";
+import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
 interface ProcessingPreviewProps {
@@ -202,14 +202,7 @@ const ProcessingPreview = ({
 export default ProcessingPreview;
 
 
-// import React, { useEffect, useState } from "react";
-// import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-// import { Progress } from "@/components/ui/progress";
-// import { Loader2, FileText, History, Crown } from "lucide-react";
-// import { supabase } from "@/integrations/supabase/client";
-// import { useToast } from "@/hooks/use-toast";
-// import { Button } from "@/components/ui/button";
-// import { useNavigate } from "react-router-dom";
+
 
 // interface ProcessingPreviewProps {
 //   analysisId: string;
