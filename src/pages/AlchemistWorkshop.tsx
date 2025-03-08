@@ -31,6 +31,7 @@ const AlchemistWorkshop = () => {
   const [isGenerationComplete, setIsGenerationComplete] = useState(false);
   const [showLoadingAnimation, setShowLoadingAnimation] = useState(false);
   const [googleDocUrl, setGoogleDocUrl] = useState<string | null>(null);
+  const [renderPreview, setRenderPreview] = useState(false);
 
   // Track if we've already checked the subscription in this session
   const hasCheckedSubscription = useRef(false);
@@ -71,154 +72,137 @@ const AlchemistWorkshop = () => {
     });
   };
 
-  const handleUrlSubmit = async (url: string) => {
-    // Reset states
-    setIsProcessing(true);
-    console.log("isProcessing set to true");
-    setIsTimeout(false);
-    setTimeoutMessage(null);
-    setIsGenerationComplete(false);
-    setShowLoadingAnimation(true);
+  const handleUrlSubmit = useCallback(
+    async (url) => {
+      // Reset states
+      setIsProcessing(true);
+      console.log("isProcessing set to true");
+      setIsTimeout(false);
+      setTimeoutMessage(null);
+      setIsGenerationComplete(false);
+      setShowLoadingAnimation(true);
 
-    if (timeoutId.current) {
-      clearTimeout(timeoutId.current);
-    }
+      if (timeoutId.current) {
+        clearTimeout(timeoutId.current);
+      }
 
-    try {
-      console.log("Creating analysis record with data:", {
-        resume_id: resumeId,
-        job_url: url,
-        user_id: session?.user?.id,
-      });
-
-      // First, create the analysis record in the database
-      const { data: analysisRecord, error: analysisError } = await supabase
-        .from("resume_analyses")
-        .insert({
+      try {
+        console.log("Creating analysis record with data:", {
           resume_id: resumeId,
           job_url: url,
           user_id: session?.user?.id,
-        })
-        .select()
-        .single();
+        });
 
-      if (analysisError) {
-        console.error("Error creating analysis record:", analysisError);
-        throw analysisError;
-      }
+        // First, create the analysis record in the database
+        const { data: analysisRecord, error: analysisError } = await supabase
+          .from("resume_analyses")
+          .insert({
+            resume_id: resumeId,
+            job_url: url,
+            user_id: session?.user?.id,
+          })
+          .select()
+          .single();
 
-      console.log("Analysis record created:", analysisRecord);
-
-      // Get the resume details
-      const { data: resumeData, error: resumeError } = await supabase
-        .from("resumes")
-        .select("file_name, file_path")
-        .eq("id", resumeId)
-        .single();
-
-      if (resumeError) {
-        console.error("Error fetching resume:", resumeError);
-        throw resumeError;
-      }
-
-      console.log("Resume data fetched:", resumeData);
-
-      // Get the storage URL for the resume
-      const { data: storageData } = supabase.storage
-        .from("resumes")
-        .getPublicUrl(resumeData.file_path);
-
-      console.log("Storage URL generated:", storageData);
-
-      const webhookData = {
-        analysisId: analysisRecord.id,
-        resumeUrl: storageData.publicUrl,
-        jobUrl: url,
-        fileName: resumeData.file_name,
-      };
-
-      console.log("Preparing to send webhook data:", webhookData);
-
-      // Trigger the Make.com webhook with the correct data format
-      const makeWebhookUrl =
-        "https://hook.eu2.make.com/pthisc4aefvf15i7pj4ja99a84dp7kce";
-      console.log("Sending webhook to:", makeWebhookUrl);
-
-      const webhookResponse = await fetch(makeWebhookUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(webhookData),
-      });
-
-      console.log("Webhook response status:", webhookResponse.status);
-
-      if (!webhookResponse.ok) {
-        console.error("Webhook response not OK:", webhookResponse);
-        throw new Error("Failed to trigger Make.com webhook");
-      }
-
-      setJobUrl(url);
-      setAnalysisId(analysisRecord.id);
-      setRenderCount((prevCount) => prevCount + 1);
-      console.log("analysisId set to:", analysisRecord.id);
-
-      toast({
-        title: "Analysis Started",
-        description:
-          "Your resume is being analyzed. Results will be available soon.",
-      });
-
-      // Set five-minute timeout
-      timeoutId.current = setTimeout(() => {
-        if (!isGenerationComplete) {
-          // Update the analysis record with an error message using async/await
-          // const updateAnalysis = async () => {
-          //   try {
-          //     await supabase
-          //       .from("resume_analyses")
-          //       .update({
-          //         error:
-          //           "Resume generation took too long. Please try again later.",
-          //       })
-          //       .eq("id", analysisRecord.id);
-
-          //     console.log("Updated analysis with timeout error");
-          //   } catch (err) {
-          //     console.error("Error updating analysis with timeout:", err);
-          //   }
-          // };
-
-          // // Execute the async function
-          // updateAnalysis();
-
-          toast({
-            title: "Generation Failed",
-            description:
-              "Resume generation took too long. Please try again later.",
-            variant: "destructive",
-          });
-          setIsTimeout(true);
-          setTimeoutMessage(
-            "Resume generation took too long. Please try again later."
-          );
-          setShowLoadingAnimation(false);
+        if (analysisError) {
+          console.error("Error creating analysis record:", analysisError);
+          throw analysisError;
         }
-      }, 5 * 60 * 1000); // Five minutes
-    } catch (error) {
-      console.error("Error processing resume:", error);
-      toast({
-        title: "Error",
-        description: "Failed to process resume. Please try again later.",
-        variant: "destructive",
-      });
-      setIsProcessing(false);
-      setShowLoadingAnimation(false);
-    }
-  };
 
-  const handleGenerationComplete = () => {
+        console.log("Analysis record created:", analysisRecord);
+
+        // Get the resume details
+        const { data: resumeData, error: resumeError } = await supabase
+          .from("resumes")
+          .select("file_name, file_path")
+          .eq("id", resumeId)
+          .single();
+
+        if (resumeError) {
+          console.error("Error fetching resume:", resumeError);
+          throw resumeError;
+        }
+
+        console.log("Resume data fetched:", resumeData);
+
+        // Get the storage URL for the resume
+        const { data: storageData } = supabase.storage
+          .from("resumes")
+          .getPublicUrl(resumeData.file_path);
+
+        console.log("Storage URL generated:", storageData);
+
+        const webhookData = {
+          analysisId: analysisRecord.id,
+          resumeUrl: storageData.publicUrl,
+          jobUrl: url,
+          fileName: resumeData.file_name,
+        };
+
+        console.log("Preparing to send webhook data:", webhookData);
+
+        // Trigger the Make.com webhook with the correct data format
+        const makeWebhookUrl =
+          "https://hook.eu2.make.com/pthisc4aefvf15i7pj4ja99a84dp7kce";
+        console.log("Sending webhook to:", makeWebhookUrl);
+
+        const webhookResponse = await fetch(makeWebhookUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(webhookData),
+        });
+
+        console.log("Webhook response status:", webhookResponse.status);
+
+        if (!webhookResponse.ok) {
+          console.error("Webhook response not OK:", webhookResponse);
+          throw new Error("Failed to trigger Make.com webhook");
+        }
+
+        setJobUrl(url);
+        setAnalysisId(analysisRecord.id);
+        setRenderCount((prevCount) => prevCount + 1);
+        console.log("analysisId set to:", analysisRecord.id);
+
+        toast({
+          title: "Analysis Started",
+          description:
+            "Your resume is being analyzed. Results will be available soon.",
+        });
+
+        // Set five-minute timeout
+        timeoutId.current = setTimeout(() => {
+          if (!isGenerationComplete) {
+            toast({
+              title: "Generation Failed",
+              description:
+                "Resume generation took too long. Please try again later.",
+              variant: "destructive",
+            });
+            setIsTimeout(true);
+            setTimeoutMessage(
+              "Resume generation took too long. Please try again later."
+            );
+            setShowLoadingAnimation(false);
+          }
+        }, 5 * 60 * 1000); // Five minutes
+      } catch (error) {
+        console.error("Error processing resume:", error);
+        toast({
+          title: "Error",
+          description: "Failed to process resume. Please try again later.",
+          variant: "destructive",
+        });
+        setIsProcessing(false);
+        setShowLoadingAnimation(false);
+      }
+    },
+    [session, resumeId, toast]
+  );
+
+  const handleGenerationComplete = useCallback(() => {
     console.log("Generation complete callback triggered");
     setIsGenerationComplete(true);
     setShowLoadingAnimation(false);
@@ -226,7 +210,7 @@ const AlchemistWorkshop = () => {
       clearTimeout(timeoutId.current);
       timeoutId.current = null;
     }
-  };
+  }, []);
 
   // Clean up timeout on unmount
   useEffect(() => {
@@ -290,20 +274,14 @@ const AlchemistWorkshop = () => {
 
         {console.log("isProcessing:", isProcessing, "analysisId:", analysisId)}
 
-        {isProcessing && analysisId && (
-          <>
-            {console.log(
-              "Rendering ProcessingPreview with analysisId:",
-              analysisId
-            )}
-            <ProcessingPreview
-              analysisId={analysisId}
-              jobUrl={jobUrl}
-              isProcessing={isProcessing}
-              setIsProcessing={setIsProcessing}
-              onGenerationComplete={handleGenerationComplete}
-            />
-          </>
+        {renderPreview && ( // 根據 renderPreview 狀態渲染
+          <ProcessingPreview
+            analysisId={analysisId}
+            jobUrl={jobUrl}
+            isProcessing={isProcessing}
+            setIsProcessing={setIsProcessing}
+            onGenerationComplete={handleGenerationComplete}
+          />
         )}
 
         {/* Loading animation section - show when processing and not complete or timed out */}
