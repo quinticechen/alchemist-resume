@@ -87,6 +87,9 @@ const ProcessingPreview = ({
             title: "Analysis Complete!",
             description: "Your customized resume is now ready",
           });
+        } else {
+          // If no google_doc_url yet, show loading status
+          setStatus("loading");
         }
       } catch (error) {
         console.error("Error fetching analysis:", error);
@@ -102,9 +105,12 @@ const ProcessingPreview = ({
 
     fetchAnalysis();
 
-    // Subscribe to real-time updates
+    // Subscribe to real-time updates with a stable channel name
+    const channelName = `analysis-${analysisId}`;
+    console.log(`Creating subscription channel: ${channelName}`);
+    
     const channel = supabase
-      .channel(`analysis-${analysisId}`)
+      .channel(channelName)
       .on(
         "postgres_changes",
         {
@@ -132,7 +138,7 @@ const ProcessingPreview = ({
             }
 
             // Check if google_doc_url is now available
-            if (newData.google_doc_url && !googleDocUrl) {
+            if (newData.google_doc_url) {
               console.log("Google Doc URL updated:", newData.google_doc_url);
               setGoogleDocUrl(newData.google_doc_url);
               setStatus("success");
@@ -146,9 +152,8 @@ const ProcessingPreview = ({
                 title: "Resume Alchemist Complete!",
                 description: "Your customized resume is now ready",
               });
-            }
-
-            if (newData.analysis_data) {
+            } else if (newData.analysis_data && !newData.google_doc_url) {
+              // Update progress if we have analysis_data but not yet a google_doc_url
               setProgress(90);
               console.log("Analysis data received:", newData.analysis_data);
             }
@@ -156,17 +161,17 @@ const ProcessingPreview = ({
         }
       )
       .subscribe((status) => {
-        console.log("Subscription status:", status);
+        console.log(`Subscription status for ${channelName}:`, status);
         if (status === "SUBSCRIBED") {
-          console.log("Successfully subscribed to updates");
+          console.log(`Successfully subscribed to ${channelName}`);
         }
       });
 
     return () => {
-      console.log("Cleaning up subscription");
+      console.log(`Cleaning up subscription for ${channelName}`);
       supabase.removeChannel(channel);
     };
-  }, [analysisId, toast, googleDocUrl, onGenerationComplete]);
+  }, [analysisId, toast, onGenerationComplete]);
 
   const getStatusMessage = () => {
     if (error) return error;

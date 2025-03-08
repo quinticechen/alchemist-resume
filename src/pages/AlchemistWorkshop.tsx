@@ -169,8 +169,7 @@ const AlchemistWorkshop = () => {
       // Set five-minute timeout
       timeoutId.current = setTimeout(() => {
         if (!isGenerationComplete) {
-          // Update the analysis record with an error message
-          // Fix: Convert this to a proper async/await pattern to use try/catch
+          // Update the analysis record with an error message using async/await
           const updateAnalysis = async () => {
             try {
               await supabase

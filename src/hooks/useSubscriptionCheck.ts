@@ -7,9 +7,6 @@ export const useSubscriptionCheck = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  // Track if we've already shown a welcome toast in this session
-  let hasShownWelcomeToast = false;
-
   const checkSubscriptionAndRedirect = async (userId: string, showWelcomeToast = true) => {
     console.log("Checking subscription for user:", userId);
 
@@ -67,13 +64,12 @@ export const useSubscriptionCheck = () => {
       if (subscriptionStatus === "grandmaster") {
         console.log("User has Grandmaster subscription - granting unlimited access");
         
-        // Only show welcome toast if requested AND we haven't shown it yet in this session
-        if (showWelcomeToast && !hasShownWelcomeToast) {
+        // Only show welcome toast if explicitly requested
+        if (showWelcomeToast) {
           toast({
             title: "Welcome back!",
             description: "You've successfully signed in.",
           });
-          hasShownWelcomeToast = true;
         }
         return;
       }
@@ -92,13 +88,12 @@ export const useSubscriptionCheck = () => {
           return;
         } else {
           console.log("Alchemist user within monthly limit");
-          // Only show welcome toast if requested AND we haven't shown it yet in this session
-          if (showWelcomeToast && !hasShownWelcomeToast) {
+          // Only show welcome toast if explicitly requested
+          if (showWelcomeToast) {
             toast({
               title: "Welcome back!",
               description: "You've successfully signed in.",
             });
-            hasShownWelcomeToast = true;
           }
           return;
         }
@@ -128,13 +123,12 @@ export const useSubscriptionCheck = () => {
       }
 
       // User is within free trial limits or has valid subscription
-      // Only show welcome toast if requested AND we haven't shown it yet in this session
-      if (showWelcomeToast && !hasShownWelcomeToast) {
+      // Only show welcome toast if explicitly requested
+      if (showWelcomeToast) {
         toast({
           title: "Welcome back!",
           description: "You've successfully signed in.",
         });
-        hasShownWelcomeToast = true;
       }
     } catch (error) {
       console.error("Detailed subscription check error:", error);

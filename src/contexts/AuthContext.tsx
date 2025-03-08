@@ -28,6 +28,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Clear any user-related data from local storage when signing out
       localStorage.removeItem('userProfile');
       sessionStorage.removeItem('userAuthenticated');
+      sessionStorage.removeItem('hasVisitedWorkshop');
     } catch (error) {
       console.error('Error signing out:', error);
     }
