@@ -11,7 +11,7 @@ import { useNavigate } from "react-router-dom";
 interface ProcessingPreviewProps {
   analysisId?: string;
   jobUrl?: string;
-  resumeId?: string;
+  // resumeId?: string;
   isProcessing?:
   setIsProcessing?: (isProcessing: boolean) => void;
   onGenerationComplete?: () => void;
@@ -22,7 +22,7 @@ type ProcessingStatus = "idle" | "loading" | "error" | "success";
 const ProcessingPreview = ({
   analysisId,
   jobUrl,
-  resumeId,
+  // resumeId,
   isProcessing,
   setIsProcessing,
   onGenerationComplete,
