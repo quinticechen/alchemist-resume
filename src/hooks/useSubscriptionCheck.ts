@@ -10,6 +10,13 @@ export const useSubscriptionCheck = () => {
   const checkSubscriptionAndRedirect = async (userId: string, showWelcomeToast = true) => {
     console.log("Checking subscription for user:", userId);
 
+    // Check if we've already shown the welcome toast in this session
+    const welcomeToastShown = sessionStorage.getItem('welcomeToastShown') === 'true';
+    const isFreshLogin = sessionStorage.getItem('freshLogin') === 'true';
+    
+    // Only show welcome toast if explicitly requested, hasn't been shown yet, and it's a fresh login
+    const shouldShowWelcomeToast = showWelcomeToast && !welcomeToastShown && isFreshLogin;
+    
     try {
       // First check cached profile data
       const cachedProfile = localStorage.getItem("userProfile");
@@ -64,13 +71,18 @@ export const useSubscriptionCheck = () => {
       if (subscriptionStatus === "grandmaster") {
         console.log("User has Grandmaster subscription - granting unlimited access");
         
-        // Only show welcome toast if explicitly requested
-        if (showWelcomeToast) {
+        // Only show welcome toast if conditions are met
+        if (shouldShowWelcomeToast) {
           toast({
             title: "Welcome back!",
             description: "You've successfully signed in.",
           });
+          // Set the flag that we've shown the welcome toast
+          sessionStorage.setItem('welcomeToastShown', 'true');
         }
+        
+        // Clear the fresh login flag once processed
+        sessionStorage.removeItem('freshLogin');
         return;
       }
 
@@ -88,13 +100,19 @@ export const useSubscriptionCheck = () => {
           return;
         } else {
           console.log("Alchemist user within monthly limit");
-          // Only show welcome toast if explicitly requested
-          if (showWelcomeToast) {
+          
+          // Only show welcome toast if conditions are met
+          if (shouldShowWelcomeToast) {
             toast({
               title: "Welcome back!",
               description: "You've successfully signed in.",
             });
+            // Set the flag that we've shown the welcome toast
+            sessionStorage.setItem('welcomeToastShown', 'true');
           }
+          
+          // Clear the fresh login flag once processed
+          sessionStorage.removeItem('freshLogin');
           return;
         }
       }
@@ -123,13 +141,18 @@ export const useSubscriptionCheck = () => {
       }
 
       // User is within free trial limits or has valid subscription
-      // Only show welcome toast if explicitly requested
-      if (showWelcomeToast) {
+      // Only show welcome toast if conditions are met
+      if (shouldShowWelcomeToast) {
         toast({
           title: "Welcome back!",
           description: "You've successfully signed in.",
         });
+        // Set the flag that we've shown the welcome toast
+        sessionStorage.setItem('welcomeToastShown', 'true');
       }
+      
+      // Clear the fresh login flag once processed
+      sessionStorage.removeItem('freshLogin');
     } catch (error) {
       console.error("Detailed subscription check error:", error);
       toast({

@@ -6,13 +6,13 @@ import { Session } from "@supabase/supabase-js";
 interface AuthContextType {
   session: Session | null;
   isLoading: boolean;
-  signOut: () => Promise<void>; // Add signOut method to the interface
+  signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
   session: null,
   isLoading: true,
-  signOut: async () => {}, // Provide a default implementation
+  signOut: async () => {},
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -29,6 +29,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.removeItem('userProfile');
       sessionStorage.removeItem('userAuthenticated');
       sessionStorage.removeItem('hasVisitedWorkshop');
+      sessionStorage.removeItem('welcomeToastShown');
     } catch (error) {
       console.error('Error signing out:', error);
     }
@@ -59,7 +60,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       // Track auth state when session changes
       if (newSession) {
-        trackAuthState();
+        // Only set userAuthenticated on login/token refresh events
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+          trackAuthState();
+          // Set a flag to indicate this is a fresh login
+          if (event === 'SIGNED_IN') {
+            sessionStorage.setItem('freshLogin', 'true');
+          }
+        }
+      } else if (event === 'SIGNED_OUT') {
+        // Clear session storage on sign out
+        sessionStorage.removeItem('userAuthenticated');
+        sessionStorage.removeItem('hasVisitedWorkshop');
+        sessionStorage.removeItem('welcomeToastShown');
+        sessionStorage.removeItem('freshLogin');
       }
     });
 

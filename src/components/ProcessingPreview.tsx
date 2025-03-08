@@ -88,8 +88,10 @@ const ProcessingPreview = ({
             description: "Your customized resume is now ready",
           });
         } else {
-          // If no google_doc_url yet, show loading status
+          // If no google_doc_url yet, show loading status and start progress animation
           setStatus("loading");
+          // Begin progress animation
+          setProgress(15);
         }
       } catch (error) {
         console.error("Error fetching analysis:", error);
@@ -230,7 +232,9 @@ const ProcessingPreview = ({
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {status === "loading" && <Progress value={progress} className="h-2" />}
+          {status === "loading" && (
+            <Progress value={progress} className="h-2" aria-label="Processing progress" />
+          )}
 
           <p className="text-sm text-gray-600">
             {getStatusMessage()}
