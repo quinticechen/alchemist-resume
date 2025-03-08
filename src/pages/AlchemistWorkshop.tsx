@@ -73,6 +73,7 @@ const AlchemistWorkshop = () => {
   const handleUrlSubmit = async (url: string) => {
     // Reset states
     setIsProcessing(true);
+    console.log("isProcessing set to true");
     setIsTimeout(false);
     setTimeoutMessage(null);
     setIsGenerationComplete(false);
@@ -159,6 +160,8 @@ const AlchemistWorkshop = () => {
 
       setJobUrl(url);
       setAnalysisId(analysisRecord.id);
+      setRenderCount((prevCount) => prevCount + 1);
+      console.log("analysisId set to:", analysisRecord.id);
 
       toast({
         title: "Analysis Started",
@@ -283,6 +286,8 @@ const AlchemistWorkshop = () => {
             />
           </>
         )}
+
+        {console.log("isProcessing:", isProcessing, "analysisId:", analysisId)}
 
         {isProcessing && analysisId && (
           <>
