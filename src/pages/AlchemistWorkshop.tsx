@@ -4,7 +4,7 @@ import ResumeUploader from "@/components/ResumeUploader";
 import JobUrlInput, { SUPPORTED_JOB_SITES } from "@/components/JobUrlInput";
 import ProcessingPreview from "@/components/ProcessingPreview";
 import { Button } from "@/components/ui/button";
-import { History, FileText } from "lucide-react";
+import { History, FileText, Crown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -163,7 +163,6 @@ const AlchemistWorkshop = () => {
 
         setJobUrl(url);
         setAnalysisId(analysisRecord.id);
-        setRenderCount((prevCount) => prevCount + 1);
         console.log("analysisId set to:", analysisRecord.id);
 
         toast({
@@ -250,6 +249,10 @@ const AlchemistWorkshop = () => {
     },
   };
 
+  const viewAllRecords = useCallback(() => {
+    navigate("/alchemy-records");
+  }, [navigate]);
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-4xl mx-auto space-y-8">
@@ -323,15 +326,15 @@ const AlchemistWorkshop = () => {
 
         {googleDocUrl && (
           <div className="flex flex-wrap gap-4">
-            <a
-              href={googleDocUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-md border border-blue-500 text-blue-600 hover:bg-blue-50 transition-colors"
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => window.open(google_doc_url, "_blank")}
+              className="text-info border-info/20 hover:bg-info/5"
             >
-              <Crown className="h-4 w-4 text-amber-500" />
+              <Crown className="h-4 w-4 mr-2" />
               Open Golden Resume
-            </a>
+            </Button>
 
             <Button
               variant="outline"
