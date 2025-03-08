@@ -1,10 +1,10 @@
-import React, { useEffect, useState, useRef, useCallback } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import ResumeUploader from "@/components/ResumeUploader";
 import JobUrlInput, { SUPPORTED_JOB_SITES } from "@/components/JobUrlInput";
 import ProcessingPreview from "@/components/ProcessingPreview";
 import { Button } from "@/components/ui/button";
-import { History, FileText, Crown } from "lucide-react";
+import { History, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -31,7 +31,6 @@ const AlchemistWorkshop = () => {
   const [isGenerationComplete, setIsGenerationComplete] = useState(false);
   const [showLoadingAnimation, setShowLoadingAnimation] = useState(false);
   const [googleDocUrl, setGoogleDocUrl] = useState<string | null>(null);
-  const [renderPreview, setRenderPreview] = useState(false);
 
   // Track if we've already checked the subscription in this session
   const hasCheckedSubscription = useRef(false);
@@ -72,136 +71,154 @@ const AlchemistWorkshop = () => {
     });
   };
 
-  const handleUrlSubmit = useCallback(
-    async (url) => {
-      // Reset states
-      setIsProcessing(true);
-      console.log("isProcessing set to true");
-      setIsTimeout(false);
-      setTimeoutMessage(null);
-      setIsGenerationComplete(false);
-      setShowLoadingAnimation(true);
+  const handleUrlSubmit = async (url: string) => {
+    // Reset states
+    setIsProcessing(true);
+    console.log("isProcessing set to true");
+    setIsTimeout(false);
+    setTimeoutMessage(null);
+    setIsGenerationComplete(false);
+    setShowLoadingAnimation(true);
 
-      if (timeoutId.current) {
-        clearTimeout(timeoutId.current);
-      }
+    if (timeoutId.current) {
+      clearTimeout(timeoutId.current);
+    }
 
-      try {
-        console.log("Creating analysis record with data:", {
+    try {
+      console.log("Creating analysis record with data:", {
+        resume_id: resumeId,
+        job_url: url,
+        user_id: session?.user?.id,
+      });
+
+      // First, create the analysis record in the database
+      const { data: analysisRecord, error: analysisError } = await supabase
+        .from("resume_analyses")
+        .insert({
           resume_id: resumeId,
           job_url: url,
           user_id: session?.user?.id,
-        });
+        })
+        .select()
+        .single();
 
-        // First, create the analysis record in the database
-        const { data: analysisRecord, error: analysisError } = await supabase
-          .from("resume_analyses")
-          .insert({
-            resume_id: resumeId,
-            job_url: url,
-            user_id: session?.user?.id,
-          })
-          .select()
-          .single();
-
-        if (analysisError) {
-          console.error("Error creating analysis record:", analysisError);
-          throw analysisError;
-        }
-
-        console.log("Analysis record created:", analysisRecord);
-
-        // Get the resume details
-        const { data: resumeData, error: resumeError } = await supabase
-          .from("resumes")
-          .select("file_name, file_path")
-          .eq("id", resumeId)
-          .single();
-
-        if (resumeError) {
-          console.error("Error fetching resume:", resumeError);
-          throw resumeError;
-        }
-
-        console.log("Resume data fetched:", resumeData);
-
-        // Get the storage URL for the resume
-        const { data: storageData } = supabase.storage
-          .from("resumes")
-          .getPublicUrl(resumeData.file_path);
-
-        console.log("Storage URL generated:", storageData);
-
-        const webhookData = {
-          analysisId: analysisRecord.id,
-          resumeUrl: storageData.publicUrl,
-          jobUrl: url,
-          fileName: resumeData.file_name,
-        };
-
-        console.log("Preparing to send webhook data:", webhookData);
-
-        // Trigger the Make.com webhook with the correct data format
-        const makeWebhookUrl =
-          "https://hook.eu2.make.com/pthisc4aefvf15i7pj4ja99a84dp7kce";
-        console.log("Sending webhook to:", makeWebhookUrl);
-
-        const webhookResponse = await fetch(makeWebhookUrl, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(webhookData),
-        });
-
-        console.log("Webhook response status:", webhookResponse.status);
-
-        if (!webhookResponse.ok) {
-          console.error("Webhook response not OK:", webhookResponse);
-          throw new Error("Failed to trigger Make.com webhook");
-        }
-
-        setJobUrl(url);
-        setAnalysisId(analysisRecord.id);
-        console.log("analysisId set to:", analysisRecord.id);
-
-        toast({
-          title: "Analysis Started",
-          description:
-            "Your resume is being analyzed. Results will be available soon.",
-        });
-
-        // Set five-minute timeout
-        timeoutId.current = setTimeout(() => {
-          if (!isGenerationComplete) {
-            toast({
-              title: "Generation Failed",
-              description:
-                "Resume generation took too long. Please try again later.",
-              variant: "destructive",
-            });
-            setIsTimeout(true);
-            setTimeoutMessage(
-              "Resume generation took too long. Please try again later."
-            );
-            setShowLoadingAnimation(false);
-          }
-        }, 5 * 60 * 1000); // Five minutes
-      } catch (error) {
-        console.error("Error processing resume:", error);
-        toast({
-          title: "Error",
-          description: "Failed to process resume. Please try again later.",
-          variant: "destructive",
-        });
-        setIsProcessing(false);
-        setShowLoadingAnimation(false);
+      if (analysisError) {
+        console.error("Error creating analysis record:", analysisError);
+        throw analysisError;
       }
-    },
-    [session, resumeId, toast]
-  );
 
-  const handleGenerationComplete = useCallback(() => {
+      console.log("Analysis record created:", analysisRecord);
+
+      // Get the resume details
+      const { data: resumeData, error: resumeError } = await supabase
+        .from("resumes")
+        .select("file_name, file_path")
+        .eq("id", resumeId)
+        .single();
+
+      if (resumeError) {
+        console.error("Error fetching resume:", resumeError);
+        throw resumeError;
+      }
+
+      console.log("Resume data fetched:", resumeData);
+
+      // Get the storage URL for the resume
+      const { data: storageData } = supabase.storage
+        .from("resumes")
+        .getPublicUrl(resumeData.file_path);
+
+      console.log("Storage URL generated:", storageData);
+
+      const webhookData = {
+        analysisId: analysisRecord.id,
+        resumeUrl: storageData.publicUrl,
+        jobUrl: url,
+        fileName: resumeData.file_name,
+      };
+
+      console.log("Preparing to send webhook data:", webhookData);
+
+      // Trigger the Make.com webhook with the correct data format
+      const makeWebhookUrl =
+        "https://hook.eu2.make.com/pthisc4aefvf15i7pj4ja99a84dp7kce";
+      console.log("Sending webhook to:", makeWebhookUrl);
+
+      const webhookResponse = await fetch(makeWebhookUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(webhookData),
+      });
+
+      console.log("Webhook response status:", webhookResponse.status);
+
+      if (!webhookResponse.ok) {
+        console.error("Webhook response not OK:", webhookResponse);
+        throw new Error("Failed to trigger Make.com webhook");
+      }
+
+      setJobUrl(url);
+      setAnalysisId(analysisRecord.id);
+      setRenderCount((prevCount) => prevCount + 1);
+      console.log("analysisId set to:", analysisRecord.id);
+
+      toast({
+        title: "Analysis Started",
+        description:
+          "Your resume is being analyzed. Results will be available soon.",
+      });
+
+      // Set five-minute timeout
+      timeoutId.current = setTimeout(() => {
+        if (!isGenerationComplete) {
+          // Update the analysis record with an error message using async/await
+          // const updateAnalysis = async () => {
+          //   try {
+          //     await supabase
+          //       .from("resume_analyses")
+          //       .update({
+          //         error:
+          //           "Resume generation took too long. Please try again later.",
+          //       })
+          //       .eq("id", analysisRecord.id);
+
+          //     console.log("Updated analysis with timeout error");
+          //   } catch (err) {
+          //     console.error("Error updating analysis with timeout:", err);
+          //   }
+          // };
+
+          // // Execute the async function
+          // updateAnalysis();
+
+          toast({
+            title: "Generation Failed",
+            description:
+              "Resume generation took too long. Please try again later.",
+            variant: "destructive",
+          });
+          setIsTimeout(true);
+          setTimeoutMessage(
+            "Resume generation took too long. Please try again later."
+          );
+          setShowLoadingAnimation(false);
+        }
+      }, 5 * 60 * 1000); // Five minutes
+    } catch (error) {
+      console.error("Error processing resume:", error);
+      toast({
+        title: "Error",
+        description: "Failed to process resume. Please try again later.",
+        variant: "destructive",
+      });
+      setIsProcessing(false);
+      setShowLoadingAnimation(false);
+    }
+  };
+
+  const handleGenerationComplete = () => {
     console.log("Generation complete callback triggered");
     setIsGenerationComplete(true);
     setShowLoadingAnimation(false);
@@ -209,7 +226,7 @@ const AlchemistWorkshop = () => {
       clearTimeout(timeoutId.current);
       timeoutId.current = null;
     }
-  }, []);
+  };
 
   // Clean up timeout on unmount
   useEffect(() => {
@@ -249,10 +266,6 @@ const AlchemistWorkshop = () => {
     },
   };
 
-  const viewAllRecords = useCallback(() => {
-    navigate("/alchemy-records");
-  }, [navigate]);
-
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-4xl mx-auto space-y-8">
@@ -277,14 +290,20 @@ const AlchemistWorkshop = () => {
 
         {console.log("isProcessing:", isProcessing, "analysisId:", analysisId)}
 
-        {renderPreview && ( // 根據 renderPreview 狀態渲染
-          <ProcessingPreview
-            analysisId={analysisId}
-            jobUrl={jobUrl}
-            isProcessing={isProcessing}
-            setIsProcessing={setIsProcessing}
-            onGenerationComplete={handleGenerationComplete}
-          />
+        {isProcessing && analysisId && (
+          <>
+            {console.log(
+              "Rendering ProcessingPreview with analysisId:",
+              analysisId
+            )}
+            <ProcessingPreview
+              analysisId={analysisId}
+              jobUrl={jobUrl}
+              isProcessing={isProcessing}
+              setIsProcessing={setIsProcessing}
+              onGenerationComplete={handleGenerationComplete}
+            />
+          </>
         )}
 
         {/* Loading animation section - show when processing and not complete or timed out */}
@@ -326,15 +345,15 @@ const AlchemistWorkshop = () => {
 
         {googleDocUrl && (
           <div className="flex flex-wrap gap-4">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => window.open(google_doc_url, "_blank")}
-              className="text-info border-info/20 hover:bg-info/5"
+            <a
+              href={googleDocUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-md border border-blue-500 text-blue-600 hover:bg-blue-50 transition-colors"
             >
-              <Crown className="h-4 w-4 mr-2" />
+              <Crown className="h-4 w-4 text-amber-500" />
               Open Golden Resume
-            </Button>
+            </a>
 
             <Button
               variant="outline"
