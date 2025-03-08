@@ -30,6 +30,7 @@ const AlchemistWorkshop = () => {
   const [timeoutMessage, setTimeoutMessage] = useState<string | null>(null);
   const [isGenerationComplete, setIsGenerationComplete] = useState(false);
   const [showLoadingAnimation, setShowLoadingAnimation] = useState(false);
+  const [googleDocUrl, setGoogleDocUrl] = useState<string | null>(null);
 
   // Track if we've already checked the subscription in this session
   const hasCheckedSubscription = useRef(false);
@@ -340,6 +341,29 @@ const AlchemistWorkshop = () => {
               <p className="mt-4 text-gray-600">{timeoutMessage}</p>
             </div>
           </section>
+        )}
+
+        {googleDocUrl && (
+          <div className="flex flex-wrap gap-4">
+            <a
+              href={googleDocUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-md border border-blue-500 text-blue-600 hover:bg-blue-50 transition-colors"
+            >
+              <Crown className="h-4 w-4 text-amber-500" />
+              Open Golden Resume
+            </a>
+
+            <Button
+              variant="outline"
+              onClick={viewAllRecords}
+              className="flex items-center gap-2"
+            >
+              <History className="h-4 w-4" />
+              View All Records
+            </Button>
+          </div>
         )}
       </div>
     </div>
