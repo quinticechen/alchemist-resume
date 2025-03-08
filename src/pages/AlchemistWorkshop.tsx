@@ -155,18 +155,24 @@ const AlchemistWorkshop = () => {
       timeoutId.current = setTimeout(() => {
         if (!isGenerationComplete) {
           // Update the analysis record with an error message
-          supabase
-            .from("resume_analyses")
-            .update({ 
-              error: "Resume generation took too long. Please try again later." 
-            })
-            .eq("id", analysisRecord.id)
-            .then(() => {
+          // Fix: Convert this to a proper async/await pattern to use try/catch
+          const updateAnalysis = async () => {
+            try {
+              await supabase
+                .from("resume_analyses")
+                .update({ 
+                  error: "Resume generation took too long. Please try again later." 
+                })
+                .eq("id", analysisRecord.id);
+              
               console.log("Updated analysis with timeout error");
-            })
-            .catch((err) => {
+            } catch (err) {
               console.error("Error updating analysis with timeout:", err);
-            });
+            }
+          };
+          
+          // Execute the async function
+          updateAnalysis();
 
           toast({
             title: "Generation Failed",
