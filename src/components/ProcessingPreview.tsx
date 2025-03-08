@@ -16,7 +16,6 @@ interface ProcessingPreviewProps {
   onGenerationComplete?: () => void;
 }
 
-//Add ProcessingStatus
 type ProcessingStatus = "idle" | "loading" | "error" | "success";
 
 const ProcessingPreview = ({
@@ -29,17 +28,15 @@ const ProcessingPreview = ({
   const [progress, setProgress] = useState(10);
   const [googleDocUrl, setGoogleDocUrl] = useState<string | null>(null);
   const [isGenerationDone, setIsGenerationDone] = useState(false);
+  const [status, setStatus] = useState<ProcessingStatus>("idle");
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
-
-  //Add ProcessingStatus
-  const [status, setStatus] = React.useState<ProcessingStatus>("idle");
 
   useEffect(() => {
     if (!analysisId) return;
 
     console.log("Setting up ProcessingPreview for analysis:", analysisId);
-    //Add ProcessingStatus
     setStatus("loading");
 
     // Initial fetch of the analysis
@@ -48,21 +45,33 @@ const ProcessingPreview = ({
         console.log("Fetching initial analysis data...");
         const { data, error } = await supabase
           .from("resume_analyses")
-          .select("google_doc_url")
+          .select("google_doc_url, error")
           .eq("id", analysisId)
           .single();
 
         if (error) {
           console.error("Error fetching analysis:", error);
           setStatus("error");
+          setError("Failed to fetch analysis data");
           return;
         }
 
         console.log("Initial analysis data:", data);
+        if (data?.error) {
+          console.error("Analysis contains error:", data.error);
+          setStatus("error");
+          setError(data.error);
+          toast({
+            title: "Error",
+            description: data.error,
+            variant: "destructive",
+          });
+          return;
+        }
+
         if (data?.google_doc_url) {
           console.log("Found existing Google Doc URL:", data.google_doc_url);
           setGoogleDocUrl(data.google_doc_url);
-          //Add ProcessingStatus
           setStatus("success");
           setProgress(100);
           setIsGenerationDone(true);
@@ -75,6 +84,7 @@ const ProcessingPreview = ({
       } catch (error) {
         console.error("Error fetching analysis:", error);
         setStatus("error");
+        setError("Failed to fetch analysis results");
         toast({
           title: "Error",
           description: "Failed to fetch analysis results",
@@ -103,9 +113,19 @@ const ProcessingPreview = ({
             const newData = payload.new;
             console.log("Analysis update received:", newData);
 
+            if (newData.error) {
+              setStatus("error");
+              setError(newData.error);
+              toast({
+                title: "Generation Failed",
+                description: newData.error,
+                variant: "destructive",
+              });
+              return;
+            }
+
             if (newData.google_doc_url && !googleDocUrl) {
               setGoogleDocUrl(newData.google_doc_url);
-              //Add ProcessingStatus
               setStatus("success");
               setProgress(100);
               setIsGenerationDone(true);
@@ -137,6 +157,8 @@ const ProcessingPreview = ({
   }, [analysisId, toast, googleDocUrl, onGenerationComplete]);
 
   const getStatusMessage = () => {
+    if (error) return error;
+    
     switch (status) {
       case "loading":
         return "Processing your resume...";
@@ -151,7 +173,7 @@ const ProcessingPreview = ({
 
   // Continuous progress updates while waiting for the result
   useEffect(() => {
-    if (!googleDocUrl && progress < 90) {
+    if (status === "loading" && progress < 90) {
       const timer = setInterval(() => {
         setProgress((prev) => {
           // Gradually increase progress, but never reach 90 until we get analysis_data
@@ -161,7 +183,7 @@ const ProcessingPreview = ({
       }, 3000);
       return () => clearInterval(timer);
     }
-  }, [googleDocUrl, progress]);
+  }, [status, progress]);
 
   const viewAllRecords = () => {
     navigate("/alchemy-records");
@@ -171,10 +193,15 @@ const ProcessingPreview = ({
     <Card className="w-full animate-fade-up">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          {googleDocUrl ? (
+          {status === "success" ? (
             <>
               <Crown className="h-5 w-5 text-amber-500" />
               Golden Resume Ready
+            </>
+          ) : status === "error" ? (
+            <>
+              <FileText className="h-5 w-5 text-red-500" />
+              Generation Failed
             </>
           ) : (
             <>
@@ -186,39 +213,45 @@ const ProcessingPreview = ({
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {!isGenerationDone && <Progress value={progress} className="h-2" />}
+          {status === "loading" && <Progress value={progress} className="h-2" />}
 
-          {googleDocUrl ? (
-            <div className="space-y-4">
-              <p className="text-sm text-gray-600">
-                Your customized resume is ready! Click below to view and edit it in Google Docs.
-              </p>
-              <div className="flex flex-wrap gap-4">
-                <a
-                  href={googleDocUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-md border border-blue-500 text-blue-600 hover:bg-blue-50 transition-colors"
-                >
-                  <Crown className="h-4 w-4 text-amber-500" />
-                  Open Golden Resume
-                </a>
+          <p className="text-sm text-gray-600">
+            {getStatusMessage()}
+          </p>
 
-                <Button
-                  variant="outline"
-                  onClick={viewAllRecords}
-                  className="flex items-center gap-2"
-                >
-                  <History className="h-4 w-4" />
-                  View All Records
-                </Button>
-              </div>
+          {status === "success" && (
+            <div className="flex flex-wrap gap-4">
+              <a
+                href={googleDocUrl || "#"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-md border border-blue-500 text-blue-600 hover:bg-blue-50 transition-colors"
+              >
+                <Crown className="h-4 w-4 text-amber-500" />
+                Open Golden Resume
+              </a>
+
+              <Button
+                variant="outline"
+                onClick={viewAllRecords}
+                className="flex items-center gap-2"
+              >
+                <History className="h-4 w-4" />
+                View All Records
+              </Button>
             </div>
-          ) : (
-            <p className="text-sm text-gray-600">
-              Your resume is being analyzed and customized.
-              This may take a few minutes...
-            </p>
+          )}
+
+          {status === "error" && (
+            <Button
+              variant="outline"
+              onClick={() => {
+                if (setIsProcessing) setIsProcessing(false);
+              }}
+              className="flex items-center gap-2"
+            >
+              Try Again
+            </Button>
           )}
         </div>
       </CardContent>

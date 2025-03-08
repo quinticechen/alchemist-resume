@@ -30,6 +30,7 @@ const AlchemistWorkshop = () => {
   const [isTimeout, setIsTimeout] = useState(false);
   const [timeoutMessage, setTimeoutMessage] = useState<string | null>(null);
   const [isGenerationComplete, setIsGenerationComplete] = useState(false);
+  const [showLoadingAnimation, setShowLoadingAnimation] = useState(false);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -60,6 +61,7 @@ const AlchemistWorkshop = () => {
     setIsTimeout(false);
     setTimeoutMessage(null);
     setIsGenerationComplete(false);
+    setShowLoadingAnimation(true);
     
     if (timeoutId.current) {
       clearTimeout(timeoutId.current);
@@ -152,6 +154,20 @@ const AlchemistWorkshop = () => {
       // Set five-minute timeout
       timeoutId.current = setTimeout(() => {
         if (!isGenerationComplete) {
+          // Update the analysis record with an error message
+          supabase
+            .from("resume_analyses")
+            .update({ 
+              error: "Resume generation took too long. Please try again later." 
+            })
+            .eq("id", analysisRecord.id)
+            .then(() => {
+              console.log("Updated analysis with timeout error");
+            })
+            .catch((err) => {
+              console.error("Error updating analysis with timeout:", err);
+            });
+
           toast({
             title: "Generation Failed",
             description:
@@ -162,6 +178,7 @@ const AlchemistWorkshop = () => {
           setTimeoutMessage(
             "Resume generation took too long. Please try again later."
           );
+          setShowLoadingAnimation(false);
         }
       }, 5 * 60 * 1000); // Five minutes
     } catch (error) {
@@ -172,11 +189,13 @@ const AlchemistWorkshop = () => {
         variant: "destructive",
       });
       setIsProcessing(false);
+      setShowLoadingAnimation(false);
     }
   };
 
   const handleGenerationComplete = () => {
     setIsGenerationComplete(true);
+    setShowLoadingAnimation(false);
     if (timeoutId.current) {
       clearTimeout(timeoutId.current);
       timeoutId.current = null;
@@ -254,7 +273,7 @@ const AlchemistWorkshop = () => {
         )}
 
         {/* Loading animation section - show when processing and not complete or timed out */}
-        {isProcessing && analysisId && !isGenerationComplete && !isTimeout && (
+        {showLoadingAnimation && !isGenerationComplete && !isTimeout && (
           <section className="text-center">
             <div className="py-8">
               <div className="w-64 h-64 mx-auto">

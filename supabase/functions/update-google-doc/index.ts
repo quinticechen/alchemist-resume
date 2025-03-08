@@ -14,11 +14,11 @@ serve(async (req) => {
   }
 
   try {
-    const { analysisId, googleDocUrl } = await req.json()
-    console.log('Received update request:', { analysisId, googleDocUrl })
+    const { analysisId, googleDocUrl, error } = await req.json()
+    console.log('Received update request:', { analysisId, googleDocUrl, error })
 
-    if (!analysisId || !googleDocUrl) {
-      throw new Error('Missing required fields: analysisId or googleDocUrl')
+    if (!analysisId) {
+      throw new Error('Missing required field: analysisId')
     }
 
     // Initialize Supabase client
@@ -27,30 +27,47 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Update the resume analysis with the Google Doc URL
-    const { data, error } = await supabaseClient
+    // Update the resume analysis with the Google Doc URL or error
+    const updateData = error 
+      ? { error } 
+      : { google_doc_url: googleDocUrl }
+
+    const { data, error: updateError } = await supabaseClient
       .from('resume_analyses')
-      .update({ google_doc_url: googleDocUrl })
+      .update(updateData)
       .eq('id', analysisId)
       .select()
       .single()
 
-    if (error) {
-      throw error
+    if (updateError) {
+      throw updateError
     }
 
-    console.log('Successfully updated analysis with Google Doc URL:', data)
-
-    return new Response(
-      JSON.stringify({ 
-        message: 'Successfully updated analysis with Google Doc URL',
-        data 
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
-      }
-    )
+    if (error) {
+      console.log('Updated analysis with error message:', error)
+      return new Response(
+        JSON.stringify({ 
+          message: 'Analysis updated with error information',
+          data 
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200,
+        }
+      )
+    } else {
+      console.log('Successfully updated analysis with Google Doc URL:', data)
+      return new Response(
+        JSON.stringify({ 
+          message: 'Successfully updated analysis with Google Doc URL',
+          data 
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200,
+        }
+      )
+    }
   } catch (error) {
     console.error('Error updating Google Doc URL:', error)
     return new Response(
