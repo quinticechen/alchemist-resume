@@ -4,7 +4,7 @@ import ResumeUploader from "@/components/ResumeUploader";
 import JobUrlInput, { SUPPORTED_JOB_SITES } from "@/components/JobUrlInput";
 import ProcessingPreview from "@/components/ProcessingPreview";
 import { Button } from "@/components/ui/button";
-import { History, FileText } from "lucide-react";
+import { History, FileText, Crown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
