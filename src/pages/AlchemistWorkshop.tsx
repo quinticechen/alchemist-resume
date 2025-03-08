@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import ResumeUploader from "@/components/ResumeUploader";
@@ -28,6 +29,7 @@ const AlchemistWorkshop = () => {
   const timeoutId = useRef<NodeJS.Timeout | null>(null);
   const [isTimeout, setIsTimeout] = useState(false);
   const [timeoutMessage, setTimeoutMessage] = useState<string | null>(null);
+  const [isGenerationComplete, setIsGenerationComplete] = useState(false);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -53,13 +55,20 @@ const AlchemistWorkshop = () => {
   };
 
   const handleUrlSubmit = async (url: string) => {
-    // 接收驗證後的 URL
+    // Reset states
     setIsProcessing(true);
+    setIsTimeout(false);
+    setTimeoutMessage(null);
+    setIsGenerationComplete(false);
+    
+    if (timeoutId.current) {
+      clearTimeout(timeoutId.current);
+    }
 
     try {
       console.log("Creating analysis record with data:", {
         resume_id: resumeId,
-        job_url: url, // 使用驗證後的 URL
+        job_url: url,
         user_id: session?.user?.id,
       });
 
@@ -138,22 +147,23 @@ const AlchemistWorkshop = () => {
         title: "Analysis Started",
         description:
           "Your resume is being analyzed. Results will be available soon.",
-        variant: "destructive",
       });
 
-      // 設定五分鐘計時器
+      // Set five-minute timeout
       timeoutId.current = setTimeout(() => {
-        toast({
-          title: "Generate Failed",
-          description:
-            "Resume generation took too long. Please try again later.",
-          variant: "destructive",
-        });
-        setIsTimeout(true);
-        setTimeoutMessage(
-          "Resume generation took too long. Please try again later."
-        ); // 設定超時訊息
-      }, 5 * 60 * 1000); // 五分鐘
+        if (!isGenerationComplete) {
+          toast({
+            title: "Generation Failed",
+            description:
+              "Resume generation took too long. Please try again later.",
+            variant: "destructive",
+          });
+          setIsTimeout(true);
+          setTimeoutMessage(
+            "Resume generation took too long. Please try again later."
+          );
+        }
+      }, 5 * 60 * 1000); // Five minutes
     } catch (error) {
       console.error("Error processing resume:", error);
       toast({
@@ -165,16 +175,22 @@ const AlchemistWorkshop = () => {
     }
   };
 
-  const viewAllRecords = () => {
-    navigate("/alchemy-records");
-  };
-
-  const previewOriginalResume = () => {
-    if (filePath) {
-      const { data } = supabase.storage.from("resumes").getPublicUrl(filePath);
-      window.open(data.publicUrl, "_blank");
+  const handleGenerationComplete = () => {
+    setIsGenerationComplete(true);
+    if (timeoutId.current) {
+      clearTimeout(timeoutId.current);
+      timeoutId.current = null;
     }
   };
+
+  // Clean up timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutId.current) {
+        clearTimeout(timeoutId.current);
+      }
+    };
+  }, []);
 
   // Show loading state while checking authentication
   if (isLoading) {
@@ -185,8 +201,9 @@ const AlchemistWorkshop = () => {
   if (!session) {
     return null;
   }
-  // Lottie 設定 (使用 react-lottie)
-  const loading = {
+
+  // Lottie settings
+  const loadingOptions = {
     loop: true,
     autoplay: true,
     animationData: Loading,
@@ -195,7 +212,7 @@ const AlchemistWorkshop = () => {
     },
   };
 
-  const failed = {
+  const failedOptions = {
     loop: true,
     autoplay: true,
     animationData: Failed,
@@ -232,35 +249,32 @@ const AlchemistWorkshop = () => {
             jobUrl={jobUrl}
             resumeId={resumeId}
             setIsProcessing={setIsProcessing}
-            onGenerationComplete={() => {
-              // 清除計時器
-              if (timeoutId.current) {
-                clearTimeout(timeoutId.current);
-              }
-            }}
+            onGenerationComplete={handleGenerationComplete}
           />
         )}
 
-        {analysisId && !isTimeout && (
-          <section>
-            <div className="justify-center pt-8">
-              <div className="w-full h-300p mx-auto items-center md:w-2/4 lg:w-1/3 xl:w-1/2">
-                <Lottie options={loading} height={"100%"} width={"100%"} />
+        {/* Loading animation section - show when processing and not complete or timed out */}
+        {isProcessing && analysisId && !isGenerationComplete && !isTimeout && (
+          <section className="text-center">
+            <div className="py-8">
+              <div className="w-64 h-64 mx-auto">
+                <Lottie options={loadingOptions} />
               </div>
-              <p className="justify-center">
+              <p className="mt-4 text-gray-600">
                 Your resume is being alchemized. Please wait a few minutes...
               </p>
             </div>
           </section>
         )}
 
+        {/* Error/Timeout section */}
         {isTimeout && timeoutMessage && (
-          <section>
-            <div className="justify-center pt-8">
-              <div className="w-full mx-auto items-center md:w-2/4 lg:w-1/3 xl:w-1/2">
-                <Lottie options={failed} height={"30%"} width={"30%"} />
+          <section className="text-center">
+            <div className="py-8">
+              <div className="w-64 h-64 mx-auto">
+                <Lottie options={failedOptions} />
               </div>
-              <p className="justify-center">{timeoutMessage}</p>
+              <p className="mt-4 text-gray-600">{timeoutMessage}</p>
             </div>
           </section>
         )}

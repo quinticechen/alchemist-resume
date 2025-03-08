@@ -1,7 +1,8 @@
+
 import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Loader2, FileText, History } from "lucide-react";
+import { Loader2, FileText, History, Crown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -53,6 +54,7 @@ const ProcessingPreview = ({
 
         if (error) {
           console.error("Error fetching analysis:", error);
+          setStatus("error");
           return;
         }
 
@@ -66,7 +68,6 @@ const ProcessingPreview = ({
           setIsGenerationDone(true);
           if (onGenerationComplete) onGenerationComplete();
           toast({
-            // 添加這裡，如果 googleDocUrl 已經存在，則直接顯示成功通知
             title: "Analysis Complete!",
             description: "Your customized resume is now ready",
           });
@@ -83,19 +84,6 @@ const ProcessingPreview = ({
     };
 
     fetchAnalysis();
-
-    // Set up timeout for error state
-    // const timeoutId = setTimeout(() => {
-    //   if (status === "loading") {
-    //     console.log("Processing timeout reached");
-    //     setStatus("error");
-    //     toast({
-    //       title: "Processing Timeout",
-    //       description: "Update failed, please try again later",
-    //       variant: "destructive",
-    //     });
-    //   }
-    // }, 300000); // 5 minute timeout
 
     // Subscribe to real-time updates
     const channel = supabase
@@ -123,7 +111,7 @@ const ProcessingPreview = ({
               setIsGenerationDone(true);
               if (onGenerationComplete) onGenerationComplete();
               toast({
-                title: "Alcehmist Complete!",
+                title: "Resume Alchemist Complete!",
                 description: "Your customized resume is now ready",
               });
             }
@@ -144,7 +132,6 @@ const ProcessingPreview = ({
 
     return () => {
       console.log("Cleaning up subscription");
-      // clearTimeout(timeoutId);
       supabase.removeChannel(channel);
     };
   }, [analysisId, toast, googleDocUrl, onGenerationComplete]);
@@ -186,8 +173,8 @@ const ProcessingPreview = ({
         <CardTitle className="flex items-center gap-2">
           {googleDocUrl ? (
             <>
-              <FileText className="h-5 w-5" />
-              Resume Ready
+              <Crown className="h-5 w-5 text-amber-500" />
+              Golden Resume Ready
             </>
           ) : (
             <>
@@ -199,7 +186,7 @@ const ProcessingPreview = ({
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          <Progress value={progress} className="h-2" />
+          {!isGenerationDone && <Progress value={progress} className="h-2" />}
 
           {googleDocUrl ? (
             <div className="space-y-4">
@@ -211,10 +198,10 @@ const ProcessingPreview = ({
                   href={googleDocUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-md border border-blue-500 text-blue-600 hover:bg-blue-50 transition-colors"
                 >
-                  <FileText className="h-4 w-4" />
-                  Open in Google Docs/Golden Resume
+                  <Crown className="h-4 w-4 text-amber-500" />
+                  Open Golden Resume
                 </a>
 
                 <Button
