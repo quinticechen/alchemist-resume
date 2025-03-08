@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -45,7 +44,7 @@ const ProcessingPreview = ({
   useEffect(() => {
     if (!analysisId) return;
     setStatus("loading");
-
+    console.log("all id:", analysisId, jobUrl, resumeId, isProcessing);
     // Initial fetch of the analysis
     const fetchAnalysis = async () => {
       try {
@@ -110,7 +109,7 @@ const ProcessingPreview = ({
     // Subscribe to real-time updates with a stable channel name
     const channelName = `analysis-${analysisId}`;
     console.log(`Creating subscription channel: ${channelName}`);
-    
+
     const channel = supabase
       .channel(channelName)
       .on(
@@ -126,8 +125,9 @@ const ProcessingPreview = ({
 
           if (payload.eventType === "UPDATE") {
             const newData = payload.new;
-            console.log("Analysis update received:", newData);
-
+            if (newData.google_doc_url) {
+              console.log("Analysis update received:", newData);
+            }
             if (newData.error) {
               setStatus("error");
               setError(newData.error);
@@ -177,7 +177,7 @@ const ProcessingPreview = ({
 
   const getStatusMessage = () => {
     if (error) return error;
-    
+
     switch (status) {
       case "loading":
         return "Processing your resume...";
@@ -237,12 +237,14 @@ const ProcessingPreview = ({
       <CardContent>
         <div className="space-y-4">
           {status === "loading" && (
-            <Progress value={progress} className="h-2" aria-label="Processing progress" />
+            <Progress
+              value={progress}
+              className="h-2"
+              aria-label="Processing progress"
+            />
           )}
 
-          <p className="text-sm text-gray-600">
-            {getStatusMessage()}
-          </p>
+          <p className="text-sm text-gray-600">{getStatusMessage()}</p>
 
           {status === "success" && googleDocUrl && (
             <div className="flex flex-wrap gap-4">
