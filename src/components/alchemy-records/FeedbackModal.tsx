@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -31,6 +31,15 @@ const FeedbackModal = ({ isOpen, onClose, analysisId, onFeedbackSubmitted }: Fee
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
+  // Reset form state when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setRating(5);
+      setFeedbackText("");
+      setSelectedOption(null);
+    }
+  }, [isOpen]);
+
   const handleRatingChange = (newRating: number) => {
     setRating(newRating);
   };
@@ -52,6 +61,13 @@ const FeedbackModal = ({ isOpen, onClose, analysisId, onFeedbackSubmitted }: Fee
 
     setIsSubmitting(true);
     try {
+      console.log("Submitting feedback:", {
+        analysis_id: analysisId,
+        rating,
+        feedback_text: feedbackText,
+        quick_feedback_option: selectedOption,
+      });
+
       const { error } = await supabase.from("user_feedback").insert({
         analysis_id: analysisId,
         rating,
@@ -66,13 +82,7 @@ const FeedbackModal = ({ isOpen, onClose, analysisId, onFeedbackSubmitted }: Fee
         feedback_popup_count: 0, // Reset counter after successful feedback
       });
 
-      toast({
-        title: "Thank You!",
-        description: "Your feedback has been submitted successfully.",
-      });
-      
       onFeedbackSubmitted();
-      onClose();
     } catch (error) {
       console.error("Error submitting feedback:", error);
       toast({
@@ -86,7 +96,9 @@ const FeedbackModal = ({ isOpen, onClose, analysisId, onFeedbackSubmitted }: Fee
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={(open) => {
+      if (!open) onClose();
+    }}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold">Share Your Experience</DialogTitle>

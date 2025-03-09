@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ThumbsUp, ThumbsDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import FeedbackModal from './FeedbackModal';
+import { useToast } from "@/hooks/use-toast";
 
 interface FeedbackButtonsProps {
   feedback: boolean | null;
@@ -13,33 +14,51 @@ interface FeedbackButtonsProps {
 
 const FeedbackButtons = ({ feedback, onFeedback, analysisId }: FeedbackButtonsProps) => {
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const { toast } = useToast();
   
   const handleThumbsUp = async () => {
-    onFeedback(true);
-    
     try {
-      // Check if we should show the feedback modal
+      // First update the feedback in the UI
+      onFeedback(true);
+      
+      // Check user profile for feedback popup counter
       const { data: profileData, error } = await supabase
         .from('profiles')
         .select('feedback_popup_count')
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error checking feedback popup count:', error);
+        return;
+      }
       
       // Increment the feedback popup count
-      const updatedCount = (profileData.feedback_popup_count || 0) + 1;
+      const updatedCount = (profileData?.feedback_popup_count || 0) + 1;
       
+      // Update the counter in the database
       await supabase
         .from('profiles')
         .update({ feedback_popup_count: updatedCount });
       
-      // Show feedback modal every 5 thumbs up or on the first thumbs up
+      console.log('Feedback count updated:', updatedCount);
+      
+      // Show feedback modal on first thumbs up or every 5th thumbs up
       if (updatedCount === 1 || updatedCount % 5 === 0) {
+        console.log('Showing feedback modal');
         setShowFeedbackModal(true);
       }
     } catch (error) {
-      console.error('Error checking feedback popup count:', error);
+      console.error('Error in thumbs up handler:', error);
+      toast({
+        title: "Error",
+        description: "There was a problem updating your feedback. Please try again.",
+        variant: "destructive"
+      });
     }
+  };
+  
+  const handleThumbsDown = () => {
+    onFeedback(false);
   };
   
   const handleModalClose = () => {
@@ -47,7 +66,14 @@ const FeedbackButtons = ({ feedback, onFeedback, analysisId }: FeedbackButtonsPr
   };
   
   const handleFeedbackSubmitted = () => {
-    // Additional actions after feedback is submitted if needed
+    // Reset modal state after submission
+    setShowFeedbackModal(false);
+    
+    // Show confirmation toast
+    toast({
+      title: "Thank You!",
+      description: "Your feedback has been submitted successfully."
+    });
   };
 
   return (
@@ -64,13 +90,14 @@ const FeedbackButtons = ({ feedback, onFeedback, analysisId }: FeedbackButtonsPr
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => onFeedback(false)}
+          onClick={handleThumbsDown}
           className={feedback === false ? "text-red-600" : ""}
         >
           <ThumbsDown className="h-4 w-4" />
         </Button>
       </div>
       
+      {/* Ensure the FeedbackModal gets rendered with the correct props */}
       <FeedbackModal
         isOpen={showFeedbackModal}
         onClose={handleModalClose}
