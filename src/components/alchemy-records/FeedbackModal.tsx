@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 // Predefined feedback options
 const QUICK_FEEDBACK_OPTIONS = [
@@ -30,6 +31,8 @@ const FeedbackModal = ({ isOpen, onClose, analysisId, onFeedbackSubmitted }: Fee
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+  const { session } = useAuth();
+  const userId = session?.user?.id;
 
   // Reset form state when modal opens
   useEffect(() => {
@@ -59,10 +62,20 @@ const FeedbackModal = ({ isOpen, onClose, analysisId, onFeedbackSubmitted }: Fee
       return;
     }
 
+    if (!userId) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to submit feedback.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       console.log("Submitting feedback:", {
         analysis_id: analysisId,
+        user_id: userId,
         rating,
         feedback_text: feedbackText,
         quick_feedback_option: selectedOption,
@@ -70,6 +83,7 @@ const FeedbackModal = ({ isOpen, onClose, analysisId, onFeedbackSubmitted }: Fee
 
       const { error } = await supabase.from("user_feedback").insert({
         analysis_id: analysisId,
+        user_id: userId,
         rating,
         feedback_text: feedbackText,
         quick_feedback_option: selectedOption,
@@ -78,9 +92,13 @@ const FeedbackModal = ({ isOpen, onClose, analysisId, onFeedbackSubmitted }: Fee
       if (error) throw error;
 
       // Update profile feedback popup count
-      await supabase.from("profiles").update({
+      const { error: updateError } = await supabase.from("profiles").update({
         feedback_popup_count: 0, // Reset counter after successful feedback
-      });
+      }).eq("id", userId);
+
+      if (updateError) {
+        console.error("Error updating profile:", updateError);
+      }
 
       onFeedbackSubmitted();
     } catch (error) {

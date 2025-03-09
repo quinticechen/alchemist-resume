@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ThumbsUp, ThumbsDown } from "lucide-react";
@@ -19,19 +20,26 @@ const FeedbackButtons = ({
 }: FeedbackButtonsProps) => {
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const { toast } = useToast();
-  const { session } = useAuth(); // 使用 useAuth
-  const userId = session?.user?.id; // 取得 user_id
+  const { session } = useAuth();
+  const userId = session?.user?.id;
 
   const handleThumbsUp = async () => {
     try {
       // First update the feedback in the UI
       onFeedback(true);
 
-      // Check user profile for feedback popup counter
+      if (!userId) {
+        console.error("User ID is not available");
+        return;
+      }
+
+      console.log("Handling thumbs up for user:", userId);
+
+      // Check user profile for feedback popup counter - Fixed query
       const { data: profileData, error } = await supabase
         .from("profiles")
         .select("feedback_popup_count")
-        .eq("user_id", userId)
+        .eq("id", userId)
         .single();
 
       if (error) {
@@ -39,14 +47,21 @@ const FeedbackButtons = ({
         return;
       }
 
+      console.log("Retrieved profile data:", profileData);
+
       // Increment the feedback popup count
       const updatedCount = (profileData?.feedback_popup_count || 0) + 1;
 
       // Update the counter in the database
-      await supabase
+      const { error: updateError } = await supabase
         .from("profiles")
         .update({ feedback_popup_count: updatedCount })
-        .eq("user_id", userId);
+        .eq("id", userId);
+        
+      if (updateError) {
+        console.error("Error updating feedback count:", updateError);
+        return;
+      }
 
       console.log("Feedback count updated:", updatedCount);
 
@@ -106,7 +121,6 @@ const FeedbackButtons = ({
         </Button>
       </div>
 
-      {/* Ensure the FeedbackModal gets rendered with the correct props */}
       <FeedbackModal
         isOpen={showFeedbackModal}
         onClose={handleModalClose}
