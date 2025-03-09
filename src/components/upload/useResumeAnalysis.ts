@@ -28,6 +28,19 @@ export const useResumeAnalysis = () => {
         },
         (payload: ResumeAnalysisPayload) => {
           console.log('Received realtime update:', payload);
+          
+          // Check for error first
+          if (payload.new && 'error' in payload.new && payload.new.error) {
+            console.error('Analysis error received:', payload.new.error);
+            toast({
+              title: "Analysis Error",
+              description: payload.new.error || "An error occurred during resume analysis",
+              variant: "destructive",
+            });
+            return;
+          }
+          
+          // If no error, check for success (google_doc_url)
           if (payload.new && 'google_doc_url' in payload.new && payload.new.google_doc_url) {
             toast({
               title: "Analysis Complete",

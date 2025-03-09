@@ -48,11 +48,12 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ 
           message: 'Analysis updated with error information',
-          data 
+          error,
+          data
         }),
         {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200,
+          status: 400, // Using 400 for errors to better distinguish them
         }
       )
     } else {
@@ -71,7 +72,10 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error updating Google Doc URL:', error)
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        status: 'error'
+      }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500,

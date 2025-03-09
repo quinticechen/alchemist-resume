@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Loader2, FileText, History, Crown } from "lucide-react";
+import { Loader2, FileText, History, Crown, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -144,6 +144,11 @@ const ProcessingPreview = ({
                 description: newData.error,
                 variant: "destructive",
               });
+              
+              // Notify parent component
+              if (onGenerationComplete) {
+                onGenerationComplete();
+              }
               return;
             }
 
@@ -232,7 +237,7 @@ const ProcessingPreview = ({
             </>
           ) : status === "error" ? (
             <>
-              <FileText className="h-5 w-5 text-red-500" />
+              <AlertCircle className="h-5 w-5 text-red-500" />
               Generation Failed
             </>
           ) : (
@@ -284,7 +289,7 @@ const ProcessingPreview = ({
               onClick={() => {
                 if (setIsProcessing) setIsProcessing(false);
               }}
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 text-red-500 border-red-200 hover:bg-red-50 hover:border-red-300"
             >
               Try Again
             </Button>
