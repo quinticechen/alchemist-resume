@@ -45,8 +45,8 @@ const FeedbackButtons = ({
       // Update the counter in the database
       await supabase
         .from("profiles")
-        .update({ feedback_popup_count: updatedCount });
-        .eq("user_id", userId)
+        .update({ feedback_popup_count: updatedCount })
+        .eq("user_id", userId);
 
       console.log("Feedback count updated:", updatedCount);
 
