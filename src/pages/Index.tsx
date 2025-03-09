@@ -3,7 +3,6 @@ import React, { useState } from "react";
 import ResumeUploader from "@/components/ResumeUploader";
 import JobUrlInput from "@/components/JobUrlInput";
 import ResumePreview from "@/components/ResumePreview";
-import AlchemistSection from "@/components/AlchemistSection";
 import Header from "@/components/Header";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,7 +13,7 @@ const Index = () => {
   const [publicUrl, setPublicUrl] = useState<string>();
   const [resumeId, setResumeId] = useState<string>();
   const [isProcessing, setIsProcessing] = useState(false);
-  const [showAlchemist, setShowAlchemist] = useState(false);
+  const [showResults, setShowResults] = useState(false);
   const { toast } = useToast();
 
   const handleFileUpload = (file: File, path: string, url: string, id: string) => {
@@ -23,7 +22,7 @@ const Index = () => {
     setFilePath(path);
     setPublicUrl(url);
     setResumeId(id);
-    setShowAlchemist(false);
+    setShowResults(false);
     toast({
       title: "Resume Uploaded",
       description: `Successfully uploaded ${file.name}`,
@@ -44,7 +43,7 @@ const Index = () => {
         setPublicUrl(undefined);
         setResumeId(undefined);
         setIsProcessing(false);
-        setShowAlchemist(false);
+        setShowResults(false);
 
         toast({
           title: "Resume Cancelled",
@@ -83,7 +82,7 @@ const Index = () => {
       if (error) throw error;
 
       console.log('Processing started:', data);
-      setShowAlchemist(true);
+      setShowResults(true);
 
       toast({
         title: "Analysis Started",
@@ -129,7 +128,13 @@ const Index = () => {
               />
             )}
             <JobUrlInput onUrlSubmit={handleUrlSubmit} isProcessing={isProcessing} />
-            {showAlchemist && resumeId && <AlchemistSection resumeId={resumeId} />}
+            {/* Results section would go here when implemented */}
+            {showResults && resumeId && (
+              <div className="bg-white p-6 rounded-xl shadow-md">
+                <h2 className="text-lg font-medium mb-4">Analysis in Progress</h2>
+                <p>Your resume is being analyzed. Check back shortly to see the results.</p>
+              </div>
+            )}
           </div>
         </div>
       </div>
