@@ -12,6 +12,7 @@ import { useSubscriptionCheck } from "@/hooks/useSubscriptionCheck";
 import Lottie from "react-lottie";
 import Loading from "@/animations/Loading.json";
 import Failed from "@/animations/Failed.json";
+import UsageStats from "@/components/alchemy-records/UsageStats";
 
 const AlchemistWorkshop = () => {
   const { session, isLoading } = useAuth();
@@ -311,15 +312,13 @@ const AlchemistWorkshop = () => {
     },
   };
 
-
-
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-4xl mx-auto space-y-8">
         <h1 className="text-3xl font-bold bg-gradient-primary text-transparent bg-clip-text text-center">
           Alchemist Workshop
         </h1>
-
+        <UsageStats usageCount={usageCount} />
         <ResumeUploader onUploadSuccess={handleFileUploadSuccess} />
 
         {selectedFile && (
@@ -368,7 +367,6 @@ const AlchemistWorkshop = () => {
             </div>
           </section>
         )}
-
 
         {/* Success section - show when Google Doc URL is available */}
         {googleDocUrl && (
