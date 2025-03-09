@@ -311,6 +311,8 @@ const AlchemistWorkshop = () => {
     },
   };
 
+
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-4xl mx-auto space-y-8">
@@ -367,9 +369,10 @@ const AlchemistWorkshop = () => {
           </section>
         )}
 
+
         {/* Success section - show when Google Doc URL is available */}
         {googleDocUrl && (
-          <div className="flex flex-wrap gap-4 mt-8">
+          <div className="flex flex-wrap items-center gap-4 mt-8">
             <a
               href={googleDocUrl}
               target="_blank"
@@ -379,11 +382,12 @@ const AlchemistWorkshop = () => {
               <Crown className="h-4 w-4 text-amber-500" />
               Open Golden Resume
             </a>
+            
 
             <Button
               variant="outline"
               size="sm"
-              onClick={googleDocUrl}
+              onClick={() => window.open(googleDocUrl, "_blank")}
               className="text-info border-info/20 hover:bg-info/5"
             >
               <Crown className="h-4 w-4 mr-2" />
