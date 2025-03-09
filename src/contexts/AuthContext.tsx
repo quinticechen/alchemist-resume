@@ -36,7 +36,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
-    console.log("Initial session check:", session);
+    // console.log("Initial session check:", session);
     
     // Track user authentication state in session storage to avoid showing welcome toast repeatedly
     const trackAuthState = () => {
@@ -49,11 +49,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, newSession) => {
-      console.log("Auth state changed:", event, {
-        "_type": typeof newSession,
-        "value": String(newSession)
-      });
-      console.log("Auth state changed:", event, newSession);
+      // console.log("Auth state changed:", event, {
+      //   "_type": typeof newSession,
+      //   "value": String(newSession)
+      // });
+      // console.log("Auth state changed:", event, newSession);
       
       setSession(newSession);
       setIsLoading(false);

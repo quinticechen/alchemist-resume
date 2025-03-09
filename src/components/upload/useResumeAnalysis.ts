@@ -12,7 +12,7 @@ export const useResumeAnalysis = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    console.log('Setting up realtime subscription for resume analyses');
+    // console.log('Setting up realtime subscription for resume analyses');
     
     // Create a stable channel name
     const channelName = 'resume_analyses_updates';
@@ -54,7 +54,7 @@ export const useResumeAnalysis = () => {
       .subscribe((status) => {
         console.log(`Subscription ${channelName} status:`, status);
         if (status === 'SUBSCRIBED') {
-          console.log(`Successfully subscribed to ${channelName}`);
+          // console.log(`Successfully subscribed to ${channelName}`);
         }
       });
 
