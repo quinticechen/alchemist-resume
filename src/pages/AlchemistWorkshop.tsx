@@ -373,17 +373,6 @@ const AlchemistWorkshop = () => {
         {/* Success section - show when Google Doc URL is available */}
         {googleDocUrl && (
           <div className="flex flex-wrap justify-center gap-4 mt-8">
-            <a
-              href={googleDocUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-md border border-blue-500 text-blue-600 hover:bg-blue-50 transition-colors"
-            >
-              <Crown className="h-4 w-4 text-amber-500" />
-              Open Golden Resume
-            </a>
-            
-
             <Button
               variant="outline"
               size="sm"
