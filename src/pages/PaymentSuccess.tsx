@@ -32,7 +32,7 @@ const PaymentSuccess: React.FC = () => {
         if (value.includes("?session_id=")) {
           const parts = value.split("?session_id=");
           sessionId = parts[1];
-          console.log("Found session ID in malformed URL:", sessionId);
+          // console.log("Found session ID in malformed URL:", sessionId);
           break;
         }
       }
@@ -46,12 +46,12 @@ const PaymentSuccess: React.FC = () => {
 
   useEffect(() => {
     const verifyPayment = async () => {
-      console.log("URL parameters:", {
-        sessionId,
-        plan,
-        isAnnual,
-        searchParams: Object.fromEntries(searchParams.entries())
-      });
+      // console.log("URL parameters:", {
+      //   sessionId,
+      //   plan,
+      //   isAnnual,
+      //   searchParams: Object.fromEntries(searchParams.entries())
+      // });
 
       if (!sessionId) {
         setError("Missing session ID");
@@ -78,7 +78,7 @@ const PaymentSuccess: React.FC = () => {
       }
 
       try {
-        console.log("Verifying payment session:", sessionId);
+        // console.log("Verifying payment session:", sessionId);
 
         const { data: existingTransaction, error: txError } = await supabase
           .from("transactions")
@@ -87,12 +87,12 @@ const PaymentSuccess: React.FC = () => {
           .single();
 
         if (existingTransaction) {
-          console.log("Transaction already exists:", existingTransaction);
+          // console.log("Transaction already exists:", existingTransaction);
           
           if (plan) {
             const { data: { user } } = await supabase.auth.getUser();
             if (user) {
-              console.log("Ensuring user profile has correct subscription status:", plan);
+              // console.log("Ensuring user profile has correct subscription status:", plan);
               const { error: profileUpdateError } = await supabase
                 .from("profiles")
                 .update({
@@ -105,7 +105,7 @@ const PaymentSuccess: React.FC = () => {
               if (profileUpdateError) {
                 console.error("Error updating profile:", profileUpdateError);
               } else {
-                console.log("Successfully updated user profile subscription status");
+                // console.log("Successfully updated user profile subscription status");
                 
                 const cachedProfile = localStorage.getItem("userProfile");
                 if (cachedProfile) {
@@ -115,7 +115,7 @@ const PaymentSuccess: React.FC = () => {
                   updatedProfile.monthly_usage_count = 0;
                   updatedProfile.cachedAt = Date.now();
                   localStorage.setItem("userProfile", JSON.stringify(updatedProfile));
-                  console.log("Updated local profile cache with new subscription data");
+                  // console.log("Updated local profile cache with new subscription data");
                 }
               }
             }
@@ -131,7 +131,7 @@ const PaymentSuccess: React.FC = () => {
           return;
         }
 
-        console.log("No existing transaction found, calling verify-stripe-session function");
+        // console.log("No existing transaction found, calling verify-stripe-session function");
         const { data, error } = await supabase.functions.invoke(
           "verify-stripe-session",
           {
@@ -139,7 +139,7 @@ const PaymentSuccess: React.FC = () => {
           }
         );
 
-        console.log("Function response:", data, "Error:", error);
+        // console.log("Function response:", data, "Error:", error);
 
         if (error) {
           console.error("Payment verification error:", error);
@@ -177,13 +177,13 @@ const PaymentSuccess: React.FC = () => {
           return;
         }
         
-        console.log("Payment verified successfully:", data);
+        // console.log("Payment verified successfully:", data);
         setVerificationSuccess(true);
 
         if (data.transactionData) {
           setTransaction(data.transactionData);
         } else {
-          console.log("Fetching transaction data from database");
+          // console.log("Fetching transaction data from database");
           const { data: transactionData, error: transactionError } =
             await supabase
               .from("transactions")
@@ -200,7 +200,7 @@ const PaymentSuccess: React.FC = () => {
               variant: "destructive",
             });
           } else {
-            console.log("Transaction data fetched:", transactionData);
+            // console.log("Transaction data fetched:", transactionData);
             setTransaction(transactionData);
           }
         }

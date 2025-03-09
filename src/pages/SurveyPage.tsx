@@ -128,8 +128,8 @@ const SurveyPage = () => {
           body: { planId, isAnnual },
         }
       );
-      console.log("Received planId:", planId);
-      console.log("Received isAnnual:", isAnnual);
+      // console.log("Received planId:", planId);
+      // console.log("Received isAnnual:", isAnnual);
 
       if (error) throw error;
 

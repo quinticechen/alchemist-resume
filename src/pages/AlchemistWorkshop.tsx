@@ -95,7 +95,7 @@ const AlchemistWorkshop = () => {
             filter: `id=eq.${analysisId}`,
           },
           (payload) => {
-            console.log("Received real-time update for analysis:", payload);
+            // console.log("Received real-time update for analysis:", payload);
             if (payload.new.google_doc_url) {
               setGoogleDocUrl(payload.new.google_doc_url);
               setIsGenerationComplete(true);
@@ -151,11 +151,11 @@ const AlchemistWorkshop = () => {
     }
 
     try {
-      console.log("Creating analysis record with data:", {
-        resume_id: resumeId,
-        job_url: url,
-        user_id: session?.user?.id,
-      });
+      // console.log("Creating analysis record with data:", {
+      //   resume_id: resumeId,
+      //   job_url: url,
+      //   user_id: session?.user?.id,
+      // });
 
       // First, create the analysis record in the database
       const { data: analysisRecord, error: analysisError } = await supabase
@@ -173,7 +173,7 @@ const AlchemistWorkshop = () => {
         throw analysisError;
       }
 
-      console.log("Analysis record created:", analysisRecord);
+      // console.log("Analysis record created:", analysisRecord);
 
       // Get the resume details
       const { data: resumeData, error: resumeError } = await supabase
@@ -187,14 +187,14 @@ const AlchemistWorkshop = () => {
         throw resumeError;
       }
 
-      console.log("Resume data fetched:", resumeData);
+      // console.log("Resume data fetched:", resumeData);
 
       // Get the storage URL for the resume
       const { data: storageData } = supabase.storage
         .from("resumes")
         .getPublicUrl(resumeData.file_path);
 
-      console.log("Storage URL generated:", storageData);
+      // console.log("Storage URL generated:", storageData);
 
       const webhookData = {
         analysisId: analysisRecord.id,
@@ -208,7 +208,7 @@ const AlchemistWorkshop = () => {
       // Trigger the Make.com webhook with the correct data format
       const makeWebhookUrl =
         "https://hook.eu2.make.com/pthisc4aefvf15i7pj4ja99a84dp7kce";
-      console.log("Sending webhook to:", makeWebhookUrl);
+      // console.log("Sending webhook to:", makeWebhookUrl);
 
       const webhookResponse = await fetch(makeWebhookUrl, {
         method: "POST",
@@ -218,16 +218,16 @@ const AlchemistWorkshop = () => {
         body: JSON.stringify(webhookData),
       });
 
-      console.log("Webhook response status:", webhookResponse.status);
+      // console.log("Webhook response status:", webhookResponse.status);
 
       if (!webhookResponse.ok) {
-        console.error("Webhook response not OK:", webhookResponse);
+        // console.error("Webhook response not OK:", webhookResponse);
         throw new Error("Failed to trigger Make.com webhook");
       }
 
       setJobUrl(url);
       setAnalysisId(analysisRecord.id);
-      console.log("analysisId set to:", analysisRecord.id);
+      // console.log("analysisId set to:", analysisRecord.id);
 
       toast({
         title: "Analysis Started",
@@ -252,7 +252,7 @@ const AlchemistWorkshop = () => {
         }
       }, 5 * 60 * 1000); // Five minutes
     } catch (error) {
-      console.error("Error processing resume:", error);
+      // console.error("Error processing resume:", error);
       toast({
         title: "Error",
         description: "Failed to process resume. Please try again later.",
@@ -264,7 +264,7 @@ const AlchemistWorkshop = () => {
   };
 
   const handleGenerationComplete = () => {
-    console.log("Generation complete callback triggered");
+    // console.log("Generation complete callback triggered");
     setIsGenerationComplete(true);
     setShowLoadingAnimation(false);
     if (timeoutId.current) {

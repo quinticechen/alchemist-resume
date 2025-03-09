@@ -82,7 +82,7 @@ const Pricing = () => {
 
   const fetchUsageInfo = async (userId: string) => {
     try {
-      console.log("Fetching usage info for user:", userId);
+      // console.log("Fetching usage info for user:", userId);
       
       const { data: profileData, error: profileError } = await supabase
         .from("profiles")
@@ -93,18 +93,18 @@ const Pricing = () => {
         .single();
 
       if (profileError) {
-        console.error("Error fetching profile info:", profileError);
+        // console.error("Error fetching profile info:", profileError);
         return;
       }
       
-      console.log("Usage and subscription info fetched:", profileData);
+      // console.log("Usage and subscription info fetched:", profileData);
       setUsageInfo(profileData);
       
       if (profileData.payment_period === 'annual') {
         setIsAnnual(true);
       }
     } catch (err) {
-      console.error("Unexpected error fetching usage info:", err);
+      // console.error("Unexpected error fetching usage info:", err);
     }
   };
 
@@ -182,11 +182,11 @@ const Pricing = () => {
         throw new Error("No price ID available for the selected plan");
       }
 
-      console.log("Making request to stripe-payment function with:", {
-        planId,
-        priceId,
-        isAnnual,
-      });
+      // console.log("Making request to stripe-payment function with:", {
+      //   planId,
+      //   priceId,
+      //   isAnnual,
+      // });
 
       const { data, error } = await supabase.functions.invoke(
         "stripe-payment",
@@ -208,10 +208,10 @@ const Pricing = () => {
         throw new Error("No checkout URL received from payment function");
       }
 
-      console.log("Redirecting to Stripe checkout URL:", data.sessionUrl);
+      // console.log("Redirecting to Stripe checkout URL:", data.sessionUrl);
       window.location.href = data.sessionUrl;
     } catch (error: any) {
-      console.error("Payment error:", error);
+      // console.error("Payment error:", error);
       toast({
         title: "Payment Error",
         description:

@@ -17,7 +17,7 @@ const Index = () => {
   const { toast } = useToast();
 
   const handleFileUpload = (file: File, path: string, url: string, id: string) => {
-    console.log("File uploaded:", file.name, "Path:", path, "Public URL:", url, "ID:", id);
+    // console.log("File uploaded:", file.name, "Path:", path, "Public URL:", url, "ID:", id);
     setSelectedFile(file);
     setFilePath(path);
     setPublicUrl(url);
@@ -81,7 +81,7 @@ const Index = () => {
 
       if (error) throw error;
 
-      console.log('Processing started:', data);
+      // console.log('Processing started:', data);
       setShowResults(true);
 
       toast({

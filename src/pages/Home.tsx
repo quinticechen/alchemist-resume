@@ -96,13 +96,13 @@ const Home = () => {
           throw sessionError;
         }
 
-        console.log("Initial session check:", initialSession);
+        // console.log("Initial session check:", initialSession);
         setSession(initialSession);
 
         const {
           data: { subscription },
         } = supabase.auth.onAuthStateChange((event, currentSession) => {
-          console.log("Auth state changed:", event, currentSession);
+          // console.log("Auth state changed:", event, currentSession);
           setSession(currentSession);
 
           if (event === "SIGNED_IN" && currentSession) {
@@ -138,13 +138,13 @@ const Home = () => {
       const {
         data: { session: currentSession },
       } = await supabase.auth.getSession();
-      console.log("Current session before navigation:", currentSession);
+      // console.log("Current session before navigation:", currentSession);
 
       if (currentSession) {
-        console.log("Navigating to workshop (user is logged in)");
+        // console.log("Navigating to workshop (user is logged in)");
         navigate("/alchemist-workshop");
       } else {
-        console.log("Navigating to login (user is not logged in)");
+        // console.log("Navigating to login (user is not logged in)");
         navigate("/login");
       }
     } catch (error) {
