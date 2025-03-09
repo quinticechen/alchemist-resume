@@ -33,7 +33,7 @@ const getRedirectTo = () => {
   return typeof window !== 'undefined' ? window.location.href : 'https://resumealchemist.qwizai.com';
 };
 
-console.log('Current environment:', getEnvironment());
+// console.log('Current environment:', getEnvironment());
 
 // Create the Supabase client with customized configuration
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
