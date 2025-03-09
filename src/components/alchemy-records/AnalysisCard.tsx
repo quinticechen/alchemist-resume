@@ -54,7 +54,7 @@ const AnalysisCard = ({
         </div>
         <FeedbackButtons
           feedback={feedback}
-          onFeedback={(value) => onFeedback(id, value)}
+          onFeedback={onFeedback} 
           analysisId={id}
         />
       </div>
