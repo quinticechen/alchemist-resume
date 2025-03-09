@@ -12,13 +12,19 @@ const getEnvironment = () => {
   if (hostname.includes('localhost') || hostname.includes('127.0.0.1')) {
     return 'development';
   }
+  if (hostname.includes('staging.resumealchemist') || hostname.includes('127.0.0.1')) {
+    return 'staging';
+  }
   if (hostname.includes('vercel.app')) {
     // Check if it's a preview deployment
     if (hostname.includes('-git-') || hostname.includes('-pr-')) {
       return 'preview';
     }
   }
-  return 'production';
+  if (hostname.includes('resumealchemist') || hostname.includes('127.0.0.1')) {
+    return 'production';
+  }
+  return 'staging';
 };
 
 // Get the current URL for redirect
