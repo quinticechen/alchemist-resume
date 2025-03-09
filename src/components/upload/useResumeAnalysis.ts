@@ -27,11 +27,11 @@ export const useResumeAnalysis = () => {
           table: 'resume_analyses',
         },
         (payload: ResumeAnalysisPayload) => {
-          console.log('Received realtime update:', payload);
+          // console.log('Received realtime update:', payload);
           
           // Check for error first
           if (payload.new && 'error' in payload.new && payload.new.error) {
-            console.error('Analysis error received:', payload.new.error);
+            // console.error('Analysis error received:', payload.new.error);
             toast({
               title: "Analysis Error",
               description: typeof payload.new.error === 'string' ? payload.new.error : "An error occurred during resume analysis",
@@ -47,12 +47,12 @@ export const useResumeAnalysis = () => {
               description: "Your resume analysis is ready!",
             });
           } else if (payload.new && 'analysis_data' in payload.new && payload.new.analysis_data) {
-            console.log("Analysis data received, processing in progress");
+            // console.log("Analysis data received, processing in progress");
           }
         }
       )
       .subscribe((status) => {
-        console.log(`Subscription ${channelName} status:`, status);
+        // console.log(`Subscription ${channelName} status:`, status);
         if (status === 'SUBSCRIBED') {
           // console.log(`Successfully subscribed to ${channelName}`);
         }
@@ -60,9 +60,9 @@ export const useResumeAnalysis = () => {
 
     // Cleanup function
     return () => {
-      console.log(`Cleaning up realtime subscription for ${channelName}`);
+      // console.log(`Cleaning up realtime subscription for ${channelName}`);
       supabase.removeChannel(channel).then(() => {
-        console.log(`Successfully cleaned up ${channelName} subscription`);
+        // console.log(`Successfully cleaned up ${channelName} subscription`);
       });
     };
   }, [toast]); // Only re-run if toast changes

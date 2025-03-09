@@ -35,7 +35,7 @@ const ProcessingPreview = ({
   // Debug logging for props
   useEffect(() => {
     if (analysisId) {
-      console.log("ProcessingPreview initialized with analysisId:", analysisId);
+      // console.log("ProcessingPreview initialized with analysisId:", analysisId);
     }
   }, [analysisId]);
 
@@ -43,7 +43,7 @@ const ProcessingPreview = ({
   useEffect(() => {
     if (!analysisId) return;
     
-    console.log("Setting up processing for analysis ID:", analysisId);
+    // console.log("Setting up processing for analysis ID:", analysisId);
     setStatus("loading");
     
     // Begin progress animation immediately
@@ -52,7 +52,7 @@ const ProcessingPreview = ({
     // Initial fetch of the analysis
     const fetchAnalysis = async () => {
       try {
-        console.log("Fetching initial analysis data...");
+        // console.log("Fetching initial analysis data...");
         const { data, error } = await supabase
           .from("resume_analyses")
           .select("google_doc_url, error")
@@ -60,16 +60,16 @@ const ProcessingPreview = ({
           .single();
 
         if (error) {
-          console.error("Error fetching analysis:", error);
+          // console.error("Error fetching analysis:", error);
           setStatus("error");
           setError("Failed to fetch analysis data");
           return;
         }
 
-        console.log("Initial analysis data:", data);
+        // console.log("Initial analysis data:", data);
         
         if (data?.error) {
-          console.error("Analysis contains error:", data.error);
+          // console.error("Analysis contains error:", data.error);
           setStatus("error");
           setError(data.error);
           toast({
@@ -87,7 +87,7 @@ const ProcessingPreview = ({
           setProgress(100);
           
           if (onGenerationComplete) {
-            console.log("Calling onGenerationComplete callback");
+            // console.log("Calling onGenerationComplete callback");
             onGenerationComplete();
           }
           
@@ -98,7 +98,7 @@ const ProcessingPreview = ({
         } else {
           // If no google_doc_url yet, show loading status
           setStatus("loading");
-          console.log("No google_doc_url yet, showing loading state");
+          // console.log("No google_doc_url yet, showing loading state");
         }
       } catch (error) {
         console.error("Error fetching analysis:", error);
@@ -116,7 +116,7 @@ const ProcessingPreview = ({
 
     // Subscribe to real-time updates
     const channelName = `analysis-${analysisId}`;
-    console.log(`Creating subscription channel: ${channelName}`);
+    // console.log(`Creating subscription channel: ${channelName}`);
 
     const channel = supabase
       .channel(channelName)
@@ -129,7 +129,7 @@ const ProcessingPreview = ({
           filter: `id=eq.${analysisId}`,
         },
         (payload) => {
-          console.log("Received real-time update:", payload);
+          // console.log("Received real-time update:", payload);
 
           if (payload.eventType === "UPDATE") {
             const newData = payload.new;
@@ -154,13 +154,13 @@ const ProcessingPreview = ({
 
             // Check if google_doc_url is now available
             if (newData.google_doc_url) {
-              console.log("Google Doc URL updated:", newData.google_doc_url);
+              // console.log("Google Doc URL updated:", newData.google_doc_url);
               setGoogleDocUrl(newData.google_doc_url);
               setStatus("success");
               setProgress(100);
               
               if (onGenerationComplete) {
-                console.log("Calling onGenerationComplete callback");
+                // console.log("Calling onGenerationComplete callback");
                 onGenerationComplete();
               }
               
@@ -170,18 +170,18 @@ const ProcessingPreview = ({
               });
             } else if (newData.analysis_data && !newData.google_doc_url) {
               // Update progress if we have analysis_data but not yet a google_doc_url
-              console.log("Analysis data received, updating progress");
+              // console.log("Analysis data received, updating progress");
               setProgress(90);
             }
           }
         }
       )
       .subscribe((status) => {
-        console.log(`Subscription status for ${channelName}:`, status);
+        // console.log(`Subscription status for ${channelName}:`, status);
       });
 
     return () => {
-      console.log(`Cleaning up subscription for ${channelName}`);
+      // console.log(`Cleaning up subscription for ${channelName}`);
       supabase.removeChannel(channel);
     };
   }, [analysisId, toast, onGenerationComplete]);

@@ -4,7 +4,7 @@ import { corsHeaders } from "../_shared/cors.ts";
 import Stripe from "https://esm.sh/stripe@13.2.0?target=deno";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
 
-console.log("Hello from verify-stripe-session Edge Function!");
+// console.log("Hello from verify-stripe-session Edge Function!");
 
 // Initialize Stripe
 const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') as string, {
@@ -54,7 +54,7 @@ serve(async (req) => {
       });
     }
 
-    console.log(`Verifying Stripe checkout session: ${sessionId}`);
+    // console.log(`Verifying Stripe checkout session: ${sessionId}`);
 
     // First check if we already have a transaction record for this session
     const { data: existingTransaction, error: txError } = await supabase
@@ -64,7 +64,7 @@ serve(async (req) => {
       .single();
 
     if (existingTransaction) {
-      console.log(`Transaction already exists for session: ${sessionId}`);
+      // console.log(`Transaction already exists for session: ${sessionId}`);
       // Make sure we pass all necessary data and indicate success
       
       return new Response(JSON.stringify({ 
@@ -111,7 +111,7 @@ serve(async (req) => {
       const customerId = session.customer as string;
       const subscriptionId = session.subscription as string;
 
-      console.log(`Session verified: plan=${planId}, isAnnual=${isAnnual}, customer=${customerId}, subscription=${subscriptionId}`);
+      // console.log(`Session verified: plan=${planId}, isAnnual=${isAnnual}, customer=${customerId}, subscription=${subscriptionId}`);
 
       // Retrieve the user ID from the customer metadata or from our database
       let userId;

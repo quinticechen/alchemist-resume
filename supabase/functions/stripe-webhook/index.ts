@@ -45,7 +45,7 @@ serve(async (req) => {
     }
 
     const body = await req.text();
-    console.log("Request body received, length:", body.length);
+    // console.log("Request body received, length:", body.length);
 
     // IMPORTANT: Use constructEventAsync instead of constructEvent
     let event;
@@ -67,7 +67,7 @@ serve(async (req) => {
     // Handle the event
     switch (event.type) {
       case 'checkout.session.completed': {
-        console.log("Processing checkout.session.completed event");
+        // console.log("Processing checkout.session.completed event");
         const session = event.data.object;
         
         // Retrieve more details about the session
@@ -75,12 +75,12 @@ serve(async (req) => {
           expand: ['line_items', 'subscription', 'customer'],
         });
         
-        console.log("Checkout session details:", JSON.stringify({
-          id: checkoutSession.id,
-          customerId: checkoutSession.customer?.id,
-          subscriptionId: checkoutSession.subscription?.id,
-          status: checkoutSession.status,
-        }));
+        // console.log("Checkout session details:", JSON.stringify({
+        //   id: checkoutSession.id,
+        //   customerId: checkoutSession.customer?.id,
+        //   subscriptionId: checkoutSession.subscription?.id,
+        //   status: checkoutSession.status,
+        // }));
 
         // Check if all required data is available
         if (!checkoutSession.customer || !checkoutSession.subscription) {
@@ -96,15 +96,15 @@ serve(async (req) => {
           checkoutSession.subscription.id
         );
         
-        console.log("Subscription details:", JSON.stringify({
-          id: subscription.id,
-          customerId: subscription.customer,
-          status: subscription.status,
-          currentPeriod: {
-            start: subscription.current_period_start,
-            end: subscription.current_period_end,
-          },
-        }));
+        // console.log("Subscription details:", JSON.stringify({
+        //   id: subscription.id,
+        //   customerId: subscription.customer,
+        //   status: subscription.status,
+        //   currentPeriod: {
+        //     start: subscription.current_period_start,
+        //     end: subscription.current_period_end,
+        //   },
+        // }));
 
         // Determine the tier from the product ID
         const priceId = subscription.items.data[0]?.price.id;
@@ -113,11 +113,11 @@ serve(async (req) => {
         let tier = 'apprentice';
         if (productId) {
           const product = await stripe.products.retrieve(productId.toString());
-          console.log("Product details:", JSON.stringify({
-            id: product.id,
-            name: product.name,
-            metadata: product.metadata,
-          }));
+          // console.log("Product details:", JSON.stringify({
+          //   id: product.id,
+          //   name: product.name,
+          //   metadata: product.metadata,
+          // }));
           
           // Extract tier from product metadata or name
           if (product.metadata.tier) {
@@ -129,7 +129,7 @@ serve(async (req) => {
           }
         }
         
-        console.log(`Determined tier: ${tier}`);
+        // console.log(`Determined tier: ${tier}`);
         
         // Determine payment period (monthly or annual)
         let payment_period = 'monthly';
@@ -139,7 +139,7 @@ serve(async (req) => {
           payment_period = 'annual';
         }
         
-        console.log(`Determined payment period: ${payment_period}`);
+        // console.log(`Determined payment period: ${payment_period}`);
 
         // Create Supabase client
         const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2.39.4");
@@ -183,7 +183,7 @@ serve(async (req) => {
           }
           
           userData = { id: subData.user_id };
-          console.log("Found user ID from subscriptions table:", userData.id);
+          // console.log("Found user ID from subscriptions table:", userData.id);
         } else {
           userData = profileData;
           console.log("Found user ID from profiles table:", userData.id);
@@ -258,7 +258,7 @@ serve(async (req) => {
             // Continue execution even if profile update fails
           }
           
-          console.log("Successfully updated subscription and transaction data");
+          // console.log("Successfully updated subscription and transaction data");
         } catch (dbError) {
           console.error("Exception during database update:", dbError);
           return new Response(JSON.stringify({ error: `Database exception: ${dbError.message}` }), {
@@ -270,7 +270,7 @@ serve(async (req) => {
       }
       
       case 'customer.subscription.updated': {
-        console.log("Processing customer.subscription.updated event");
+        // console.log("Processing customer.subscription.updated event");
         const subscription = event.data.object;
         
         // Determine payment period (monthly or annual)
@@ -281,7 +281,7 @@ serve(async (req) => {
           payment_period = 'annual';
         }
         
-        console.log(`Subscription updated - Payment period: ${payment_period}`);
+        // console.log(`Subscription updated - Payment period: ${payment_period}`);
         
         // Create Supabase client
         const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2.39.4");
@@ -347,7 +347,7 @@ serve(async (req) => {
           // Continue execution even if profile update fails
         }
         
-        console.log("Successfully updated subscription");
+        // console.log("Successfully updated subscription");
         break;
       }
       
@@ -411,12 +411,12 @@ serve(async (req) => {
           console.error("Error updating profile subscription status:", profileError);
         }
         
-        console.log("Successfully processed subscription cancellation");
+        // console.log("Successfully processed subscription cancellation");
         break;
       }
       
       default:
-        console.log(`Unhandled event type: ${event.type}`);
+        // console.log(`Unhandled event type: ${event.type}`);
     }
 
     return new Response(JSON.stringify({ received: true }), {

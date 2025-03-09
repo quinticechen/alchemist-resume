@@ -5,14 +5,14 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.47.0";
 import Stripe from "https://esm.sh/stripe@12.18.0";
 import { corsHeaders } from "../_shared/cors.ts";
 
-console.log("Hello from stripe-payment Edge Function!");
+// console.log("Hello from stripe-payment Edge Function!");
 
 serve(async (req) => {
-  console.log(`Received ${req.method} request to stripe-payment function`);
+  // console.log(`Received ${req.method} request to stripe-payment function`);
   
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    console.log("Handling CORS preflight request");
+    // console.log("Handling CORS preflight request");
     return new Response(null, { 
       status: 204, 
       headers: corsHeaders 
@@ -43,9 +43,9 @@ serve(async (req) => {
     let requestData;
     try {
       requestData = await req.json();
-      console.log(`Request data:`, JSON.stringify(requestData));
+      // console.log(`Request data:`, JSON.stringify(requestData));
     } catch (err) {
-      console.error("Error parsing request body:", err);
+      // console.error("Error parsing request body:", err);
       return new Response(JSON.stringify({ error: 'Invalid request body' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -85,7 +85,7 @@ serve(async (req) => {
 
     // Extract user ID from JWT token
     const token = authHeader.replace('Bearer ', '');
-    console.log(`Authenticating user with token: ${token.substring(0, 15)}...`);
+    // console.log(`Authenticating user with token: ${token.substring(0, 15)}...`);
     
     // Create a Supabase client with the service role key
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -102,7 +102,7 @@ serve(async (req) => {
     }
 
     const userId = user.id;
-    console.log(`Authenticated user ID: ${userId}`);
+    // console.log(`Authenticated user ID: ${userId}`);
 
     // Get user profile information
     const { data: profile, error: profileError } = await supabase
@@ -122,7 +122,7 @@ serve(async (req) => {
     const userEmail = user.email;
     let stripeCustomerId = profile?.stripe_customer_id;
 
-    console.log(`Processing payment for user: ${userId}, email: ${userEmail}, plan: ${planId} (${isAnnual ? 'annual' : 'monthly'})`);
+    // console.log(`Processing payment for user: ${userId}, email: ${userEmail}, plan: ${planId} (${isAnnual ? 'annual' : 'monthly'})`);
 
     try {
       // Initialize Stripe with a compatible API version
@@ -133,7 +133,7 @@ serve(async (req) => {
 
       // Create Stripe customer if not exists
       if (!stripeCustomerId) {
-        console.log("Creating new Stripe customer");
+        // console.log("Creating new Stripe customer");
         const customer = await stripe.customers.create({
           email: userEmail,
           metadata: {
@@ -148,7 +148,7 @@ serve(async (req) => {
           .update({ stripe_customer_id: stripeCustomerId })
           .eq('id', userId);
 
-        console.log(`Created new Stripe customer with ID: ${stripeCustomerId}`);
+        // console.log(`Created new Stripe customer with ID: ${stripeCustomerId}`);
       }
 
       // Calculate success URL
@@ -160,7 +160,7 @@ serve(async (req) => {
       successUrl.searchParams.append('is_annual', isAnnual.toString());
 
       const successUrlString = successUrl.toString();
-      console.log(`Success URL base: ${successUrlString}`);
+      // console.log(`Success URL base: ${successUrlString}`);
 
       // Create Stripe Checkout Session with the session_id parameter automatically handled by Stripe
       const session = await stripe.checkout.sessions.create({
@@ -191,7 +191,7 @@ serve(async (req) => {
         },
       });
 
-      console.log(`Created checkout session with ID: ${session.id}`);
+      // console.log(`Created checkout session with ID: ${session.id}`);
 
       return new Response(JSON.stringify({ sessionUrl: session.url }), {
         status: 200,
