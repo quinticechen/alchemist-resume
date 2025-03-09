@@ -16,32 +16,32 @@ import { useAuth } from "@/contexts/AuthContext";
 // Predefined feedback options
 const QUICK_FEEDBACK_OPTIONS = [
   {
-    displayText: "Option 1 - Short Display Text",
+    displayText: "Quick and Professional",
     value:
       "Absolutely blown away by how quick and professional the results were. My resume now stands out in all the right ways. This tool is a game-changer!",
   },
   {
-    displayText: "Option 2 - Short Display Text",
+    displayText: "Incredible",
     value:
       "The transformation was incredible - from basic to brilliant in minutes. Love how it maintained my voice while making everything sound more impactful.",
   },
   {
-    displayText: "Option 3 - Short Display Text",
+    displayText: "Thoughtful",
     value:
       "The AI's ability to enhance my resume while keeping my professional identity intact is remarkable. Every change made was thoughtful and purposeful.",
   },
   {
-    displayText: "Option 4 - Short Display Text",
+    displayText: "Actually works",
     value:
       "Finally found a tool that actually understands how to present my experience effectively. The improvements were spot-on and made my resume much more compelling.",
   },
   {
-    displayText: "Option 5 - Short Display Text",
+    displayText: "Worth every second",
     value:
       "What an incredible tool! It took my basic resume and turned it into something that truly represents my professional journey. Worth every second!",
   },
   {
-    displayText: "Option 6 - Short Display Text",
+    displayText: "Exactly what I needed",
     value:
       "The resume transformation exceeded my expectations. Each section was expertly refined while maintaining authenticity. Exactly what I needed!",
   },
