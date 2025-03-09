@@ -372,7 +372,7 @@ const AlchemistWorkshop = () => {
 
         {/* Success section - show when Google Doc URL is available */}
         {googleDocUrl && (
-          <div className="flex flex-wrap items-center gap-4 mt-8">
+          <div className="flex flex-wrap justify-center gap-4 mt-8">
             <a
               href={googleDocUrl}
               target="_blank"
