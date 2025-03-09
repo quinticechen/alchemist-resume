@@ -28,11 +28,13 @@ export const useResumeAnalysis = () => {
         },
         (payload: ResumeAnalysisPayload) => {
           console.log('Received realtime update:', payload);
-          if (payload.new && 'analysis_data' in payload.new && payload.new.analysis_data) {
+          if (payload.new && 'google_doc_url' in payload.new && payload.new.google_doc_url) {
             toast({
-              title: "分析完成",
-              description: "您的簡歷分析已準備就緒！",
+              title: "Analysis Complete",
+              description: "Your resume analysis is ready!",
             });
+          } else if (payload.new && 'analysis_data' in payload.new && payload.new.analysis_data) {
+            console.log("Analysis data received, processing in progress");
           }
         }
       )

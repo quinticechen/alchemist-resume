@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import ResumeUploader from "@/components/ResumeUploader";
@@ -35,6 +36,11 @@ const AlchemistWorkshop = () => {
   // Track if we've already checked the subscription in this session
   const hasCheckedSubscription = useRef(false);
 
+  // Function to navigate to records page (defined outside of conditional rendering)
+  const viewAllRecords = () => {
+    navigate("/alchemy-records");
+  };
+
   // Redirect to login if not authenticated
   useEffect(() => {
     if (!isLoading && !session) {
@@ -55,6 +61,67 @@ const AlchemistWorkshop = () => {
     }
   }, [session, isLoading, navigate, checkSubscriptionAndRedirect]);
 
+  // Listen for google_doc_url updates when analysis is complete
+  useEffect(() => {
+    if (analysisId) {
+      const fetchAnalysis = async () => {
+        const { data } = await supabase
+          .from("resume_analyses")
+          .select("google_doc_url")
+          .eq("id", analysisId)
+          .single();
+          
+        if (data?.google_doc_url) {
+          setGoogleDocUrl(data.google_doc_url);
+          setIsGenerationComplete(true);
+          setShowLoadingAnimation(false);
+          if (timeoutId.current) {
+            clearTimeout(timeoutId.current);
+            timeoutId.current = null;
+          }
+        }
+      };
+      
+      fetchAnalysis();
+      
+      // Set up real-time subscription
+      const channel = supabase
+        .channel(`analysis-${analysisId}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "UPDATE",
+            schema: "public",
+            table: "resume_analyses",
+            filter: `id=eq.${analysisId}`,
+          },
+          (payload) => {
+            console.log("Received real-time update for analysis:", payload);
+            if (payload.new.google_doc_url) {
+              setGoogleDocUrl(payload.new.google_doc_url);
+              setIsGenerationComplete(true);
+              setShowLoadingAnimation(false);
+              
+              toast({
+                title: "Resume Alchemist Complete!",
+                description: "Your customized resume is now ready",
+              });
+              
+              if (timeoutId.current) {
+                clearTimeout(timeoutId.current);
+                timeoutId.current = null;
+              }
+            }
+          }
+        )
+        .subscribe();
+        
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
+  }, [analysisId, toast]);
+
   const handleFileUploadSuccess = (
     file: File,
     path: string,
@@ -74,11 +141,11 @@ const AlchemistWorkshop = () => {
   const handleUrlSubmit = async (url: string) => {
     // Reset states
     setIsProcessing(true);
-    console.log("isProcessing set to true");
     setIsTimeout(false);
     setTimeoutMessage(null);
     setIsGenerationComplete(false);
     setShowLoadingAnimation(true);
+    setGoogleDocUrl(null);
 
     if (timeoutId.current) {
       clearTimeout(timeoutId.current);
@@ -172,26 +239,6 @@ const AlchemistWorkshop = () => {
       // Set five-minute timeout
       timeoutId.current = setTimeout(() => {
         if (!isGenerationComplete) {
-          // Update the analysis record with an error message using async/await
-          // const updateAnalysis = async () => {
-          //   try {
-          //     await supabase
-          //       .from("resume_analyses")
-          //       .update({
-          //         error:
-          //           "Resume generation took too long. Please try again later.",
-          //       })
-          //       .eq("id", analysisRecord.id);
-
-          //     console.log("Updated analysis with timeout error");
-          //   } catch (err) {
-          //     console.error("Error updating analysis with timeout:", err);
-          //   }
-          // };
-
-          // // Execute the async function
-          // updateAnalysis();
-
           toast({
             title: "Generation Failed",
             description:
@@ -275,34 +322,24 @@ const AlchemistWorkshop = () => {
         <ResumeUploader onUploadSuccess={handleFileUploadSuccess} />
 
         {selectedFile && (
-          <>
-            <JobUrlInput
-              onUrlSubmit={handleUrlSubmit}
-              isProcessing={isProcessing}
-              jobUrl={jobUrl}
-              setJobUrl={setJobUrl}
-              resumeId={resumeId}
-              setIsProcessing={setIsProcessing}
-            />
-          </>
+          <JobUrlInput
+            onUrlSubmit={handleUrlSubmit}
+            isProcessing={isProcessing}
+            jobUrl={jobUrl}
+            setJobUrl={setJobUrl}
+            resumeId={resumeId}
+            setIsProcessing={setIsProcessing}
+          />
         )}
 
-        {console.log("isProcessing:", isProcessing, "analysisId:", analysisId)}
-
         {isProcessing && analysisId && (
-          <>
-            {console.log(
-              "Rendering ProcessingPreview with analysisId:",
-              analysisId
-            )}
-            <ProcessingPreview
-              analysisId={analysisId}
-              jobUrl={jobUrl}
-              isProcessing={isProcessing}
-              setIsProcessing={setIsProcessing}
-              onGenerationComplete={handleGenerationComplete}
-            />
-          </>
+          <ProcessingPreview
+            analysisId={analysisId}
+            jobUrl={jobUrl}
+            isProcessing={isProcessing}
+            setIsProcessing={setIsProcessing}
+            onGenerationComplete={handleGenerationComplete}
+          />
         )}
 
         {/* Loading animation section - show when processing and not complete or timed out */}
@@ -319,17 +356,6 @@ const AlchemistWorkshop = () => {
           </section>
         )}
 
-        {/* Received section */}
-        {isGenerationComplete && (
-          <section className="text-center">
-            <div className="py-8">
-              <div className="w-64 h-64 mx-auto">
-                <Lottie options={failedOptions} />
-              </div>
-              <p className="mt-4 text-gray-600">{timeoutMessage}</p>
-            </div>
-          </section>
-        )}
         {/* Error/Timeout section */}
         {isTimeout && timeoutMessage && (
           <section className="text-center">
@@ -342,8 +368,9 @@ const AlchemistWorkshop = () => {
           </section>
         )}
 
+        {/* Success section - show when Google Doc URL is available */}
         {googleDocUrl && (
-          <div className="flex flex-wrap gap-4">
+          <div className="flex flex-wrap gap-4 mt-8">
             <a
               href={googleDocUrl}
               target="_blank"

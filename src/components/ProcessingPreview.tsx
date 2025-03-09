@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -26,7 +27,6 @@ const ProcessingPreview = ({
 }: ProcessingPreviewProps) => {
   const [progress, setProgress] = useState(10);
   const [googleDocUrl, setGoogleDocUrl] = useState<string | null>(null);
-  const [isGenerationDone, setIsGenerationDone] = useState(false);
   const [status, setStatus] = useState<ProcessingStatus>("idle");
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
@@ -39,10 +39,16 @@ const ProcessingPreview = ({
     }
   }, [analysisId]);
 
+  // Set up initial state and subscription
   useEffect(() => {
     if (!analysisId) return;
+    
+    console.log("Setting up processing for analysis ID:", analysisId);
     setStatus("loading");
-    console.log("all id:", analysisId, jobUrl, isProcessing);
+    
+    // Begin progress animation immediately
+    setProgress(15);
+    
     // Initial fetch of the analysis
     const fetchAnalysis = async () => {
       try {
@@ -61,6 +67,7 @@ const ProcessingPreview = ({
         }
 
         console.log("Initial analysis data:", data);
+        
         if (data?.error) {
           console.error("Analysis contains error:", data.error);
           setStatus("error");
@@ -78,17 +85,20 @@ const ProcessingPreview = ({
           setGoogleDocUrl(data.google_doc_url);
           setStatus("success");
           setProgress(100);
-          setIsGenerationDone(true);
-          if (onGenerationComplete) onGenerationComplete();
+          
+          if (onGenerationComplete) {
+            console.log("Calling onGenerationComplete callback");
+            onGenerationComplete();
+          }
+          
           toast({
             title: "Analysis Complete!",
             description: "Your customized resume is now ready",
           });
         } else {
-          // If no google_doc_url yet, show loading status and start progress animation
+          // If no google_doc_url yet, show loading status
           setStatus("loading");
-          // Begin progress animation
-          setProgress(15);
+          console.log("No google_doc_url yet, showing loading state");
         }
       } catch (error) {
         console.error("Error fetching analysis:", error);
@@ -104,7 +114,7 @@ const ProcessingPreview = ({
 
     fetchAnalysis();
 
-    // Subscribe to real-time updates with a stable channel name
+    // Subscribe to real-time updates
     const channelName = `analysis-${analysisId}`;
     console.log(`Creating subscription channel: ${channelName}`);
 
@@ -123,10 +133,10 @@ const ProcessingPreview = ({
 
           if (payload.eventType === "UPDATE") {
             const newData = payload.new;
-            if (newData.google_doc_url) {
-              console.log("Analysis update received:", newData);
-            }
+            
+            // Check for errors first
             if (newData.error) {
+              console.error("Error in analysis:", newData.error);
               setStatus("error");
               setError(newData.error);
               toast({
@@ -143,28 +153,26 @@ const ProcessingPreview = ({
               setGoogleDocUrl(newData.google_doc_url);
               setStatus("success");
               setProgress(100);
-              setIsGenerationDone(true);
+              
               if (onGenerationComplete) {
                 console.log("Calling onGenerationComplete callback");
                 onGenerationComplete();
               }
+              
               toast({
                 title: "Resume Alchemist Complete!",
                 description: "Your customized resume is now ready",
               });
             } else if (newData.analysis_data && !newData.google_doc_url) {
               // Update progress if we have analysis_data but not yet a google_doc_url
+              console.log("Analysis data received, updating progress");
               setProgress(90);
-              console.log("Analysis data received:", newData.analysis_data);
             }
           }
         }
       )
       .subscribe((status) => {
         console.log(`Subscription status for ${channelName}:`, status);
-        if (status === "SUBSCRIBED") {
-          console.log(`Successfully subscribed to ${channelName}`);
-        }
       });
 
     return () => {
@@ -173,6 +181,7 @@ const ProcessingPreview = ({
     };
   }, [analysisId, toast, onGenerationComplete]);
 
+  // Message to display based on current status
   const getStatusMessage = () => {
     if (error) return error;
 
@@ -202,10 +211,12 @@ const ProcessingPreview = ({
     }
   }, [status, progress]);
 
+  // Navigate to records page
   const viewAllRecords = () => {
     navigate("/alchemy-records");
   };
 
+  // Don't render anything if not processing
   if (!isProcessing) {
     return null;
   }

@@ -12,6 +12,8 @@ export const useSubscriptionCheck = () => {
 
     // Check if we've already shown the welcome toast in this session
     const welcomeToastShown = sessionStorage.getItem('welcomeToastShown') === 'true';
+    
+    // Check if this is a fresh login (set in AuthContext)
     const isFreshLogin = sessionStorage.getItem('freshLogin') === 'true';
     
     // Only show welcome toast if explicitly requested, hasn't been shown yet, and it's a fresh login
