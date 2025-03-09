@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import ResumeUploader from "@/components/ResumeUploader";
@@ -70,7 +69,7 @@ const AlchemistWorkshop = () => {
           .select("google_doc_url")
           .eq("id", analysisId)
           .single();
-          
+
         if (data?.google_doc_url) {
           setGoogleDocUrl(data.google_doc_url);
           setIsGenerationComplete(true);
@@ -81,9 +80,9 @@ const AlchemistWorkshop = () => {
           }
         }
       };
-      
+
       fetchAnalysis();
-      
+
       // Set up real-time subscription
       const channel = supabase
         .channel(`analysis-${analysisId}`)
@@ -101,12 +100,12 @@ const AlchemistWorkshop = () => {
               setGoogleDocUrl(payload.new.google_doc_url);
               setIsGenerationComplete(true);
               setShowLoadingAnimation(false);
-              
+
               toast({
                 title: "Resume Alchemist Complete!",
                 description: "Your customized resume is now ready",
               });
-              
+
               if (timeoutId.current) {
                 clearTimeout(timeoutId.current);
                 timeoutId.current = null;
@@ -115,7 +114,7 @@ const AlchemistWorkshop = () => {
           }
         )
         .subscribe();
-        
+
       return () => {
         supabase.removeChannel(channel);
       };
@@ -380,6 +379,16 @@ const AlchemistWorkshop = () => {
               <Crown className="h-4 w-4 text-amber-500" />
               Open Golden Resume
             </a>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={googleDocUrl}
+              className="text-info border-info/20 hover:bg-info/5"
+            >
+              <Crown className="h-4 w-4 mr-2" />
+              Golden Resume
+            </Button>
 
             <Button
               variant="outline"
