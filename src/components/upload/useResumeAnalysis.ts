@@ -34,7 +34,7 @@ export const useResumeAnalysis = () => {
             console.error('Analysis error received:', payload.new.error);
             toast({
               title: "Analysis Error",
-              description: payload.new.error || "An error occurred during resume analysis",
+              description: typeof payload.new.error === 'string' ? payload.new.error : "An error occurred during resume analysis",
               variant: "destructive",
             });
             return;
