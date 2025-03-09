@@ -117,7 +117,7 @@ const FeedbackModal = ({ isOpen, onClose, analysisId, onFeedbackSubmitted }: Fee
     <Dialog open={isOpen} onOpenChange={(open) => {
       if (!open) onClose();
     }}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="bg-white sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold">Share Your Experience</DialogTitle>
         </DialogHeader>
