@@ -22,8 +22,8 @@ Deno.serve(async (req) => {
       // Fix any potential JSON syntax issues
       // This is a temporary fix to handle missing commas in the JSON
       const fixedText = text.replace(/}(\s*)"([^"]+)"/g, '},$1"$2"')
-                             .replace(/\n/g, '')
-                             .replace(/([^,{])\s*"([^"]+)":/g, '$1,"$2":');
+                           .replace(/\n/g, '')
+                           .replace(/([^,{])\s*"([^"]+)":/g, '$1,"$2":');
       
       console.log("Fixed request body:", fixedText);
       requestBody = JSON.parse(fixedText);
@@ -38,6 +38,47 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Early return if there's an error in the request
+    if (requestBody.error) {
+      console.log("Error received in request:", requestBody.error);
+      
+      // Initialize Supabase client for error update
+      const supabaseClient = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      );
+
+      // Update the analysis with the error
+      const { error: analysisUpdateError } = await supabaseClient
+        .from('resume_analyses')
+        .update({
+          error: requestBody.error,
+          status: 'error'
+        })
+        .eq('id', requestBody.analysisId);
+
+      if (analysisUpdateError) {
+        console.error('Error updating analysis with error status:', analysisUpdateError);
+        throw analysisUpdateError;
+      }
+
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          message: 'Error status updated successfully' 
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200,
+        }
+      );
+    }
+
+    // Validate required fields
+    if (!requestBody.analysisId) {
+      throw new Error('Analysis ID is required');
+    }
+
     const {
       analysisId,
       googleDocUrl,
@@ -50,15 +91,6 @@ Deno.serve(async (req) => {
       originalResume,
       matchScore
     } = requestBody;
-
-    console.log('Received data:', {
-      analysisId,
-      googleDocUrl,
-      companyName,
-      jobTitle,
-      jobLanguage,
-      matchScore
-    });
 
     // Initialize Supabase client
     const supabaseClient = createClient(
@@ -120,7 +152,8 @@ Deno.serve(async (req) => {
       .update({
         google_doc_url: googleDocUrl,
         golden_resume: goldenResume,
-        match_score: matchScore ? parseFloat(matchScore) : null
+        match_score: matchScore ? parseFloat(matchScore) : null,
+        status: googleDocUrl ? 'completed' : 'error'
       })
       .eq('id', analysisId);
 
