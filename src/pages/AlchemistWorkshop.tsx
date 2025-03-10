@@ -62,9 +62,9 @@ const AlchemistWorkshop = () => {
   useEffect(() => {
     if (analysisId) {
       const fetchAnalysis = async () => {
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from("resume_analyses")
-          .select("google_doc_url")
+          .select("google_doc_url, error")
           .eq("id", analysisId)
           .single();
 
@@ -184,10 +184,9 @@ const AlchemistWorkshop = () => {
       };
 
       const currentEnv = getEnvironment();
-      const makeWebhookUrl =
-        currentEnv === "production"
-          ? "https://hook.eu2.make.com/pthisc4aefvf15i7pj4ja99a84dp7kce"
-          : "https://hook.eu2.make.com/2up5vi5mr8jhhdl1eclyw3shu99uoxlb";
+      const makeWebhookUrl = currentEnv === 'production' 
+        ? "https://hook.eu2.make.com/pthisc4aefvf15i7pj4ja99a84dp7kce" 
+        : "https://hook.eu2.make.com/2up5vi5mr8jhhdl1eclyw3shu99uoxlb";
 
       console.log(`Using ${currentEnv} webhook URL: ${makeWebhookUrl}`);
 
