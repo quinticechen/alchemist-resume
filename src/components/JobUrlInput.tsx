@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import { getEnvironment } from "@/integrations/supabase/client";
 
 interface JobUrlInputProps {
   onUrlSubmit: (url: string) => Promise<void>;
@@ -30,6 +31,15 @@ export const SUPPORTED_JOB_SITES = [
   "51job.com",
 ];
 
+// Environment-specific webhook URLs
+export const getWebhookUrl = () => {
+  const env = getEnvironment();
+  if (env === 'production') {
+    return "https://hook.eu2.make.com/pthisc4aefvf15i7pj4ja99a84dp7kce";
+  } else {
+    return "https://hook.eu2.make.com/2up5vi5mr8jhhdl1eclyw3shu99uoxlb";
+  }
+};
 
 const JobUrlInput = ({
   onUrlSubmit,
@@ -68,7 +78,7 @@ const JobUrlInput = ({
 
       if (setJobUrl) setJobUrl(processedUrl);
       if (setIsProcessing) setIsProcessing(true);
-      await onUrlSubmit(processedUrl); // 傳遞處理後的 URL
+      await onUrlSubmit(processedUrl);
       setUrl("");
     } catch (error) {
       toast({
@@ -89,8 +99,8 @@ const JobUrlInput = ({
     await validateAndProcessJobUrl(url);
   };
 
-  // Button should remain disabled during the entire generation process
-  const isButtonDisabled = isProcessing || isSubmitting || !url;
+  // Button should remain disabled during processing or if URL is empty
+  const isButtonDisabled = isProcessing || isSubmitting || !url || !isGenerationComplete;
 
   return (
     <Card className="w-full">
