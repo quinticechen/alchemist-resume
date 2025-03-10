@@ -38,11 +38,12 @@ const UsageStats = ({ usageCount }: UsageStatsProps) => {
         }
       }
       
-      // Get total number of resumes
+      // Get total number of Golden resumes (with google_doc_url)
       const { count } = await supabase
         .from('resume_analyses')
         .select('*', { count: 'exact', head: true })
-        .eq('user_id', session.user.id);
+        .eq('user_id', session.user.id)
+        .not('google_doc_url', 'is', null);
       
       if (count !== null) {
         setTotalResumes(count);
@@ -58,7 +59,7 @@ const UsageStats = ({ usageCount }: UsageStatsProps) => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="flex items-center gap-2">
           <FileText className="h-5 w-5 text-primary" />
-          <span className="text-neutral-600">Total Resumes Generated: <strong>{totalResumes}</strong></span>
+          <span className="text-neutral-600">Total Golden Resumes Generated: <strong>{totalResumes}</strong></span>
         </div>
         <div className="text-neutral-600">
           {subscriptionStatus === 'apprentice' ? (

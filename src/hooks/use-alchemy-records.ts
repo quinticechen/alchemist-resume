@@ -39,14 +39,17 @@ export const useAlchemyRecords = () => {
           setUsageCount(profile.usage_count || 0);
         }
 
+        // Count only records with google_doc_url
         const { count } = await supabase
           .from('resume_analyses')
-          .select('*', { count: 'exact', head: true });
+          .select('*', { count: 'exact', head: true })
+          .not('google_doc_url', 'is', null);
 
         if (count) {
           setTotalPages(Math.ceil(count / ITEMS_PER_PAGE));
         }
 
+        // Fetch only records with google_doc_url
         const { data: analysesData, error } = await supabase
           .from('resume_analyses')
           .select(`
@@ -61,6 +64,7 @@ export const useAlchemyRecords = () => {
               file_path
             )
           `)
+          .not('google_doc_url', 'is', null)
           .range((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE - 1)
           .order('created_at', { ascending: false });
 
