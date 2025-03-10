@@ -19,6 +19,7 @@ export type Database = {
           job_title: string | null
           language: string | null
           updated_at: string | null
+          user_id: string | null
         }
         Insert: {
           company_name?: string | null
@@ -29,6 +30,7 @@ export type Database = {
           job_title?: string | null
           language?: string | null
           updated_at?: string | null
+          user_id?: string | null
         }
         Update: {
           company_name?: string | null
@@ -39,6 +41,7 @@ export type Database = {
           job_title?: string | null
           language?: string | null
           updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }

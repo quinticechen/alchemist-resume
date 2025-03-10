@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import ResumeUploader from "@/components/ResumeUploader";
@@ -149,15 +148,16 @@ const AlchemistWorkshop = () => {
     try {
       // First, create a job entry in the jobs table
       const { data: jobData, error: jobError } = await supabase
-        .from("jobs")
+        .from('jobs')
         .insert({
           company_url: url,
+          user_id: session?.user?.id
         })
         .select()
         .single();
 
       if (jobError) {
-        console.error("Error creating job record:", jobError);
+        console.error('Error creating job record:', jobError);
         throw jobError;
       }
 
@@ -165,7 +165,7 @@ const AlchemistWorkshop = () => {
 
       // Then create the analysis record with the job_id
       const { data: analysisRecord, error: analysisError } = await supabase
-        .from("resume_analyses")
+        .from('resume_analyses')
         .insert({
           resume_id: resumeId,
           job_url: url,
@@ -176,25 +176,27 @@ const AlchemistWorkshop = () => {
         .single();
 
       if (analysisError) {
-        console.error("Error creating analysis record:", analysisError);
+        console.error('Error creating analysis record:', analysisError);
         throw analysisError;
       }
 
+      // Get resume details for the webhook
       const { data: resumeData, error: resumeError } = await supabase
-        .from("resumes")
-        .select("file_name, file_path")
-        .eq("id", resumeId)
+        .from('resumes')
+        .select('file_name, file_path')
+        .eq('id', resumeId)
         .single();
 
       if (resumeError) {
-        console.error("Error fetching resume:", resumeError);
+        console.error('Error fetching resume:', resumeError);
         throw resumeError;
       }
 
       const { data: storageData } = supabase.storage
-        .from("resumes")
+        .from('resumes')
         .getPublicUrl(resumeData.file_path);
 
+      // Prepare webhook data
       const webhookData = {
         analysisId: analysisRecord.id,
         jobId: jobId,
@@ -228,16 +230,14 @@ const AlchemistWorkshop = () => {
 
       toast({
         title: "Analysis Started",
-        description:
-          "Your resume is being analyzed. Results will be available soon.",
+        description: "Your resume is being analyzed. Results will be available soon.",
       });
 
       timeoutId.current = setTimeout(() => {
         if (!isGenerationComplete) {
           toast({
             title: "Generation Failed",
-            description:
-              "Resume generation took too long. Please try again later.",
+            description: "Resume generation took too long. Please try again later.",
             variant: "destructive",
           });
           setIsTimeout(true);
@@ -250,6 +250,7 @@ const AlchemistWorkshop = () => {
         }
       }, 5 * 60 * 1000);
     } catch (error) {
+      console.error('Error processing resume:', error);
       toast({
         title: "Error",
         description: "Failed to process resume. Please try again later.",
@@ -386,3 +387,4 @@ const AlchemistWorkshop = () => {
 };
 
 export default AlchemistWorkshop;
+
