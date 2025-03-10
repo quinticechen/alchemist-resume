@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -77,6 +78,7 @@ const JobUrlInput = ({
 
       if (setJobUrl) setJobUrl(processedUrl);
       if (setIsProcessing) setIsProcessing(true);
+      setIsSubmitting(true);
       await onUrlSubmit(processedUrl);
       setUrl("");
     } catch (error) {
@@ -88,19 +90,19 @@ const JobUrlInput = ({
       console.error("URL validation error:", error);
     } finally {
       setIsSubmitting(false);
-      if (setIsProcessing) setIsProcessing(false);
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
     await validateAndProcessJobUrl(url);
   };
 
-  // Button should only be disabled during active processing on current page,
-  // not when returning to or refreshing the page
-  const isButtonDisabled = isSubmitting || !url || (isProcessing && !isGenerationComplete);
+  // Input should be disabled during active processing on current page
+  const isInputDisabled = isProcessing && !isGenerationComplete;
+  
+  // Button should only be disabled during active processing or when no URL is provided
+  const isButtonDisabled = isSubmitting || !url || isInputDisabled;
 
   return (
     <Card className="w-full">
@@ -115,7 +117,7 @@ const JobUrlInput = ({
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             className="flex-1"
-            disabled={isProcessing && isSubmitting}
+            disabled={isInputDisabled}
           />
           <Button type="submit" disabled={isButtonDisabled}>
             {isSubmitting ? (
