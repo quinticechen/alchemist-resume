@@ -82,28 +82,18 @@ export const useAlchemyRecords = () => {
     fetchData();
   }, [currentPage]);
 
-  const handleFeedback = async (id: string, value: boolean) => {
+  const handleFeedback = async (id: string, value: boolean | null) => {
     try {
-      const { error } = await supabase
-        .from('resume_analyses')
-        .update({ feedback: value })
-        .eq('id', id);
-
-      if (error) throw error;
-
       setAnalyses(analyses.map(analysis => 
         analysis.id === id ? { ...analysis, feedback: value } : analysis
       ));
 
-      toast({
-        title: "Feedback submitted",
-        description: "Thank you for your feedback!",
-      });
+      // Database update is handled in the FeedbackButtons component
     } catch (error) {
       console.error('Error updating feedback:', error);
       toast({
         title: "Error",
-        description: "Failed to submit feedback",
+        description: "Failed to update feedback",
         variant: "destructive",
       });
     }

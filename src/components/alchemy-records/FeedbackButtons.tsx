@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ThumbsUp, ThumbsDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,7 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 
 interface FeedbackButtonsProps {
   feedback: boolean | null;
-  onFeedback: (value: boolean) => void;
+  onFeedback: (value: boolean | null) => void;
   analysisId: string;
 }
 
@@ -23,53 +23,96 @@ const FeedbackButtons = ({
   const { session } = useAuth();
   const userId = session?.user?.id;
 
+  // Clear console log of the previous state for debugging
+  useEffect(() => {
+    console.log(`Current feedback state for analysis ${analysisId}:`, feedback);
+  }, [feedback, analysisId]);
+
   const handleThumbsUp = async () => {
     try {
-      // First update the feedback in the UI
-      onFeedback(true);
-
       if (!userId) {
         console.error("User ID is not available");
+        toast({
+          title: "Error",
+          description: "You must be logged in to provide feedback.",
+          variant: "destructive",
+        });
         return;
       }
 
-      console.log("Handling thumbs up for user:", userId);
+      // Toggle the feedback: if it's already true, set to null (cancel), otherwise set to true
+      const newFeedbackValue = feedback === true ? null : true;
+      
+      // First update the UI to make it feel responsive
+      onFeedback(newFeedbackValue);
 
-      // Check user profile for feedback popup counter - Fixed query
-      const { data: profileData, error } = await supabase
-        .from("profiles")
-        .select("feedback_popup_count")
-        .eq("id", userId)
-        .single();
+      console.log(`Setting feedback to ${newFeedbackValue} for analysis ${analysisId}`);
 
-      if (error) {
-        console.error("Error checking feedback popup count:", error);
-        return;
-      }
-
-      console.log("Retrieved profile data:", profileData);
-
-      // Increment the feedback popup count
-      const updatedCount = (profileData?.feedback_popup_count || 0) + 1;
-
-      // Update the counter in the database
+      // Update the feedback in the database
       const { error: updateError } = await supabase
-        .from("profiles")
-        .update({ feedback_popup_count: updatedCount })
-        .eq("id", userId);
-        
+        .from("resume_analyses")
+        .update({ feedback: newFeedbackValue })
+        .eq("id", analysisId);
+
       if (updateError) {
-        console.error("Error updating feedback count:", updateError);
+        console.error("Error updating feedback:", updateError);
+        // Revert UI change if database update failed
+        onFeedback(feedback);
+        toast({
+          title: "Error",
+          description: "Failed to update feedback. Please try again.",
+          variant: "destructive",
+        });
         return;
       }
 
-      console.log("Feedback count updated:", updatedCount);
+      // Only show modal and update profile if the new value is true (not when canceling)
+      if (newFeedbackValue === true) {
+        // Check user profile for feedback popup counter
+        const { data: profileData, error } = await supabase
+          .from("profiles")
+          .select("feedback_popup_count")
+          .eq("id", userId)
+          .single();
 
-      // Show feedback modal on first thumbs up or every 5th thumbs up
-      if (updatedCount === 1 || updatedCount % 5 === 0) {
-        console.log("Showing feedback modal");
-        setShowFeedbackModal(true);
+        if (error) {
+          console.error("Error checking feedback popup count:", error);
+          return;
+        }
+
+        console.log("Retrieved profile data:", profileData);
+
+        // Increment the feedback popup count
+        const updatedCount = (profileData?.feedback_popup_count || 0) + 1;
+
+        // Update the counter in the database
+        const { error: updateError } = await supabase
+          .from("profiles")
+          .update({ feedback_popup_count: updatedCount })
+          .eq("id", userId);
+          
+        if (updateError) {
+          console.error("Error updating feedback count:", updateError);
+          return;
+        }
+
+        console.log("Feedback count updated:", updatedCount);
+
+        // Show feedback modal on first thumbs up or every 5th thumbs up
+        if (updatedCount === 1 || updatedCount % 5 === 0) {
+          console.log("Showing feedback modal");
+          setShowFeedbackModal(true);
+        }
       }
+
+      // Show a toast confirmation
+      toast({
+        title: newFeedbackValue === true ? "Liked" : "Feedback Removed",
+        description: newFeedbackValue === true 
+          ? "Thank you for your positive feedback!" 
+          : "Your feedback has been removed."
+      });
+      
     } catch (error) {
       console.error("Error in thumbs up handler:", error);
       toast({
@@ -81,8 +124,61 @@ const FeedbackButtons = ({
     }
   };
 
-  const handleThumbsDown = () => {
-    onFeedback(false);
+  const handleThumbsDown = async () => {
+    try {
+      if (!userId) {
+        console.error("User ID is not available");
+        toast({
+          title: "Error",
+          description: "You must be logged in to provide feedback.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Toggle the feedback: if it's already false, set to null (cancel), otherwise set to false
+      const newFeedbackValue = feedback === false ? null : false;
+      
+      // Update the UI first
+      onFeedback(newFeedbackValue);
+
+      console.log(`Setting feedback to ${newFeedbackValue} for analysis ${analysisId}`);
+
+      // Update the feedback in the database
+      const { error: updateError } = await supabase
+        .from("resume_analyses")
+        .update({ feedback: newFeedbackValue })
+        .eq("id", analysisId);
+
+      if (updateError) {
+        console.error("Error updating feedback:", updateError);
+        // Revert UI change if database update failed
+        onFeedback(feedback);
+        toast({
+          title: "Error",
+          description: "Failed to update feedback. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Show a toast confirmation
+      toast({
+        title: newFeedbackValue === false ? "Disliked" : "Feedback Removed",
+        description: newFeedbackValue === false 
+          ? "Thank you for your feedback!" 
+          : "Your feedback has been removed."
+      });
+      
+    } catch (error) {
+      console.error("Error in thumbs down handler:", error);
+      toast({
+        title: "Error",
+        description:
+          "There was a problem updating your feedback. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleModalClose = () => {

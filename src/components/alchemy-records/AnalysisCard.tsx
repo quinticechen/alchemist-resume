@@ -23,7 +23,7 @@ interface AnalysisCardProps {
   onStartEditing: (id: string) => void;
   onSaveTitle: (id: string, title: string) => void;
   onCancelEditing: () => void;
-  onFeedback: (id: string, value: boolean) => void;
+  onFeedback: (id: string, value: boolean | null) => void;
 }
 
 const AnalysisCard = ({
@@ -54,7 +54,7 @@ const AnalysisCard = ({
         </div>
         <FeedbackButtons
           feedback={feedback}
-          onFeedback={onFeedback} 
+          onFeedback={(value) => onFeedback(id, value)} 
           analysisId={id}
         />
       </div>
