@@ -8,7 +8,7 @@ import { Loader2 } from "lucide-react";
 import { getEnvironment } from "@/integrations/supabase/client";
 
 interface JobUrlInputProps {
-  onUrlSubmit: (url: string) => Promise<void>;
+  onUrlSubmit: (url: string, jobId?: string) => Promise<void>;
   isProcessing?: boolean;
   jobUrl?: string;
   setJobUrl?: (url: string) => void;

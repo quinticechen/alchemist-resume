@@ -1,19 +1,19 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
 
   try {
+    // Parse the request body
     const {
       analysisId,
       googleDocUrl,
@@ -24,27 +24,17 @@ serve(async (req) => {
       jobDescription,
       goldenResume,
       originalResume,
-      matchScore,
-      error
+      matchScore
     } = await req.json()
 
-    console.log('Received update request:', {
+    console.log('Received data:', {
       analysisId,
       googleDocUrl,
       companyName,
-      companyUrl,
       jobTitle,
       jobLanguage,
-      hasJobDescription: !!jobDescription,
-      hasGoldenResume: !!goldenResume,
-      hasOriginalResume: !!originalResume,
-      matchScore,
-      error
+      matchScore
     })
-
-    if (!analysisId) {
-      throw new Error('Missing required field: analysisId')
-    }
 
     // Initialize Supabase client
     const supabaseClient = createClient(
@@ -52,110 +42,83 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    let jobId = null;
+    // First, get the analysis to find the job_id and resume_id
+    const { data: analysis, error: analysisError } = await supabaseClient
+      .from('resume_analyses')
+      .select('job_id, resume_id')
+      .eq('id', analysisId)
+      .single()
 
-    // If we have job details, create a job record
-    if (companyName || companyUrl || jobTitle || jobLanguage || jobDescription) {
-      const { data: jobData, error: jobError } = await supabaseClient
+    if (analysisError) {
+      console.error('Error fetching analysis:', analysisError)
+      throw analysisError
+    }
+
+    // Update the jobs table with job information
+    if (analysis.job_id) {
+      const { error: jobUpdateError } = await supabaseClient
         .from('jobs')
-        .insert({
+        .update({
           company_name: companyName,
           company_url: companyUrl,
           job_title: jobTitle,
           language: jobLanguage,
-          job_description: jobDescription ? JSON.parse(jobDescription) : null
+          job_description: typeof jobDescription === 'string' ? JSON.parse(jobDescription) : jobDescription
         })
-        .select('id')
-        .single()
+        .eq('id', analysis.job_id)
 
-      if (jobError) {
-        console.error('Error creating job record:', jobError)
-      } else {
-        jobId = jobData?.id
-        console.log('Created job record with ID:', jobId)
+      if (jobUpdateError) {
+        console.error('Error updating job:', jobUpdateError)
+        throw jobUpdateError
       }
     }
 
-    // Update original resume if provided
-    if (originalResume) {
-      // First, get the resume_id from the analysis
-      const { data: analysisData, error: analysisError } = await supabaseClient
-        .from('resume_analyses')
-        .select('resume_id')
-        .eq('id', analysisId)
-        .single()
+    // Update the resume with original resume content
+    if (analysis.resume_id && originalResume) {
+      const { error: resumeUpdateError } = await supabaseClient
+        .from('resumes')
+        .update({
+          original_resume: originalResume
+        })
+        .eq('id', analysis.resume_id)
 
-      if (!analysisError && analysisData?.resume_id) {
-        const resumeId = analysisData.resume_id
-        const { error: resumeError } = await supabaseClient
-          .from('resumes')
-          .update({ original_resume: originalResume })
-          .eq('id', resumeId)
-
-        if (resumeError) {
-          console.error('Error updating resume with original content:', resumeError)
-        } else {
-          console.log('Updated original resume content for resume ID:', resumeId)
-        }
-      } else {
-        console.error('Error fetching resume_id from analysis:', analysisError)
+      if (resumeUpdateError) {
+        console.error('Error updating resume:', resumeUpdateError)
+        throw resumeUpdateError
       }
     }
 
-    // Update the resume analysis with the Google Doc URL or error
-    const updateData = error 
-      ? { error } 
-      : {
-          google_doc_url: googleDocUrl,
-          golden_resume: goldenResume,
-          match_score: matchScore ? parseFloat(matchScore) : null,
-          job_id: jobId
-        }
-
-    const { data, error: updateError } = await supabaseClient
+    // Update the analysis with Google Doc URL, golden resume, and match score
+    const { error: analysisUpdateError } = await supabaseClient
       .from('resume_analyses')
-      .update(updateData)
+      .update({
+        google_doc_url: googleDocUrl,
+        golden_resume: goldenResume,
+        match_score: matchScore ? parseFloat(matchScore) : null
+      })
       .eq('id', analysisId)
-      .select()
-      .single()
 
-    if (updateError) {
-      throw updateError
+    if (analysisUpdateError) {
+      console.error('Error updating analysis:', analysisUpdateError)
+      throw analysisUpdateError
     }
 
-    if (error) {
-      console.log('Updated analysis with error message:', error)
-      return new Response(
-        JSON.stringify({ 
-          message: 'Analysis updated with error information',
-          error,
-          data
-        }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400, // Using 400 for errors to better distinguish them
-        }
-      )
-    } else {
-      console.log('Successfully updated analysis with Google Doc URL:', data)
-      return new Response(
-        JSON.stringify({ 
-          message: 'Successfully updated analysis with Google Doc URL',
-          data 
-        }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200,
-        }
-      )
-    }
-  } catch (error) {
-    console.error('Error updating Google Doc URL:', error)
+    console.log('Successfully updated records for analysis ID:', analysisId)
+
     return new Response(
       JSON.stringify({ 
-        error: error.message,
-        status: 'error'
+        success: true, 
+        message: 'Records updated successfully' 
       }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      }
+    )
+  } catch (error) {
+    console.error('Error processing update:', error)
+    return new Response(
+      JSON.stringify({ error: error.message }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500,

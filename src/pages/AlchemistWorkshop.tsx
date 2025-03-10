@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import ResumeUploader from "@/components/ResumeUploader";
@@ -146,11 +147,29 @@ const AlchemistWorkshop = () => {
     }
 
     try {
+      // First, create a job entry in the jobs table
+      const { data: jobData, error: jobError } = await supabase
+        .from("jobs")
+        .insert({
+          company_url: url,
+        })
+        .select()
+        .single();
+
+      if (jobError) {
+        console.error("Error creating job record:", jobError);
+        throw jobError;
+      }
+
+      const jobId = jobData.id;
+
+      // Then create the analysis record with the job_id
       const { data: analysisRecord, error: analysisError } = await supabase
         .from("resume_analyses")
         .insert({
           resume_id: resumeId,
           job_url: url,
+          job_id: jobId,
           user_id: session?.user?.id,
         })
         .select()
@@ -178,6 +197,7 @@ const AlchemistWorkshop = () => {
 
       const webhookData = {
         analysisId: analysisRecord.id,
+        jobId: jobId,
         resumeUrl: storageData.publicUrl,
         jobUrl: url,
         fileName: resumeData.file_name,
@@ -189,6 +209,7 @@ const AlchemistWorkshop = () => {
         : "https://hook.eu2.make.com/2up5vi5mr8jhhdl1eclyw3shu99uoxlb";
 
       console.log(`Using ${currentEnv} webhook URL: ${makeWebhookUrl}`);
+      console.log("Sending webhook data:", webhookData);
 
       const webhookResponse = await fetch(makeWebhookUrl, {
         method: "POST",
