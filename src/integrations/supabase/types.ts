@@ -9,6 +9,39 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      jobs: {
+        Row: {
+          company_name: string | null
+          company_url: string | null
+          created_at: string | null
+          id: string
+          job_description: Json | null
+          job_title: string | null
+          language: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          company_name?: string | null
+          company_url?: string | null
+          created_at?: string | null
+          id?: string
+          job_description?: Json | null
+          job_title?: string | null
+          language?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          company_name?: string | null
+          company_url?: string | null
+          created_at?: string | null
+          id?: string
+          job_description?: Json | null
+          job_title?: string | null
+          language?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -80,13 +113,12 @@ export type Database = {
       }
       resume_analyses: {
         Row: {
-          analysis_data: Json | null
           created_at: string
           feedback: boolean | null
+          golden_resume: string | null
           google_doc_url: string | null
           id: string
-          job_company: string | null
-          job_title: string | null
+          job_id: string | null
           job_url: string
           match_score: number | null
           resume_id: string | null
@@ -94,13 +126,12 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
-          analysis_data?: Json | null
           created_at?: string
           feedback?: boolean | null
+          golden_resume?: string | null
           google_doc_url?: string | null
           id?: string
-          job_company?: string | null
-          job_title?: string | null
+          job_id?: string | null
           job_url: string
           match_score?: number | null
           resume_id?: string | null
@@ -108,13 +139,12 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
-          analysis_data?: Json | null
           created_at?: string
           feedback?: boolean | null
+          golden_resume?: string | null
           google_doc_url?: string | null
           id?: string
-          job_company?: string | null
-          job_title?: string | null
+          job_id?: string | null
           job_url?: string
           match_score?: number | null
           resume_id?: string | null
@@ -122,6 +152,13 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "resume_analyses_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "resume_analyses_resume_id_fkey"
             columns: ["resume_id"]
@@ -139,6 +176,7 @@ export type Database = {
           file_size: number
           id: string
           mime_type: string
+          original_resume: string | null
           updated_at: string
           user_id: string | null
         }
@@ -149,6 +187,7 @@ export type Database = {
           file_size: number
           id?: string
           mime_type: string
+          original_resume?: string | null
           updated_at?: string
           user_id?: string | null
         }
@@ -159,6 +198,7 @@ export type Database = {
           file_size?: number
           id?: string
           mime_type?: string
+          original_resume?: string | null
           updated_at?: string
           user_id?: string | null
         }

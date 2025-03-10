@@ -14,8 +14,33 @@ serve(async (req) => {
   }
 
   try {
-    const { analysisId, googleDocUrl, error } = await req.json()
-    console.log('Received update request:', { analysisId, googleDocUrl, error })
+    const {
+      analysisId,
+      googleDocUrl,
+      companyName,
+      companyUrl,
+      jobTitle,
+      jobLanguage,
+      jobDescription,
+      goldenResume,
+      originalResume,
+      matchScore,
+      error
+    } = await req.json()
+
+    console.log('Received update request:', {
+      analysisId,
+      googleDocUrl,
+      companyName,
+      companyUrl,
+      jobTitle,
+      jobLanguage,
+      hasJobDescription: !!jobDescription,
+      hasGoldenResume: !!goldenResume,
+      hasOriginalResume: !!originalResume,
+      matchScore,
+      error
+    })
 
     if (!analysisId) {
       throw new Error('Missing required field: analysisId')
@@ -27,10 +52,65 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
+    let jobId = null;
+
+    // If we have job details, create a job record
+    if (companyName || companyUrl || jobTitle || jobLanguage || jobDescription) {
+      const { data: jobData, error: jobError } = await supabaseClient
+        .from('jobs')
+        .insert({
+          company_name: companyName,
+          company_url: companyUrl,
+          job_title: jobTitle,
+          language: jobLanguage,
+          job_description: jobDescription ? JSON.parse(jobDescription) : null
+        })
+        .select('id')
+        .single()
+
+      if (jobError) {
+        console.error('Error creating job record:', jobError)
+      } else {
+        jobId = jobData?.id
+        console.log('Created job record with ID:', jobId)
+      }
+    }
+
+    // Update original resume if provided
+    if (originalResume) {
+      // First, get the resume_id from the analysis
+      const { data: analysisData, error: analysisError } = await supabaseClient
+        .from('resume_analyses')
+        .select('resume_id')
+        .eq('id', analysisId)
+        .single()
+
+      if (!analysisError && analysisData?.resume_id) {
+        const resumeId = analysisData.resume_id
+        const { error: resumeError } = await supabaseClient
+          .from('resumes')
+          .update({ original_resume: originalResume })
+          .eq('id', resumeId)
+
+        if (resumeError) {
+          console.error('Error updating resume with original content:', resumeError)
+        } else {
+          console.log('Updated original resume content for resume ID:', resumeId)
+        }
+      } else {
+        console.error('Error fetching resume_id from analysis:', analysisError)
+      }
+    }
+
     // Update the resume analysis with the Google Doc URL or error
     const updateData = error 
       ? { error } 
-      : { google_doc_url: googleDocUrl }
+      : {
+          google_doc_url: googleDocUrl,
+          golden_resume: goldenResume,
+          match_score: matchScore ? parseFloat(matchScore) : null,
+          job_id: jobId
+        }
 
     const { data, error: updateError } = await supabaseClient
       .from('resume_analyses')

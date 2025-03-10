@@ -7,13 +7,20 @@ export interface ResumeAnalysis {
   id: string;
   created_at: string;
   job_url: string;
-  job_title: string;
   google_doc_url: string | null;
+  golden_resume: string | null;
+  match_score: number | null;
   feedback: boolean | null;
   resume: {
     file_name: string;
     file_path: string;
+    original_resume: string | null;
   };
+  job: {
+    job_title: string;
+    company_name: string | null;
+    company_url: string | null;
+  } | null;
 }
 
 const ITEMS_PER_PAGE = 10;
@@ -56,12 +63,19 @@ export const useAlchemyRecords = () => {
             id,
             created_at,
             job_url,
-            job_title,
             google_doc_url,
+            golden_resume,
+            match_score,
             feedback,
+            job:job_id (
+              job_title,
+              company_name,
+              company_url
+            ),
             resume:resumes!resume_id (
               file_name,
-              file_path
+              file_path,
+              original_resume
             )
           `)
           .not('google_doc_url', 'is', null)
@@ -105,16 +119,32 @@ export const useAlchemyRecords = () => {
 
   const handleSaveTitle = async (id: string, title: string) => {
     try {
-      const { error } = await supabase
-        .from('resume_analyses')
-        .update({ job_title: title })
-        .eq('id', id);
+      // Get the analysis to find the job_id
+      const analysis = analyses.find(a => a.id === id);
+      
+      if (analysis?.job?.job_title) {
+        // If we have a job associated with this analysis, update the job title
+        const { error } = await supabase
+          .from('jobs')
+          .update({ job_title: title })
+          .eq('id', analysis.job.job_title);
+          
+        if (error) throw error;
+      }
 
-      if (error) throw error;
-
-      setAnalyses(analyses.map(analysis => 
-        analysis.id === id ? { ...analysis, job_title: title } : analysis
-      ));
+      // Update the local state
+      setAnalyses(analyses.map(analysis => {
+        if (analysis.id === id && analysis.job) {
+          return {
+            ...analysis,
+            job: {
+              ...analysis.job,
+              job_title: title
+            }
+          };
+        }
+        return analysis;
+      }));
 
       toast({
         title: "Title updated",

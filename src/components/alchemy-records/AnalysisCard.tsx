@@ -9,16 +9,25 @@ import FeedbackButtons from './FeedbackButtons';
 interface Resume {
   file_name: string;
   file_path: string;
+  original_resume: string | null;
+}
+
+interface Job {
+  job_title: string;
+  company_name: string | null;
+  company_url: string | null;
 }
 
 interface AnalysisCardProps {
   id: string;
   created_at: string;
-  job_title: string;
   job_url: string;
   google_doc_url: string | null;
+  golden_resume: string | null;
+  match_score: number | null;
   feedback: boolean | null;
   resume: Resume;
+  job: Job | null;
   editingId: string | null;
   onStartEditing: (id: string) => void;
   onSaveTitle: (id: string, title: string) => void;
@@ -29,23 +38,28 @@ interface AnalysisCardProps {
 const AnalysisCard = ({
   id,
   created_at,
-  job_title,
   job_url,
   google_doc_url,
+  golden_resume,
+  match_score,
   feedback,
   resume,
+  job,
   editingId,
   onStartEditing,
   onSaveTitle,
   onCancelEditing,
   onFeedback,
 }: AnalysisCardProps) => {
+  // Get the job title from either the job object or use a default
+  const jobTitle = job?.job_title || 'Unnamed Position';
+  
   return (
     <div className="bg-white rounded-xl p-6 shadow-apple">
       <div className="flex justify-between items-start mb-4">
         <div className="flex-1">
           <AnalysisTitle
-            title={job_title}
+            title={jobTitle}
             isEditing={editingId === id}
             onEdit={() => onStartEditing(id)}
             onSave={(title) => onSaveTitle(id, title)}
@@ -71,6 +85,11 @@ const AnalysisCard = ({
           <FileText className="h-4 w-4" />
           {resume?.file_name || 'Unnamed Resume'}
         </div>
+        {match_score !== null && (
+          <div className="font-semibold">
+            Match: {Math.round(match_score * 100)}%
+          </div>
+        )}
       </div>
 
       <div className="mt-4 flex flex-wrap gap-4">
@@ -90,7 +109,15 @@ const AnalysisCard = ({
           variant="outline"
           size="sm"
           onClick={() => {
-            if (resume?.file_path) {
+            if (resume?.original_resume) {
+              // Open original resume content in a new tab
+              const newTab = window.open();
+              if (newTab) {
+                newTab.document.write(`<html><head><title>Original Resume</title></head><body>${resume.original_resume}</body></html>`);
+                newTab.document.close();
+              }
+            } else if (resume?.file_path) {
+              // Fall back to the uploaded file
               const { data } = supabase.storage
                 .from('resumes')
                 .getPublicUrl(resume.file_path);
