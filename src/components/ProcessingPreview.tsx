@@ -184,55 +184,55 @@ const ProcessingPreview = ({
     return null;
   }
 
-  return (
-    <Card className="w-full animate-fade-up">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          {status === "success" ? (
-            <>
-              <Crown className="h-5 w-5 text-amber-500" />
-              Golden Resume Ready
-            </>
-          ) : status === "error" ? (
-            <>
-              <AlertCircle className="h-5 w-5 text-red-500" />
-              Generation Failed
-            </>
-          ) : (
-            <>
-              <Loader2 className="h-5 w-5 animate-spin" />
-              Processing Resume
-            </>
-          )}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          {status === "loading" && (
-            <Progress
-              value={progress}
-              className="h-2"
-              aria-label="Processing progress"
-            />
-          )}
+//   return (
+//     <Card className="w-full animate-fade-up">
+//       <CardHeader>
+//         <CardTitle className="flex items-center gap-2">
+//           {status === "success" ? (
+//             <>
+//               <Crown className="h-5 w-5 text-amber-500" />
+//               Golden Resume Ready
+//             </>
+//           ) : status === "error" ? (
+//             <>
+//               <AlertCircle className="h-5 w-5 text-red-500" />
+//               Generation Failed
+//             </>
+//           ) : (
+//             <>
+//               <Loader2 className="h-5 w-5 animate-spin" />
+//               Processing Resume
+//             </>
+//           )}
+//         </CardTitle>
+//       </CardHeader>
+//       <CardContent>
+//         <div className="space-y-4">
+//           {status === "loading" && (
+//             <Progress
+//               value={progress}
+//               className="h-2"
+//               aria-label="Processing progress"
+//             />
+//           )}
 
-          <p className="text-sm text-gray-600">{getStatusMessage()}</p>
+//           <p className="text-sm text-gray-600">{getStatusMessage()}</p>
 
-          {status === "error" && (
-            <Button
-              variant="outline"
-              onClick={() => {
-                if (setIsProcessing) setIsProcessing(false);
-              }}
-              className="flex items-center gap-2 text-red-500 border-red-200 hover:bg-red-50 hover:border-red-300"
-            >
-              Try Again
-            </Button>
-          )}
-        </div>
-      </CardContent>
-    </Card>
-  );
-};
+//           {status === "error" && (
+//             <Button
+//               variant="outline"
+//               onClick={() => {
+//                 if (setIsProcessing) setIsProcessing(false);
+//               }}
+//               className="flex items-center gap-2 text-red-500 border-red-200 hover:bg-red-50 hover:border-red-300"
+//             >
+//               Try Again
+//             </Button>
+//           )}
+//         </div>
+//       </CardContent>
+//     </Card>
+//   );
+// };
 
 export default ProcessingPreview;
