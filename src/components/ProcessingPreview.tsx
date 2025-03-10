@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -35,12 +34,12 @@ const ProcessingPreview = ({
   // Set up initial state and subscription
   useEffect(() => {
     if (!analysisId) return;
-    
+
     setStatus("loading");
-    
+
     // Begin progress animation immediately
     setProgress(15);
-    
+
     // Initial fetch of the analysis
     const fetchAnalysis = async () => {
       try {
@@ -55,7 +54,7 @@ const ProcessingPreview = ({
           setError("Failed to fetch analysis data");
           return;
         }
-        
+
         if (data?.error) {
           setStatus("error");
           setError(data.error);
@@ -71,7 +70,7 @@ const ProcessingPreview = ({
           setGoogleDocUrl(data.google_doc_url);
           setStatus("success");
           setProgress(100);
-          
+
           if (onGenerationComplete) {
             onGenerationComplete();
           }
@@ -107,7 +106,7 @@ const ProcessingPreview = ({
         (payload) => {
           if (payload.eventType === "UPDATE") {
             const newData = payload.new;
-            
+
             // Check for errors first
             if (newData.error) {
               console.error("Error in analysis:", newData.error);
@@ -118,7 +117,7 @@ const ProcessingPreview = ({
                 description: newData.error,
                 variant: "destructive",
               });
-              
+
               // Notify parent component
               if (onGenerationComplete) {
                 onGenerationComplete();
@@ -131,7 +130,7 @@ const ProcessingPreview = ({
               setGoogleDocUrl(newData.google_doc_url);
               setStatus("success");
               setProgress(100);
-              
+
               if (onGenerationComplete) {
                 onGenerationComplete();
               }
@@ -183,56 +182,6 @@ const ProcessingPreview = ({
   if (!isProcessing) {
     return null;
   }
-
-//   return (
-//     <Card className="w-full animate-fade-up">
-//       <CardHeader>
-//         <CardTitle className="flex items-center gap-2">
-//           {status === "success" ? (
-//             <>
-//               <Crown className="h-5 w-5 text-amber-500" />
-//               Golden Resume Ready
-//             </>
-//           ) : status === "error" ? (
-//             <>
-//               <AlertCircle className="h-5 w-5 text-red-500" />
-//               Generation Failed
-//             </>
-//           ) : (
-//             <>
-//               <Loader2 className="h-5 w-5 animate-spin" />
-//               Processing Resume
-//             </>
-//           )}
-//         </CardTitle>
-//       </CardHeader>
-//       <CardContent>
-//         <div className="space-y-4">
-//           {status === "loading" && (
-//             <Progress
-//               value={progress}
-//               className="h-2"
-//               aria-label="Processing progress"
-//             />
-//           )}
-
-//           <p className="text-sm text-gray-600">{getStatusMessage()}</p>
-
-//           {status === "error" && (
-//             <Button
-//               variant="outline"
-//               onClick={() => {
-//                 if (setIsProcessing) setIsProcessing(false);
-//               }}
-//               className="flex items-center gap-2 text-red-500 border-red-200 hover:bg-red-50 hover:border-red-300"
-//             >
-//               Try Again
-//             </Button>
-//           )}
-//         </div>
-//       </CardContent>
-//     </Card>
-//   );
 };
 
 export default ProcessingPreview;
