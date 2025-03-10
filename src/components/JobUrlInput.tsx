@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -99,8 +98,9 @@ const JobUrlInput = ({
     await validateAndProcessJobUrl(url);
   };
 
-  // Button should remain disabled during processing or if URL is empty
-  const isButtonDisabled = isProcessing || isSubmitting || !url || !isGenerationComplete;
+  // Button should only be disabled during active processing on current page,
+  // not when returning to or refreshing the page
+  const isButtonDisabled = isSubmitting || !url || (isProcessing && !isGenerationComplete);
 
   return (
     <Card className="w-full">
@@ -115,7 +115,7 @@ const JobUrlInput = ({
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             className="flex-1"
-            disabled={isProcessing}
+            disabled={isProcessing && isSubmitting}
           />
           <Button type="submit" disabled={isButtonDisabled}>
             {isSubmitting ? (

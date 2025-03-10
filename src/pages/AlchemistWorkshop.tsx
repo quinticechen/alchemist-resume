@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import ResumeUploader from "@/components/ResumeUploader";
@@ -34,35 +33,32 @@ const AlchemistWorkshop = () => {
   const [showLoadingAnimation, setShowLoadingAnimation] = useState(false);
   const [googleDocUrl, setGoogleDocUrl] = useState<string | null>(null);
 
-  // Track if we've already checked the subscription in this session
   const hasCheckedSubscription = useRef(false);
 
-  // Function to navigate to records page (defined outside of conditional rendering)
+  useEffect(() => {
+    setIsProcessing(false);
+    setIsGenerationComplete(true);
+  }, []);
+
   const viewAllRecords = () => {
     navigate("/alchemy-records");
   };
 
-  // Redirect to login if not authenticated
   useEffect(() => {
     if (!isLoading && !session) {
       navigate("/login", { state: { from: "/alchemist-workshop" } });
     } else if (!isLoading && session && !hasCheckedSubscription.current) {
-      // Only check subscription once per session/component mount
       hasCheckedSubscription.current = true;
 
-      // Check if this is a fresh login or returning visit
       const isReturningVisit =
         sessionStorage.getItem("hasVisitedWorkshop") === "true";
 
-      // Only show welcome toast on first visit after login, not on subsequent visits
       checkSubscriptionAndRedirect(session.user.id, !isReturningVisit);
 
-      // Mark that user has visited the workshop in this session
       sessionStorage.setItem("hasVisitedWorkshop", "true");
     }
   }, [session, isLoading, navigate, checkSubscriptionAndRedirect]);
 
-  // Listen for google_doc_url updates when analysis is complete
   useEffect(() => {
     if (analysisId) {
       const fetchAnalysis = async () => {
@@ -85,7 +81,6 @@ const AlchemistWorkshop = () => {
 
       fetchAnalysis();
 
-      // Set up real-time subscription
       const channel = supabase
         .channel(`analysis-${analysisId}`)
         .on(
@@ -97,7 +92,6 @@ const AlchemistWorkshop = () => {
             filter: `id=eq.${analysisId}`,
           },
           (payload) => {
-            // console.log("Received real-time update for analysis:", payload);
             if (payload.new.google_doc_url) {
               setGoogleDocUrl(payload.new.google_doc_url);
               setIsGenerationComplete(true);
@@ -140,7 +134,6 @@ const AlchemistWorkshop = () => {
   };
 
   const handleUrlSubmit = async (url: string) => {
-    // Reset states
     setIsProcessing(true);
     setIsTimeout(false);
     setTimeoutMessage(null);
@@ -153,7 +146,6 @@ const AlchemistWorkshop = () => {
     }
 
     try {
-      // First, create the analysis record in the database
       const { data: analysisRecord, error: analysisError } = await supabase
         .from("resume_analyses")
         .insert({
@@ -169,7 +161,6 @@ const AlchemistWorkshop = () => {
         throw analysisError;
       }
 
-      // Get the resume details
       const { data: resumeData, error: resumeError } = await supabase
         .from("resumes")
         .select("file_name, file_path")
@@ -181,7 +172,6 @@ const AlchemistWorkshop = () => {
         throw resumeError;
       }
 
-      // Get the storage URL for the resume
       const { data: storageData } = supabase.storage
         .from("resumes")
         .getPublicUrl(resumeData.file_path);
@@ -193,7 +183,6 @@ const AlchemistWorkshop = () => {
         fileName: resumeData.file_name,
       };
 
-      // Get environment-specific webhook URL
       const currentEnv = getEnvironment();
       const makeWebhookUrl = currentEnv === 'production' 
         ? "https://hook.eu2.make.com/pthisc4aefvf15i7pj4ja99a84dp7kce" 
@@ -222,7 +211,6 @@ const AlchemistWorkshop = () => {
           "Your resume is being analyzed. Results will be available soon.",
       });
 
-      // Set five-minute timeout
       timeoutId.current = setTimeout(() => {
         if (!isGenerationComplete) {
           toast({
@@ -236,10 +224,11 @@ const AlchemistWorkshop = () => {
             "Resume generation took too long. Please try again later."
           );
           setShowLoadingAnimation(false);
+          setIsProcessing(false);
+          setIsGenerationComplete(true);
         }
-      }, 5 * 60 * 1000); // Five minutes
+      }, 5 * 60 * 1000);
     } catch (error) {
-      // console.error("Error processing resume:", error);
       toast({
         title: "Error",
         description: "Failed to process resume. Please try again later.",
@@ -247,11 +236,11 @@ const AlchemistWorkshop = () => {
       });
       setIsProcessing(false);
       setShowLoadingAnimation(false);
+      setIsGenerationComplete(true);
     }
   };
 
   const handleGenerationComplete = () => {
-    // console.log("Generation complete callback triggered");
     setIsGenerationComplete(true);
     setShowLoadingAnimation(false);
     if (timeoutId.current) {
@@ -260,7 +249,6 @@ const AlchemistWorkshop = () => {
     }
   };
 
-  // Clean up timeout on unmount
   useEffect(() => {
     return () => {
       if (timeoutId.current) {
@@ -269,17 +257,14 @@ const AlchemistWorkshop = () => {
     };
   }, []);
 
-  // Show loading state while checking authentication
   if (isLoading) {
     return <div className="container mx-auto px-4 py-8">Loading...</div>;
   }
 
-  // Don't render anything if not authenticated (will redirect)
   if (!session) {
     return null;
   }
 
-  // Lottie settings
   const loadingOptions = {
     loop: true,
     autoplay: true,
@@ -328,7 +313,6 @@ const AlchemistWorkshop = () => {
           />
         )}
 
-        {/* Loading animation section - show when processing and not complete or timed out */}
         {showLoadingAnimation && !isGenerationComplete && !isTimeout && (
           <section className="text-center">
             <div className="py-8">
@@ -342,7 +326,6 @@ const AlchemistWorkshop = () => {
           </section>
         )}
 
-        {/* Error/Timeout section */}
         {isTimeout && timeoutMessage && (
           <section className="text-center">
             <div className="py-8">
@@ -354,7 +337,6 @@ const AlchemistWorkshop = () => {
           </section>
         )}
 
-        {/* Success section - show when Google Doc URL is available */}
         {googleDocUrl && (
           <div className="flex flex-wrap justify-center gap-4 mt-8">
             <Button
