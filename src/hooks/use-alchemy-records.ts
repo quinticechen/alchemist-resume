@@ -84,10 +84,36 @@ export const useAlchemyRecords = () => {
 
         if (error) throw error;
 
-        const transformedData: ResumeAnalysis[] = (analysesData || []).map(item => ({
-          ...item,
-          resume: Array.isArray(item.resume) ? item.resume[0] : item.resume
-        }));
+        // Transform the data to ensure job is properly handled
+        const transformedData: ResumeAnalysis[] = (analysesData || []).map(item => {
+          // Ensure resume is an object and not an array
+          const resumeData = Array.isArray(item.resume) ? item.resume[0] : item.resume;
+          
+          // Handle job data - it might be null, an array with one item, or an object
+          let jobData = null;
+          if (item.job) {
+            // If job is an array with items, use the first one
+            if (Array.isArray(item.job) && item.job.length > 0) {
+              jobData = item.job[0];
+            } 
+            // If job is already an object, use it directly
+            else if (typeof item.job === 'object') {
+              jobData = item.job;
+            }
+          }
+
+          return {
+            id: item.id,
+            created_at: item.created_at,
+            job_url: item.job_url,
+            google_doc_url: item.google_doc_url,
+            golden_resume: item.golden_resume,
+            match_score: item.match_score,
+            feedback: item.feedback,
+            resume: resumeData,
+            job: jobData
+          };
+        });
 
         setAnalyses(transformedData);
       } catch (error) {
@@ -122,7 +148,7 @@ export const useAlchemyRecords = () => {
       // Get the analysis to find the job_id
       const analysis = analyses.find(a => a.id === id);
       
-      if (analysis?.job?.job_title) {
+      if (analysis?.job) {
         // If we have a job associated with this analysis, update the job title
         const { error } = await supabase
           .from('jobs')
