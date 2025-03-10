@@ -184,9 +184,10 @@ const AlchemistWorkshop = () => {
       };
 
       const currentEnv = getEnvironment();
-      const makeWebhookUrl = currentEnv === 'production' 
-        ? "https://hook.eu2.make.com/pthisc4aefvf15i7pj4ja99a84dp7kce" 
-        : "https://hook.eu2.make.com/2up5vi5mr8jhhdl1eclyw3shu99uoxlb";
+      const makeWebhookUrl =
+        currentEnv === "production"
+          ? "https://hook.eu2.make.com/pthisc4aefvf15i7pj4ja99a84dp7kce"
+          : "https://hook.eu2.make.com/2up5vi5mr8jhhdl1eclyw3shu99uoxlb";
 
       console.log(`Using ${currentEnv} webhook URL: ${makeWebhookUrl}`);
 
@@ -338,7 +339,7 @@ const AlchemistWorkshop = () => {
         )}
 
         {googleDocUrl && (
-          <div className="flex flex-wrap justify-center gap-4 mt-8">
+          <section className="flex flex-wrap justify-center gap-4 mt-8">
             <Button
               variant="outline"
               size="sm"
@@ -357,7 +358,7 @@ const AlchemistWorkshop = () => {
               <History className="h-4 w-4" />
               View All Records
             </Button>
-          </div>
+          </section>
         )}
       </div>
     </div>
