@@ -32,18 +32,10 @@ const ProcessingPreview = ({
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  // Debug logging for props
-  useEffect(() => {
-    if (analysisId) {
-      // console.log("ProcessingPreview initialized with analysisId:", analysisId);
-    }
-  }, [analysisId]);
-
   // Set up initial state and subscription
   useEffect(() => {
     if (!analysisId) return;
     
-    // console.log("Setting up processing for analysis ID:", analysisId);
     setStatus("loading");
     
     // Begin progress animation immediately
@@ -52,7 +44,6 @@ const ProcessingPreview = ({
     // Initial fetch of the analysis
     const fetchAnalysis = async () => {
       try {
-        // console.log("Fetching initial analysis data...");
         const { data, error } = await supabase
           .from("resume_analyses")
           .select("google_doc_url, error")
@@ -60,16 +51,12 @@ const ProcessingPreview = ({
           .single();
 
         if (error) {
-          // console.error("Error fetching analysis:", error);
           setStatus("error");
           setError("Failed to fetch analysis data");
           return;
         }
-
-        // console.log("Initial analysis data:", data);
         
         if (data?.error) {
-          // console.error("Analysis contains error:", data.error);
           setStatus("error");
           setError(data.error);
           toast({
@@ -81,24 +68,16 @@ const ProcessingPreview = ({
         }
 
         if (data?.google_doc_url) {
-          console.log("Found existing Google Doc URL:", data.google_doc_url);
           setGoogleDocUrl(data.google_doc_url);
           setStatus("success");
           setProgress(100);
           
           if (onGenerationComplete) {
-            // console.log("Calling onGenerationComplete callback");
             onGenerationComplete();
           }
-          
-          toast({
-            title: "Analysis Complete!",
-            description: "Your customized resume is now ready",
-          });
         } else {
           // If no google_doc_url yet, show loading status
           setStatus("loading");
-          // console.log("No google_doc_url yet, showing loading state");
         }
       } catch (error) {
         console.error("Error fetching analysis:", error);
@@ -115,11 +94,8 @@ const ProcessingPreview = ({
     fetchAnalysis();
 
     // Subscribe to real-time updates
-    const channelName = `analysis-${analysisId}`;
-    // console.log(`Creating subscription channel: ${channelName}`);
-
     const channel = supabase
-      .channel(channelName)
+      .channel(`analysis-${analysisId}`)
       .on(
         "postgres_changes",
         {
@@ -129,8 +105,6 @@ const ProcessingPreview = ({
           filter: `id=eq.${analysisId}`,
         },
         (payload) => {
-          // console.log("Received real-time update:", payload);
-
           if (payload.eventType === "UPDATE") {
             const newData = payload.new;
             
@@ -154,34 +128,23 @@ const ProcessingPreview = ({
 
             // Check if google_doc_url is now available
             if (newData.google_doc_url) {
-              // console.log("Google Doc URL updated:", newData.google_doc_url);
               setGoogleDocUrl(newData.google_doc_url);
               setStatus("success");
               setProgress(100);
               
               if (onGenerationComplete) {
-                // console.log("Calling onGenerationComplete callback");
                 onGenerationComplete();
               }
-              
-              toast({
-                title: "Resume Alchemist Complete!",
-                description: "Your customized resume is now ready",
-              });
             } else if (newData.analysis_data && !newData.google_doc_url) {
               // Update progress if we have analysis_data but not yet a google_doc_url
-              // console.log("Analysis data received, updating progress");
               setProgress(90);
             }
           }
         }
       )
-      .subscribe((status) => {
-        // console.log(`Subscription status for ${channelName}:`, status);
-      });
+      .subscribe();
 
     return () => {
-      // console.log(`Cleaning up subscription for ${channelName}`);
       supabase.removeChannel(channel);
     };
   }, [analysisId, toast, onGenerationComplete]);
@@ -196,7 +159,7 @@ const ProcessingPreview = ({
       case "error":
         return "Update failed, please try again later";
       case "success":
-        return "Your enhanced resume is ready! Click below to view it in Google Docs.";
+        return "Your enhanced resume is ready!";
       default:
         return "Waiting to process your resume...";
     }
@@ -215,11 +178,6 @@ const ProcessingPreview = ({
       return () => clearInterval(timer);
     }
   }, [status, progress]);
-
-  // Navigate to records page
-  const viewAllRecords = () => {
-    navigate("/alchemy-records");
-  };
 
   // Don't render anything if not processing
   if (!isProcessing) {
@@ -259,29 +217,6 @@ const ProcessingPreview = ({
           )}
 
           <p className="text-sm text-gray-600">{getStatusMessage()}</p>
-
-          {status === "success" && googleDocUrl && (
-            <div className="flex flex-wrap gap-4">
-              <a
-                href={googleDocUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-md border border-blue-500 text-blue-600 hover:bg-blue-50 transition-colors"
-              >
-                <Crown className="h-4 w-4 text-amber-500" />
-                Open Golden Resume
-              </a>
-
-              <Button
-                variant="outline"
-                onClick={viewAllRecords}
-                className="flex items-center gap-2"
-              >
-                <History className="h-4 w-4" />
-                View All Records
-              </Button>
-            </div>
-          )}
 
           {status === "error" && (
             <Button

@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -12,6 +13,7 @@ interface JobUrlInputProps {
   setJobUrl?: (url: string) => void;
   resumeId?: string;
   setIsProcessing?: (isProcessing: boolean) => void;
+  isGenerationComplete?: boolean;
 }
 
 export const SUPPORTED_JOB_SITES = [
@@ -36,6 +38,7 @@ const JobUrlInput = ({
   setJobUrl,
   resumeId,
   setIsProcessing,
+  isGenerationComplete = false,
 }: JobUrlInputProps) => {
   const [url, setUrl] = useState(jobUrl);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -86,6 +89,9 @@ const JobUrlInput = ({
     await validateAndProcessJobUrl(url);
   };
 
+  // Button should remain disabled during the entire generation process
+  const isButtonDisabled = isProcessing || isSubmitting || !url;
+
   return (
     <Card className="w-full">
       <CardHeader>
@@ -99,9 +105,9 @@ const JobUrlInput = ({
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             className="flex-1"
-            disabled={isProcessing || isSubmitting}
+            disabled={isProcessing}
           />
-          <Button type="submit" disabled={isProcessing || isSubmitting}>
+          <Button type="submit" disabled={isButtonDisabled}>
             {isSubmitting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

@@ -7,7 +7,7 @@ const supabaseUrl = `https://${projectId}.supabase.co`;
 const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZob2ZncW1tb3ZqdGNuYWtvd2x2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzY1NzM3MzYsImV4cCI6MjA1MjE0OTczNn0.-kse7xq6jQtuOjEWym-9PKCB8Emjv_IMeGi52ciuGtk';
 
 // Get the current environment
-const getEnvironment = () => {
+export const getEnvironment = () => {
   const hostname = window.location.hostname;
   if (hostname.includes('localhost') || hostname.includes('127.0.0.1')) {
     return 'development';

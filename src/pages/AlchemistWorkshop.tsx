@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import ResumeUploader from "@/components/ResumeUploader";
@@ -12,6 +13,7 @@ import { useSubscriptionCheck } from "@/hooks/useSubscriptionCheck";
 import Lottie from "react-lottie";
 import Loading from "@/animations/Loading.json";
 import Failed from "@/animations/Failed.json";
+import { getEnvironment } from "@/integrations/supabase/client";
 
 const AlchemistWorkshop = () => {
   const { session, isLoading } = useAuth();
@@ -151,12 +153,6 @@ const AlchemistWorkshop = () => {
     }
 
     try {
-      // console.log("Creating analysis record with data:", {
-      //   resume_id: resumeId,
-      //   job_url: url,
-      //   user_id: session?.user?.id,
-      // });
-
       // First, create the analysis record in the database
       const { data: analysisRecord, error: analysisError } = await supabase
         .from("resume_analyses")
@@ -173,8 +169,6 @@ const AlchemistWorkshop = () => {
         throw analysisError;
       }
 
-      // console.log("Analysis record created:", analysisRecord);
-
       // Get the resume details
       const { data: resumeData, error: resumeError } = await supabase
         .from("resumes")
@@ -187,14 +181,10 @@ const AlchemistWorkshop = () => {
         throw resumeError;
       }
 
-      // console.log("Resume data fetched:", resumeData);
-
       // Get the storage URL for the resume
       const { data: storageData } = supabase.storage
         .from("resumes")
         .getPublicUrl(resumeData.file_path);
-
-      // console.log("Storage URL generated:", storageData);
 
       const webhookData = {
         analysisId: analysisRecord.id,
@@ -203,12 +193,13 @@ const AlchemistWorkshop = () => {
         fileName: resumeData.file_name,
       };
 
-      console.log("Preparing to send webhook data:", webhookData);
+      // Get environment-specific webhook URL
+      const currentEnv = getEnvironment();
+      const makeWebhookUrl = currentEnv === 'production' 
+        ? "https://hook.eu2.make.com/pthisc4aefvf15i7pj4ja99a84dp7kce" 
+        : "https://hook.eu2.make.com/2up5vi5mr8jhhdl1eclyw3shu99uoxlb";
 
-      // Trigger the Make.com webhook with the correct data format
-      const makeWebhookUrl =
-        "https://hook.eu2.make.com/pthisc4aefvf15i7pj4ja99a84dp7kce";
-      // console.log("Sending webhook to:", makeWebhookUrl);
+      console.log(`Using ${currentEnv} webhook URL: ${makeWebhookUrl}`);
 
       const webhookResponse = await fetch(makeWebhookUrl, {
         method: "POST",
@@ -218,16 +209,12 @@ const AlchemistWorkshop = () => {
         body: JSON.stringify(webhookData),
       });
 
-      // console.log("Webhook response status:", webhookResponse.status);
-
       if (!webhookResponse.ok) {
-        // console.error("Webhook response not OK:", webhookResponse);
         throw new Error("Failed to trigger Make.com webhook");
       }
 
       setJobUrl(url);
       setAnalysisId(analysisRecord.id);
-      // console.log("analysisId set to:", analysisRecord.id);
 
       toast({
         title: "Analysis Started",
@@ -311,8 +298,6 @@ const AlchemistWorkshop = () => {
     },
   };
 
-
-
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-4xl mx-auto space-y-8">
@@ -329,6 +314,7 @@ const AlchemistWorkshop = () => {
             setJobUrl={setJobUrl}
             resumeId={resumeId}
             setIsProcessing={setIsProcessing}
+            isGenerationComplete={isGenerationComplete}
           />
         )}
 
@@ -367,7 +353,6 @@ const AlchemistWorkshop = () => {
             </div>
           </section>
         )}
-
 
         {/* Success section - show when Google Doc URL is available */}
         {googleDocUrl && (
