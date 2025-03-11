@@ -1,6 +1,5 @@
 
 import React, { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, FileText, History, Crown, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -16,6 +15,8 @@ interface ProcessingPreviewProps {
   isProcessing?: boolean;
   setIsProcessing?: (isProcessing: boolean) => void;
   onGenerationComplete?: () => void;
+  isTimeout?: boolean;
+  timeoutMessage?: string | null;
 }
 
 type ProcessingStatus = "idle" | "loading" | "error" | "success";
@@ -26,18 +27,35 @@ const ProcessingPreview = ({
   isProcessing,
   setIsProcessing,
   onGenerationComplete,
+  isTimeout = false,
+  timeoutMessage = "Resume generation took too long. Please try again later."
 }: ProcessingPreviewProps) => {
-  const [isTimeout, setIsTimeout] = useState(false);
   const [googleDocUrl, setGoogleDocUrl] = useState<string | null>(null);
   const [goldenResume, setGoldenResume] = useState<string | null>(null);
   const [matchScore, setMatchScore] = useState<number | null>(null);
   const [status, setStatus] = useState<ProcessingStatus>("idle");
   const [error, setError] = useState<string | null>(null);
-  const [timeoutMessage, setTimeoutMessage] = useState<string | null>(
-    "Resume generation took too long. Please try again later."
-  );
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  // Animation configuration options
+  const loadingOptions = {
+    loop: true,
+    autoplay: true,
+    animationData: Loading,
+    rendererSettings: {
+      preserveAspectRatio: "xMidYMid slice",
+    },
+  };
+
+  const failedOptions = {
+    loop: true,
+    autoplay: true,
+    animationData: Failed,
+    rendererSettings: {
+      preserveAspectRatio: "xMidYMid slice",
+    },
+  };
 
   // Set up initial state and subscription
   useEffect(() => {
@@ -111,7 +129,6 @@ const ProcessingPreview = ({
               setGoldenResume(newData.golden_resume || null);
               setMatchScore(newData.match_score || null);
               setStatus("success");
-              setIsTimeout(false);
 
               toast({
                 title: "Resume generation complete",
@@ -135,28 +152,28 @@ const ProcessingPreview = ({
     };
   }, [analysisId, toast, onGenerationComplete]);
 
-  // Animation configuration options
-  const loadingOptions = {
-    loop: true,
-    autoplay: true,
-    animationData: Loading,
-    rendererSettings: {
-      preserveAspectRatio: "xMidYMid slice",
-    },
-  };
-
-  const failedOptions = {
-    loop: true,
-    autoplay: true,
-    animationData: Failed,
-    rendererSettings: {
-      preserveAspectRatio: "xMidYMid slice",
-    },
-  };
-
   // Don't render anything if not processing
   if (!isProcessing) {
     return null;
+  }
+
+  // If there's a timeout, display the Failed animation with timeout message
+  if (isTimeout) {
+    return (
+      <div className="w-full text-center mt-4">
+        <div className="py-8">
+          <div className="w-64 h-64 mx-auto">
+            <Lottie options={failedOptions} />
+          </div>
+          <p className="mt-4 text-gray-600">
+            {timeoutMessage || "Resume generation took too long. Please try again later."}
+          </p>
+        </div>
+        <div className="mt-2">
+          Resume Alchemy Failed
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -184,20 +201,11 @@ const ProcessingPreview = ({
           </div>
         )}
 
-        {isTimeout && (
-          <div className="py-8">
-            <div className="w-64 h-64 mx-auto">
-              <Lottie options={failedOptions} />
-            </div>
-            <p className="mt-4 text-gray-600">{timeoutMessage}</p>
-          </div>
-        )}
-
         <div className="mt-2">
           Resume Alchemy{" "}
           {status === "success"
             ? "Complete"
-            : status === "error" || isTimeout
+            : status === "error"
             ? "Failed"
             : "In Progress"}
         </div>

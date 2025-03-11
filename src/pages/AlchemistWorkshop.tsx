@@ -26,7 +26,9 @@ const AlchemistWorkshop = () => {
   const { checkSubscriptionAndRedirect } = useSubscriptionCheck();
   const timeoutId = useRef<NodeJS.Timeout | null>(null);
   const [isTimeout, setIsTimeout] = useState(false);
-  const [timeoutMessage, setTimeoutMessage] = useState<string | null>(null);
+  const [timeoutMessage, setTimeoutMessage] = useState<string | null>(
+    "Resume generation took too long. Please try again later."
+  );
   const [isGenerationComplete, setIsGenerationComplete] = useState(false);
   const [googleDocUrl, setGoogleDocUrl] = useState<string | null>(null);
 
@@ -241,18 +243,17 @@ const AlchemistWorkshop = () => {
 
       // Set timeout for 5 minutes
       timeoutId.current = setTimeout(() => {
-        if (!isGenerationComplete) {
-          setIsTimeout(true);
-          setTimeoutMessage(
-            "Resume generation took too long. Please try again later."
-          );
-          
-          toast({
-            title: "Generation Failed",
-            description: "Resume generation took too long. Please try again later.",
-            variant: "destructive",
-          });
-        }
+        console.log("Timeout reached. Setting timeout state to true");
+        setIsTimeout(true);
+        setTimeoutMessage(
+          "Resume generation took too long. Please try again later."
+        );
+        
+        toast({
+          title: "Generation Failed",
+          description: "Resume generation took too long. Please try again later.",
+          variant: "destructive",
+        });
       }, 5 * 60 * 1000);
     } catch (error) {
       console.error('Error processing resume:', error);
@@ -319,6 +320,8 @@ const AlchemistWorkshop = () => {
             isProcessing={isProcessing}
             setIsProcessing={setIsProcessing}
             onGenerationComplete={handleGenerationComplete}
+            isTimeout={isTimeout}
+            timeoutMessage={timeoutMessage}
           />
         )}
       </div>
