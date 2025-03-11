@@ -169,9 +169,6 @@ const ProcessingPreview = ({
             {timeoutMessage || "Resume generation took too long. Please try again later."}
           </p>
         </div>
-        <div className="mt-2">
-          Resume Alchemy Failed
-        </div>
       </div>
     );
   }
@@ -200,15 +197,6 @@ const ProcessingPreview = ({
             </p>
           </div>
         )}
-
-        {/* <div className="mt-2">
-          Resume Alchemy{" "}
-          {status === "success"
-            ? "Complete"
-            : status === "error"
-            ? "Failed"
-            : "In Progress"}
-        </div> */}
       </div>
 
       <div className="space-y-4">
