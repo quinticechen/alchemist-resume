@@ -201,14 +201,14 @@ const ProcessingPreview = ({
           </div>
         )}
 
-        <div className="mt-2">
+        {/* <div className="mt-2">
           Resume Alchemy{" "}
           {status === "success"
             ? "Complete"
             : status === "error"
             ? "Failed"
             : "In Progress"}
-        </div>
+        </div> */}
       </div>
 
       <div className="space-y-4">
