@@ -33,6 +33,12 @@ export const useResumeAnalysis = () => {
               title: "Analysis Complete",
               description: "Your resume analysis is ready!",
             });
+          } else if (payload.new && 'error' in payload.new && payload.new.error) {
+            toast({
+              title: "Analysis Failed",
+              description: payload.new.error || "An error occurred during analysis.",
+              variant: "destructive"
+            });
           } else if (payload.new && 'analysis_data' in payload.new && payload.new.analysis_data) {
             console.log("Analysis data received, processing in progress");
           }
