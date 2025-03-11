@@ -16,6 +16,16 @@ Deno.serve(async (req) => {
     const { resumeId, jobUrl } = await req.json()
     console.log('Received request:', { resumeId, jobUrl })
 
+    if (!resumeId || !jobUrl) {
+      throw new Error('Both resumeId and jobUrl are required')
+    }
+
+    // Validate resumeId is a proper UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(resumeId)) {
+      throw new Error(`Invalid resumeId format: ${resumeId}`);
+    }
+
     // Initialize Supabase client
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -33,6 +43,19 @@ Deno.serve(async (req) => {
       throw resumeError
     }
 
+    // Create or find job record
+    const { data: jobData, error: jobError } = await supabaseClient
+      .from('jobs')
+      .insert({
+        user_id: resume.user_id,
+      })
+      .select()
+      .single()
+
+    if (jobError) {
+      throw jobError
+    }
+
     // Get the public URL for the resume
     const { data: publicUrlData } = supabaseClient.storage
       .from('resumes')
@@ -45,6 +68,7 @@ Deno.serve(async (req) => {
         resume_id: resumeId,
         job_url: jobUrl,
         user_id: resume.user_id,
+        job_id: jobData.id,
         status: 'pending'
       })
       .select()

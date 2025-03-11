@@ -39,8 +39,18 @@ export const useResumeAnalysis = () => {
               description: payload.new.error || "An error occurred during analysis.",
               variant: "destructive"
             });
-          } else if (payload.new && 'analysis_data' in payload.new && payload.new.analysis_data) {
-            console.log("Analysis data received, processing in progress");
+          } else if (payload.new && 'status' in payload.new) {
+            if (payload.new.status === 'pending') {
+              console.log("Analysis is pending");
+            } else if (payload.new.status === 'error') {
+              toast({
+                title: "Analysis Failed",
+                description: payload.new.error || "An error occurred during analysis.",
+                variant: "destructive"
+              });
+            } else if (payload.new.status === 'success' && !payload.new.google_doc_url) {
+              console.log("Analysis completed but no document URL available");
+            }
           }
         }
       )

@@ -36,28 +36,51 @@ Deno.serve(async (req) => {
     if (requestBody.error) {
       console.log("Error received in request:", requestBody.error);
       
-      // If there's an analysisId, update the analysis with the error
-      if (requestBody.analysisId) {
-        // Initialize Supabase client
-        const supabaseClient = createClient(
-          Deno.env.get('SUPABASE_URL') ?? '',
-          Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      // Check if analysisId looks like a valid UUID
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (!requestBody.analysisId || !uuidRegex.test(requestBody.analysisId)) {
+        console.error("Invalid analysisId format:", requestBody.analysisId);
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            message: 'Error: Invalid analysisId format. Expected UUID, received: ' + requestBody.analysisId 
+          }),
+          {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 400,
+          }
         );
+      }
+      
+      // Initialize Supabase client
+      const supabaseClient = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      );
+      
+      // Update the resume analysis with the error message
+      const { error: updateError } = await supabaseClient
+        .from('resume_analyses')
+        .update({ 
+          error: requestBody.error,
+          status: 'error'
+        })
+        .eq('id', requestBody.analysisId);
         
-        // Update the resume analysis with the error message
-        const { error: updateError } = await supabaseClient
-          .from('resume_analyses')
-          .update({ 
-            error: requestBody.error,
-            status: 'error'
-          })
-          .eq('id', requestBody.analysisId);
-          
-        if (updateError) {
-          console.error("Error updating analysis with error message:", updateError);
-        } else {
-          console.log("Successfully updated analysis with error status for ID:", requestBody.analysisId);
-        }
+      if (updateError) {
+        console.error("Error updating analysis with error message:", updateError);
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            message: `Failed to update analysis with error: ${updateError.message}` 
+          }),
+          {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 500,
+          }
+        );
+      } else {
+        console.log("Successfully updated analysis with error status for ID:", requestBody.analysisId);
       }
       
       return new Response(
@@ -75,6 +98,12 @@ Deno.serve(async (req) => {
     // Validate required fields
     if (!requestBody.analysisId) {
       throw new Error('Analysis ID is required');
+    }
+    
+    // Validate analysisId is a proper UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(requestBody.analysisId)) {
+      throw new Error(`Invalid analysisId format: ${requestBody.analysisId}`);
     }
 
     const {
