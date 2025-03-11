@@ -23,8 +23,6 @@ const AlchemistWorkshop = () => {
   const { checkSubscriptionAndRedirect } = useSubscriptionCheck();
   const timeoutId = useRef<NodeJS.Timeout | null>(null);
   const [isTimeout, setIsTimeout] = useState(false);
-    "Resume generation took too long. Please try again later."
-  );
   const [isGenerationComplete, setIsGenerationComplete] = useState(false);
   const [googleDocUrl, setGoogleDocUrl] = useState<string | null>(null);
 
