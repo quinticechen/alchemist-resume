@@ -26,6 +26,8 @@ const AlchemistWorkshop = () => {
   const [isTimeout, setIsTimeout] = useState(false);
   const [isGenerationComplete, setIsGenerationComplete] = useState(false);
   const [googleDocUrl, setGoogleDocUrl] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [analysisStatus, setAnalysisStatus] = useState<string | null>(null);
 
   const hasCheckedSubscription = useRef(false);
 
@@ -68,10 +70,17 @@ const AlchemistWorkshop = () => {
             return;
           }
 
+          // Set the analysis status for conditional rendering
+          if (data?.status) {
+            setAnalysisStatus(data.status);
+          }
+
           if (data?.error || data?.status === "error") {
             console.log("Error found in analysis:", data?.error);
             setIsGenerationComplete(true);
             setIsTimeout(false);
+            setErrorMessage(data?.error || "Resume generation failed");
+            setAnalysisStatus("error");
 
             if (timeoutId.current) {
               clearTimeout(timeoutId.current);
@@ -90,6 +99,7 @@ const AlchemistWorkshop = () => {
             console.log("Timeout found in analysis");
             setIsGenerationComplete(true);
             setIsTimeout(true);
+            setAnalysisStatus("timeout");
 
             if (timeoutId.current) {
               clearTimeout(timeoutId.current);
@@ -108,6 +118,7 @@ const AlchemistWorkshop = () => {
             setGoogleDocUrl(data.google_doc_url);
             setIsGenerationComplete(true);
             setIsTimeout(false);
+            setAnalysisStatus("success");
             if (timeoutId.current) {
               clearTimeout(timeoutId.current);
               timeoutId.current = null;
@@ -133,11 +144,18 @@ const AlchemistWorkshop = () => {
           (payload) => {
             console.log("Realtime update received:", payload);
 
+            // Update the analysis status
+            if (payload.new.status) {
+              setAnalysisStatus(payload.new.status);
+            }
+
             // Check for errors in the update
             if (payload.new.error || payload.new.status === "error") {
               console.log("Error received in update:", payload.new.error);
               setIsGenerationComplete(true);
               setIsTimeout(false);
+              setErrorMessage(payload.new.error || "Resume generation failed");
+              setAnalysisStatus("error");
 
               toast({
                 title: "Generation Failed",
@@ -157,6 +175,7 @@ const AlchemistWorkshop = () => {
               console.log("Timeout received in update");
               setIsGenerationComplete(true);
               setIsTimeout(true);
+              setAnalysisStatus("timeout");
 
               toast({
                 title: "Generation Timed Out",
@@ -175,6 +194,7 @@ const AlchemistWorkshop = () => {
               setGoogleDocUrl(payload.new.google_doc_url);
               setIsGenerationComplete(true);
               setIsTimeout(false);
+              setAnalysisStatus("success");
 
               toast({
                 title: "Resume Alchemist Complete!",
@@ -217,6 +237,8 @@ const AlchemistWorkshop = () => {
     setIsTimeout(false);
     setIsGenerationComplete(false);
     setGoogleDocUrl(null);
+    setErrorMessage(null);
+    setAnalysisStatus("pending");
 
     if (timeoutId.current) {
       clearTimeout(timeoutId.current);
@@ -317,13 +339,14 @@ const AlchemistWorkshop = () => {
       timeoutId.current = setTimeout(() => {
         console.log("Timeout reached. Setting timeout state to true");
         setIsTimeout(true);
+        setAnalysisStatus("timeout");
 
         // Also update the analysis with a timeout status
         supabase
           .from("resume_analyses")
           .update({
             error: "Resume generation took too long. Please try again later.",
-            status: "timeout", // Using the new enum value
+            status: "timeout",
           })
           .eq("id", analysisRecord.id)
           .then(({ error }) => {
@@ -396,15 +419,23 @@ const AlchemistWorkshop = () => {
           />
         )}
 
-        {isProcessing && analysisId && (
+        {analysisId && (
           <ProcessingPreview
             analysisId={analysisId}
             jobUrl={jobUrl}
-            isProcessing={isProcessing}
+            isProcessing={isProcessing || analysisStatus === "error" || analysisStatus === "timeout"}
             setIsProcessing={setIsProcessing}
             onGenerationComplete={handleGenerationComplete}
             isTimeout={isTimeout}
           />
+        )}
+
+        {errorMessage && (analysisStatus === "error" || analysisStatus === "timeout") && (
+          <div className="bg-red-50 border border-red-200 rounded-md p-4 mt-4">
+            <p className="text-red-700 text-sm">
+              {errorMessage}
+            </p>
+          </div>
         )}
       </div>
     </div>

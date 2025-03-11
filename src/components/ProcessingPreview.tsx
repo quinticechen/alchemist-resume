@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { History, Crown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -30,7 +31,7 @@ const ProcessingPreview = ({
   const [googleDocUrl, setGoogleDocUrl] = useState<string | null>(null);
   const [goldenResume, setGoldenResume] = useState<string | null>(null);
   const [matchScore, setMatchScore] = useState<number | null>(null);
-  const [status, setStatus] = useState<ProcessingStatus>("pending");
+  const [status, setStatus] = useState<ProcessingStatus>(isTimeout ? "timeout" : "pending");
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -57,15 +58,15 @@ const ProcessingPreview = ({
   // Set up initial state and subscription
   useEffect(() => {
     if (!analysisId) return;
-
+    
+    // If timeout is externally set, update the status
     if (isTimeout) {
+      console.log("isTimeout prop is true, setting status to timeout");
       setStatus("timeout");
-      if (setIsProcessing) {
-        setIsProcessing(false);
-      }
       return;
     }
 
+    // Initial status is pending
     setStatus("pending");
 
     // Initial fetch of the analysis
@@ -83,6 +84,8 @@ const ProcessingPreview = ({
           setError("Failed to fetch analysis data");
           return;
         }
+
+        console.log("Fetched analysis data:", data);
 
         if (data?.error || data?.status === "error") {
           console.log("Found error in analysis:", data.error);
@@ -214,15 +217,17 @@ const ProcessingPreview = ({
     };
   }, [analysisId, toast, onGenerationComplete, setIsProcessing, isTimeout]);
 
-  // Don't render anything if not processing
-  if (!isProcessing) {
-    return null;
-  }
+  console.log("Current status:", status);
+  console.log("isProcessing:", isProcessing);
+  console.log("isTimeout:", isTimeout);
+  console.log("Error message:", error);
 
+  // Always render when there's a status, even if isProcessing is false
+  // This ensures the error/timeout animations are visible
   return (
     <div className="w-full text-center mt-4">
       <div className="text-xl flex flex-col items-center">
-        {status === "pending" && (
+        {status === "pending" && isProcessing && (
           <div className="py-8">
             <div className="w-64 h-64 mx-auto">
               <Lottie options={loadingOptions} />
