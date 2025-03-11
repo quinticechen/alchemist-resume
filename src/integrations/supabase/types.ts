@@ -117,6 +117,7 @@ export type Database = {
       resume_analyses: {
         Row: {
           created_at: string
+          error: string | null
           feedback: boolean | null
           golden_resume: string | null
           google_doc_url: string | null
@@ -125,11 +126,13 @@ export type Database = {
           job_url: string
           match_score: number | null
           resume_id: string | null
+          status: string | null
           updated_at: string
           user_id: string | null
         }
         Insert: {
           created_at?: string
+          error?: string | null
           feedback?: boolean | null
           golden_resume?: string | null
           google_doc_url?: string | null
@@ -138,11 +141,13 @@ export type Database = {
           job_url: string
           match_score?: number | null
           resume_id?: string | null
+          status?: string | null
           updated_at?: string
           user_id?: string | null
         }
         Update: {
           created_at?: string
+          error?: string | null
           feedback?: boolean | null
           golden_resume?: string | null
           google_doc_url?: string | null
@@ -151,6 +156,7 @@ export type Database = {
           job_url?: string
           match_score?: number | null
           resume_id?: string | null
+          status?: string | null
           updated_at?: string
           user_id?: string | null
         }

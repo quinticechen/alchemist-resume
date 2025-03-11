@@ -1,3 +1,4 @@
+
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
@@ -44,6 +45,7 @@ Deno.serve(async (req) => {
         resume_id: resumeId,
         job_url: jobUrl,
         user_id: resume.user_id,
+        status: 'pending'
       })
       .select()
       .single()
