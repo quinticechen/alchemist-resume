@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import ResumeUploader from "@/components/ResumeUploader";
@@ -24,7 +23,6 @@ const AlchemistWorkshop = () => {
   const { checkSubscriptionAndRedirect } = useSubscriptionCheck();
   const timeoutId = useRef<NodeJS.Timeout | null>(null);
   const [isTimeout, setIsTimeout] = useState(false);
-  const [timeoutMessage, setTimeoutMessage] = useState<string | null>(
     "Resume generation took too long. Please try again later."
   );
   const [isGenerationComplete, setIsGenerationComplete] = useState(false);
@@ -75,13 +73,13 @@ const AlchemistWorkshop = () => {
             console.log("Error found in analysis:", data?.error);
             setIsGenerationComplete(true);
             setIsTimeout(true);
-            setTimeoutMessage(data?.error || "Resume generation failed. Please try again.");
-            
+
+
             if (timeoutId.current) {
               clearTimeout(timeoutId.current);
               timeoutId.current = null;
             }
-            
+
             toast({
               title: "Generation Failed",
               description: data?.error || "Resume generation failed",
@@ -100,7 +98,7 @@ const AlchemistWorkshop = () => {
             }
           }
         } catch (error) {
-          console.error('Error fetching analysis data:', error);
+          console.error("Error fetching analysis data:", error);
         }
       };
 
@@ -118,27 +116,26 @@ const AlchemistWorkshop = () => {
           },
           (payload) => {
             console.log("Realtime update received:", payload);
-            
+
             // Check for errors in the update
             if (payload.new.error || payload.new.status === "error") {
               console.log("Error received in update:", payload.new.error);
               setIsGenerationComplete(true);
               setIsTimeout(true);
-              setTimeoutMessage(payload.new.error || "Resume generation failed. Please try again.");
-              
+
               toast({
                 title: "Generation Failed",
                 description: payload.new.error || "Resume generation failed",
                 variant: "destructive",
               });
-              
+
               if (timeoutId.current) {
                 clearTimeout(timeoutId.current);
                 timeoutId.current = null;
               }
               return;
             }
-            
+
             if (payload.new.google_doc_url) {
               setGoogleDocUrl(payload.new.google_doc_url);
               setIsGenerationComplete(true);
@@ -183,7 +180,6 @@ const AlchemistWorkshop = () => {
   const handleUrlSubmit = async (url: string) => {
     setIsProcessing(true);
     setIsTimeout(false);
-    setTimeoutMessage(null);
     setIsGenerationComplete(false);
     setGoogleDocUrl(null);
 
@@ -194,16 +190,16 @@ const AlchemistWorkshop = () => {
     try {
       // First, create a job entry in the jobs table
       const { data: jobData, error: jobError } = await supabase
-        .from('jobs')
+        .from("jobs")
         .insert({
           company_url: url,
-          user_id: session?.user?.id
+          user_id: session?.user?.id,
         })
         .select()
         .single();
 
       if (jobError) {
-        console.error('Error creating job record:', jobError);
+        console.error("Error creating job record:", jobError);
         throw jobError;
       }
 
@@ -211,36 +207,36 @@ const AlchemistWorkshop = () => {
 
       // Then create the analysis record with the job_id
       const { data: analysisRecord, error: analysisError } = await supabase
-        .from('resume_analyses')
+        .from("resume_analyses")
         .insert({
           resume_id: resumeId,
           job_url: url,
           job_id: jobId,
           user_id: session?.user?.id,
-          status: 'pending'
+          status: "pending",
         })
         .select()
         .single();
 
       if (analysisError) {
-        console.error('Error creating analysis record:', analysisError);
+        console.error("Error creating analysis record:", analysisError);
         throw analysisError;
       }
 
       // Get resume details for the webhook
       const { data: resumeData, error: resumeError } = await supabase
-        .from('resumes')
-        .select('file_name, file_path')
-        .eq('id', resumeId)
+        .from("resumes")
+        .select("file_name, file_path")
+        .eq("id", resumeId)
         .single();
 
       if (resumeError) {
-        console.error('Error fetching resume:', resumeError);
+        console.error("Error fetching resume:", resumeError);
         throw resumeError;
       }
 
       const { data: storageData } = supabase.storage
-        .from('resumes')
+        .from("resumes")
         .getPublicUrl(resumeData.file_path);
 
       // Prepare webhook data
@@ -253,9 +249,10 @@ const AlchemistWorkshop = () => {
       };
 
       const currentEnv = getEnvironment();
-      const makeWebhookUrl = currentEnv === 'production' 
-        ? "https://hook.eu2.make.com/pthisc4aefvf15i7pj4ja99a84dp7kce" 
-        : "https://hook.eu2.make.com/2up5vi5mr8jhhdl1eclyw3shu99uoxlb";
+      const makeWebhookUrl =
+        currentEnv === "production"
+          ? "https://hook.eu2.make.com/pthisc4aefvf15i7pj4ja99a84dp7kce"
+          : "https://hook.eu2.make.com/2up5vi5mr8jhhdl1eclyw3shu99uoxlb";
 
       console.log(`Using ${currentEnv} webhook URL: ${makeWebhookUrl}`);
       console.log("Sending webhook data:", webhookData);
@@ -277,39 +274,39 @@ const AlchemistWorkshop = () => {
 
       toast({
         title: "Analysis Started",
-        description: "Your resume is being analyzed. Results will be available soon.",
+        description:
+          "Your resume is being analyzed. Results will be available soon.",
       });
 
       // Set timeout for 5 minutes
       timeoutId.current = setTimeout(() => {
         console.log("Timeout reached. Setting timeout state to true");
         setIsTimeout(true);
-        setTimeoutMessage(
-          "Resume generation took too long. Please try again later."
-        );
-        
+
+
         // Also update the analysis with a timeout error
         supabase
-          .from('resume_analyses')
+          .from("resume_analyses")
           .update({
             error: "Resume generation took too long. Please try again later.",
-            status: "error"
+            status: "error",
           })
-          .eq('id', analysisRecord.id)
+          .eq("id", analysisRecord.id)
           .then(({ error }) => {
             if (error) {
               console.error("Error updating analysis with timeout:", error);
             }
           });
-        
+
         toast({
           title: "Generation Failed",
-          description: "Resume generation took too long. Please try again later.",
+          description:
+            "Resume generation took too long. Please try again later.",
           variant: "destructive",
         });
       }, 5 * 60 * 1000);
     } catch (error) {
-      console.error('Error processing resume:', error);
+      console.error("Error processing resume:", error);
       toast({
         title: "Error",
         description: "Failed to process resume. Please try again later.",
@@ -318,7 +315,6 @@ const AlchemistWorkshop = () => {
       setIsProcessing(false);
       setIsGenerationComplete(true);
       setIsTimeout(true);
-      setTimeoutMessage("Failed to process resume. Please try again later.");
     }
   };
 
@@ -374,7 +370,6 @@ const AlchemistWorkshop = () => {
             setIsProcessing={setIsProcessing}
             onGenerationComplete={handleGenerationComplete}
             isTimeout={isTimeout}
-            timeoutMessage={timeoutMessage}
           />
         )}
       </div>

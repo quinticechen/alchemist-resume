@@ -16,7 +16,6 @@ interface ProcessingPreviewProps {
   setIsProcessing?: (isProcessing: boolean) => void;
   onGenerationComplete?: () => void;
   isTimeout?: boolean;
-  timeoutMessage?: string | null;
 }
 
 type ProcessingStatus = "idle" | "loading" | "error" | "success";
@@ -28,7 +27,6 @@ const ProcessingPreview = ({
   setIsProcessing,
   onGenerationComplete,
   isTimeout = false,
-  timeoutMessage = "Resume generation took too long. Please try again later."
 }: ProcessingPreviewProps) => {
   const [googleDocUrl, setGoogleDocUrl] = useState<string | null>(null);
   const [goldenResume, setGoldenResume] = useState<string | null>(null);
@@ -214,7 +212,7 @@ const ProcessingPreview = ({
             <Lottie options={failedOptions} />
           </div>
           <p className="mt-4 text-gray-600">
-            {timeoutMessage || "Resume generation took too long. Please try again later."}
+            Resume generation took too long. Please try again later.
           </p>
         </div>
       </div>
