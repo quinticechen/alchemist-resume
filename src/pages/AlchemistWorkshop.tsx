@@ -25,20 +25,12 @@ const AlchemistWorkshop = () => {
   const timeoutId = useRef<NodeJS.Timeout | null>(null);
   const [isTimeout, setIsTimeout] = useState(false);
   const [isGenerationComplete, setIsGenerationComplete] = useState(false);
-  const [googleDocUrl, setGoogleDocUrl] = useState<string | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [analysisStatus, setAnalysisStatus] = useState<string | null>(null);
-
   const hasCheckedSubscription = useRef(false);
 
   useEffect(() => {
     setIsProcessing(false);
     setIsGenerationComplete(true);
   }, []);
-
-  const viewAllRecords = () => {
-    navigate("/alchemy-records");
-  };
 
   // Check session and subscription
   useEffect(() => {
@@ -55,176 +47,6 @@ const AlchemistWorkshop = () => {
       sessionStorage.setItem("hasVisitedWorkshop", "true");
     }
   }, [session, isLoading, navigate, checkSubscriptionAndRedirect]);
-
-  // Initial fetch and setup realtime subscription for analysis status
-  useEffect(() => {
-    if (analysisId) {
-      const fetchAnalysis = async () => {
-        try {
-          const { data, error } = await supabase
-            .from("resume_analyses")
-            .select("google_doc_url, error, status")
-            .eq("id", analysisId)
-            .single();
-
-          if (error) {
-            console.error("Error fetching analysis:", error);
-            return;
-          }
-
-          // Set the analysis status for conditional rendering
-          if (data?.status) {
-            setAnalysisStatus(data.status);
-          }
-
-          if (data?.error || data?.status === "error") {
-            console.log("Error found in analysis:", data?.error);
-            setIsGenerationComplete(true);
-            setIsProcessing(false);
-            setIsTimeout(false);
-            setErrorMessage(data?.error || "Resume generation failed");
-            setAnalysisStatus("error");
-
-            if (timeoutId.current) {
-              clearTimeout(timeoutId.current);
-              timeoutId.current = null;
-            }
-
-            toast({
-              title: "Generation Failed",
-              description: data?.error || "Resume generation failed",
-              variant: "destructive",
-            });
-            return;
-          }
-
-          if (data?.status === "timeout") {
-            console.log("Timeout found in analysis");
-            setIsGenerationComplete(true);
-            setIsProcessing(false);
-            setIsTimeout(true);
-            setAnalysisStatus("timeout");
-            setErrorMessage(data?.error || "Resume generation took too long. Please try again later.");
-
-            if (timeoutId.current) {
-              clearTimeout(timeoutId.current);
-              timeoutId.current = null;
-            }
-
-            toast({
-              title: "Generation Timed Out",
-              description: "Resume generation took too long. Please try again later.",
-              variant: "destructive",
-            });
-            return;
-          }
-
-          if (data?.google_doc_url) {
-            setGoogleDocUrl(data.google_doc_url);
-            setIsGenerationComplete(true);
-            setIsProcessing(false);
-            setIsTimeout(false);
-            setAnalysisStatus("success");
-            if (timeoutId.current) {
-              clearTimeout(timeoutId.current);
-              timeoutId.current = null;
-            }
-          }
-        } catch (error) {
-          console.error("Error fetching analysis data:", error);
-        }
-      };
-
-      fetchAnalysis();
-
-      const channel = supabase
-        .channel(`analysis-${analysisId}`)
-        .on(
-          "postgres_changes",
-          {
-            event: "UPDATE",
-            schema: "public",
-            table: "resume_analyses",
-            filter: `id=eq.${analysisId}`,
-          },
-          (payload) => {
-            console.log("Realtime update received:", payload);
-
-            // Update the analysis status
-            if (payload.new.status) {
-              setAnalysisStatus(payload.new.status);
-            }
-
-            // Check for errors in the update
-            if (payload.new.error || payload.new.status === "error") {
-              console.log("Error received in update:", payload.new.error);
-              setIsGenerationComplete(true);
-              setIsProcessing(false);
-              setIsTimeout(false);
-              setErrorMessage(payload.new.error || "Resume generation failed");
-              setAnalysisStatus("error");
-
-              toast({
-                title: "Generation Failed",
-                description: payload.new.error || "Resume generation failed",
-                variant: "destructive",
-              });
-
-              if (timeoutId.current) {
-                clearTimeout(timeoutId.current);
-                timeoutId.current = null;
-              }
-              return;
-            }
-
-            // Check for timeout status
-            if (payload.new.status === "timeout") {
-              console.log("Timeout received in update");
-              setIsGenerationComplete(true);
-              setIsProcessing(false);
-              setIsTimeout(true);
-              setErrorMessage(payload.new.error || "Resume generation took too long. Please try again later.");
-              setAnalysisStatus("timeout");
-
-              toast({
-                title: "Generation Timed Out",
-                description: "Resume generation took too long. Please try again later.",
-                variant: "destructive",
-              });
-
-              if (timeoutId.current) {
-                clearTimeout(timeoutId.current);
-                timeoutId.current = null;
-              }
-              return;
-            }
-
-            if (payload.new.google_doc_url) {
-              setGoogleDocUrl(payload.new.google_doc_url);
-              setIsGenerationComplete(true);
-              setIsProcessing(false);
-              setIsTimeout(false);
-              setAnalysisStatus("success");
-
-              toast({
-                title: "Resume Alchemist Complete!",
-                description: "Your customized resume is now ready",
-              });
-
-              if (timeoutId.current) {
-                clearTimeout(timeoutId.current);
-                timeoutId.current = null;
-              }
-            }
-          }
-        )
-        .subscribe();
-
-      return () => {
-        supabase.removeChannel(channel);
-      };
-    }
-  }, [analysisId, toast]);
 
   const handleFileUploadSuccess = (
     file: File,
@@ -246,9 +68,6 @@ const AlchemistWorkshop = () => {
     setIsProcessing(true);
     setIsTimeout(false);
     setIsGenerationComplete(false);
-    setGoogleDocUrl(null);
-    setErrorMessage(null);
-    setAnalysisStatus("pending");
 
     if (timeoutId.current) {
       clearTimeout(timeoutId.current);
@@ -350,7 +169,6 @@ const AlchemistWorkshop = () => {
         console.log("Timeout reached. Setting timeout state to true");
         setIsTimeout(true);
         setIsProcessing(false);
-        setAnalysisStatus("timeout");
 
         // Also update the analysis with a timeout status
         supabase

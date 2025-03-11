@@ -91,11 +91,6 @@ const ProcessingPreview = ({
           if (setIsProcessing) {
             setIsProcessing(false);
           }
-          toast({
-            title: "Error",
-            description: data.error || "Resume generation failed",
-            variant: "destructive",
-          });
           return;
         }
 
@@ -106,11 +101,6 @@ const ProcessingPreview = ({
           if (setIsProcessing) {
             setIsProcessing(false);
           }
-          toast({
-            title: "Timeout",
-            description: "Resume generation timed out",
-            variant: "destructive",
-          });
           return;
         }
 
@@ -129,11 +119,6 @@ const ProcessingPreview = ({
         console.error("Error fetching analysis:", error);
         setStatus("error");
         setError("Failed to fetch analysis results");
-        toast({
-          title: "Error",
-          description: "Failed to fetch analysis results",
-          variant: "destructive",
-        });
       }
     };
 
@@ -162,12 +147,6 @@ const ProcessingPreview = ({
               setStatus("error");
               setError(newData.error || "An error occurred during processing");
 
-              toast({
-                title: "Error",
-                description: newData.error || "Resume generation failed",
-                variant: "destructive",
-              });
-
               if (setIsProcessing) {
                 setIsProcessing(false);
               }
@@ -182,11 +161,6 @@ const ProcessingPreview = ({
               if (setIsProcessing) {
                 setIsProcessing(false);
               }
-              toast({
-                title: "Timeout",
-                description: "Resume generation timed out",
-                variant: "destructive",
-              });
               return;
             }
 
@@ -217,9 +191,6 @@ const ProcessingPreview = ({
   }, [analysisId, toast, onGenerationComplete, setIsProcessing, isTimeout]);
 
   console.log("Current status:", status);
-  console.log("isProcessing:", isProcessing);
-  console.log("isTimeout:", isTimeout);
-  console.log("Error message:", error);
 
   // Always render the component based on status
   return (
