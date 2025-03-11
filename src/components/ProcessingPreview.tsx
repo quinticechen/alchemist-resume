@@ -66,9 +66,6 @@ const ProcessingPreview = ({
       return;
     }
 
-    // Initial status is pending
-    setStatus("pending");
-
     // Initial fetch of the analysis
     const fetchAnalysis = async () => {
       try {
@@ -105,6 +102,7 @@ const ProcessingPreview = ({
         if (data?.status === "timeout") {
           console.log("Analysis status is timeout");
           setStatus("timeout");
+          setError(data.error || "Resume generation timed out. Please try again later.");
           if (setIsProcessing) {
             setIsProcessing(false);
           }
@@ -180,6 +178,7 @@ const ProcessingPreview = ({
             if (newData.status === "timeout") {
               console.log("Received timeout update");
               setStatus("timeout");
+              setError(newData.error || "Resume generation took too long. Please try again later.");
               if (setIsProcessing) {
                 setIsProcessing(false);
               }
@@ -222,12 +221,11 @@ const ProcessingPreview = ({
   console.log("isTimeout:", isTimeout);
   console.log("Error message:", error);
 
-  // Always render when there's a status, even if isProcessing is false
-  // This ensures the error/timeout animations are visible
+  // Always render the component based on status
   return (
     <div className="w-full text-center mt-4">
       <div className="text-xl flex flex-col items-center">
-        {status === "pending" && isProcessing && (
+        {status === "pending" && (
           <div className="py-8">
             <div className="w-64 h-64 mx-auto">
               <Lottie options={loadingOptions} />
@@ -251,6 +249,14 @@ const ProcessingPreview = ({
           </div>
         )}
       </div>
+
+      {error && (status === "error" || status === "timeout") && (
+        <div className="bg-red-50 border border-red-200 rounded-md p-4 mt-4">
+          <p className="text-red-700 text-sm">
+            {error}
+          </p>
+        </div>
+      )}
 
       <div className="space-y-4">
         {status === "success" && googleDocUrl && (
