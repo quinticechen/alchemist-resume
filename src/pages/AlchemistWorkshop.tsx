@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import ResumeUploader from "@/components/ResumeUploader";
-import JobUrlInput, { SUPPORTED_JOB_SITES } from "@/components/JobUrlInput";
+import JobUrlInput from "@/components/JobUrlInput";
 import ProcessingPreview from "@/components/ProcessingPreview";
 import { Button } from "@/components/ui/button";
 import { History, FileText, Crown } from "lucide-react";
@@ -64,31 +64,30 @@ const AlchemistWorkshop = () => {
   useEffect(() => {
     if (analysisId) {
       const fetchAnalysis = async () => {
-        const { data, error } = await supabase
-          .from("resume_analyses")
-          .select("google_doc_url, error")
-          .eq("id", analysisId)
-          .single();
+        try {
+          const { data, error } = await supabase
+            .from("resume_analyses")
+            .select("google_doc_url")
+            .eq("id", analysisId)
+            .single();
 
-        if (data?.google_doc_url) {
-          setGoogleDocUrl(data.google_doc_url);
-          setIsGenerationComplete(true);
-          setShowLoadingAnimation(false);
-          setShowFailedAnimation(false);
-          if (timeoutId.current) {
-            clearTimeout(timeoutId.current);
-            timeoutId.current = null;
+          if (error) {
+            console.error("Error fetching analysis:", error);
+            return;
           }
-        } else if (data?.error) {
-          setIsGenerationComplete(true);
-          setShowLoadingAnimation(false);
-          setShowFailedAnimation(true);
-          setIsTimeout(true);
-          setTimeoutMessage(data.error);
-          if (timeoutId.current) {
-            clearTimeout(timeoutId.current);
-            timeoutId.current = null;
+
+          if (data?.google_doc_url) {
+            setGoogleDocUrl(data.google_doc_url);
+            setIsGenerationComplete(true);
+            setShowLoadingAnimation(false);
+            setShowFailedAnimation(false);
+            if (timeoutId.current) {
+              clearTimeout(timeoutId.current);
+              timeoutId.current = null;
+            }
           }
+        } catch (error) {
+          console.error('Error fetching analysis data:', error);
         }
       };
 
@@ -105,6 +104,8 @@ const AlchemistWorkshop = () => {
             filter: `id=eq.${analysisId}`,
           },
           (payload) => {
+            console.log("Realtime update received:", payload);
+            
             if (payload.new.google_doc_url) {
               setGoogleDocUrl(payload.new.google_doc_url);
               setIsGenerationComplete(true);
@@ -115,23 +116,6 @@ const AlchemistWorkshop = () => {
               toast({
                 title: "Resume Alchemist Complete!",
                 description: "Your customized resume is now ready",
-              });
-
-              if (timeoutId.current) {
-                clearTimeout(timeoutId.current);
-                timeoutId.current = null;
-              }
-            } else if (payload.new.error) {
-              setIsGenerationComplete(true);
-              setShowLoadingAnimation(false);
-              setShowFailedAnimation(true);
-              setIsTimeout(true);
-              setTimeoutMessage(payload.new.error);
-              
-              toast({
-                title: "Generation Failed",
-                description: payload.new.error,
-                variant: "destructive",
               });
 
               if (timeoutId.current) {
@@ -266,21 +250,21 @@ const AlchemistWorkshop = () => {
         description: "Your resume is being analyzed. Results will be available soon.",
       });
 
+      // Set timeout for 5 minutes
       timeoutId.current = setTimeout(() => {
         if (!isGenerationComplete) {
-          toast({
-            title: "Generation Failed",
-            description: "Resume generation took too long. Please try again later.",
-            variant: "destructive",
-          });
           setIsTimeout(true);
           setTimeoutMessage(
             "Resume generation took too long. Please try again later."
           );
           setShowLoadingAnimation(false);
           setShowFailedAnimation(true);
-          setIsProcessing(false);
-          setIsGenerationComplete(true);
+          
+          toast({
+            title: "Generation Failed",
+            description: "Resume generation took too long. Please try again later.",
+            variant: "destructive",
+          });
         }
       }, 5 * 60 * 1000);
     } catch (error) {

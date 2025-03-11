@@ -48,24 +48,14 @@ const ProcessingPreview = ({
       try {
         const { data, error } = await supabase
           .from("resume_analyses")
-          .select("google_doc_url, golden_resume, match_score, error")
+          .select("google_doc_url, golden_resume, match_score")
           .eq("id", analysisId)
           .single();
 
         if (error) {
+          console.error("Error fetching analysis:", error);
           setStatus("error");
           setError("Failed to fetch analysis data");
-          return;
-        }
-
-        if (data?.error) {
-          setStatus("error");
-          setError(data.error);
-          toast({
-            title: "Error",
-            description: data.error,
-            variant: "destructive",
-          });
           return;
         }
 
@@ -109,26 +99,10 @@ const ProcessingPreview = ({
           filter: `id=eq.${analysisId}`,
         },
         (payload) => {
+          console.log("Received realtime update:", payload);
+          
           if (payload.eventType === "UPDATE") {
             const newData = payload.new;
-
-            // Check for errors first
-            if (newData.error) {
-              console.error("Error in analysis:", newData.error);
-              setStatus("error");
-              setError(newData.error);
-              toast({
-                title: "Generation Failed",
-                description: newData.error,
-                variant: "destructive",
-              });
-
-              // Notify parent component
-              if (onGenerationComplete) {
-                onGenerationComplete();
-              }
-              return;
-            }
 
             // Check if google_doc_url is now available
             if (newData.google_doc_url) {
