@@ -46,8 +46,7 @@ Deno.serve(async (req) => {
       const { error: analysisUpdateError } = await supabaseClient
         .from('resume_analyses')
         .update({
-          error: requestBody.error,
-          status: 'error'
+          error: requestBody.error
         })
         .eq('id', requestBody.analysisId);
 
@@ -141,14 +140,18 @@ Deno.serve(async (req) => {
     }
 
     // Update the analysis with Google Doc URL, golden resume, and match score
+    const updateData: any = {
+      google_doc_url: googleDocUrl,
+      golden_resume: goldenResume
+    };
+    
+    if (matchScore) {
+      updateData.match_score = parseFloat(matchScore);
+    }
+
     const { error: analysisUpdateError } = await supabaseClient
       .from('resume_analyses')
-      .update({
-        google_doc_url: googleDocUrl,
-        golden_resume: goldenResume,
-        match_score: matchScore ? parseFloat(matchScore) : null,
-        status: googleDocUrl ? 'completed' : 'error'
-      })
+      .update(updateData)
       .eq('id', analysisId);
 
     if (analysisUpdateError) {
