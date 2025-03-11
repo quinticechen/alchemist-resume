@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import ResumeUploader from "@/components/ResumeUploader";
@@ -70,8 +71,7 @@ const AlchemistWorkshop = () => {
           if (data?.error || data?.status === "error") {
             console.log("Error found in analysis:", data?.error);
             setIsGenerationComplete(true);
-            setIsTimeout(true);
-
+            setIsTimeout(false);
 
             if (timeoutId.current) {
               clearTimeout(timeoutId.current);
@@ -81,6 +81,24 @@ const AlchemistWorkshop = () => {
             toast({
               title: "Generation Failed",
               description: data?.error || "Resume generation failed",
+              variant: "destructive",
+            });
+            return;
+          }
+
+          if (data?.status === "timeout") {
+            console.log("Timeout found in analysis");
+            setIsGenerationComplete(true);
+            setIsTimeout(true);
+
+            if (timeoutId.current) {
+              clearTimeout(timeoutId.current);
+              timeoutId.current = null;
+            }
+
+            toast({
+              title: "Generation Timed Out",
+              description: "Resume generation took too long. Please try again later.",
               variant: "destructive",
             });
             return;
@@ -119,11 +137,30 @@ const AlchemistWorkshop = () => {
             if (payload.new.error || payload.new.status === "error") {
               console.log("Error received in update:", payload.new.error);
               setIsGenerationComplete(true);
-              setIsTimeout(true);
+              setIsTimeout(false);
 
               toast({
                 title: "Generation Failed",
                 description: payload.new.error || "Resume generation failed",
+                variant: "destructive",
+              });
+
+              if (timeoutId.current) {
+                clearTimeout(timeoutId.current);
+                timeoutId.current = null;
+              }
+              return;
+            }
+
+            // Check for timeout status
+            if (payload.new.status === "timeout") {
+              console.log("Timeout received in update");
+              setIsGenerationComplete(true);
+              setIsTimeout(true);
+
+              toast({
+                title: "Generation Timed Out",
+                description: "Resume generation took too long. Please try again later.",
                 variant: "destructive",
               });
 
@@ -211,7 +248,7 @@ const AlchemistWorkshop = () => {
           job_url: url,
           job_id: jobId,
           user_id: session?.user?.id,
-          status: "pending",
+          status: "pending", // Using the new enum value
         })
         .select()
         .single();
@@ -281,13 +318,12 @@ const AlchemistWorkshop = () => {
         console.log("Timeout reached. Setting timeout state to true");
         setIsTimeout(true);
 
-
-        // Also update the analysis with a timeout error
+        // Also update the analysis with a timeout status
         supabase
           .from("resume_analyses")
           .update({
             error: "Resume generation took too long. Please try again later.",
-            status: "error",
+            status: "timeout", // Using the new enum value
           })
           .eq("id", analysisRecord.id)
           .then(({ error }) => {
@@ -297,7 +333,7 @@ const AlchemistWorkshop = () => {
           });
 
         toast({
-          title: "Generation Failed",
+          title: "Generation Timed Out",
           description:
             "Resume generation took too long. Please try again later.",
           variant: "destructive",
@@ -312,7 +348,7 @@ const AlchemistWorkshop = () => {
       });
       setIsProcessing(false);
       setIsGenerationComplete(true);
-      setIsTimeout(true);
+      setIsTimeout(false);
     }
   };
 

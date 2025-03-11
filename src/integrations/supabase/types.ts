@@ -126,7 +126,7 @@ export type Database = {
           job_url: string
           match_score: number | null
           resume_id: string | null
-          status: string | null
+          status: Database["public"]["Enums"]["analysis_status_type"] | null
           updated_at: string
           user_id: string | null
         }
@@ -141,7 +141,7 @@ export type Database = {
           job_url: string
           match_score?: number | null
           resume_id?: string | null
-          status?: string | null
+          status?: Database["public"]["Enums"]["analysis_status_type"] | null
           updated_at?: string
           user_id?: string | null
         }
@@ -156,7 +156,7 @@ export type Database = {
           job_url?: string
           match_score?: number | null
           resume_id?: string | null
-          status?: string | null
+          status?: Database["public"]["Enums"]["analysis_status_type"] | null
           updated_at?: string
           user_id?: string | null
         }
@@ -423,6 +423,7 @@ export type Database = {
       }
     }
     Enums: {
+      analysis_status_type: "pending" | "error" | "timeout" | "success"
       payment_period_type: "monthly" | "annual"
       subscription_tier: "apprentice" | "alchemist" | "grandmaster"
     }

@@ -18,7 +18,8 @@ interface ProcessingPreviewProps {
   isTimeout?: boolean;
 }
 
-type ProcessingStatus = "idle" | "loading" | "error" | "success";
+// This type should match the Supabase enum 'analysis_status_type'
+type ProcessingStatus = "pending" | "error" | "timeout" | "success";
 
 const ProcessingPreview = ({
   analysisId,
@@ -31,7 +32,7 @@ const ProcessingPreview = ({
   const [googleDocUrl, setGoogleDocUrl] = useState<string | null>(null);
   const [goldenResume, setGoldenResume] = useState<string | null>(null);
   const [matchScore, setMatchScore] = useState<number | null>(null);
-  const [status, setStatus] = useState<ProcessingStatus>("idle");
+  const [status, setStatus] = useState<ProcessingStatus>("pending");
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -59,7 +60,7 @@ const ProcessingPreview = ({
   useEffect(() => {
     if (!analysisId) return;
 
-    setStatus("loading");
+    setStatus("pending");
 
     // Initial fetch of the analysis
     const fetchAnalysis = async () => {
@@ -92,33 +93,39 @@ const ProcessingPreview = ({
           return;
         }
 
-        if (data?.status === "error") {
-          console.log("Analysis status is error");
-          setStatus("error");
-          setError(data.error || "An error occurred during processing");
-          if (setIsProcessing) {
-            setIsProcessing(false);
+        // Update status based on the database value
+        if (data?.status) {
+          setStatus(data.status as ProcessingStatus);
+          
+          if (data.status === "error") {
+            setError(data.error || "An error occurred during processing");
+            if (setIsProcessing) {
+              setIsProcessing(false);
+            }
+            toast({
+              title: "Error",
+              description: data.error || "Resume generation failed",
+              variant: "destructive",
+            });
+          } else if (data.status === "timeout") {
+            setError("Resume generation took too long. Please try again later.");
+            if (setIsProcessing) {
+              setIsProcessing(false);
+            }
+            toast({
+              title: "Generation timed out",
+              description: "Resume generation took too long. Please try again later.",
+              variant: "destructive",
+            });
+          } else if (data.status === "success" && data.google_doc_url) {
+            setGoogleDocUrl(data.google_doc_url);
+            setGoldenResume(data.golden_resume || null);
+            setMatchScore(data.match_score || null);
+            
+            if (onGenerationComplete) {
+              onGenerationComplete();
+            }
           }
-          toast({
-            title: "Error",
-            description: data.error || "Resume generation failed",
-            variant: "destructive",
-          });
-          return;
-        }
-
-        if (data?.google_doc_url) {
-          setGoogleDocUrl(data.google_doc_url);
-          setGoldenResume(data.golden_resume || null);
-          setMatchScore(data.match_score || null);
-          setStatus("success");
-
-          if (onGenerationComplete) {
-            onGenerationComplete();
-          }
-        } else {
-          // If no google_doc_url yet, show loading status
-          setStatus("loading");
         }
       } catch (error) {
         console.error("Error fetching analysis:", error);
@@ -151,42 +158,50 @@ const ProcessingPreview = ({
           if (payload.eventType === "UPDATE") {
             const newData = payload.new;
             
-            // Check if there's an error in the update
-            if (newData.error || newData.status === "error") {
-              console.log("Received error update:", newData.error);
-              setStatus("error");
-              setError(newData.error || "An error occurred during processing");
+            // Update status based on the database value
+            if (newData.status) {
+              setStatus(newData.status as ProcessingStatus);
               
-              toast({
-                title: "Error",
-                description: newData.error || "Resume generation failed",
-                variant: "destructive",
-              });
-              
-              if (setIsProcessing) {
-                setIsProcessing(false);
+              // Check if there's an error in the update
+              if (newData.status === "error") {
+                console.log("Received error update:", newData.error);
+                setError(newData.error || "An error occurred during processing");
+                
+                toast({
+                  title: "Error",
+                  description: newData.error || "Resume generation failed",
+                  variant: "destructive",
+                });
+                
+                if (setIsProcessing) {
+                  setIsProcessing(false);
+                }
+              } else if (newData.status === "timeout") {
+                setError("Resume generation took too long. Please try again later.");
+                
+                toast({
+                  title: "Generation timed out",
+                  description: "Resume generation took too long. Please try again later.",
+                  variant: "destructive",
+                });
+                
+                if (setIsProcessing) {
+                  setIsProcessing(false);
+                }
+              } else if (newData.status === "success" && newData.google_doc_url) {
+                setGoogleDocUrl(newData.google_doc_url);
+                setGoldenResume(newData.golden_resume || null);
+                setMatchScore(newData.match_score || null);
+
+                toast({
+                  title: "Resume generation complete",
+                  description: "Your customized resume is ready to view",
+                });
+
+                if (onGenerationComplete) {
+                  onGenerationComplete();
+                }
               }
-              return;
-            }
-
-            // Check if google_doc_url is now available
-            if (newData.google_doc_url) {
-              setGoogleDocUrl(newData.google_doc_url);
-              setGoldenResume(newData.golden_resume || null);
-              setMatchScore(newData.match_score || null);
-              setStatus("success");
-
-              toast({
-                title: "Resume generation complete",
-                description: "Your customized resume is ready to view",
-              });
-
-              if (onGenerationComplete) {
-                onGenerationComplete();
-              }
-            } else if (newData.analysis_data && !newData.google_doc_url) {
-              // Update if we have analysis_data but not yet a google_doc_url
-              // Continue in loading state
             }
           }
         }
@@ -204,7 +219,7 @@ const ProcessingPreview = ({
   }
 
   // If there's a timeout, display the Failed animation with timeout message
-  if (isTimeout) {
+  if (isTimeout || status === "timeout") {
     return (
       <div className="w-full text-center mt-4">
         <div className="py-8">
@@ -222,7 +237,7 @@ const ProcessingPreview = ({
   return (
     <div className="w-full text-center mt-4">
       <div className="text-xl flex flex-col items-center">
-        {status === "loading" && (
+        {status === "pending" && (
           <div className="py-8">
             <div className="w-64 h-64 mx-auto">
               <Lottie options={loadingOptions} />

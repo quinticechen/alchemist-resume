@@ -69,7 +69,7 @@ Deno.serve(async (req) => {
         job_url: jobUrl,
         user_id: resume.user_id,
         job_id: jobData.id,
-        status: 'pending'
+        status: 'pending' // Using the new enum type value
       })
       .select()
       .single()

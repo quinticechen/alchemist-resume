@@ -40,12 +40,19 @@ export const useResumeAnalysis = () => {
               variant: "destructive"
             });
           } else if (payload.new && 'status' in payload.new) {
+            // Handle different status types
             if (payload.new.status === 'pending') {
               console.log("Analysis is pending");
             } else if (payload.new.status === 'error') {
               toast({
                 title: "Analysis Failed",
                 description: payload.new.error || "An error occurred during analysis.",
+                variant: "destructive"
+              });
+            } else if (payload.new.status === 'timeout') {
+              toast({
+                title: "Analysis Timed Out",
+                description: "Resume generation took too long. Please try again later.",
                 variant: "destructive"
               });
             } else if (payload.new.status === 'success' && !payload.new.google_doc_url) {

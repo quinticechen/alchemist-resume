@@ -63,7 +63,7 @@ Deno.serve(async (req) => {
         .from('resume_analyses')
         .update({ 
           error: requestBody.error,
-          status: 'error'
+          status: 'error' // Using the new enumerated type value
         })
         .eq('id', requestBody.analysisId);
         
@@ -177,7 +177,7 @@ Deno.serve(async (req) => {
     const updateData: any = {
       google_doc_url: googleDocUrl,
       golden_resume: goldenResume,
-      status: 'success'
+      status: 'success' // Using the new enumerated type value
     };
     
     if (matchScore) {
