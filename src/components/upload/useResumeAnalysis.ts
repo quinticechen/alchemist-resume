@@ -31,7 +31,7 @@ export const useResumeAnalysis = () => {
           
           // Check for error first
           if (payload.new && 'error' in payload.new && payload.new.error) {
-            // console.error('Analysis error received:', payload.new.error);
+            console.error('Analysis error received:', payload.new.error);
             toast({
               title: "Analysis Error",
               description: typeof payload.new.error === 'string' ? payload.new.error : "An error occurred during resume analysis",

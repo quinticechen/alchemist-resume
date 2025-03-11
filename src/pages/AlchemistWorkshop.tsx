@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import ResumeUploader from "@/components/ResumeUploader";
@@ -31,6 +32,7 @@ const AlchemistWorkshop = () => {
   const [timeoutMessage, setTimeoutMessage] = useState<string | null>(null);
   const [isGenerationComplete, setIsGenerationComplete] = useState(false);
   const [showLoadingAnimation, setShowLoadingAnimation] = useState(false);
+  const [showFailedAnimation, setShowFailedAnimation] = useState(false); 
   const [googleDocUrl, setGoogleDocUrl] = useState<string | null>(null);
 
   const hasCheckedSubscription = useRef(false);
@@ -72,6 +74,17 @@ const AlchemistWorkshop = () => {
           setGoogleDocUrl(data.google_doc_url);
           setIsGenerationComplete(true);
           setShowLoadingAnimation(false);
+          setShowFailedAnimation(false);
+          if (timeoutId.current) {
+            clearTimeout(timeoutId.current);
+            timeoutId.current = null;
+          }
+        } else if (data?.error) {
+          setIsGenerationComplete(true);
+          setShowLoadingAnimation(false);
+          setShowFailedAnimation(true);
+          setIsTimeout(true);
+          setTimeoutMessage(data.error);
           if (timeoutId.current) {
             clearTimeout(timeoutId.current);
             timeoutId.current = null;
@@ -96,10 +109,29 @@ const AlchemistWorkshop = () => {
               setGoogleDocUrl(payload.new.google_doc_url);
               setIsGenerationComplete(true);
               setShowLoadingAnimation(false);
+              setShowFailedAnimation(false);
+              setIsTimeout(false);
 
               toast({
                 title: "Resume Alchemist Complete!",
                 description: "Your customized resume is now ready",
+              });
+
+              if (timeoutId.current) {
+                clearTimeout(timeoutId.current);
+                timeoutId.current = null;
+              }
+            } else if (payload.new.error) {
+              setIsGenerationComplete(true);
+              setShowLoadingAnimation(false);
+              setShowFailedAnimation(true);
+              setIsTimeout(true);
+              setTimeoutMessage(payload.new.error);
+              
+              toast({
+                title: "Generation Failed",
+                description: payload.new.error,
+                variant: "destructive",
               });
 
               if (timeoutId.current) {
@@ -139,6 +171,7 @@ const AlchemistWorkshop = () => {
     setTimeoutMessage(null);
     setIsGenerationComplete(false);
     setShowLoadingAnimation(true);
+    setShowFailedAnimation(false);
     setGoogleDocUrl(null);
 
     if (timeoutId.current) {
@@ -245,6 +278,7 @@ const AlchemistWorkshop = () => {
             "Resume generation took too long. Please try again later."
           );
           setShowLoadingAnimation(false);
+          setShowFailedAnimation(true);
           setIsProcessing(false);
           setIsGenerationComplete(true);
         }
@@ -258,7 +292,10 @@ const AlchemistWorkshop = () => {
       });
       setIsProcessing(false);
       setShowLoadingAnimation(false);
+      setShowFailedAnimation(true);
       setIsGenerationComplete(true);
+      setIsTimeout(true);
+      setTimeoutMessage("Failed to process resume. Please try again later.");
     }
   };
 
@@ -348,7 +385,7 @@ const AlchemistWorkshop = () => {
           </section>
         )}
 
-        {isTimeout && timeoutMessage && (
+        {(isTimeout || showFailedAnimation) && timeoutMessage && (
           <section className="text-center">
             <div className="py-8">
               <div className="w-64 h-64 mx-auto">
@@ -359,7 +396,7 @@ const AlchemistWorkshop = () => {
           </section>
         )}
 
-        {googleDocUrl && (
+        {googleDocUrl && isGenerationComplete && (
           <section className="flex flex-wrap justify-center gap-4 mt-8">
             <Button
               variant="outline"
@@ -387,4 +424,3 @@ const AlchemistWorkshop = () => {
 };
 
 export default AlchemistWorkshop;
-

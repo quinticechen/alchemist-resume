@@ -137,6 +137,11 @@ const ProcessingPreview = ({
               setMatchScore(newData.match_score || null);
               setStatus("success");
               setProgress(100);
+              
+              toast({
+                title: "Resume generation complete",
+                description: "Your customized resume is ready to view",
+              });
 
               if (onGenerationComplete) {
                 onGenerationComplete();
@@ -163,7 +168,7 @@ const ProcessingPreview = ({
       case "loading":
         return "Processing your resume...";
       case "error":
-        return "Update failed, please try again later";
+        return "Failed to process your resume";
       case "success":
         return "Your enhanced resume is ready!";
       default:
@@ -197,7 +202,7 @@ const ProcessingPreview = ({
           {status === "loading" && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
           {status === "error" && <AlertCircle className="mr-2 h-5 w-5 text-destructive" />}
           {status === "success" && <Crown className="mr-2 h-5 w-5 text-info" />}
-          Resume Alchemy {status === "success" ? "Complete" : "In Progress"}
+          Resume Alchemy {status === "success" ? "Complete" : status === "error" ? "Failed" : "In Progress"}
         </CardTitle>
       </CardHeader>
       <CardContent>

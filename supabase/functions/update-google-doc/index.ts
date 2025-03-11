@@ -36,7 +36,7 @@ Deno.serve(async (req) => {
     if (requestBody.error) {
       console.log("Error received in request:", requestBody.error);
       
-      // We're not updating the database with the error anymore
+      // We're not updating the database with the error key
       // Just log it and return a success response
       return new Response(
         JSON.stringify({ 
