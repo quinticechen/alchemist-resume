@@ -658,7 +658,7 @@ const Home = () => {
         </div>
         
         {/* Alchemist Section */}
-        <AlchemistSection />
+        {/* <AlchemistSection /> */}
         
         {/* FAQ Section (existing) */}
         <div className="bg-white py-24 sm:py-32">
