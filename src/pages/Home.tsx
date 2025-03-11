@@ -343,7 +343,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import AlchemistSection from "@/components/AlchemistSection";
 import WebsitesSection from "@/components/WebsitesSection";
 
 const Home = () => {
