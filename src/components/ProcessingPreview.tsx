@@ -1,11 +1,14 @@
+
 import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import { Loader2, FileText, History, Crown, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import Lottie from "react-lottie";
+import Loading from "@/animations/Loading.json";
+import Failed from "@/animations/Failed.json";
 
 interface ProcessingPreviewProps {
   analysisId: string;
@@ -24,13 +27,15 @@ const ProcessingPreview = ({
   setIsProcessing,
   onGenerationComplete,
 }: ProcessingPreviewProps) => {
-  // const [progress, setProgress] = useState(10);
   const [isTimeout, setIsTimeout] = useState(false);
   const [googleDocUrl, setGoogleDocUrl] = useState<string | null>(null);
   const [goldenResume, setGoldenResume] = useState<string | null>(null);
   const [matchScore, setMatchScore] = useState<number | null>(null);
   const [status, setStatus] = useState<ProcessingStatus>("idle");
   const [error, setError] = useState<string | null>(null);
+  const [timeoutMessage, setTimeoutMessage] = useState<string | null>(
+    "Resume generation took too long. Please try again later."
+  );
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -39,9 +44,6 @@ const ProcessingPreview = ({
     if (!analysisId) return;
 
     setStatus("loading");
-
-    // Begin progress animation immediately
-    // setProgress(15);
 
     // Initial fetch of the analysis
     const fetchAnalysis = async () => {
@@ -64,7 +66,6 @@ const ProcessingPreview = ({
           setGoldenResume(data.golden_resume || null);
           setMatchScore(data.match_score || null);
           setStatus("success");
-          // setProgress(100);
 
           if (onGenerationComplete) {
             onGenerationComplete();
@@ -110,7 +111,7 @@ const ProcessingPreview = ({
               setGoldenResume(newData.golden_resume || null);
               setMatchScore(newData.match_score || null);
               setStatus("success");
-              // setProgress(100);
+              setIsTimeout(false);
 
               toast({
                 title: "Resume generation complete",
@@ -121,8 +122,8 @@ const ProcessingPreview = ({
                 onGenerationComplete();
               }
             } else if (newData.analysis_data && !newData.google_doc_url) {
-              // Update progress if we have analysis_data but not yet a google_doc_url
-              // setProgress(90);
+              // Update if we have analysis_data but not yet a google_doc_url
+              // Continue in loading state
             }
           }
         }
@@ -134,35 +135,24 @@ const ProcessingPreview = ({
     };
   }, [analysisId, toast, onGenerationComplete]);
 
-  // Message to display based on current status
-  const getStatusMessage = () => {
-    if (error) return error;
-
-    switch (status) {
-      case "loading":
-        return "Processing your resume...";
-      case "error":
-        return "Failed to process your resume";
-      case "success":
-        return "Your enhanced resume is ready!";
-      default:
-        return "Waiting to process your resume...";
-    }
+  // Animation configuration options
+  const loadingOptions = {
+    loop: true,
+    autoplay: true,
+    animationData: Loading,
+    rendererSettings: {
+      preserveAspectRatio: "xMidYMid slice",
+    },
   };
 
-  // Continuous progress updates while waiting for the result
-  // useEffect(() => {
-  //   if (status === "loading" && progress < 90) {
-  //     const timer = setInterval(() => {
-  //       setProgress((prev) => {
-  //         // Gradually increase progress, but never reach 90 until we get analysis_data
-  //         const increment = Math.max(1, Math.floor(5 * Math.random()));
-  //         return Math.min(prev + increment, 85);
-  //       });
-  //     }, 3000);
-  //     return () => clearInterval(timer);
-  //   }
-  // }, [status, progress]);
+  const failedOptions = {
+    loop: true,
+    autoplay: true,
+    animationData: Failed,
+    rendererSettings: {
+      preserveAspectRatio: "xMidYMid slice",
+    },
+  };
 
   // Don't render anything if not processing
   if (!isProcessing) {
@@ -171,9 +161,8 @@ const ProcessingPreview = ({
 
   return (
     <div className="w-full text-center mt-4">
-      <div className="text-xl flex items-center">
+      <div className="text-xl flex flex-col items-center">
         {status === "loading" && (
-          // <Loader2 className="mr-2 h-5 w-5 animate-spin" />
           <div className="py-8">
             <div className="w-64 h-64 mx-auto">
               <Lottie options={loadingOptions} />
@@ -183,8 +172,19 @@ const ProcessingPreview = ({
             </p>
           </div>
         )}
+
         {status === "error" && (
-          // <AlertCircle className="mr-2 h-5 w-5 text-destructive" />
+          <div className="py-8">
+            <div className="w-64 h-64 mx-auto">
+              <Lottie options={failedOptions} />
+            </div>
+            <p className="mt-4 text-gray-600">
+              {error || "An error occurred during processing."}
+            </p>
+          </div>
+        )}
+
+        {isTimeout && (
           <div className="py-8">
             <div className="w-64 h-64 mx-auto">
               <Lottie options={failedOptions} />
@@ -192,27 +192,20 @@ const ProcessingPreview = ({
             <p className="mt-4 text-gray-600">{timeoutMessage}</p>
           </div>
         )}
-        {status === "Failed" && (
-          // <AlertCircle className="mr-2 h-5 w-5 text-destructive" />
-          <div className="py-8">
-            <div className="w-64 h-64 mx-auto">
-              <Lottie options={failedOptions} />
-            </div>
-            <p className="mt-4 text-gray-600">{timeoutMessage}</p>
-          </div>
-        )}
-        {status === "success" && <Crown className="mr-2 h-5 w-5 text-info" />}
-        Resume Alchemy{" "}
-        {status === "success"
-          ? "Complete"
-          : status === "error"
-          ? "Failed"
-          : "In Progress"}
+
+        <div className="mt-2">
+          Resume Alchemy{" "}
+          {status === "success"
+            ? "Complete"
+            : status === "error" || isTimeout
+            ? "Failed"
+            : "In Progress"}
+        </div>
       </div>
 
       <div className="space-y-4">
         {status === "success" && googleDocUrl && (
-          <div className="flex text-center flex-wrap gap-3 pt-2">
+          <div className="flex text-center flex-wrap gap-3 pt-2 justify-center">
             <Button
               variant="outline"
               size="sm"

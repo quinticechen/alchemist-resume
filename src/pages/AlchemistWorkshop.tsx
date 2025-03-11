@@ -10,9 +10,6 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscriptionCheck } from "@/hooks/useSubscriptionCheck";
-import Lottie from "react-lottie";
-import Loading from "@/animations/Loading.json";
-import Failed from "@/animations/Failed.json";
 import { getEnvironment } from "@/integrations/supabase/client";
 
 const AlchemistWorkshop = () => {
@@ -31,8 +28,6 @@ const AlchemistWorkshop = () => {
   const [isTimeout, setIsTimeout] = useState(false);
   const [timeoutMessage, setTimeoutMessage] = useState<string | null>(null);
   const [isGenerationComplete, setIsGenerationComplete] = useState(false);
-  const [showLoadingAnimation, setShowLoadingAnimation] = useState(false);
-  const [showFailedAnimation, setShowFailedAnimation] = useState(false); 
   const [googleDocUrl, setGoogleDocUrl] = useState<string | null>(null);
 
   const hasCheckedSubscription = useRef(false);
@@ -79,8 +74,6 @@ const AlchemistWorkshop = () => {
           if (data?.google_doc_url) {
             setGoogleDocUrl(data.google_doc_url);
             setIsGenerationComplete(true);
-            setShowLoadingAnimation(false);
-            setShowFailedAnimation(false);
             if (timeoutId.current) {
               clearTimeout(timeoutId.current);
               timeoutId.current = null;
@@ -109,8 +102,6 @@ const AlchemistWorkshop = () => {
             if (payload.new.google_doc_url) {
               setGoogleDocUrl(payload.new.google_doc_url);
               setIsGenerationComplete(true);
-              setShowLoadingAnimation(false);
-              setShowFailedAnimation(false);
               setIsTimeout(false);
 
               toast({
@@ -154,8 +145,6 @@ const AlchemistWorkshop = () => {
     setIsTimeout(false);
     setTimeoutMessage(null);
     setIsGenerationComplete(false);
-    setShowLoadingAnimation(true);
-    setShowFailedAnimation(false);
     setGoogleDocUrl(null);
 
     if (timeoutId.current) {
@@ -257,8 +246,6 @@ const AlchemistWorkshop = () => {
           setTimeoutMessage(
             "Resume generation took too long. Please try again later."
           );
-          setShowLoadingAnimation(false);
-          setShowFailedAnimation(true);
           
           toast({
             title: "Generation Failed",
@@ -275,8 +262,6 @@ const AlchemistWorkshop = () => {
         variant: "destructive",
       });
       setIsProcessing(false);
-      setShowLoadingAnimation(false);
-      setShowFailedAnimation(true);
       setIsGenerationComplete(true);
       setIsTimeout(true);
       setTimeoutMessage("Failed to process resume. Please try again later.");
@@ -285,7 +270,6 @@ const AlchemistWorkshop = () => {
 
   const handleGenerationComplete = () => {
     setIsGenerationComplete(true);
-    setShowLoadingAnimation(false);
     if (timeoutId.current) {
       clearTimeout(timeoutId.current);
       timeoutId.current = null;
@@ -307,24 +291,6 @@ const AlchemistWorkshop = () => {
   if (!session) {
     return null;
   }
-
-  const loadingOptions = {
-    loop: true,
-    autoplay: true,
-    animationData: Loading,
-    rendererSettings: {
-      preserveAspectRatio: "xMidYMid slice",
-    },
-  };
-
-  const failedOptions = {
-    loop: true,
-    autoplay: true,
-    animationData: Failed,
-    rendererSettings: {
-      preserveAspectRatio: "xMidYMid slice",
-    },
-  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -355,53 +321,6 @@ const AlchemistWorkshop = () => {
             onGenerationComplete={handleGenerationComplete}
           />
         )}
-
-        {showLoadingAnimation && !isGenerationComplete && !isTimeout && (
-          <section className="text-center">
-            <div className="py-8">
-              <div className="w-64 h-64 mx-auto">
-                <Lottie options={loadingOptions} />
-              </div>
-              <p className="mt-4 text-gray-600">
-                Your resume is being alchemized. Please wait a few minutes...
-              </p>
-            </div>
-          </section>
-        )}
-
-        {(isTimeout || showFailedAnimation) && timeoutMessage && (
-          <section className="text-center">
-            <div className="py-8">
-              <div className="w-64 h-64 mx-auto">
-                <Lottie options={failedOptions} />
-              </div>
-              <p className="mt-4 text-gray-600">{timeoutMessage}</p>
-            </div>
-          </section>
-        )}
-
-        {/* {googleDocUrl && isGenerationComplete && (
-          <section className="flex flex-wrap justify-center gap-4 mt-8">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => window.open(googleDocUrl, "_blank")}
-              className="text-info border-info/20 hover:bg-info/5"
-            >
-              <Crown className="h-4 w-4 mr-2" />
-              Golden Resume
-            </Button>
-
-            <Button
-              variant="outline"
-              onClick={viewAllRecords}
-              className="flex items-center gap-2"
-            >
-              <History className="h-4 w-4" />
-              View All Records
-            </Button>
-          </section>
-        )} */}
       </div>
     </div>
   );
