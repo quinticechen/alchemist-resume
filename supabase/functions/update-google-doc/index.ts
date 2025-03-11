@@ -13,20 +13,14 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Parse the request body with better error handling
+    // Parse the request body without any "fixing" attempts
     let requestBody;
     try {
       const text = await req.text();
       console.log("Raw request body:", text);
       
-      // Fix any potential JSON syntax issues
-      // This is a temporary fix to handle missing commas in the JSON
-      const fixedText = text.replace(/}(\s*)"([^"]+)"/g, '},$1"$2"')
-                           .replace(/\n/g, '')
-                           .replace(/([^,{])\s*"([^"]+)":/g, '$1,"$2":');
-      
-      console.log("Fixed request body:", fixedText);
-      requestBody = JSON.parse(fixedText);
+      // Parse the JSON directly without modifications
+      requestBody = JSON.parse(text);
     } catch (parseError) {
       console.error("JSON parsing error:", parseError.message);
       return new Response(
