@@ -109,19 +109,24 @@ const AnalysisCard = ({
           variant="outline"
           size="sm"
           onClick={() => {
-            if (resume?.original_resume) {
+            // First check if we have a file path to the original resume
+            if (resume?.file_path) {
+              // Get the public URL from Supabase storage
+              const { data } = supabase.storage
+                .from('resumes')
+                .getPublicUrl(resume.file_path);
+              
+              // Open the original resume document in a new tab
+              window.open(data.publicUrl, '_blank');
+            } 
+            // Fallback to original_resume HTML content if file_path doesn't work
+            else if (resume?.original_resume) {
               // Open original resume content in a new tab
               const newTab = window.open();
               if (newTab) {
                 newTab.document.write(`<html><head><title>Original Resume</title></head><body>${resume.original_resume}</body></html>`);
                 newTab.document.close();
               }
-            } else if (resume?.file_path) {
-              // Fall back to the uploaded file
-              const { data } = supabase.storage
-                .from('resumes')
-                .getPublicUrl(resume.file_path);
-              window.open(data.publicUrl, '_blank');
             }
           }}
           className="text-primary border-primary/20 hover:bg-primary/5"
