@@ -380,7 +380,7 @@ const AlchemistWorkshop = () => {
           </section>
         )}
 
-        {googleDocUrl && isGenerationComplete && (
+        {/* {googleDocUrl && isGenerationComplete && (
           <section className="flex flex-wrap justify-center gap-4 mt-8">
             <Button
               variant="outline"
@@ -401,7 +401,7 @@ const AlchemistWorkshop = () => {
               View All Records
             </Button>
           </section>
-        )}
+        )} */}
       </div>
     </div>
   );

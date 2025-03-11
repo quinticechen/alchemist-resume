@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -100,7 +99,7 @@ const ProcessingPreview = ({
         },
         (payload) => {
           console.log("Received realtime update:", payload);
-          
+
           if (payload.eventType === "UPDATE") {
             const newData = payload.new;
 
@@ -111,7 +110,7 @@ const ProcessingPreview = ({
               setMatchScore(newData.match_score || null);
               setStatus("success");
               setProgress(100);
-              
+
               toast({
                 title: "Resume generation complete",
                 description: "Your customized resume is ready to view",
@@ -170,55 +169,55 @@ const ProcessingPreview = ({
   }
 
   return (
-    <Card className="w-full mt-4">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-xl flex items-center">
-          {status === "loading" && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
-          {status === "error" && <AlertCircle className="mr-2 h-5 w-5 text-destructive" />}
-          {status === "success" && <Crown className="mr-2 h-5 w-5 text-info" />}
-          Resume Alchemy {status === "success" ? "Complete" : status === "error" ? "Failed" : "In Progress"}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <div className="flex justify-between items-center text-sm">
-              <span>{getStatusMessage()}</span>
-              {matchScore !== null && (
-                <span className="font-semibold">
-                  Match Score: {Math.round(matchScore * 100)}%
-                </span>
-              )}
-            </div>
-            <Progress value={progress} className="h-2" />
-          </div>
+    <div className="w-full mt-4">
+      <div className="text-xl flex items-center">
+        {status === "loading" && (
+          <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+        )}
+        {status === "error" && (
+          <AlertCircle className="mr-2 h-5 w-5 text-destructive" />
+        )}
+        {status === "success" && <Crown className="mr-2 h-5 w-5 text-info" />}
+        Resume Alchemy{" "}
+        {status === "success"
+          ? "Complete"
+          : status === "error"
+          ? "Failed"
+          : "In Progress"}
+      </div>
 
-          {status === "success" && googleDocUrl && (
-            <div className="flex flex-wrap gap-3 pt-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => window.open(googleDocUrl, "_blank")}
-                className="text-info border-info/20 hover:bg-info/5"
-              >
-                <FileText className="h-4 w-4 mr-2" />
-                View Resume
-              </Button>
-              
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate("/alchemy-records")}
-                className="text-primary border-primary/20 hover:bg-primary/5"
-              >
-                <History className="h-4 w-4 mr-2" />
-                View Records
-              </Button>
-            </div>
-          )}
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <div className="flex justify-between items-center text-sm">
+            
+          </div>
         </div>
-      </CardContent>
-    </Card>
+
+        {status === "success" && googleDocUrl && (
+          <div className="flex flex-wrap gap-3 pt-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => window.open(googleDocUrl, "_blank")}
+              className="text-info border-info/20 hover:bg-info/5"
+            >
+              <Crown className="h-4 w-4 mr-2" />
+              Golden Resume
+            </Button>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate("/alchemy-records")}
+              className="text-primary border-primary/20 hover:bg-primary/5"
+            >
+              <History className="h-4 w-4 mr-2" />
+              View All Records
+            </Button>
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
 
