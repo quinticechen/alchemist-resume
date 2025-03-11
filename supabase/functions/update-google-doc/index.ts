@@ -36,29 +36,12 @@ Deno.serve(async (req) => {
     if (requestBody.error) {
       console.log("Error received in request:", requestBody.error);
       
-      // Initialize Supabase client for error update
-      const supabaseClient = createClient(
-        Deno.env.get('SUPABASE_URL') ?? '',
-        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-      );
-
-      // Update the analysis with the error
-      const { error: analysisUpdateError } = await supabaseClient
-        .from('resume_analyses')
-        .update({
-          error: requestBody.error
-        })
-        .eq('id', requestBody.analysisId);
-
-      if (analysisUpdateError) {
-        console.error('Error updating analysis with error status:', analysisUpdateError);
-        throw analysisUpdateError;
-      }
-
+      // We're not updating the database with the error anymore
+      // Just log it and return a success response
       return new Response(
         JSON.stringify({ 
           success: true, 
-          message: 'Error status updated successfully' 
+          message: 'Error logged successfully' 
         }),
         {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
