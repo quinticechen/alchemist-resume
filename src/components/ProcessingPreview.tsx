@@ -58,6 +58,14 @@ const ProcessingPreview = ({
   useEffect(() => {
     if (!analysisId) return;
 
+    if (isTimeout) {
+      setStatus("timeout");
+      if (setIsProcessing) {
+        setIsProcessing(false);
+      }
+      return;
+    }
+
     setStatus("pending");
 
     // Initial fetch of the analysis
@@ -76,23 +84,8 @@ const ProcessingPreview = ({
           return;
         }
 
-        if (data?.error) {
+        if (data?.error || data?.status === "error") {
           console.log("Found error in analysis:", data.error);
-          setStatus("error");
-          setError(data.error);
-          if (setIsProcessing) {
-            setIsProcessing(false);
-          }
-          toast({
-            title: "Error",
-            description: data.error,
-            variant: "destructive",
-          });
-          return;
-        }
-
-        if (data?.status === "error") {
-          console.log("Analysis status is error");
           setStatus("error");
           setError(data.error || "An error occurred during processing");
           if (setIsProcessing) {
@@ -106,17 +99,29 @@ const ProcessingPreview = ({
           return;
         }
 
+        if (data?.status === "timeout") {
+          console.log("Analysis status is timeout");
+          setStatus("timeout");
+          if (setIsProcessing) {
+            setIsProcessing(false);
+          }
+          toast({
+            title: "Timeout",
+            description: "Resume generation timed out",
+            variant: "destructive",
+          });
+          return;
+        }
+
         if (data?.google_doc_url) {
           setGoogleDocUrl(data.google_doc_url);
           setGoldenResume(data.golden_resume || null);
           setMatchScore(data.match_score || null);
           setStatus("success");
-
           if (onGenerationComplete) {
             onGenerationComplete();
           }
         } else {
-          // If no google_doc_url yet, show loading status
           setStatus("pending");
         }
       } catch (error) {
@@ -168,6 +173,21 @@ const ProcessingPreview = ({
               return;
             }
 
+            // Check if status is timeout
+            if (newData.status === "timeout") {
+              console.log("Received timeout update");
+              setStatus("timeout");
+              if (setIsProcessing) {
+                setIsProcessing(false);
+              }
+              toast({
+                title: "Timeout",
+                description: "Resume generation timed out",
+                variant: "destructive",
+              });
+              return;
+            }
+
             // Check if google_doc_url is now available
             if (newData.google_doc_url) {
               setGoogleDocUrl(newData.google_doc_url);
@@ -183,9 +203,6 @@ const ProcessingPreview = ({
               if (onGenerationComplete) {
                 onGenerationComplete();
               }
-            } else if (newData.analysis_data && !newData.google_doc_url) {
-              // Update if we have analysis_data but not yet a google_doc_url
-              // Continue in loading state
             }
           }
         }
@@ -195,27 +212,11 @@ const ProcessingPreview = ({
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [analysisId, toast, onGenerationComplete, setIsProcessing]);
+  }, [analysisId, toast, onGenerationComplete, setIsProcessing, isTimeout]);
 
   // Don't render anything if not processing
   if (!isProcessing) {
     return null;
-  }
-
-  // If there's a timeout, display the Failed animation with timeout message
-  if (isTimeout) {
-    return (
-      <div className="w-full text-center mt-4">
-        <div className="py-8">
-          <div className="w-64 h-64 mx-auto">
-            <Lottie options={failedOptions} />
-          </div>
-          <p className="mt-4 text-gray-600">
-            Resume generation took too long. Please try again later.
-          </p>
-        </div>
-      </div>
-    );
   }
 
   return (
@@ -232,23 +233,15 @@ const ProcessingPreview = ({
           </div>
         )}
 
-        {status === "error" && (
+        {(status === "error" || status === "timeout") && (
           <div className="py-8">
             <div className="w-64 h-64 mx-auto">
               <Lottie options={failedOptions} />
             </div>
             <p className="mt-4 text-gray-600">
-              {error || "An error occurred during processing."}
-            </p>
-          </div>
-        )}
-        {status === "timeout" && (
-          <div className="py-8">
-            <div className="w-64 h-64 mx-auto">
-              <Lottie options={failedOptions} />
-            </div>
-            <p className="mt-4 text-gray-600">
-              {error || "An error occurred during processing."}
+              {status === "timeout"
+                ? "Resume generation took too long. Please try again later."
+                : error || "An error occurred during processing."}
             </p>
           </div>
         )}
