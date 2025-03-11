@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from "react";
-import { Loader2, FileText, History, Crown, AlertCircle } from "lucide-react";
+import { History, Crown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -68,7 +68,7 @@ const ProcessingPreview = ({
       try {
         const { data, error } = await supabase
           .from("resume_analyses")
-          .select("google_doc_url, golden_resume, match_score")
+          .select("google_doc_url, golden_resume, match_score, error, status")
           .eq("id", analysisId)
           .single();
 
@@ -76,6 +76,36 @@ const ProcessingPreview = ({
           console.error("Error fetching analysis:", error);
           setStatus("error");
           setError("Failed to fetch analysis data");
+          return;
+        }
+
+        if (data?.error) {
+          console.log("Found error in analysis:", data.error);
+          setStatus("error");
+          setError(data.error);
+          if (setIsProcessing) {
+            setIsProcessing(false);
+          }
+          toast({
+            title: "Error",
+            description: data.error,
+            variant: "destructive",
+          });
+          return;
+        }
+
+        if (data?.status === "error") {
+          console.log("Analysis status is error");
+          setStatus("error");
+          setError(data.error || "An error occurred during processing");
+          if (setIsProcessing) {
+            setIsProcessing(false);
+          }
+          toast({
+            title: "Error",
+            description: data.error || "Resume generation failed",
+            variant: "destructive",
+          });
           return;
         }
 
@@ -122,6 +152,24 @@ const ProcessingPreview = ({
 
           if (payload.eventType === "UPDATE") {
             const newData = payload.new;
+            
+            // Check if there's an error in the update
+            if (newData.error || newData.status === "error") {
+              console.log("Received error update:", newData.error);
+              setStatus("error");
+              setError(newData.error || "An error occurred during processing");
+              
+              toast({
+                title: "Error",
+                description: newData.error || "Resume generation failed",
+                variant: "destructive",
+              });
+              
+              if (setIsProcessing) {
+                setIsProcessing(false);
+              }
+              return;
+            }
 
             // Check if google_doc_url is now available
             if (newData.google_doc_url) {
@@ -150,7 +198,7 @@ const ProcessingPreview = ({
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [analysisId, toast, onGenerationComplete]);
+  }, [analysisId, toast, onGenerationComplete, setIsProcessing]);
 
   // Don't render anything if not processing
   if (!isProcessing) {

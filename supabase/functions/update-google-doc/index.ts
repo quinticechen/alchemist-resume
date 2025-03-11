@@ -36,7 +36,30 @@ Deno.serve(async (req) => {
     if (requestBody.error) {
       console.log("Error received in request:", requestBody.error);
       
-      // Just log the error and return success response, don't update the database
+      // If there's an analysisId, update the analysis with the error
+      if (requestBody.analysisId) {
+        // Initialize Supabase client
+        const supabaseClient = createClient(
+          Deno.env.get('SUPABASE_URL') ?? '',
+          Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+        );
+        
+        // Update the resume analysis with the error message
+        const { error: updateError } = await supabaseClient
+          .from('resume_analyses')
+          .update({ 
+            error: requestBody.error,
+            status: 'error'
+          })
+          .eq('id', requestBody.analysisId);
+          
+        if (updateError) {
+          console.error("Error updating analysis with error message:", updateError);
+        } else {
+          console.log("Successfully updated analysis with error status for ID:", requestBody.analysisId);
+        }
+      }
+      
       return new Response(
         JSON.stringify({ 
           success: true, 
@@ -124,7 +147,8 @@ Deno.serve(async (req) => {
     // Update the analysis with Google Doc URL, golden resume, and match score
     const updateData: any = {
       google_doc_url: googleDocUrl,
-      golden_resume: goldenResume
+      golden_resume: goldenResume,
+      status: 'success'
     };
     
     if (matchScore) {

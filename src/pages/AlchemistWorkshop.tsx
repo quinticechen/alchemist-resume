@@ -4,8 +4,6 @@ import { useNavigate } from "react-router-dom";
 import ResumeUploader from "@/components/ResumeUploader";
 import JobUrlInput from "@/components/JobUrlInput";
 import ProcessingPreview from "@/components/ProcessingPreview";
-import { Button } from "@/components/ui/button";
-import { History, FileText, Crown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -64,7 +62,7 @@ const AlchemistWorkshop = () => {
         try {
           const { data, error } = await supabase
             .from("resume_analyses")
-            .select("google_doc_url")
+            .select("google_doc_url, error, status")
             .eq("id", analysisId)
             .single();
 
@@ -73,9 +71,29 @@ const AlchemistWorkshop = () => {
             return;
           }
 
+          if (data?.error || data?.status === "error") {
+            console.log("Error found in analysis:", data?.error);
+            setIsGenerationComplete(true);
+            setIsTimeout(true);
+            setTimeoutMessage(data?.error || "Resume generation failed. Please try again.");
+            
+            if (timeoutId.current) {
+              clearTimeout(timeoutId.current);
+              timeoutId.current = null;
+            }
+            
+            toast({
+              title: "Generation Failed",
+              description: data?.error || "Resume generation failed",
+              variant: "destructive",
+            });
+            return;
+          }
+
           if (data?.google_doc_url) {
             setGoogleDocUrl(data.google_doc_url);
             setIsGenerationComplete(true);
+            setIsTimeout(false);
             if (timeoutId.current) {
               clearTimeout(timeoutId.current);
               timeoutId.current = null;
@@ -100,6 +118,26 @@ const AlchemistWorkshop = () => {
           },
           (payload) => {
             console.log("Realtime update received:", payload);
+            
+            // Check for errors in the update
+            if (payload.new.error || payload.new.status === "error") {
+              console.log("Error received in update:", payload.new.error);
+              setIsGenerationComplete(true);
+              setIsTimeout(true);
+              setTimeoutMessage(payload.new.error || "Resume generation failed. Please try again.");
+              
+              toast({
+                title: "Generation Failed",
+                description: payload.new.error || "Resume generation failed",
+                variant: "destructive",
+              });
+              
+              if (timeoutId.current) {
+                clearTimeout(timeoutId.current);
+                timeoutId.current = null;
+              }
+              return;
+            }
             
             if (payload.new.google_doc_url) {
               setGoogleDocUrl(payload.new.google_doc_url);
@@ -179,6 +217,7 @@ const AlchemistWorkshop = () => {
           job_url: url,
           job_id: jobId,
           user_id: session?.user?.id,
+          status: 'pending'
         })
         .select()
         .single();
@@ -248,6 +287,20 @@ const AlchemistWorkshop = () => {
         setTimeoutMessage(
           "Resume generation took too long. Please try again later."
         );
+        
+        // Also update the analysis with a timeout error
+        supabase
+          .from('resume_analyses')
+          .update({
+            error: "Resume generation took too long. Please try again later.",
+            status: "error"
+          })
+          .eq('id', analysisRecord.id)
+          .then(({ error }) => {
+            if (error) {
+              console.error("Error updating analysis with timeout:", error);
+            }
+          });
         
         toast({
           title: "Generation Failed",
