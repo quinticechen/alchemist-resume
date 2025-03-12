@@ -20,7 +20,7 @@ export const SUPPORTED_JOB_SITES = [
   "linkedin.com",
   "indeed.com",
   "glassdoor.com",
-  "foundit.com",
+  "foundit",
   "ziprecruiter.com",
   "simplyhired.com",
   "104.com.tw",
@@ -79,21 +79,20 @@ const JobUrlInput = ({
       //   });
       //   return;
       // }
+      if (!isValidUrl) {
+        toast({
+          title: "Invalid URL",
+          description: "This URL is not from a supported site.",
+          variant: "destructive",
+        });
+        return;
+      }
 
       if (!hostname.includes("foundit") && url.includes("search")) {
         toast({
           title: "Invalid URL",
           description:
             "This URL contains multiple or no job information, or search URLs are not allowed.",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      if (!isValidUrl) {
-        toast({
-          title: "Invalid URL",
-          description: "This URL is not from a supported site.",
           variant: "destructive",
         });
         return;
