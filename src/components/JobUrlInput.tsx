@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -34,7 +33,7 @@ export const SUPPORTED_JOB_SITES = [
 // Environment-specific webhook URLs
 export const getWebhookUrl = () => {
   const env = getEnvironment();
-  if (env === 'production') {
+  if (env === "production") {
     return "https://hook.eu2.make.com/pthisc4aefvf15i7pj4ja99a84dp7kce";
   } else {
     return "https://hook.eu2.make.com/2up5vi5mr8jhhdl1eclyw3shu99uoxlb";
@@ -60,13 +59,36 @@ const JobUrlInput = ({
       const urlObj = new URL(url);
       const hostname = urlObj.hostname.toLowerCase();
 
-      if (!hostname.includes("indeed.com") && !hostname.includes("ziprecruiter.com")) {
+      if (
+        !hostname.includes("indeed.com") &&
+        !hostname.includes("ziprecruiter.com")
+      ) {
         processedUrl = url.split("?")[0];
       }
 
-      const isValidUrl = SUPPORTED_JOB_SITES.some((site) => hostname.includes(site));
+      const isValidUrl = SUPPORTED_JOB_SITES.some((site) =>
+        hostname.includes(site)
+      );
 
-      if (!isValidUrl || url.includes("search")) {
+      // if (!isValidUrl || url.includes("search")) {
+      //   toast({
+      //     title: "Invalid URL",
+      //     description:
+      //       "This URL contains multiple or no job information, or search URLs are not allowed.",
+      //     variant: "destructive",
+      //   });
+      //   return;
+      // }
+      if (!isValidUrl) {
+        toast({
+          title: "Invalid URL",
+          description: "This URL is not from a supported site.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (!hostname.includes("foundit.in") && url.includes("search")) {
         toast({
           title: "Invalid URL",
           description:
@@ -100,7 +122,7 @@ const JobUrlInput = ({
 
   // Input should be disabled during active processing or when generation is complete and button should be disabled
   const isInputDisabled = isProcessing || isGenerationComplete;
-  
+
   // Button should be disabled during submission, when no URL is provided, during processing, or after generation is complete
   const isButtonDisabled = isSubmitting || !url || isInputDisabled;
 
