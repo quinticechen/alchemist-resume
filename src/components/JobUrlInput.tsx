@@ -27,7 +27,6 @@ export const SUPPORTED_JOB_SITES = [
   "1111.com.tw",
   "jobsdb.com",
   "next.rikunabi.com",
-  "51job.com",
 ];
 
 // Environment-specific webhook URLs

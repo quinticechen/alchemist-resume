@@ -49,7 +49,7 @@ const asianPlatforms = [
   { name: "1111 Job Bank", url: "1111.com.tw" },
   { name: "JobsDB", url: "jobsdb.com" },
   { name: "Rikunabi NEXT", url: "next.rikunabi.com" },
-  { name: "51job", url: "51job.com" },
+  // { name: "51job", url: "51job.com" },
 ];
 
 const faqs = [
