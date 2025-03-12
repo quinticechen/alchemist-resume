@@ -16,7 +16,7 @@ interface Job {
   job_title: string;
   company_name: string | null;
   company_url: string | null;
-  job_url: string | null; // Add job_url field
+  job_url: string | null;
 }
 
 interface AnalysisCardProps {
