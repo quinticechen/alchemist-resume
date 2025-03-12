@@ -230,13 +230,13 @@ const ProcessingPreview = ({
         )}
       </div>
 
-      {error && (status === "error" || status === "timeout") && (
+      {/* {error && (status === "error" || status === "timeout") && (
         <div className="bg-red-50 border border-red-200 rounded-md p-4 mt-4">
           <p className="text-red-700 text-sm">
-            {/* {error} */}
+            {error}
           </p>
         </div>
-      )}
+      )} */}
 
       <div className="space-y-4">
         {status === "success" && googleDocUrl && (
