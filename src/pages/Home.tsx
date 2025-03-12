@@ -118,7 +118,7 @@ const Home = () => {
           subscription.unsubscribe();
         };
       } catch (error) {
-        console.error("Session initialization error:", error);
+        // console.error("Session initialization error:", error);
         toast({
           title: "Error",
           description:
@@ -148,7 +148,7 @@ const Home = () => {
         navigate("/login");
       }
     } catch (error) {
-      console.error("Navigation error:", error);
+      // console.error("Navigation error:", error);
       toast({
         title: "Error",
         description:

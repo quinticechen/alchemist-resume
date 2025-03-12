@@ -44,7 +44,7 @@ serve(async (req) => {
 
     // Check if session ID is the placeholder value and return a helpful error
     if (sessionId === '{CHECKOUT_SESSION_ID}') {
-      console.error("Received placeholder session ID instead of actual value");
+      // console.error("Received placeholder session ID instead of actual value");
       return new Response(JSON.stringify({ 
         success: false, 
         error: 'Invalid session ID: received placeholder {CHECKOUT_SESSION_ID} instead of actual session ID' 
@@ -139,7 +139,7 @@ serve(async (req) => {
           });
         }
       } catch (error) {
-        console.error('Error getting user ID:', error);
+        // console.error('Error getting user ID:', error);
         return new Response(JSON.stringify({ 
           success: false, 
           error: 'Could not verify user' 
@@ -161,7 +161,7 @@ serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     } catch (stripeError) {
-      console.error(`Stripe API error: ${stripeError.message}`);
+      // console.error(`Stripe API error: ${stripeError.message}`);
       return new Response(JSON.stringify({ 
         success: false, 
         error: `Stripe API error: ${stripeError.message}` 
@@ -171,7 +171,7 @@ serve(async (req) => {
       });
     }
   } catch (error) {
-    console.error(`Error verifying Stripe session: ${error.message}`);
+    // console.error(`Error verifying Stripe session: ${error.message}`);
     return new Response(JSON.stringify({ 
       success: false, 
       error: error.message 

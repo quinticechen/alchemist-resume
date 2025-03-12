@@ -34,13 +34,13 @@ export const useResumeUpload = (onUploadSuccess: (file: File, filePath: string, 
 
   const uploadWithRetry = async (filePath: string, file: File, retryCount = 0): Promise<boolean> => {
     try {
-      console.log(`Attempting upload, retry count: ${retryCount}`);
+      // console.log(`Attempting upload, retry count: ${retryCount}`);
       const { error: uploadError } = await supabase.storage
         .from('resumes')
         .upload(filePath, file);
 
       if (uploadError) {
-        console.error('Upload error:', uploadError);
+        // console.error('Upload error:', uploadError);
         throw uploadError;
       }
 
@@ -49,7 +49,7 @@ export const useResumeUpload = (onUploadSuccess: (file: File, filePath: string, 
       console.error(`Upload attempt ${retryCount + 1} failed:`, error);
       
       if (retryCount < MAX_RETRIES) {
-        console.log(`Retrying upload in ${RETRY_DELAY}ms...`);
+        // console.log(`Retrying upload in ${RETRY_DELAY}ms...`);
         await delay(RETRY_DELAY);
         return uploadWithRetry(filePath, file, retryCount + 1);
       }
@@ -66,7 +66,7 @@ export const useResumeUpload = (onUploadSuccess: (file: File, filePath: string, 
       const fileExt = file.name.split('.').pop();
       const filePath = `${crypto.randomUUID()}.${fileExt}`;
 
-      console.log('Starting file upload with retry mechanism');
+      // console.log('Starting file upload with retry mechanism');
       await uploadWithRetry(filePath, file);
 
       const { data: publicUrlData } = supabase.storage
@@ -90,12 +90,12 @@ export const useResumeUpload = (onUploadSuccess: (file: File, filePath: string, 
         throw insertError;
       }
 
-      console.log('Resume uploaded successfully:', resume);
-      console.log('Public URL:', publicUrl);
+      // console.log('Resume uploaded successfully:', resume);
+      // console.log('Public URL:', publicUrl);
       
       onUploadSuccess(file, filePath, publicUrl, resume.id);
     } catch (error) {
-      console.error('Error uploading resume:', error);
+      // console.error('Error uploading resume:', error);
       toast({
         title: "Upload Failed",
         description: "Failed to upload resume. Please try again.",

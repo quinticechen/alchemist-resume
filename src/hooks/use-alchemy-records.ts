@@ -117,7 +117,7 @@ export const useAlchemyRecords = () => {
 
         setAnalyses(transformedData);
       } catch (error) {
-        console.error('Error fetching data:', error);
+        // console.error('Error fetching data:', error);
       } finally {
         setLoading(false);
       }
@@ -134,7 +134,7 @@ export const useAlchemyRecords = () => {
 
       // Database update is handled in the FeedbackButtons component
     } catch (error) {
-      console.error('Error updating feedback:', error);
+      // console.error('Error updating feedback:', error);
       toast({
         title: "Error",
         description: "Failed to update feedback",
@@ -177,7 +177,7 @@ export const useAlchemyRecords = () => {
         description: "Position name has been updated successfully",
       });
     } catch (error) {
-      console.error('Error updating title:', error);
+      // console.error('Error updating title:', error);
       toast({
         title: "Error",
         description: "Failed to update position name",

@@ -110,13 +110,13 @@ const FeedbackModal = ({
 
     setIsSubmitting(true);
     try {
-      console.log("Submitting feedback:", {
-        analysis_id: analysisId,
-        user_id: userId,
-        rating,
-        feedback_text: feedbackText,
-        quick_feedback_option: selectedOption,
-      });
+      // console.log("Submitting feedback:", {
+      //   analysis_id: analysisId,
+      //   user_id: userId,
+      //   rating,
+      //   feedback_text: feedbackText,
+      //   quick_feedback_option: selectedOption,
+      // });
 
       const { error } = await supabase.from("user_feedback").insert({
         analysis_id: analysisId,
@@ -137,12 +137,12 @@ const FeedbackModal = ({
         .eq("id", userId);
 
       if (updateError) {
-        console.error("Error updating profile:", updateError);
+        // console.error("Error updating profile:", updateError);
       }
 
       onFeedbackSubmitted();
     } catch (error) {
-      console.error("Error submitting feedback:", error);
+      // console.error("Error submitting feedback:", error);
       toast({
         title: "Error",
         description: "Failed to submit feedback. Please try again.",

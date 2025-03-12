@@ -87,7 +87,7 @@ const JobUrlInput = ({
         description: "Please enter a valid URL.",
         variant: "destructive",
       });
-      console.error("URL validation error:", error);
+      // console.error("URL validation error:", error);
     } finally {
       setIsSubmitting(false);
     }

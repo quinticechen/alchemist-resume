@@ -27,7 +27,7 @@ serve(async (req) => {
     // Get the signature from the header
     const signature = req.headers.get('stripe-signature');
     if (!signature) {
-      console.error("No Stripe signature found in request headers");
+      // console.error("No Stripe signature found in request headers");
       return new Response(JSON.stringify({ error: 'No Stripe signature found' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400,
@@ -37,7 +37,7 @@ serve(async (req) => {
     // Get the webhook secret
     const webhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET');
     if (!webhookSecret) {
-      console.error("Stripe webhook secret not configured");
+      // console.error("Stripe webhook secret not configured");
       return new Response(JSON.stringify({ error: 'Webhook secret missing' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500,
@@ -55,9 +55,9 @@ serve(async (req) => {
         signature,
         webhookSecret
       );
-      console.log("Webhook event constructed successfully:", event.type);
+      // console.log("Webhook event constructed successfully:", event.type);
     } catch (err) {
-      console.error(`Webhook signature verification failed: ${err.message}`);
+      // console.error(`Webhook signature verification failed: ${err.message}`);
       return new Response(JSON.stringify({ error: `Webhook signature verification failed: ${err.message}` }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400,
@@ -84,7 +84,7 @@ serve(async (req) => {
 
         // Check if all required data is available
         if (!checkoutSession.customer || !checkoutSession.subscription) {
-          console.error("Missing customer or subscription data in session");
+          // console.error("Missing customer or subscription data in session");
           return new Response(JSON.stringify({ error: 'Missing customer or subscription data' }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             status: 400,
@@ -147,7 +147,7 @@ serve(async (req) => {
         const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
         
         if (!supabaseUrl || !supabaseServiceKey) {
-          console.error("Supabase credentials not configured");
+          // console.error("Supabase credentials not configured");
           return new Response(JSON.stringify({ error: 'Database connection failed' }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             status: 500,
@@ -165,7 +165,7 @@ serve(async (req) => {
         
         let userData;
         if (profileError || !profileData) {
-          console.error("Error fetching user profile:", profileError);
+          // console.error("Error fetching user profile:", profileError);
           
           // Try to find user by querying existing subscriptions
           const { data: subData, error: subError } = await supabase
@@ -175,7 +175,7 @@ serve(async (req) => {
             .single();
           
           if (subError || !subData) {
-            console.error("Could not find user for this customer:", subscription.customer);
+            // console.error("Could not find user for this customer:", subscription.customer);
             return new Response(JSON.stringify({ error: 'User not found' }), {
               headers: { ...corsHeaders, 'Content-Type': 'application/json' },
               status: 404,
@@ -186,7 +186,7 @@ serve(async (req) => {
           // console.log("Found user ID from subscriptions table:", userData.id);
         } else {
           userData = profileData;
-          console.log("Found user ID from profiles table:", userData.id);
+          // console.log("Found user ID from profiles table:", userData.id);
         }
         
         // Create a custom function to update subscription with payment period
@@ -207,7 +207,7 @@ serve(async (req) => {
               }, { onConflict: 'user_id' });
               
             if (error) {
-              console.error("Error updating subscription:", error);
+              // console.error("Error updating subscription:", error);
               throw error;
             }
             
@@ -238,7 +238,7 @@ serve(async (req) => {
             });
             
           if (transactionError) {
-            console.error("Error inserting transaction:", transactionError);
+            // console.error("Error inserting transaction:", transactionError);
             // Continue execution even if transaction insert fails
           }
           
@@ -254,7 +254,7 @@ serve(async (req) => {
             .eq('id', userData.id);
             
           if (profileUpdateError) {
-            console.error("Error updating profile:", profileUpdateError);
+            // console.error("Error updating profile:", profileUpdateError);
             // Continue execution even if profile update fails
           }
           
@@ -289,7 +289,7 @@ serve(async (req) => {
         const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
         
         if (!supabaseUrl || !supabaseServiceKey) {
-          console.error("Supabase credentials not configured");
+          // console.error("Supabase credentials not configured");
           return new Response(JSON.stringify({ error: 'Database connection failed' }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             status: 500,
@@ -306,7 +306,7 @@ serve(async (req) => {
           .single();
           
         if (subError || !subData) {
-          console.error("Could not find subscription:", subscription.id);
+          // console.error("Could not find subscription:", subscription.id);
           return new Response(JSON.stringify({ error: 'Subscription not found' }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             status: 404,
@@ -327,7 +327,7 @@ serve(async (req) => {
           .eq('stripe_subscription_id', subscription.id);
           
         if (updateError) {
-          console.error("Error updating subscription:", updateError);
+          // console.error("Error updating subscription:", updateError);
           return new Response(JSON.stringify({ error: 'Error updating subscription' }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             status: 500,
@@ -343,7 +343,7 @@ serve(async (req) => {
           .eq('id', subData.user_id);
           
         if (profileUpdateError) {
-          console.error("Error updating profile payment period:", profileUpdateError);
+          // console.error("Error updating profile payment period:", profileUpdateError);
           // Continue execution even if profile update fails
         }
         
@@ -352,7 +352,7 @@ serve(async (req) => {
       }
       
       case 'customer.subscription.deleted': {
-        console.log("Processing customer.subscription.deleted event");
+        // console.log("Processing customer.subscription.deleted event");
         const subscription = event.data.object;
         
         // Create Supabase client
@@ -361,7 +361,7 @@ serve(async (req) => {
         const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
         
         if (!supabaseUrl || !supabaseServiceKey) {
-          console.error("Supabase credentials not configured");
+          // console.error("Supabase credentials not configured");
           return new Response(JSON.stringify({ error: 'Database connection failed' }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             status: 500,
@@ -378,7 +378,7 @@ serve(async (req) => {
           .single();
           
         if (subError || !subData) {
-          console.error("Could not find subscription:", subscription.id);
+          // console.error("Could not find subscription:", subscription.id);
           return new Response(JSON.stringify({ error: 'Subscription not found' }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             status: 404,
@@ -395,7 +395,7 @@ serve(async (req) => {
           .eq('stripe_subscription_id', subscription.id);
           
         if (updateError) {
-          console.error("Error updating subscription status:", updateError);
+          // console.error("Error updating subscription status:", updateError);
         }
         
         // Reset user to apprentice tier and clear payment_period
@@ -408,7 +408,7 @@ serve(async (req) => {
           .eq('id', subData.user_id);
           
         if (profileError) {
-          console.error("Error updating profile subscription status:", profileError);
+          // console.error("Error updating profile subscription status:", profileError);
         }
         
         // console.log("Successfully processed subscription cancellation");
@@ -424,7 +424,7 @@ serve(async (req) => {
       status: 200,
     });
   } catch (err) {
-    console.error(`Webhook processing error: ${err.message}`);
+    // console.error(`Webhook processing error: ${err.message}`);
     return new Response(JSON.stringify({ error: `Webhook processing error: ${err.message}` }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 500,

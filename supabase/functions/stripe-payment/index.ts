@@ -22,7 +22,7 @@ serve(async (req) => {
   try {
     // Check if it's a POST request
     if (req.method !== 'POST') {
-      console.error(`Invalid method: ${req.method}`);
+      // console.error(`Invalid method: ${req.method}`);
       return new Response(JSON.stringify({ error: 'Method not allowed' }), {
         status: 405,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -32,7 +32,7 @@ serve(async (req) => {
     // Get JWT token from authorization header
     const authHeader = req.headers.get('authorization');
     if (!authHeader) {
-      console.error("No authorization header provided");
+      // console.error("No authorization header provided");
       return new Response(JSON.stringify({ error: 'No authorization header' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -55,7 +55,7 @@ serve(async (req) => {
     const { planId, priceId, isAnnual } = requestData;
     
     if (!planId || !priceId) {
-      console.error("Missing planId or priceId in request");
+      // console.error("Missing planId or priceId in request");
       return new Response(JSON.stringify({ error: 'Missing plan or price information' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -68,7 +68,7 @@ serve(async (req) => {
     const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY');
 
     if (!supabaseUrl || !supabaseServiceKey) {
-      console.error("Missing Supabase environment variables");
+      // console.error("Missing Supabase environment variables");
       return new Response(JSON.stringify({ error: 'Server configuration error' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -76,7 +76,7 @@ serve(async (req) => {
     }
 
     if (!stripeSecretKey) {
-      console.error("STRIPE_SECRET_KEY is not set in environment variables");
+      // console.error("STRIPE_SECRET_KEY is not set in environment variables");
       return new Response(JSON.stringify({ error: 'Stripe configuration error' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -94,7 +94,7 @@ serve(async (req) => {
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     
     if (authError || !user) {
-      console.error("Auth error:", authError);
+      // console.error("Auth error:", authError);
       return new Response(JSON.stringify({ error: 'Invalid authentication token' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -112,7 +112,7 @@ serve(async (req) => {
       .single();
 
     if (profileError) {
-      console.error("Error fetching profile:", profileError);
+      // console.error("Error fetching profile:", profileError);
       return new Response(JSON.stringify({ error: 'Error fetching user profile' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -198,7 +198,7 @@ serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     } catch (stripeError) {
-      console.error('Stripe error:', stripeError);
+      // console.error('Stripe error:', stripeError);
       return new Response(JSON.stringify({ 
         error: stripeError.message || 'Error creating checkout session',
       }), {
@@ -207,7 +207,7 @@ serve(async (req) => {
       });
     }
   } catch (error) {
-    console.error('Unexpected error in stripe-payment edge function:', error);
+    // console.error('Unexpected error in stripe-payment edge function:', error);
     return new Response(JSON.stringify({ error: 'An unexpected error occurred' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

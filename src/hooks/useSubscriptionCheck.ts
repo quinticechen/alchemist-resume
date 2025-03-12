@@ -43,7 +43,7 @@ export const useSubscriptionCheck = () => {
           .single();
 
         if (profileError) {
-          console.error("Profile check error:", profileError);
+          // console.error("Profile check error:", profileError);
           throw profileError;
         }
 
@@ -61,7 +61,7 @@ export const useSubscriptionCheck = () => {
       // console.log("Full profile data:", profile);
 
       if (!profile) {
-        console.error("No profile found for user");
+        // console.error("No profile found for user");
         throw new Error("No profile found");
       }
 
@@ -156,7 +156,7 @@ export const useSubscriptionCheck = () => {
       // Clear the fresh login flag once processed
       sessionStorage.removeItem('freshLogin');
     } catch (error) {
-      console.error("Detailed subscription check error:", error);
+      // console.error("Detailed subscription check error:", error);
       toast({
         title: "Error",
         description: "There was an error checking your subscription status.",

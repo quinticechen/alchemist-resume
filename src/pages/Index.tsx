@@ -89,7 +89,7 @@ const Index = () => {
         description: "Your resume is being analyzed. Results will be available soon.",
       });
     } catch (error) {
-      console.error('Error processing resume:', error);
+      // console.error('Error processing resume:', error);
       toast({
         title: "Error",
         description: "Failed to process resume",

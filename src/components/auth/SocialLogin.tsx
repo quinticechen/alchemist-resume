@@ -11,7 +11,7 @@ const SocialLogin = ({ onSocialLogin, isLoading }: SocialLoginProps) => {
     try {
       await onSocialLogin(provider);
     } catch (error) {
-      console.error(`${provider} login error:`, error);
+      // console.error(`${provider} login error:`, error);
     }
   };
 

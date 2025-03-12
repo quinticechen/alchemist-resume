@@ -25,13 +25,13 @@ const FeedbackButtons = ({
 
   // Clear console log of the previous state for debugging
   useEffect(() => {
-    console.log(`Current feedback state for analysis ${analysisId}:`, feedback);
+    // console.log(`Current feedback state for analysis ${analysisId}:`, feedback);
   }, [feedback, analysisId]);
 
   const handleThumbsUp = async () => {
     try {
       if (!userId) {
-        console.error("User ID is not available");
+        // console.error("User ID is not available");
         toast({
           title: "Error",
           description: "You must be logged in to provide feedback.",
@@ -46,7 +46,7 @@ const FeedbackButtons = ({
       // First update the UI to make it feel responsive
       onFeedback(newFeedbackValue);
 
-      console.log(`Setting feedback to ${newFeedbackValue} for analysis ${analysisId}`);
+      // console.log(`Setting feedback to ${newFeedbackValue} for analysis ${analysisId}`);
 
       // Update the feedback in the database
       const { error: updateError } = await supabase
@@ -55,7 +55,7 @@ const FeedbackButtons = ({
         .eq("id", analysisId);
 
       if (updateError) {
-        console.error("Error updating feedback:", updateError);
+        // console.error("Error updating feedback:", updateError);
         // Revert UI change if database update failed
         onFeedback(feedback);
         toast({
@@ -76,11 +76,11 @@ const FeedbackButtons = ({
           .single();
 
         if (error) {
-          console.error("Error checking feedback popup count:", error);
+          // console.error("Error checking feedback popup count:", error);
           return;
         }
 
-        console.log("Retrieved profile data:", profileData);
+        // console.log("Retrieved profile data:", profileData);
 
         // Increment the feedback popup count
         const updatedCount = (profileData?.feedback_popup_count || 0) + 1;
@@ -92,7 +92,7 @@ const FeedbackButtons = ({
           .eq("id", userId);
           
         if (updateError) {
-          console.error("Error updating feedback count:", updateError);
+          // console.error("Error updating feedback count:", updateError);
           return;
         }
 
@@ -100,7 +100,7 @@ const FeedbackButtons = ({
 
         // Show feedback modal on first thumbs up or every 5th thumbs up
         if (updatedCount === 1 || updatedCount % 5 === 0) {
-          console.log("Showing feedback modal");
+          // console.log("Showing feedback modal");
           setShowFeedbackModal(true);
         }
       }
@@ -114,7 +114,7 @@ const FeedbackButtons = ({
       });
       
     } catch (error) {
-      console.error("Error in thumbs up handler:", error);
+      // console.error("Error in thumbs up handler:", error);
       toast({
         title: "Error",
         description:
@@ -127,7 +127,7 @@ const FeedbackButtons = ({
   const handleThumbsDown = async () => {
     try {
       if (!userId) {
-        console.error("User ID is not available");
+        // console.error("User ID is not available");
         toast({
           title: "Error",
           description: "You must be logged in to provide feedback.",
@@ -142,7 +142,7 @@ const FeedbackButtons = ({
       // Update the UI first
       onFeedback(newFeedbackValue);
 
-      console.log(`Setting feedback to ${newFeedbackValue} for analysis ${analysisId}`);
+      // console.log(`Setting feedback to ${newFeedbackValue} for analysis ${analysisId}`);
 
       // Update the feedback in the database
       const { error: updateError } = await supabase
@@ -151,7 +151,7 @@ const FeedbackButtons = ({
         .eq("id", analysisId);
 
       if (updateError) {
-        console.error("Error updating feedback:", updateError);
+        // console.error("Error updating feedback:", updateError);
         // Revert UI change if database update failed
         onFeedback(feedback);
         toast({
@@ -171,7 +171,7 @@ const FeedbackButtons = ({
       });
       
     } catch (error) {
-      console.error("Error in thumbs down handler:", error);
+      // console.error("Error in thumbs down handler:", error);
       toast({
         title: "Error",
         description:

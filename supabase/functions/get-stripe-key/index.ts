@@ -5,7 +5,7 @@ import { corsHeaders } from "../_shared/cors.ts";
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    console.log("Handling OPTIONS preflight request");
+    // console.log("Handling OPTIONS preflight request");
     return new Response(null, { 
       status: 204, 
       headers: corsHeaders 
@@ -13,13 +13,13 @@ serve(async (req) => {
   }
 
   try {
-    console.log("get-stripe-key function called");
+    // console.log("get-stripe-key function called");
     
     // Get publishable key from environment
     const stripePublishableKey = Deno.env.get('STRIPE_PUBLISHABLE_KEY');
     
     if (!stripePublishableKey) {
-      console.error('STRIPE_PUBLISHABLE_KEY is not set in environment variables');
+      // console.error('STRIPE_PUBLISHABLE_KEY is not set in environment variables');
       return new Response(
         JSON.stringify({ 
           error: 'Stripe publishable key is not configured on the server' 
@@ -31,7 +31,7 @@ serve(async (req) => {
       );
     }
 
-    console.log('Successfully retrieved Stripe publishable key');
+    // console.log('Successfully retrieved Stripe publishable key');
     
     // Return the publishable key
     return new Response(
@@ -42,7 +42,7 @@ serve(async (req) => {
       }
     );
   } catch (error) {
-    console.error('Error in get-stripe-key function:', error);
+    // console.error('Error in get-stripe-key function:', error);
     return new Response(
       JSON.stringify({ error: error.message || 'An unexpected error occurred' }),
       { 

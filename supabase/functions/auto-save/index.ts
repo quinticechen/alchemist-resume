@@ -25,7 +25,7 @@ Deno.serve(async (req) => {
       .gte('updated_at', new Date(Date.now() - 10 * 60 * 1000).toISOString())
 
     if (analysesError) {
-      console.error('Error fetching analyses:', analysesError)
+      // console.error('Error fetching analyses:', analysesError)
       throw analysesError
     }
 
@@ -36,11 +36,11 @@ Deno.serve(async (req) => {
       .gte('updated_at', new Date(Date.now() - 10 * 60 * 1000).toISOString())
 
     if (resumesError) {
-      console.error('Error fetching resumes:', resumesError)
+      // console.error('Error fetching resumes:', resumesError)
       throw resumesError
     }
 
-    console.log(`Auto-save completed: ${analyses.length} analyses and ${resumes.length} resumes processed`)
+    // console.log(`Auto-save completed: ${analyses.length} analyses and ${resumes.length} resumes processed`)
 
     return new Response(
       JSON.stringify({
@@ -54,7 +54,7 @@ Deno.serve(async (req) => {
       }
     )
   } catch (error) {
-    console.error('Error in auto-save function:', error)
+    // console.error('Error in auto-save function:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
       {

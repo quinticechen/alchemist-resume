@@ -34,7 +34,7 @@ const SurveyPage = () => {
           .single();
 
         if (error) {
-          console.error("Error fetching profile:", error);
+          // console.error("Error fetching profile:", error);
           return;
         }
 
@@ -62,7 +62,7 @@ const SurveyPage = () => {
         .single();
 
       if (error) {
-        console.error("Error fetching profile:", error);
+        // console.error("Error fetching profile:", error);
         setIsLoading(false);
         return;
       }
@@ -137,7 +137,7 @@ const SurveyPage = () => {
 
       window.location.href = data.sessionUrl;
     } catch (error: any) {
-      console.error("Payment error:", error);
+      // console.error("Payment error:", error);
       toast({
         title: "Error",
         description: "Failed to initiate payment. Please try again.",

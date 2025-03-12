@@ -66,7 +66,7 @@ const PaymentSuccess: React.FC = () => {
       }
 
       if (sessionId === '{CHECKOUT_SESSION_ID}') {
-        console.error("Session ID is still a placeholder: {CHECKOUT_SESSION_ID}");
+        // console.error("Session ID is still a placeholder: {CHECKOUT_SESSION_ID}");
         setError("Invalid session ID format. The session ID is still a placeholder.");
         toast({
           title: "Invalid Session ID",
@@ -103,7 +103,7 @@ const PaymentSuccess: React.FC = () => {
                 .eq("id", user.id);
                 
               if (profileUpdateError) {
-                console.error("Error updating profile:", profileUpdateError);
+                // console.error("Error updating profile:", profileUpdateError);
               } else {
                 // console.log("Successfully updated user profile subscription status");
                 
@@ -142,7 +142,7 @@ const PaymentSuccess: React.FC = () => {
         // console.log("Function response:", data, "Error:", error);
 
         if (error) {
-          console.error("Payment verification error:", error);
+          // console.error("Payment verification error:", error);
           setError(`Function error: ${error.message || "Unknown error"}`);
           toast({
             title: "Payment Verification Failed",
@@ -154,7 +154,7 @@ const PaymentSuccess: React.FC = () => {
         } 
         
         if (!data) {
-          console.error("No data returned from verification function");
+          // console.error("No data returned from verification function");
           setError("No data returned from verification function");
           toast({
             title: "Payment Verification Failed",
@@ -166,7 +166,7 @@ const PaymentSuccess: React.FC = () => {
         }
         
         if (!data.success) {
-          console.error("Verification failed with data:", data);
+          // console.error("Verification failed with data:", data);
           setError(data.error || "Unknown verification error");
           toast({
             title: "Payment Verification Failed",
@@ -192,7 +192,7 @@ const PaymentSuccess: React.FC = () => {
               .single();
 
           if (transactionError) {
-            console.error("Error fetching transaction:", transactionError);
+            // console.error("Error fetching transaction:", transactionError);
             setError(`Transaction fetch error: ${transactionError.message}`);
             toast({
               title: "Transaction Fetch Failed",
@@ -210,7 +210,7 @@ const PaymentSuccess: React.FC = () => {
           description: "Your payment has been successfully verified.",
         });
       } catch (error: any) {
-        console.error("Error verifying payment:", error);
+        // console.error("Error verifying payment:", error);
         setError(`General error: ${error.message || "Unknown error"}`);
         toast({
           title: "Payment Verification Error",

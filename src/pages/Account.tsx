@@ -76,7 +76,7 @@ const Account = () => {
       setSubscription(subscription);
       setNewFullName(profile.full_name || "");
     } catch (error: any) {
-      console.error('Error fetching profile:', error);
+      // console.error('Error fetching profile:', error);
       toast({
         title: "Error",
         description: "Failed to load profile information",
@@ -117,7 +117,7 @@ const Account = () => {
         description: "Profile updated successfully",
       });
     } catch (error: any) {
-      console.error('Error updating profile:', error);
+      // console.error('Error updating profile:', error);
       toast({
         title: "Error",
         description: "Failed to update profile",

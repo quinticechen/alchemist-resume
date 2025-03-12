@@ -97,7 +97,7 @@ const AlchemistWorkshop = () => {
         .single();
 
       if (jobError) {
-        console.error("Error creating job record:", jobError);
+        // console.error("Error creating job record:", jobError);
         throw jobError;
       }
 
@@ -117,7 +117,7 @@ const AlchemistWorkshop = () => {
         .single();
 
       if (analysisError) {
-        console.error("Error creating analysis record:", analysisError);
+        // console.error("Error creating analysis record:", analysisError);
         throw analysisError;
       }
 
@@ -129,7 +129,7 @@ const AlchemistWorkshop = () => {
         .single();
 
       if (resumeError) {
-        console.error("Error fetching resume:", resumeError);
+        // console.error("Error fetching resume:", resumeError);
         throw resumeError;
       }
 
@@ -152,8 +152,8 @@ const AlchemistWorkshop = () => {
           ? "https://hook.eu2.make.com/pthisc4aefvf15i7pj4ja99a84dp7kce"
           : "https://hook.eu2.make.com/2up5vi5mr8jhhdl1eclyw3shu99uoxlb";
 
-      console.log(`Using ${currentEnv} webhook URL: ${makeWebhookUrl}`);
-      console.log("Sending webhook data:", webhookData);
+      // console.log(`Using ${currentEnv} webhook URL: ${makeWebhookUrl}`);
+      // console.log("Sending webhook data:", webhookData);
 
       const webhookResponse = await fetch(makeWebhookUrl, {
         method: "POST",
@@ -178,7 +178,7 @@ const AlchemistWorkshop = () => {
 
       // Set timeout for 5 minutes
       timeoutId.current = setTimeout(() => {
-        console.log("Timeout reached. Setting timeout state to true");
+        // console.log("Timeout reached. Setting timeout state to true");
         setIsTimeout(true);
         setIsProcessing(false);
 
@@ -192,7 +192,7 @@ const AlchemistWorkshop = () => {
           .eq("id", analysisRecord.id)
           .then(({ error }) => {
             if (error) {
-              console.error("Error updating analysis with timeout:", error);
+              // console.error("Error updating analysis with timeout:", error);
             }
           });
 
@@ -204,7 +204,7 @@ const AlchemistWorkshop = () => {
         });
       }, 5 * 60 * 1000);
     } catch (error) {
-      console.error("Error processing resume:", error);
+      // console.error("Error processing resume:", error);
       toast({
         title: "Error",
         description: "Failed to process resume. Please try again later.",

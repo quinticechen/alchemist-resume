@@ -14,7 +14,7 @@ Deno.serve(async (req) => {
 
   try {
     const { resumeId, jobUrl } = await req.json()
-    console.log('Received request:', { resumeId, jobUrl })
+    // console.log('Received request:', { resumeId, jobUrl })
 
     if (!resumeId || !jobUrl) {
       throw new Error('Both resumeId and jobUrl are required')
@@ -101,11 +101,11 @@ Deno.serve(async (req) => {
       throw new Error('Failed to send data to Make webhook')
     }
 
-    console.log('Successfully sent data to Make webhook:', {
-      analysisId: analysis.id,
-      resumeUrl: publicUrlData.publicUrl,
-      jobUrl: jobUrl,
-    })
+    // console.log('Successfully sent data to Make webhook:', {
+    //   analysisId: analysis.id,
+    //   resumeUrl: publicUrlData.publicUrl,
+    //   jobUrl: jobUrl,
+    // })
 
     return new Response(
       JSON.stringify({ 
@@ -118,7 +118,7 @@ Deno.serve(async (req) => {
       }
     )
   } catch (error) {
-    console.error('Error processing resume:', error)
+    // console.error('Error processing resume:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
       {

@@ -199,12 +199,12 @@ const Pricing = () => {
       );
 
       if (error) {
-        console.error("Stripe payment function error:", error);
+        // console.error("Stripe payment function error:", error);
         throw error;
       }
 
       if (!data?.sessionUrl) {
-        console.error("No checkout URL received from payment function:", data);
+        // console.error("No checkout URL received from payment function:", data);
         throw new Error("No checkout URL received from payment function");
       }
 

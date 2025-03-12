@@ -32,7 +32,7 @@ export const useAuth = () => {
       if (error) throw error;
       
     } catch (error: any) {
-      console.error(`${provider} login error:`, error);
+      // console.error(`${provider} login error:`, error);
       toast({
         title: "Authentication Error",
         description: error.message
@@ -101,7 +101,7 @@ export const useAuth = () => {
         }
       }
     } catch (error: any) {
-      console.error('Auth error:', error);
+      // console.error('Auth error:', error);
       toast({
         title: "Error",
         description: error.message

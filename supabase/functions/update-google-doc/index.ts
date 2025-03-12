@@ -17,12 +17,12 @@ Deno.serve(async (req) => {
     let requestBody;
     try {
       const text = await req.text();
-      console.log("Raw request body:", text);
+      // console.log("Raw request body:", text);
       
       // Parse the JSON directly without modifications
       requestBody = JSON.parse(text);
     } catch (parseError) {
-      console.error("JSON parsing error:", parseError.message);
+      // console.error("JSON parsing error:", parseError.message);
       return new Response(
         JSON.stringify({ error: `Invalid JSON: ${parseError.message}` }),
         {
@@ -34,12 +34,12 @@ Deno.serve(async (req) => {
 
     // Early return if there's an error in the request
     if (requestBody.error) {
-      console.log("Error received in request:", requestBody.error);
+      // console.log("Error received in request:", requestBody.error);
       
       // Check if analysisId looks like a valid UUID
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       if (!requestBody.analysisId || !uuidRegex.test(requestBody.analysisId)) {
-        console.error("Invalid analysisId format:", requestBody.analysisId);
+        // console.error("Invalid analysisId format:", requestBody.analysisId);
         return new Response(
           JSON.stringify({ 
             success: false, 
@@ -68,7 +68,7 @@ Deno.serve(async (req) => {
         .eq('id', requestBody.analysisId);
         
       if (updateError) {
-        console.error("Error updating analysis with error message:", updateError);
+        // console.error("Error updating analysis with error message:", updateError);
         return new Response(
           JSON.stringify({ 
             success: false, 
@@ -80,7 +80,7 @@ Deno.serve(async (req) => {
           }
         );
       } else {
-        console.log("Successfully updated analysis with error status for ID:", requestBody.analysisId);
+        // console.log("Successfully updated analysis with error status for ID:", requestBody.analysisId);
       }
       
       return new Response(
@@ -133,7 +133,7 @@ Deno.serve(async (req) => {
       .single();
 
     if (analysisError) {
-      console.error('Error fetching analysis:', analysisError);
+      // console.error('Error fetching analysis:', analysisError);
       throw analysisError;
     }
 
@@ -153,7 +153,7 @@ Deno.serve(async (req) => {
         .eq('id', analysis.job_id);
 
       if (jobUpdateError) {
-        console.error('Error updating job:', jobUpdateError);
+        // console.error('Error updating job:', jobUpdateError);
         throw jobUpdateError;
       }
     }
@@ -168,7 +168,7 @@ Deno.serve(async (req) => {
         .eq('id', analysis.resume_id);
 
       if (resumeUpdateError) {
-        console.error('Error updating resume:', resumeUpdateError);
+        // console.error('Error updating resume:', resumeUpdateError);
         throw resumeUpdateError;
       }
     }
@@ -190,11 +190,11 @@ Deno.serve(async (req) => {
       .eq('id', analysisId);
 
     if (analysisUpdateError) {
-      console.error('Error updating analysis:', analysisUpdateError);
+      // console.error('Error updating analysis:', analysisUpdateError);
       throw analysisUpdateError;
     }
 
-    console.log('Successfully updated records for analysis ID:', analysisId);
+    // console.log('Successfully updated records for analysis ID:', analysisId);
 
     return new Response(
       JSON.stringify({ 
@@ -207,7 +207,7 @@ Deno.serve(async (req) => {
       }
     );
   } catch (error) {
-    console.error('Error processing update:', error);
+    // console.error('Error processing update:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       {

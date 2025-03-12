@@ -70,7 +70,7 @@ const ProcessingPreview = ({
     
     // If timeout is externally set, update the status
     if (isTimeout) {
-      console.log("isTimeout prop is true, setting status to timeout");
+      // console.log("isTimeout prop is true, setting status to timeout");
       setStatus("timeout");
       return;
     }
@@ -85,16 +85,16 @@ const ProcessingPreview = ({
           .single();
 
         if (error) {
-          console.error("Error fetching analysis:", error);
+          // console.error("Error fetching analysis:", error);
           setStatus("error");
           setError("Failed to fetch analysis data");
           return;
         }
 
-        console.log("Fetched analysis data:", data);
+        // console.log("Fetched analysis data:", data);
 
         if (data?.error || data?.status === "error") {
-          console.log("Found error in analysis:", data.error);
+          // console.log("Found error in analysis:", data.error);
           setStatus("error");
           setError(data.error || "An error occurred during processing");
           if (setIsProcessing) {
@@ -104,7 +104,7 @@ const ProcessingPreview = ({
         }
 
         if (data?.status === "timeout") {
-          console.log("Analysis status is timeout");
+          // console.log("Analysis status is timeout");
           setStatus("timeout");
           setError(data.error || "Resume generation timed out. Please try again later.");
           if (setIsProcessing) {
@@ -125,7 +125,7 @@ const ProcessingPreview = ({
           setStatus("pending");
         }
       } catch (error) {
-        console.error("Error fetching analysis:", error);
+        // console.error("Error fetching analysis:", error);
         setStatus("error");
         setError("Failed to fetch analysis results");
       }
@@ -145,14 +145,14 @@ const ProcessingPreview = ({
           filter: `id=eq.${analysisId}`,
         },
         (payload) => {
-          console.log("Received realtime update:", payload);
+          // console.log("Received realtime update:", payload);
 
           if (payload.eventType === "UPDATE") {
             const newData = payload.new;
 
             // Check if there's an error in the update
             if (newData.error || newData.status === "error") {
-              console.log("Received error update:", newData.error);
+              // console.log("Received error update:", newData.error);
               setStatus("error");
               setError(newData.error || "An error occurred during processing");
 
@@ -164,7 +164,7 @@ const ProcessingPreview = ({
 
             // Check if status is timeout
             if (newData.status === "timeout") {
-              console.log("Received timeout update");
+              // console.log("Received timeout update");
               setStatus("timeout");
               setError(newData.error || "Resume generation took too long. Please try again later.");
               if (setIsProcessing) {
@@ -199,7 +199,7 @@ const ProcessingPreview = ({
     };
   }, [analysisId, toast, onGenerationComplete, setIsProcessing, isTimeout]);
 
-  console.log("Current status:", status);
+  // console.log("Current status:", status);
 
   // Always render the component based on status
   return (
@@ -233,7 +233,7 @@ const ProcessingPreview = ({
       {error && (status === "error" || status === "timeout") && (
         <div className="bg-red-50 border border-red-200 rounded-md p-4 mt-4">
           <p className="text-red-700 text-sm">
-            {error}
+            {/* {error} */}
           </p>
         </div>
       )}
