@@ -98,10 +98,10 @@ const JobUrlInput = ({
     await validateAndProcessJobUrl(url);
   };
 
-  // Input should be disabled during active processing on current page
-  const isInputDisabled = isProcessing && !isGenerationComplete;
+  // Input should be disabled during active processing or when generation is complete and button should be disabled
+  const isInputDisabled = isProcessing || isGenerationComplete;
   
-  // Button should only be disabled during active processing or when no URL is provided
+  // Button should be disabled during submission, when no URL is provided, during processing, or after generation is complete
   const isButtonDisabled = isSubmitting || !url || isInputDisabled;
 
   return (

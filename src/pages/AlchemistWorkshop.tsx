@@ -28,9 +28,13 @@ const AlchemistWorkshop = () => {
   const hasCheckedSubscription = useRef(false);
 
   useEffect(() => {
-    setIsProcessing(false);
-    setIsGenerationComplete(true);
-  }, []);
+    // Only reset processing state initially, but don't mark as complete
+    // unless we've already generated a resume
+    if (analysisId === "") {
+      setIsProcessing(false);
+      setIsGenerationComplete(false);
+    }
+  }, [analysisId]);
 
   // Check session and subscription
   useEffect(() => {
@@ -58,6 +62,13 @@ const AlchemistWorkshop = () => {
     setFilePath(path);
     setPublicUrl(url);
     setResumeId(id);
+    // Reset states when a new file is uploaded
+    setJobUrl("");
+    setAnalysisId("");
+    setIsProcessing(false);
+    setIsTimeout(false);
+    setIsGenerationComplete(false);
+    
     toast({
       title: "Upload successful",
       description: "Your resume has been uploaded successfully.",
@@ -65,6 +76,7 @@ const AlchemistWorkshop = () => {
   };
 
   const handleUrlSubmit = async (url: string) => {
+    // Reset states for new submission
     setIsProcessing(true);
     setIsTimeout(false);
     setIsGenerationComplete(false);

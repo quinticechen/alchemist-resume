@@ -55,7 +55,16 @@ const ProcessingPreview = ({
     },
   };
 
-  // Set up initial state and subscription
+  // Reset state when analysisId changes
+  useEffect(() => {
+    setGoogleDocUrl(null);
+    setGoldenResume(null);
+    setMatchScore(null);
+    setStatus(isTimeout ? "timeout" : "pending");
+    setError(null);
+  }, [analysisId, isTimeout]);
+
+  // Set up subscription and initial fetch
   useEffect(() => {
     if (!analysisId) return;
     
