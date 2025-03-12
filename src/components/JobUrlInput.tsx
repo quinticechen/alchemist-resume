@@ -88,7 +88,7 @@ const JobUrlInput = ({
         return;
       }
 
-      if (!hostname.includes("foundit.in") && url.includes("search")) {
+      if (!hostname.includes("foundit") && url.includes("search")) {
         toast({
           title: "Invalid URL",
           description:
