@@ -79,20 +79,21 @@ const JobUrlInput = ({
       //   });
       //   return;
       // }
-      if (!isValidUrl) {
-        toast({
-          title: "Invalid URL",
-          description: "This URL is not from a supported site.",
-          variant: "destructive",
-        });
-        return;
-      }
 
       if (!hostname.includes("foundit") && url.includes("search")) {
         toast({
           title: "Invalid URL",
           description:
             "This URL contains multiple or no job information, or search URLs are not allowed.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      if (!isValidUrl) {
+        toast({
+          title: "Invalid URL",
+          description: "This URL is not from a supported site.",
           variant: "destructive",
         });
         return;
