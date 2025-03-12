@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import ResumeUploader from "@/components/ResumeUploader";
@@ -28,15 +27,12 @@ const AlchemistWorkshop = () => {
   const hasCheckedSubscription = useRef(false);
 
   useEffect(() => {
-    // Only reset processing state initially, but don't mark as complete
-    // unless we've already generated a resume
     if (analysisId === "") {
       setIsProcessing(false);
       setIsGenerationComplete(false);
     }
   }, [analysisId]);
 
-  // Check session and subscription
   useEffect(() => {
     if (!isLoading && !session) {
       navigate("/login", { state: { from: "/alchemist-workshop" } });
@@ -62,7 +58,6 @@ const AlchemistWorkshop = () => {
     setFilePath(path);
     setPublicUrl(url);
     setResumeId(id);
-    // Reset states when a new file is uploaded
     setJobUrl("");
     setAnalysisId("");
     setIsProcessing(false);
@@ -76,7 +71,6 @@ const AlchemistWorkshop = () => {
   };
 
   const handleUrlSubmit = async (url: string) => {
-    // Reset states for new submission
     setIsProcessing(true);
     setIsTimeout(false);
     setIsGenerationComplete(false);
@@ -86,42 +80,37 @@ const AlchemistWorkshop = () => {
     }
 
     try {
-      // First, create a job entry in the jobs table
       const { data: jobData, error: jobError } = await supabase
         .from("jobs")
         .insert({
           company_url: url,
+          job_url: url,
           user_id: session?.user?.id,
         })
         .select()
         .single();
 
       if (jobError) {
-        // console.error("Error creating job record:", jobError);
         throw jobError;
       }
 
       const jobId = jobData.id;
 
-      // Then create the analysis record with the job_id
       const { data: analysisRecord, error: analysisError } = await supabase
         .from("resume_analyses")
         .insert({
           resume_id: resumeId,
-          job_url: url,
           job_id: jobId,
           user_id: session?.user?.id,
-          status: "pending", // Using the new enum value
+          status: "pending",
         })
         .select()
         .single();
 
       if (analysisError) {
-        // console.error("Error creating analysis record:", analysisError);
         throw analysisError;
       }
 
-      // Get resume details for the webhook
       const { data: resumeData, error: resumeError } = await supabase
         .from("resumes")
         .select("file_name, file_path")
@@ -129,7 +118,6 @@ const AlchemistWorkshop = () => {
         .single();
 
       if (resumeError) {
-        // console.error("Error fetching resume:", resumeError);
         throw resumeError;
       }
 
@@ -137,7 +125,6 @@ const AlchemistWorkshop = () => {
         .from("resumes")
         .getPublicUrl(resumeData.file_path);
 
-      // Prepare webhook data
       const webhookData = {
         analysisId: analysisRecord.id,
         jobId: jobId,
@@ -151,9 +138,6 @@ const AlchemistWorkshop = () => {
         currentEnv === "production"
           ? "https://hook.eu2.make.com/pthisc4aefvf15i7pj4ja99a84dp7kce"
           : "https://hook.eu2.make.com/2up5vi5mr8jhhdl1eclyw3shu99uoxlb";
-
-      // console.log(`Using ${currentEnv} webhook URL: ${makeWebhookUrl}`);
-      // console.log("Sending webhook data:", webhookData);
 
       const webhookResponse = await fetch(makeWebhookUrl, {
         method: "POST",
@@ -176,13 +160,10 @@ const AlchemistWorkshop = () => {
           "Your resume is being analyzed. Results will be available soon.",
       });
 
-      // Set timeout for 5 minutes
       timeoutId.current = setTimeout(() => {
-        // console.log("Timeout reached. Setting timeout state to true");
         setIsTimeout(true);
         setIsProcessing(false);
 
-        // Also update the analysis with a timeout status
         supabase
           .from("resume_analyses")
           .update({
@@ -204,7 +185,6 @@ const AlchemistWorkshop = () => {
         });
       }, 5 * 60 * 1000);
     } catch (error) {
-      // console.error("Error processing resume:", error);
       toast({
         title: "Error",
         description: "Failed to process resume. Please try again later.",

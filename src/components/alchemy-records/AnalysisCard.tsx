@@ -16,12 +16,12 @@ interface Job {
   job_title: string;
   company_name: string | null;
   company_url: string | null;
+  job_url: string | null; // Add job_url field
 }
 
 interface AnalysisCardProps {
   id: string;
   created_at: string;
-  job_url: string;
   google_doc_url: string | null;
   golden_resume: string | null;
   match_score: number | null;
@@ -38,7 +38,6 @@ interface AnalysisCardProps {
 const AnalysisCard = ({
   id,
   created_at,
-  job_url,
   google_doc_url,
   golden_resume,
   match_score,
@@ -93,11 +92,11 @@ const AnalysisCard = ({
       </div>
 
       <div className="mt-4 flex flex-wrap gap-4">
-        {job_url && (
+        {job?.job_url && (
           <Button
             variant="outline"
             size="sm"
-            onClick={() => window.open(job_url, '_blank')}
+            onClick={() => window.open(job.job_url, '_blank')}
             className="text-accent-2 border-accent-2/20 hover:bg-accent-2/5"
           >
             <LinkIcon className="h-4 w-4 mr-2" />

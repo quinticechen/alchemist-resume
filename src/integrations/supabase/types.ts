@@ -17,6 +17,7 @@ export type Database = {
           id: string
           job_description: Json | null
           job_title: string | null
+          job_url: string | null
           language: string | null
           updated_at: string | null
           user_id: string | null
@@ -28,6 +29,7 @@ export type Database = {
           id?: string
           job_description?: Json | null
           job_title?: string | null
+          job_url?: string | null
           language?: string | null
           updated_at?: string | null
           user_id?: string | null
@@ -39,6 +41,7 @@ export type Database = {
           id?: string
           job_description?: Json | null
           job_title?: string | null
+          job_url?: string | null
           language?: string | null
           updated_at?: string | null
           user_id?: string | null
@@ -123,7 +126,7 @@ export type Database = {
           google_doc_url: string | null
           id: string
           job_id: string | null
-          job_url: string
+          job_url: string | null
           match_score: number | null
           resume_id: string | null
           status: Database["public"]["Enums"]["analysis_status_type"] | null
@@ -138,7 +141,7 @@ export type Database = {
           google_doc_url?: string | null
           id?: string
           job_id?: string | null
-          job_url: string
+          job_url?: string | null
           match_score?: number | null
           resume_id?: string | null
           status?: Database["public"]["Enums"]["analysis_status_type"] | null
@@ -153,7 +156,7 @@ export type Database = {
           google_doc_url?: string | null
           id?: string
           job_id?: string | null
-          job_url?: string
+          job_url?: string | null
           match_score?: number | null
           resume_id?: string | null
           status?: Database["public"]["Enums"]["analysis_status_type"] | null

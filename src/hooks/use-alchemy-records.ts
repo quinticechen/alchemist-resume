@@ -6,7 +6,6 @@ import { useToast } from "@/hooks/use-toast";
 export interface ResumeAnalysis {
   id: string;
   created_at: string;
-  job_url: string;
   google_doc_url: string | null;
   golden_resume: string | null;
   match_score: number | null;
@@ -20,6 +19,7 @@ export interface ResumeAnalysis {
     job_title: string;
     company_name: string | null;
     company_url: string | null;
+    job_url: string | null; // Add job_url from jobs table
   } | null;
 }
 
@@ -57,12 +57,12 @@ export const useAlchemyRecords = () => {
         }
 
         // Fetch only records with google_doc_url
+        // Updated to include job_url from the jobs table
         const { data: analysesData, error } = await supabase
           .from('resume_analyses')
           .select(`
             id,
             created_at,
-            job_url,
             google_doc_url,
             golden_resume,
             match_score,
@@ -70,7 +70,8 @@ export const useAlchemyRecords = () => {
             job:job_id (
               job_title,
               company_name,
-              company_url
+              company_url,
+              job_url
             ),
             resume:resumes!resume_id (
               file_name,
@@ -105,19 +106,20 @@ export const useAlchemyRecords = () => {
           return {
             id: item.id,
             created_at: item.created_at,
-            job_url: item.job_url,
             google_doc_url: item.google_doc_url,
             golden_resume: item.golden_resume,
             match_score: item.match_score,
             feedback: item.feedback,
-            resume: resumeData,
-            job: jobData
+            resume: Array.isArray(item.resume) ? item.resume[0] : item.resume,
+            job: Array.isArray(item.job) && item.job.length > 0 
+              ? item.job[0] 
+              : (typeof item.job === 'object' ? item.job : null)
           };
         });
 
         setAnalyses(transformedData);
       } catch (error) {
-        // console.error('Error fetching data:', error);
+        // Error handling
       } finally {
         setLoading(false);
       }

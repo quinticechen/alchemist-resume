@@ -1,4 +1,3 @@
-
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
@@ -116,7 +115,8 @@ Deno.serve(async (req) => {
       jobDescription,
       goldenResume,
       originalResume,
-      matchScore
+      matchScore,
+      jobUrl
     } = requestBody;
 
     // Initialize Supabase client
@@ -133,11 +133,10 @@ Deno.serve(async (req) => {
       .single();
 
     if (analysisError) {
-      // console.error('Error fetching analysis:', analysisError);
       throw analysisError;
     }
 
-    // Update the jobs table with job information
+    // Update the jobs table with job information including job_url
     if (analysis.job_id) {
       const { error: jobUpdateError } = await supabaseClient
         .from('jobs')
@@ -146,6 +145,7 @@ Deno.serve(async (req) => {
           company_url: companyUrl,
           job_title: jobTitle,
           language: jobLanguage,
+          job_url: jobUrl,
           job_description: typeof jobDescription === 'string' 
             ? (jobDescription.startsWith('{') ? JSON.parse(jobDescription) : jobDescription) 
             : jobDescription
@@ -153,7 +153,6 @@ Deno.serve(async (req) => {
         .eq('id', analysis.job_id);
 
       if (jobUpdateError) {
-        // console.error('Error updating job:', jobUpdateError);
         throw jobUpdateError;
       }
     }
@@ -168,7 +167,6 @@ Deno.serve(async (req) => {
         .eq('id', analysis.resume_id);
 
       if (resumeUpdateError) {
-        // console.error('Error updating resume:', resumeUpdateError);
         throw resumeUpdateError;
       }
     }
@@ -190,7 +188,6 @@ Deno.serve(async (req) => {
       .eq('id', analysisId);
 
     if (analysisUpdateError) {
-      // console.error('Error updating analysis:', analysisUpdateError);
       throw analysisUpdateError;
     }
 
@@ -207,7 +204,6 @@ Deno.serve(async (req) => {
       }
     );
   } catch (error) {
-    // console.error('Error processing update:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       {

@@ -14,7 +14,6 @@ Deno.serve(async (req) => {
 
   try {
     const { resumeId, jobUrl } = await req.json()
-    // console.log('Received request:', { resumeId, jobUrl })
 
     if (!resumeId || !jobUrl) {
       throw new Error('Both resumeId and jobUrl are required')
@@ -43,11 +42,12 @@ Deno.serve(async (req) => {
       throw resumeError
     }
 
-    // Create or find job record
+    // Create or find job record with job_url
     const { data: jobData, error: jobError } = await supabaseClient
       .from('jobs')
       .insert({
         user_id: resume.user_id,
+        job_url: jobUrl, // Store job URL in jobs table
       })
       .select()
       .single()
@@ -66,7 +66,6 @@ Deno.serve(async (req) => {
       .from('resume_analyses')
       .insert({
         resume_id: resumeId,
-        job_url: jobUrl,
         user_id: resume.user_id,
         job_id: jobData.id,
         status: 'pending' // Using the new enum type value
@@ -101,12 +100,6 @@ Deno.serve(async (req) => {
       throw new Error('Failed to send data to Make webhook')
     }
 
-    // console.log('Successfully sent data to Make webhook:', {
-    //   analysisId: analysis.id,
-    //   resumeUrl: publicUrlData.publicUrl,
-    //   jobUrl: jobUrl,
-    // })
-
     return new Response(
       JSON.stringify({ 
         message: 'Processing started',
@@ -118,7 +111,6 @@ Deno.serve(async (req) => {
       }
     )
   } catch (error) {
-    // console.error('Error processing resume:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
       {
