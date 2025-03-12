@@ -19,7 +19,7 @@ export interface ResumeAnalysis {
     job_title: string;
     company_name: string | null;
     company_url: string | null;
-    job_url: string | null; // Add job_url from jobs table
+    job_url: string | null;
   } | null;
 }
 
@@ -110,10 +110,8 @@ export const useAlchemyRecords = () => {
             golden_resume: item.golden_resume,
             match_score: item.match_score,
             feedback: item.feedback,
-            resume: Array.isArray(item.resume) ? item.resume[0] : item.resume,
-            job: Array.isArray(item.job) && item.job.length > 0 
-              ? item.job[0] 
-              : (typeof item.job === 'object' ? item.job : null)
+            resume: resumeData,
+            job: jobData
           };
         });
 
