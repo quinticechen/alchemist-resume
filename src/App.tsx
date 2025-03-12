@@ -14,6 +14,7 @@ import SurveyPage from "@/pages/SurveyPage";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import PaymentSuccess from "@/pages/PaymentSuccess";
+import HomeV2 from "@/pages/HomeV2";
 import ScrollToTop from './components/ScrollToTop';
 
 const App = () => {
@@ -42,6 +43,7 @@ const App = () => {
               <Route path="/pricing" element={<Pricing />} />
               <Route path="/survey-page" element={<SurveyPage />} />
               <Route path="/payment-success" element={<PaymentSuccess />} />
+              <Route path="/homev2" element={<HomeV2 />} />
             </Routes>
           </main>
           <Footer />
