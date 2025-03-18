@@ -206,7 +206,7 @@ export type Database = {
           {
             foreignKeyName: "resume_editors_analysis_id_fkey"
             columns: ["analysis_id"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "resume_analyses"
             referencedColumns: ["id"]
           },

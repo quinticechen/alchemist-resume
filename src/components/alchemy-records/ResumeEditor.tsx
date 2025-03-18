@@ -107,6 +107,7 @@ const ResumeEditor: React.FC<ResumeEditorProps> = ({ resumeId, goldenResume, ana
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const { toast } = useToast();
   
   useEffect(() => {
@@ -122,11 +123,26 @@ const ResumeEditor: React.FC<ResumeEditorProps> = ({ resumeId, goldenResume, ana
         
         if (error) {
           console.error('Error loading resume data:', error);
-          // If no existing data, and we have a golden resume, parse it
+          // If no existing data, create a new record with the golden resume
           if (goldenResume) {
             const parsedSections = parseGoldenResume(goldenResume);
             setSections(parsedSections);
             console.log('Initialized with golden resume sections:', parsedSections);
+            
+            // Create a new record in resume_editors
+            const { error: insertError } = await supabase
+              .from('resume_editors')
+              .insert({
+                analysis_id: analysisId,
+                content: JSON.stringify(parsedSections),
+                last_saved: new Date().toISOString()
+              });
+              
+            if (insertError) {
+              console.error('Error creating resume editor record:', insertError);
+            } else {
+              setLastSaved(new Date());
+            }
           }
         } else if (data) {
           // We have existing data, so use it
@@ -155,16 +171,41 @@ const ResumeEditor: React.FC<ResumeEditorProps> = ({ resumeId, goldenResume, ana
     
     // Set up autosave
     const autosaveInterval = setInterval(() => {
-      handleSave(true);
-    }, 30000); // Autosave every 30 seconds
+      if (hasUnsavedChanges) {
+        handleSave(true);
+      }
+    }, 30000); // Autosave every 30 seconds if there are changes
     
-    return () => clearInterval(autosaveInterval);
-  }, [analysisId, goldenResume]);
+    // Set up beforeunload event to warn users about unsaved changes
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = '';
+        
+        // Show a toast notification
+        toast({
+          title: "Unsaved changes",
+          description: "You have unsaved changes. Please save before leaving.",
+          variant: "destructive"
+        });
+        
+        return '';
+      }
+    };
+    
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    
+    return () => {
+      clearInterval(autosaveInterval);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [analysisId, goldenResume, hasUnsavedChanges]);
   
   const handleContentChange = (id: string, newContent: string) => {
     setSections(sections.map(section => 
       section.id === id ? { ...section, content: newContent } : section
     ));
+    setHasUnsavedChanges(true);
   };
   
   const handleSave = async (isAutosave = false) => {
@@ -174,13 +215,11 @@ const ResumeEditor: React.FC<ResumeEditorProps> = ({ resumeId, goldenResume, ana
     try {
       const { error } = await supabase
         .from('resume_editors')
-        .upsert({
-          analysis_id: analysisId,
+        .update({
           content: JSON.stringify(sections),
           last_saved: new Date().toISOString()
-        }, {
-          onConflict: 'analysis_id'
-        });
+        })
+        .eq('analysis_id', analysisId);
       
       if (error) {
         console.error('Error saving resume data:', error);
@@ -191,6 +230,7 @@ const ResumeEditor: React.FC<ResumeEditorProps> = ({ resumeId, goldenResume, ana
         });
       } else {
         setLastSaved(new Date());
+        setHasUnsavedChanges(false);
         if (!isAutosave) {
           toast({
             title: "Resume saved",
@@ -234,7 +274,7 @@ const ResumeEditor: React.FC<ResumeEditorProps> = ({ resumeId, goldenResume, ana
   return (
     <div className="flex h-full flex-col md:flex-row gap-4">
       <div className="w-full md:w-1/3 overflow-y-auto border-r pr-4">
-        <Tabs value={activeTab} onValueChange={setActiveTab} orientation="vertical" className="h-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full">
           <TabsList className="flex flex-col w-full h-auto">
             {sections.map(section => (
               <TabsTrigger 
@@ -246,33 +286,38 @@ const ResumeEditor: React.FC<ResumeEditorProps> = ({ resumeId, goldenResume, ana
               </TabsTrigger>
             ))}
           </TabsList>
-        </Tabs>
         
-        <div className="mt-4 space-y-2">
-          <Button 
-            onClick={() => handleSave()}
-            disabled={isSaving}
-            className="w-full"
-          >
-            <Save className="mr-2 h-4 w-4" />
-            {isSaving ? 'Saving...' : 'Save Resume'}
-          </Button>
-          
-          <Button 
-            variant="outline"
-            onClick={handleExport}
-            className="w-full"
-          >
-            <Download className="mr-2 h-4 w-4" />
-            Export as Text
-          </Button>
-          
-          {lastSaved && (
-            <p className="text-xs text-muted-foreground text-center mt-2">
-              Last saved: {lastSaved.toLocaleTimeString()}
-            </p>
-          )}
-        </div>
+          <div className="mt-4 space-y-2">
+            <Button 
+              onClick={() => handleSave()}
+              disabled={isSaving || !hasUnsavedChanges}
+              className="w-full"
+            >
+              <Save className="mr-2 h-4 w-4" />
+              {isSaving ? 'Saving...' : 'Save Resume'}
+            </Button>
+            
+            <Button 
+              variant="outline"
+              onClick={handleExport}
+              className="w-full"
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Export as Text
+            </Button>
+            
+            {lastSaved && (
+              <p className="text-xs text-muted-foreground text-center mt-2">
+                Last saved: {lastSaved.toLocaleTimeString()}
+              </p>
+            )}
+            {hasUnsavedChanges && (
+              <p className="text-xs text-amber-500 text-center mt-2">
+                You have unsaved changes
+              </p>
+            )}
+          </div>
+        </Tabs>
       </div>
       
       <div className="w-full md:w-2/3 overflow-y-auto">
