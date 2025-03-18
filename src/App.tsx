@@ -41,6 +41,10 @@ const App = () => {
                 path="/resume-refine" 
                 element={<ResumeRefine />}
               />
+              <Route 
+                path="/resume-refine/:analysisId" 
+                element={<ResumeRefine />}
+              />
               <Route path="/account" element={<Account />} />
               <Route path="/login" element={<Login />} />
               <Route path="/terms" element={<Terms />} />

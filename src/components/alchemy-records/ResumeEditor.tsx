@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Save, FileText, Download } from "lucide-react";
+import { Save, FileText, Download, MessageSquare } from "lucide-react";
+import AIChatInterface from './AIChatInterface';
 
 interface ResumeEditorProps {
   resumeId: string;
@@ -108,6 +109,7 @@ const ResumeEditor: React.FC<ResumeEditorProps> = ({ resumeId, goldenResume, ana
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [showChat, setShowChat] = useState(false);
   const { toast } = useToast();
   
   useEffect(() => {
@@ -266,75 +268,101 @@ const ResumeEditor: React.FC<ResumeEditorProps> = ({ resumeId, goldenResume, ana
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   };
+
+  const handleApplySuggestion = (text: string, sectionId: string) => {
+    handleContentChange(sectionId, text);
+  };
   
   if (isLoading) {
     return <div className="flex items-center justify-center h-full">Loading resume data...</div>;
   }
   
   return (
-    <div className="flex h-full flex-col md:flex-row gap-4">
-      <div className="w-full md:w-1/3 overflow-y-auto border-r pr-4">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full">
-          <TabsList className="flex flex-col w-full h-auto">
-            {sections.map(section => (
-              <TabsTrigger 
-                key={section.id} 
-                value={section.id}
-                className="justify-start w-full"
+    <div className="flex h-full flex-col">
+      <div className="flex h-full flex-col md:flex-row gap-4">
+        <div className="w-full md:w-1/3 overflow-y-auto border-r pr-4">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full">
+            <TabsList className="flex flex-col w-full h-auto">
+              {sections.map(section => (
+                <TabsTrigger 
+                  key={section.id} 
+                  value={section.id}
+                  className="justify-start w-full"
+                >
+                  {section.title}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          
+            <div className="mt-4 space-y-2">
+              <Button 
+                onClick={() => handleSave()}
+                disabled={isSaving || !hasUnsavedChanges}
+                className="w-full"
               >
-                {section.title}
-              </TabsTrigger>
-            ))}
-          </TabsList>
+                <Save className="mr-2 h-4 w-4" />
+                {isSaving ? 'Saving...' : 'Save Resume'}
+              </Button>
+              
+              <Button 
+                variant="outline"
+                onClick={handleExport}
+                className="w-full"
+              >
+                <Download className="mr-2 h-4 w-4" />
+                Export as Text
+              </Button>
+
+              <Button 
+                variant="outline"
+                onClick={() => setShowChat(!showChat)}
+                className="w-full"
+              >
+                <MessageSquare className="mr-2 h-4 w-4" />
+                {showChat ? 'Hide AI Assistant' : 'Show AI Assistant'}
+              </Button>
+              
+              {lastSaved && (
+                <p className="text-xs text-muted-foreground text-center mt-2">
+                  Last saved: {lastSaved.toLocaleTimeString()}
+                </p>
+              )}
+              {hasUnsavedChanges && (
+                <p className="text-xs text-amber-500 text-center mt-2">
+                  You have unsaved changes
+                </p>
+              )}
+            </div>
+          </Tabs>
+        </div>
         
-          <div className="mt-4 space-y-2">
-            <Button 
-              onClick={() => handleSave()}
-              disabled={isSaving || !hasUnsavedChanges}
-              className="w-full"
-            >
-              <Save className="mr-2 h-4 w-4" />
-              {isSaving ? 'Saving...' : 'Save Resume'}
-            </Button>
-            
-            <Button 
-              variant="outline"
-              onClick={handleExport}
-              className="w-full"
-            >
-              <Download className="mr-2 h-4 w-4" />
-              Export as Text
-            </Button>
-            
-            {lastSaved && (
-              <p className="text-xs text-muted-foreground text-center mt-2">
-                Last saved: {lastSaved.toLocaleTimeString()}
-              </p>
-            )}
-            {hasUnsavedChanges && (
-              <p className="text-xs text-amber-500 text-center mt-2">
-                You have unsaved changes
-              </p>
-            )}
+        <div className={`w-full ${showChat ? 'md:w-1/3' : 'md:w-2/3'} overflow-y-auto`}>
+          <Tabs value={activeTab} className="w-full" onValueChange={setActiveTab}>
+            {sections.map(section => (
+              <TabsContent key={section.id} value={section.id} className="mt-0">
+                <div className="p-4">
+                  <h3 className="text-lg font-semibold mb-2">{section.title}</h3>
+                  <Textarea
+                    value={section.content}
+                    onChange={(e) => handleContentChange(section.id, e.target.value)}
+                    className="min-h-[300px] font-mono"
+                  />
+                </div>
+              </TabsContent>
+            ))}
+          </Tabs>
+        </div>
+
+        {showChat && (
+          <div className="w-full md:w-1/3 overflow-y-auto border-l pl-4">
+            <AIChatInterface 
+              resumeId={resumeId}
+              analysisId={analysisId}
+              onSuggestionApply={handleApplySuggestion}
+              currentSectionId={activeTab}
+            />
           </div>
-        </Tabs>
-      </div>
-      
-      <div className="w-full md:w-2/3 overflow-y-auto">
-        <Tabs value={activeTab} className="w-full" onValueChange={setActiveTab}>
-          {sections.map(section => (
-            <TabsContent key={section.id} value={section.id} className="mt-0">
-              <div className="p-4">
-                <h3 className="text-lg font-semibold mb-2">{section.title}</h3>
-                <Textarea
-                  value={section.content}
-                  onChange={(e) => handleContentChange(section.id, e.target.value)}
-                  className="min-h-[300px] font-mono"
-                />
-              </div>
-            </TabsContent>
-          ))}
-        </Tabs>
+        )}
       </div>
     </div>
   );
