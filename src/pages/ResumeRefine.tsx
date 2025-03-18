@@ -63,7 +63,7 @@ const ResumeRefine = () => {
           toast({
             title: "Don't forget to save",
             description: "You have unsaved changes. Make sure to save before leaving.",
-            variant: "warning"
+            variant: "destructive" // Changed from "warning" to "destructive" as it's a valid variant
           });
         } else {
           navigate('/alchemy-records');
