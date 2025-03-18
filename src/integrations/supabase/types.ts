@@ -9,6 +9,50 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      ai_chat_messages: {
+        Row: {
+          analysis_id: string
+          content: string
+          created_at: string
+          id: string
+          role: string
+          section: string | null
+          suggestion: string | null
+          timestamp: string
+          updated_at: string
+        }
+        Insert: {
+          analysis_id: string
+          content: string
+          created_at?: string
+          id: string
+          role: string
+          section?: string | null
+          suggestion?: string | null
+          timestamp?: string
+          updated_at?: string
+        }
+        Update: {
+          analysis_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          role?: string
+          section?: string | null
+          suggestion?: string | null
+          timestamp?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_chat_messages_analysis_id_fkey"
+            columns: ["analysis_id"]
+            isOneToOne: false
+            referencedRelation: "resume_analyses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       jobs: {
         Row: {
           company_name: string | null

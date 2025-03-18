@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card } from "@/components/ui/card";
-import { Send, ChevronDown, User, Bot } from "lucide-react";
+import { Send, ChevronDown, User, Bot, Zap } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -13,6 +13,7 @@ interface AIChatInterfaceProps {
   analysisId: string;
   onSuggestionApply: (text: string, sectionId: string) => void;
   currentSectionId: string;
+  currentSectionContent?: string;
 }
 
 interface ChatMessage {
@@ -28,7 +29,8 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
   resumeId, 
   analysisId,
   onSuggestionApply,
-  currentSectionId
+  currentSectionId,
+  currentSectionContent
 }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
@@ -36,8 +38,9 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
   const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [showChat, setShowChat] = useState(true);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  // Load existing chat messages on component mount
+  // Load existing chat messages on component mount or when analysisId changes
   useEffect(() => {
     const loadChatHistory = async () => {
       try {
@@ -202,18 +205,50 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
     });
   };
 
+  const handleOptimizeCurrentSection = () => {
+    if (!currentSectionContent) {
+      toast({
+        title: "No content to optimize",
+        description: "Please select a section with content first.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // Set a prompt to optimize the current section
+    const optimizePrompt = `Please optimize this resume section to make it more professional and impactful: "${currentSectionContent}"`;
+    setInput(optimizePrompt);
+    
+    // Focus the textarea
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  };
+
   return (
     <div className="relative rounded-xl bg-white shadow-apple h-full">
       <div className="flex items-center justify-between p-4 border-b">
         <h3 className="text-lg font-semibold">AI Resume Assistant</h3>
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          onClick={() => setShowChat(!showChat)}
-          aria-label={showChat ? "Collapse chat" : "Expand chat"}
-        >
-          <ChevronDown className={`h-5 w-5 transition-transform ${showChat ? '' : 'transform rotate-180'}`} />
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleOptimizeCurrentSection}
+            title="Optimize current section"
+            className="flex items-center gap-1"
+          >
+            <Zap className="h-4 w-4" />
+            <span className="hidden sm:inline">Optimize</span>
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => setShowChat(!showChat)}
+            aria-label={showChat ? "Collapse chat" : "Expand chat"}
+          >
+            <ChevronDown className={`h-5 w-5 transition-transform ${showChat ? '' : 'transform rotate-180'}`} />
+          </Button>
+        </div>
       </div>
       
       {showChat && (
@@ -258,6 +293,7 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
           <div className="p-4 border-t">
             <div className="flex gap-2">
               <Textarea
+                ref={inputRef}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}

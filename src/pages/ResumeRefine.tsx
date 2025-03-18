@@ -28,7 +28,7 @@ const ResumeRefine = () => {
   // Fetch resume data if only analysis ID is provided in URL
   useEffect(() => {
     const fetchResumeData = async () => {
-      if (analysisId && !resumeId && !session?.user?.id) {
+      if (analysisId && !resumeId && session?.user?.id) {
         try {
           const { data, error } = await supabase
             .from('resume_analyses')
@@ -115,22 +115,15 @@ const ResumeRefine = () => {
 
   const handleClose = () => {
     // Check if there are unsaved changes
-    supabase
-      .from('resume_editors')
-      .select('*')
-      .eq('analysis_id', analysisId)
-      .single()
-      .then(({ data, error }) => {
-        if (!error && data && hasUnsavedChanges) {
-          toast({
-            title: "Don't forget to save",
-            description: "You have unsaved changes. Make sure to save before leaving.",
-            variant: "destructive" // Changed from "warning" to "destructive" as it's a valid variant
-          });
-        } else {
-          navigate('/alchemy-records');
-        }
+    if (hasUnsavedChanges) {
+      toast({
+        title: "Don't forget to save",
+        description: "You have unsaved changes. Make sure to save before leaving.",
+        variant: "destructive" 
       });
+    } else {
+      navigate('/alchemy-records');
+    }
   };
 
   return (
@@ -152,6 +145,7 @@ const ResumeRefine = () => {
                 goldenResume={resumeData.goldenResume}
                 analysisId={analysisId}
                 onClose={handleClose}
+                setHasUnsavedChanges={setHasUnsavedChanges}
               />
             )}
           </div>
