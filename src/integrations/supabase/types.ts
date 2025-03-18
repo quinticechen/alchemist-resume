@@ -177,6 +177,41 @@ export type Database = {
           },
         ]
       }
+      resume_editors: {
+        Row: {
+          analysis_id: string
+          content: Json
+          created_at: string | null
+          id: string
+          last_saved: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          analysis_id: string
+          content?: Json
+          created_at?: string | null
+          id?: string
+          last_saved?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          analysis_id?: string
+          content?: Json
+          created_at?: string | null
+          id?: string
+          last_saved?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resume_editors_analysis_id_fkey"
+            columns: ["analysis_id"]
+            isOneToOne: false
+            referencedRelation: "resume_analyses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       resumes: {
         Row: {
           created_at: string
