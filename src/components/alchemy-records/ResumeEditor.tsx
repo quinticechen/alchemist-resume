@@ -32,8 +32,77 @@ const initialSections: ResumeSection[] = [
   { id: 'guidance', title: 'Optimization Guidance', content: '• Add specific metrics to showcase achievements\n• Focus on results rather than responsibilities' },
 ];
 
+// Parse golden resume into sections
+const parseGoldenResume = (goldenResume: string): ResumeSection[] => {
+  if (!goldenResume) return initialSections;
+  
+  try {
+    const sections = [...initialSections];
+    
+    // Simple parsing based on section titles in uppercase
+    const potentialSections = [
+      { id: 'header', title: 'CONTACT INFORMATION', regex: /CONTACT INFORMATION|FULL NAME/i },
+      { id: 'summary', title: 'PROFESSIONAL SUMMARY', regex: /PROFESSIONAL SUMMARY|SUMMARY/i },
+      { id: 'experience', title: 'PROFESSIONAL EXPERIENCE', regex: /PROFESSIONAL EXPERIENCE|EXPERIENCE|WORK EXPERIENCE/i },
+      { id: 'projects', title: 'PROJECTS', regex: /PROJECTS/i },
+      { id: 'volunteer', title: 'VOLUNTEER', regex: /VOLUNTEER/i },
+      { id: 'education', title: 'EDUCATION', regex: /EDUCATION/i },
+      { id: 'skills', title: 'SKILLS', regex: /SKILLS/i },
+      { id: 'certifications', title: 'CERTIFICATIONS', regex: /CERTIFICATIONS|LICENSES/i },
+    ];
+    
+    // Split the golden resume into lines
+    const lines = goldenResume.split('\n');
+    let currentSection: string | null = null;
+    let currentContent: string[] = [];
+    
+    // Process each line
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      
+      // Check if this line is a section header
+      const sectionMatch = potentialSections.find(section => 
+        section.regex.test(line)
+      );
+      
+      if (sectionMatch) {
+        // If we were already collecting content for a section, save it
+        if (currentSection) {
+          const sectionToUpdate = sections.find(s => s.id === currentSection);
+          if (sectionToUpdate) {
+            sectionToUpdate.content = currentContent.join('\n');
+          }
+          currentContent = [];
+        }
+        
+        // Start collecting content for the new section
+        currentSection = sectionMatch.id;
+      } else if (currentSection) {
+        // Add this line to the current section's content
+        currentContent.push(line);
+      }
+    }
+    
+    // Save the last section's content if there is any
+    if (currentSection && currentContent.length > 0) {
+      const sectionToUpdate = sections.find(s => s.id === currentSection);
+      if (sectionToUpdate) {
+        sectionToUpdate.content = currentContent.join('\n');
+      }
+    }
+    
+    return sections;
+  } catch (error) {
+    console.error('Error parsing golden resume:', error);
+    return initialSections;
+  }
+};
+
 const ResumeEditor: React.FC<ResumeEditorProps> = ({ resumeId, goldenResume, analysisId, onClose }) => {
-  const [sections, setSections] = useState<ResumeSection[]>(initialSections);
+  const [sections, setSections] = useState<ResumeSection[]>(() => {
+    // Initialize with parsed golden resume if available
+    return goldenResume ? parseGoldenResume(goldenResume) : initialSections;
+  });
   const [activeTab, setActiveTab] = useState('header');
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -55,8 +124,9 @@ const ResumeEditor: React.FC<ResumeEditorProps> = ({ resumeId, goldenResume, ana
           console.error('Error loading resume data:', error);
           // If no existing data, and we have a golden resume, parse it
           if (goldenResume) {
-            // Here we could add logic to parse the golden resume into sections
-            // For now, we'll just use our initial sections
+            const parsedSections = parseGoldenResume(goldenResume);
+            setSections(parsedSections);
+            console.log('Initialized with golden resume sections:', parsedSections);
           }
         } else if (data) {
           // We have existing data, so use it
@@ -64,6 +134,7 @@ const ResumeEditor: React.FC<ResumeEditorProps> = ({ resumeId, goldenResume, ana
             const parsedSections = JSON.parse(data.content);
             if (Array.isArray(parsedSections)) {
               setSections(parsedSections);
+              console.log('Loaded saved sections from database:', parsedSections);
             }
           } catch (e) {
             console.error('Error parsing resume content:', e);
