@@ -1,10 +1,12 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { FileText, Link as LinkIcon, Crown } from "lucide-react";
+import { FileText, Link as LinkIcon, Crown, Pencil } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import AnalysisTitle from './AnalysisTitle';
 import FeedbackButtons from './FeedbackButtons';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import ResumeEditor from './ResumeEditor';
 
 interface Resume {
   file_name: string;
@@ -52,6 +54,7 @@ const AnalysisCard = ({
 }: AnalysisCardProps) => {
   // Get the job title from either the job object or use a default
   const jobTitle = job?.job_title || 'Unnamed Position';
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
   
   return (
     <div className="bg-white rounded-xl p-6 shadow-apple">
@@ -145,7 +148,33 @@ const AnalysisCard = ({
             Golden Resume
           </Button>
         )}
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setIsEditorOpen(true)}
+          className="text-success border-success/20 hover:bg-success/5"
+        >
+          <Pencil className="h-4 w-4 mr-2" />
+          Edit Resume
+        </Button>
       </div>
+
+      <Dialog open={isEditorOpen} onOpenChange={setIsEditorOpen}>
+        <DialogContent className="max-w-5xl h-[80vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>Resume Editor - {jobTitle}</DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-hidden">
+            <ResumeEditor 
+              resumeId={resume?.file_path} 
+              goldenResume={golden_resume}
+              analysisId={id}
+              onClose={() => setIsEditorOpen(false)}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
