@@ -234,18 +234,19 @@ const ResumeEditor: React.FC<ResumeEditorProps> = ({ resumeId, goldenResume, ana
   return (
     <div className="flex h-full flex-col md:flex-row gap-4">
       <div className="w-full md:w-1/3 overflow-y-auto border-r pr-4">
-        <TabsList className="flex flex-col w-full h-auto">
-          {sections.map(section => (
-            <TabsTrigger 
-              key={section.id} 
-              value={section.id}
-              className="justify-start w-full"
-              onClick={() => setActiveTab(section.id)}
-            >
-              {section.title}
-            </TabsTrigger>
-          ))}
-        </TabsList>
+        <Tabs value={activeTab} onValueChange={setActiveTab} orientation="vertical" className="h-full">
+          <TabsList className="flex flex-col w-full h-auto">
+            {sections.map(section => (
+              <TabsTrigger 
+                key={section.id} 
+                value={section.id}
+                className="justify-start w-full"
+              >
+                {section.title}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
         
         <div className="mt-4 space-y-2">
           <Button 

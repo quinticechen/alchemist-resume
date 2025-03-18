@@ -1,9 +1,11 @@
+
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Home from "@/pages/Home";
 import AlchemistWorkshop from "@/pages/AlchemistWorkshop";
 import AlchemyRecords from "@/pages/AlchemyRecords";
+import ResumeRefine from "@/pages/ResumeRefine";
 import Account from "@/pages/Account";
 import Login from "@/pages/Login";
 import Terms from "@/pages/Terms";
@@ -34,6 +36,10 @@ const App = () => {
               <Route 
                 path="/alchemy-records" 
                 element={<AlchemyRecords />}
+              />
+              <Route 
+                path="/resume-refine" 
+                element={<ResumeRefine />}
               />
               <Route path="/account" element={<Account />} />
               <Route path="/login" element={<Login />} />
