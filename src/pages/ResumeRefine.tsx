@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from "@/contexts/AuthContext";
@@ -22,10 +21,8 @@ const ResumeRefine = () => {
   } | null>(null);
   const { toast } = useToast();
 
-  // Use analysis ID from URL params if available, otherwise from location state
   const analysisId = paramAnalysisId || locationAnalysisId;
 
-  // Fetch resume data if only analysis ID is provided in URL
   useEffect(() => {
     const fetchResumeData = async () => {
       if (analysisId && !resumeId && session?.user?.id) {
@@ -56,7 +53,6 @@ const ResumeRefine = () => {
           navigate('/alchemy-records');
         }
       } else if (resumeId && analysisId) {
-        // If we have both IDs from location state, set the data directly
         setResumeData({
           resumeId,
           goldenResume,
@@ -71,18 +67,15 @@ const ResumeRefine = () => {
     }
   }, [session, analysisId, resumeId, goldenResume, jobTitle]);
 
-  // Redirect to login if not authenticated
   useEffect(() => {
     if (!isLoading && !session) {
       navigate('/login', { state: { from: '/resume-refine' } });
     }
     
-    // If no analysis ID provided, go back to records
     if (!isLoading && session && !analysisId) {
       navigate('/alchemy-records');
     }
 
-    // Handle beforeunload to warn about unsaved changes
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (hasUnsavedChanges) {
         const message = "You have unsaved changes. Are you sure you want to leave?";
@@ -98,23 +91,19 @@ const ResumeRefine = () => {
     };
   }, [session, isLoading, navigate, analysisId, hasUnsavedChanges]);
 
-  // Show loading state while checking authentication
   if (isLoading) {
     return <div className="container mx-auto px-4 py-8">Loading...</div>;
   }
 
-  // Don't render anything if not authenticated or no analysis ID
   if (!session || !analysisId) {
     return null;
   }
 
-  // If we're still loading resume data
   if (!resumeData && analysisId) {
     return <div className="container mx-auto px-4 py-8">Loading resume data...</div>;
   }
 
   const handleClose = () => {
-    // Check if there are unsaved changes
     if (hasUnsavedChanges) {
       toast({
         title: "Don't forget to save",

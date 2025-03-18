@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -13,6 +12,7 @@ interface ResumeEditorProps {
   goldenResume: string | null;
   analysisId: string;
   onClose: () => void;
+  setHasUnsavedChanges: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 interface ResumeSection {
@@ -33,14 +33,12 @@ const initialSections: ResumeSection[] = [
   { id: 'guidance', title: 'Optimization Guidance', content: '• Add specific metrics to showcase achievements\n• Focus on results rather than responsibilities' },
 ];
 
-// Parse golden resume into sections
 const parseGoldenResume = (goldenResume: string): ResumeSection[] => {
   if (!goldenResume) return initialSections;
   
   try {
     const sections = [...initialSections];
     
-    // Simple parsing based on section titles in uppercase
     const potentialSections = [
       { id: 'header', title: 'CONTACT INFORMATION', regex: /CONTACT INFORMATION|FULL NAME/i },
       { id: 'summary', title: 'PROFESSIONAL SUMMARY', regex: /PROFESSIONAL SUMMARY|SUMMARY/i },
@@ -52,22 +50,18 @@ const parseGoldenResume = (goldenResume: string): ResumeSection[] => {
       { id: 'certifications', title: 'CERTIFICATIONS', regex: /CERTIFICATIONS|LICENSES/i },
     ];
     
-    // Split the golden resume into lines
     const lines = goldenResume.split('\n');
     let currentSection: string | null = null;
     let currentContent: string[] = [];
     
-    // Process each line
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].trim();
       
-      // Check if this line is a section header
       const sectionMatch = potentialSections.find(section => 
         section.regex.test(line)
       );
       
       if (sectionMatch) {
-        // If we were already collecting content for a section, save it
         if (currentSection) {
           const sectionToUpdate = sections.find(s => s.id === currentSection);
           if (sectionToUpdate) {
@@ -75,16 +69,12 @@ const parseGoldenResume = (goldenResume: string): ResumeSection[] => {
           }
           currentContent = [];
         }
-        
-        // Start collecting content for the new section
         currentSection = sectionMatch.id;
       } else if (currentSection) {
-        // Add this line to the current section's content
         currentContent.push(line);
       }
     }
     
-    // Save the last section's content if there is any
     if (currentSection && currentContent.length > 0) {
       const sectionToUpdate = sections.find(s => s.id === currentSection);
       if (sectionToUpdate) {
@@ -99,21 +89,24 @@ const parseGoldenResume = (goldenResume: string): ResumeSection[] => {
   }
 };
 
-const ResumeEditor: React.FC<ResumeEditorProps> = ({ resumeId, goldenResume, analysisId, onClose }) => {
+const ResumeEditor: React.FC<ResumeEditorProps> = ({ 
+  resumeId, 
+  goldenResume, 
+  analysisId, 
+  onClose,
+  setHasUnsavedChanges 
+}) => {
   const [sections, setSections] = useState<ResumeSection[]>(() => {
-    // Initialize with parsed golden resume if available
     return goldenResume ? parseGoldenResume(goldenResume) : initialSections;
   });
   const [activeTab, setActiveTab] = useState('header');
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showChat, setShowChat] = useState(false);
   const { toast } = useToast();
   
   useEffect(() => {
-    // Try to load existing resume data if available
     const loadResumeData = async () => {
       setIsLoading(true);
       try {
@@ -125,13 +118,11 @@ const ResumeEditor: React.FC<ResumeEditorProps> = ({ resumeId, goldenResume, ana
         
         if (error) {
           console.error('Error loading resume data:', error);
-          // If no existing data, create a new record with the golden resume
           if (goldenResume) {
             const parsedSections = parseGoldenResume(goldenResume);
             setSections(parsedSections);
             console.log('Initialized with golden resume sections:', parsedSections);
             
-            // Create a new record in resume_editors
             const { error: insertError } = await supabase
               .from('resume_editors')
               .insert({
@@ -147,7 +138,6 @@ const ResumeEditor: React.FC<ResumeEditorProps> = ({ resumeId, goldenResume, ana
             }
           }
         } else if (data) {
-          // We have existing data, so use it
           try {
             const parsedSections = JSON.parse(data.content);
             if (Array.isArray(parsedSections)) {
@@ -171,20 +161,17 @@ const ResumeEditor: React.FC<ResumeEditorProps> = ({ resumeId, goldenResume, ana
     
     loadResumeData();
     
-    // Set up autosave
     const autosaveInterval = setInterval(() => {
       if (hasUnsavedChanges) {
         handleSave(true);
       }
-    }, 30000); // Autosave every 30 seconds if there are changes
+    }, 30000);
     
-    // Set up beforeunload event to warn users about unsaved changes
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (hasUnsavedChanges) {
         e.preventDefault();
         e.returnValue = '';
         
-        // Show a toast notification
         toast({
           title: "Unsaved changes",
           description: "You have unsaved changes. Please save before leaving.",
@@ -249,7 +236,6 @@ const ResumeEditor: React.FC<ResumeEditorProps> = ({ resumeId, goldenResume, ana
 
   const generateFullResume = (): string => {
     return sections.map(section => {
-      // Skip the guidance section in the full resume
       if (section.id === 'guidance') return '';
       
       return `${section.title.toUpperCase()}\n${section.content}\n\n`;
