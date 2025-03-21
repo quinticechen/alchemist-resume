@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Editor } from '@tinymce/tinymce-react';
 import { Button } from "@/components/ui/button";
@@ -90,7 +91,6 @@ const ResumeEditor = ({ resumeId, goldenResume, analysisId, onClose, setHasUnsav
         title: "Success",
         description: "Resume saved successfully!",
         duration: 3000,
-        icon: <CheckCircle className="h-4 w-4 mr-2" />
       });
       setSavedContent(editorContent);
       setLocalHasUnsavedChanges(false);
@@ -100,7 +100,6 @@ const ResumeEditor = ({ resumeId, goldenResume, analysisId, onClose, setHasUnsav
         title: "Error",
         description: error.message || "Failed to save resume. Please try again.",
         variant: "destructive",
-        icon: <AlertTriangle className="h-4 w-4 mr-2" />
       });
     } finally {
       setIsSaving(false);
