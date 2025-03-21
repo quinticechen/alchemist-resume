@@ -1,4 +1,6 @@
 
+import { getEnvironment } from '@/integrations/supabase/client';
+
 export interface PricingPlan {
   name: string;
   planId: string;
@@ -23,11 +25,6 @@ export interface PricingPlan {
   isCurrentPlan?: boolean;
   mostPopular?: boolean;
 }
-
-// Determine if we're in production based on the current URL
-const isProduction = typeof window !== 'undefined' && 
-  (window.location.hostname === 'resumealchemist.qwizai.com' || 
-   window.location.hostname === 'www.resumealchemist.qwizai.com');
 
 export const pricingPlans: PricingPlan[] = [
   {
@@ -117,6 +114,6 @@ export const pricingPlans: PricingPlan[] = [
 
 // Helper function to get the correct price ID based on environment
 export function getPriceId(plan: PricingPlan, isAnnual: boolean): string {
-  const env = isProduction ? 'production' : 'staging';
+  const env = getEnvironment() === 'production' ? 'production' : 'staging';
   return isAnnual ? plan.priceId.annual[env] : plan.priceId.monthly[env];
 }

@@ -5,6 +5,7 @@ import { Check } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { PricingPlan, getPriceId } from "@/data/pricingPlans";
 import { useEffect, useRef } from "react";
+import { getEnvironment } from "@/integrations/supabase/client";
 
 interface PricingCardProps {
   plan: PricingPlan;
@@ -18,10 +19,8 @@ export const PricingCard = ({ plan, isAnnual, isLoading, onSelect }: PricingCard
   const billingPeriod = isAnnual ? "/year" : "/month";
   const stripeBuyButtonRef = useRef<HTMLDivElement>(null);
   
-  // Determine if we're in production
-  const isProduction = typeof window !== 'undefined' && 
-    (window.location.hostname === 'resumealchemist.qwizai.com' || 
-     window.location.hostname === 'www.resumealchemist.qwizai.com');
+  // Use the getEnvironment function to determine if we're in production
+  const isProduction = getEnvironment() === 'production';
   
   // Get the appropriate Buy Button ID based on the plan and billing cycle
   const getBuyButtonId = () => {

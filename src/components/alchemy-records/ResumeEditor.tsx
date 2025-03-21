@@ -1,13 +1,11 @@
-import React, { useEffect, useState } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import React, { useState, useEffect, useRef } from 'react';
+import { Editor } from '@tinymce/tinymce-react';
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Save, FileText, Download, MessageSquare } from "lucide-react";
-import AIChatInterface from './AIChatInterface';
+import { supabase } from "@/integrations/supabase/client";
+import { CheckCircle, AlertTriangle } from 'lucide-react';
 
-interface ResumeEditorProps {
+export interface ResumeEditorProps {
   resumeId: string;
   goldenResume: string | null;
   analysisId: string;
@@ -15,341 +13,140 @@ interface ResumeEditorProps {
   setHasUnsavedChanges: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-interface ResumeSection {
-  id: string;
-  title: string;
-  content: string;
-}
-
-const initialSections: ResumeSection[] = [
-  { id: 'header', title: 'Contact Information', content: 'FULL NAME\nPhone | Email | Location | LinkedIn' },
-  { id: 'summary', title: 'Professional Summary', content: '[3-4 sentences highlighting key qualifications aligned with job requirements]' },
-  { id: 'experience', title: 'Professional Experience', content: 'Company Name | Location\nJob Title | MM/YYYY - MM/YYYY\n• Achievement-focused bullet point with metrics\n• Achievement-focused bullet point with metrics\n• Achievement-focused bullet point with metrics' },
-  { id: 'projects', title: 'Projects', content: 'Project Name | MM/YYYY - MM/YYYY\n• Achievement-focused bullet point with metrics\n• Achievement-focused bullet point with metrics' },
-  { id: 'volunteer', title: 'Volunteer', content: 'Project Name | MM/YYYY - MM/YYYY\n• Achievement-focused bullet point with metrics' },
-  { id: 'education', title: 'Education', content: 'Degree Name | Institution\nGraduation Date | GPA (if notable)' },
-  { id: 'skills', title: 'Skills', content: '• Technical Skills: [List relevant skills]\n• Soft Skills: [List relevant skills]' },
-  { id: 'certifications', title: 'Certifications & Licenses', content: '• Certification Name (Date achieved)\n• Licenses Name (Date achieved)' },
-  { id: 'guidance', title: 'Optimization Guidance', content: '• Add specific metrics to showcase achievements\n• Focus on results rather than responsibilities' },
-];
-
-const parseGoldenResume = (goldenResume: string): ResumeSection[] => {
-  if (!goldenResume) return initialSections;
-  
-  try {
-    const sections = [...initialSections];
-    
-    const potentialSections = [
-      { id: 'header', title: 'CONTACT INFORMATION', regex: /CONTACT INFORMATION|FULL NAME/i },
-      { id: 'summary', title: 'PROFESSIONAL SUMMARY', regex: /PROFESSIONAL SUMMARY|SUMMARY/i },
-      { id: 'experience', title: 'PROFESSIONAL EXPERIENCE', regex: /PROFESSIONAL EXPERIENCE|EXPERIENCE|WORK EXPERIENCE/i },
-      { id: 'projects', title: 'PROJECTS', regex: /PROJECTS/i },
-      { id: 'volunteer', title: 'VOLUNTEER', regex: /VOLUNTEER/i },
-      { id: 'education', title: 'EDUCATION', regex: /EDUCATION/i },
-      { id: 'skills', title: 'SKILLS', regex: /SKILLS/i },
-      { id: 'certifications', title: 'CERTIFICATIONS', regex: /CERTIFICATIONS|LICENSES/i },
-    ];
-    
-    const lines = goldenResume.split('\n');
-    let currentSection: string | null = null;
-    let currentContent: string[] = [];
-    
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i].trim();
-      
-      const sectionMatch = potentialSections.find(section => 
-        section.regex.test(line)
-      );
-      
-      if (sectionMatch) {
-        if (currentSection) {
-          const sectionToUpdate = sections.find(s => s.id === currentSection);
-          if (sectionToUpdate) {
-            sectionToUpdate.content = currentContent.join('\n');
-          }
-          currentContent = [];
-        }
-        currentSection = sectionMatch.id;
-      } else if (currentSection) {
-        currentContent.push(line);
-      }
-    }
-    
-    if (currentSection && currentContent.length > 0) {
-      const sectionToUpdate = sections.find(s => s.id === currentSection);
-      if (sectionToUpdate) {
-        sectionToUpdate.content = currentContent.join('\n');
-      }
-    }
-    
-    return sections;
-  } catch (error) {
-    console.error('Error parsing golden resume:', error);
-    return initialSections;
-  }
-};
-
-const ResumeEditor: React.FC<ResumeEditorProps> = ({ 
-  resumeId, 
-  goldenResume, 
-  analysisId, 
-  onClose,
-  setHasUnsavedChanges 
-}) => {
-  const [sections, setSections] = useState<ResumeSection[]>(() => {
-    return goldenResume ? parseGoldenResume(goldenResume) : initialSections;
-  });
-  const [activeTab, setActiveTab] = useState('header');
-  const [isLoading, setIsLoading] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [lastSaved, setLastSaved] = useState<Date | null>(null);
-  const [showChat, setShowChat] = useState(false);
+const ResumeEditor = ({ resumeId, goldenResume, analysisId, onClose, setHasUnsavedChanges }: ResumeEditorProps) => {
+  const [editorContent, setEditorContent] = useState<string>('');
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isSaving, setIsSaving] = useState<boolean>(false);
+  const [savedContent, setSavedContent] = useState<string>('');
+  const [hasUnsavedChanges, setLocalHasUnsavedChanges] = useState<boolean>(false);
   const { toast } = useToast();
-  
+  const editorRef = useRef<any>(null);
+
   useEffect(() => {
-    const loadResumeData = async () => {
+    const fetchResumeContent = async () => {
       setIsLoading(true);
       try {
         const { data, error } = await supabase
-          .from('resume_editors')
-          .select('*')
-          .eq('analysis_id', analysisId)
+          .from('resumes')
+          .select('content')
+          .eq('id', resumeId)
           .single();
-        
+
         if (error) {
-          console.error('Error loading resume data:', error);
-          if (goldenResume) {
-            const parsedSections = parseGoldenResume(goldenResume);
-            setSections(parsedSections);
-            console.log('Initialized with golden resume sections:', parsedSections);
-            
-            const { error: insertError } = await supabase
-              .from('resume_editors')
-              .insert({
-                analysis_id: analysisId,
-                content: JSON.stringify(parsedSections),
-                last_saved: new Date().toISOString()
-              });
-              
-            if (insertError) {
-              console.error('Error creating resume editor record:', insertError);
-            } else {
-              setLastSaved(new Date());
-            }
-          }
-        } else if (data) {
-          try {
-            const parsedSections = JSON.parse(data.content);
-            if (Array.isArray(parsedSections)) {
-              setSections(parsedSections);
-              console.log('Loaded saved sections from database:', parsedSections);
-            }
-          } catch (e) {
-            console.error('Error parsing resume content:', e);
-          }
-          
-          if (data.last_saved) {
-            setLastSaved(new Date(data.last_saved));
-          }
+          throw error;
         }
-      } catch (error) {
-        console.error('Error in loadResumeData:', error);
+
+        if (data) {
+          setEditorContent(data.content || '');
+          setSavedContent(data.content || '');
+        }
+      } catch (error: any) {
+        toast({
+          title: "Error",
+          description: "Failed to load resume content.",
+          variant: "destructive"
+        });
       } finally {
         setIsLoading(false);
       }
     };
-    
-    loadResumeData();
-    
-    const autosaveInterval = setInterval(() => {
-      if (hasUnsavedChanges) {
-        handleSave(true);
-      }
-    }, 30000);
-    
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (hasUnsavedChanges) {
-        e.preventDefault();
-        e.returnValue = '';
-        
-        toast({
-          title: "Unsaved changes",
-          description: "You have unsaved changes. Please save before leaving.",
-          variant: "destructive"
-        });
-        
-        return '';
-      }
-    };
-    
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    
-    return () => {
-      clearInterval(autosaveInterval);
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
-  }, [analysisId, goldenResume, hasUnsavedChanges]);
-  
-  const handleContentChange = (id: string, newContent: string) => {
-    setSections(sections.map(section => 
-      section.id === id ? { ...section, content: newContent } : section
-    ));
-    setHasUnsavedChanges(true);
+
+    if (resumeId) {
+      fetchResumeContent();
+    }
+  }, [resumeId, toast]);
+
+  useEffect(() => {
+    const contentChanged = editorContent !== savedContent && savedContent !== '';
+    setLocalHasUnsavedChanges(contentChanged);
+    setHasUnsavedChanges(contentChanged);
+  }, [editorContent, savedContent, setHasUnsavedChanges]);
+
+  const handleEditorChange = (content: string, editor: any) => {
+    setEditorContent(content);
   };
-  
-  const handleSave = async (isAutosave = false) => {
-    if (isSaving) return;
-    
+
+  const handleSaveContent = async () => {
+    if (!editorContent || editorContent === savedContent) {
+      toast({
+        title: "No changes to save",
+        description: "You haven't made any changes to your resume.",
+      });
+      return;
+    }
+
     setIsSaving(true);
     try {
       const { error } = await supabase
-        .from('resume_editors')
-        .update({
-          content: JSON.stringify(sections),
-          last_saved: new Date().toISOString()
-        })
-        .eq('analysis_id', analysisId);
-      
+        .from('resumes')
+        .update({ content: editorContent })
+        .eq('id', resumeId);
+
       if (error) {
-        console.error('Error saving resume data:', error);
-        toast({
-          title: "Save failed",
-          description: "There was an error saving your resume. Please try again.",
-          variant: "destructive"
-        });
-      } else {
-        setLastSaved(new Date());
-        setHasUnsavedChanges(false);
-        if (!isAutosave) {
-          toast({
-            title: "Resume saved",
-            description: "Your resume has been saved successfully."
-          });
-        }
+        throw error;
       }
-    } catch (error) {
-      console.error('Error in handleSave:', error);
+
+      toast({
+        title: "Success",
+        description: "Resume saved successfully!",
+        duration: 3000,
+        icon: <CheckCircle className="h-4 w-4 mr-2" />
+      });
+      setSavedContent(editorContent);
+      setLocalHasUnsavedChanges(false);
+      setHasUnsavedChanges(false);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to save resume. Please try again.",
+        variant: "destructive",
+        icon: <AlertTriangle className="h-4 w-4 mr-2" />
+      });
     } finally {
       setIsSaving(false);
     }
   };
 
-  const generateFullResume = (): string => {
-    return sections.map(section => {
-      if (section.id === 'guidance') return '';
-      
-      return `${section.title.toUpperCase()}\n${section.content}\n\n`;
-    }).join('');
-  };
-  
-  const handleExport = () => {
-    const fullResume = generateFullResume();
-    const blob = new Blob([fullResume], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'resume.txt';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
-
-  const handleApplySuggestion = (text: string, sectionId: string) => {
-    handleContentChange(sectionId, text);
-  };
-  
-  if (isLoading) {
-    return <div className="flex items-center justify-center h-full">Loading resume data...</div>;
-  }
-  
   return (
-    <div className="flex h-full flex-col">
-      <div className="flex h-full flex-col md:flex-row gap-4">
-        <div className="w-full md:w-1/3 overflow-y-auto border-r pr-4">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full">
-            <TabsList className="flex flex-col w-full h-auto">
-              {sections.map(section => (
-                <TabsTrigger 
-                  key={section.id} 
-                  value={section.id}
-                  className="justify-start w-full"
-                >
-                  {section.title}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          
-            <div className="mt-4 space-y-2">
-              <Button 
-                onClick={() => handleSave()}
-                disabled={isSaving || !hasUnsavedChanges}
-                className="w-full"
-              >
-                <Save className="mr-2 h-4 w-4" />
-                {isSaving ? 'Saving...' : 'Save Resume'}
-              </Button>
-              
-              <Button 
-                variant="outline"
-                onClick={handleExport}
-                className="w-full"
-              >
-                <Download className="mr-2 h-4 w-4" />
-                Export as Text
-              </Button>
-
-              <Button 
-                variant="outline"
-                onClick={() => setShowChat(!showChat)}
-                className="w-full"
-              >
-                <MessageSquare className="mr-2 h-4 w-4" />
-                {showChat ? 'Hide AI Assistant' : 'Show AI Assistant'}
-              </Button>
-              
-              {lastSaved && (
-                <p className="text-xs text-muted-foreground text-center mt-2">
-                  Last saved: {lastSaved.toLocaleTimeString()}
-                </p>
-              )}
-              {hasUnsavedChanges && (
-                <p className="text-xs text-amber-500 text-center mt-2">
-                  You have unsaved changes
-                </p>
-              )}
-            </div>
-          </Tabs>
-        </div>
-        
-        <div className={`w-full ${showChat ? 'md:w-1/3' : 'md:w-2/3'} overflow-y-auto`}>
-          <Tabs value={activeTab} className="w-full" onValueChange={setActiveTab}>
-            {sections.map(section => (
-              <TabsContent key={section.id} value={section.id} className="mt-0">
-                <div className="p-4">
-                  <h3 className="text-lg font-semibold mb-2">{section.title}</h3>
-                  <Textarea
-                    value={section.content}
-                    onChange={(e) => handleContentChange(section.id, e.target.value)}
-                    className="min-h-[300px] font-mono"
-                  />
-                </div>
-              </TabsContent>
-            ))}
-          </Tabs>
-        </div>
-
-        {showChat && (
-          <div className="w-full md:w-1/3 overflow-y-auto border-l pl-4">
-            <AIChatInterface 
-              resumeId={resumeId}
-              analysisId={analysisId}
-              onSuggestionApply={handleApplySuggestion}
-              currentSectionId={activeTab}
-            />
+    <div>
+      {isLoading ? (
+        <div className="text-center py-4">Loading editor...</div>
+      ) : (
+        <>
+          <Editor
+            apiKey="YOUR_TINYMCE_API_KEY"
+            onInit={(evt, editor) => editorRef.current = editor}
+            value={editorContent}
+            onEditorChange={handleEditorChange}
+            init={{
+              height: 600,
+              menubar: false,
+              plugins: [
+                'advlist autolink lists link image charmap print preview anchor',
+                'searchreplace visualblocks code fullscreen',
+                'insertdatetime media table paste code help wordcount'
+              ],
+              toolbar: 'undo redo | formatselect | ' +
+                'bold italic backcolor | alignleft aligncenter ' +
+                'alignright alignjustify | bullist numlist outdent indent | ' +
+                'removeformat | help',
+              content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }'
+            }}
+          />
+          <div className="flex justify-between mt-4">
+            <Button variant="secondary" onClick={onClose} disabled={isSaving}>
+              Close
+            </Button>
+            <Button
+              onClick={handleSaveContent}
+              disabled={isSaving || editorContent === savedContent}
+              className={isSaving ? "cursor-not-allowed" : ""}
+            >
+              {isSaving ? "Saving..." : "Save"}
+            </Button>
           </div>
-        )}
-      </div>
+        </>
+      )}
     </div>
   );
 };
