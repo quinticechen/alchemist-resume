@@ -1,7 +1,9 @@
+
 import { useEffect, useState } from "react";
 import { loadStripe, Stripe } from "@stripe/stripe-js";
 import { supabase } from "../integrations/supabase/client";
 import { toast } from "../hooks/use-toast";
+import { getEnvironment } from "@/integrations/supabase/client";
 
 export const useStripeInit = () => {
   const [stripePromise, setStripePromise] = useState<Promise<Stripe | null> | null>(null);
@@ -9,11 +11,12 @@ export const useStripeInit = () => {
   const [error, setError] = useState<string | null>(null);
   const [attempts, setAttempts] = useState<number>(0);
   const maxAttempts = 3;
+  const environment = getEnvironment();
 
   useEffect(() => {
     const initStripe = async () => {
       try {
-        // console.info(`Initiating request to get-stripe-key function (attempt ${attempts + 1}/${maxAttempts})`);
+        // console.info(`Initiating request to get-stripe-key function (attempt ${attempts + 1}/${maxAttempts}). Environment: ${environment}`);
         setIsStripeInitializing(true);
         
         const { data, error: funcError } = await supabase.functions.invoke("get-stripe-key");
@@ -57,7 +60,7 @@ export const useStripeInit = () => {
     if (attempts < maxAttempts && !stripePromise && error === null) {
       initStripe();
     }
-  }, [attempts]);
+  }, [attempts, environment]);
 
   return { stripePromise, isStripeInitializing, error };
 };

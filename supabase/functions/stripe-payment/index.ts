@@ -39,6 +39,21 @@ serve(async (req) => {
       });
     }
 
+    // Extract environment from request headers
+    const origin = req.headers.get('origin') || '';
+    
+    // Determine environment based on origin
+    let environment = 'staging';
+    if (origin.includes('resumealchemist.com') || origin.includes('resumealchemist.qwizai.com')) {
+      environment = 'production';
+    } else if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
+      environment = 'development';
+    } else if (origin.includes('staging.resumealchemist')) {
+      environment = 'staging';
+    }
+    
+    // console.log(`Detected environment for payment: ${environment}`);
+
     // Parse request body
     let requestData;
     try {
@@ -65,7 +80,11 @@ serve(async (req) => {
     // Get Supabase URL and service role key from environment variables
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-    const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY');
+    
+    // Select the appropriate Stripe secret key based on environment
+    const stripeSecretKey = environment === 'production'
+      ? Deno.env.get('STRIPE_SECRET_KEY_PRODUCTION')
+      : Deno.env.get('STRIPE_SECRET_KEY');
 
     if (!supabaseUrl || !supabaseServiceKey) {
       // console.error("Missing Supabase environment variables");
@@ -76,7 +95,7 @@ serve(async (req) => {
     }
 
     if (!stripeSecretKey) {
-      // console.error("STRIPE_SECRET_KEY is not set in environment variables");
+      // console.error(`STRIPE_SECRET_KEY for ${environment} is not set in environment variables`);
       return new Response(JSON.stringify({ error: 'Stripe configuration error' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

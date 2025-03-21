@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import Stripe from 'https://esm.sh/stripe@12.18.0';
 
@@ -19,7 +18,38 @@ serve(async (req) => {
   }
 
   try {
-    const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
+    // Extract environment from request headers or webhook URL
+    const url = new URL(req.url);
+    let environment = 'staging';
+    
+    // Check for production indicators in the URL
+    if (url.hostname.includes('resumealchemist.com') || 
+        url.pathname.includes('/production/') ||
+        url.searchParams.get('env') === 'production') {
+      environment = 'production';
+    }
+    
+    // console.log(`Webhook environment: ${environment}`);
+    
+    // Get appropriate secret key based on environment
+    const stripeSecretKey = environment === 'production'
+      ? Deno.env.get('STRIPE_SECRET_KEY_PRODUCTION')
+      : Deno.env.get('STRIPE_SECRET_KEY');
+      
+    // Get appropriate webhook secret based on environment
+    const webhookSecret = environment === 'production'
+      ? Deno.env.get('STRIPE_WEBHOOK_SECRET_PRODUCTION')
+      : Deno.env.get('STRIPE_WEBHOOK_SECRET');
+    
+    if (!stripeSecretKey) {
+      // console.error(`STRIPE_SECRET_KEY for ${environment} not configured`);
+      return new Response(JSON.stringify({ error: 'Stripe secret key missing' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500,
+      });
+    }
+
+    const stripe = new Stripe(stripeSecretKey, {
       apiVersion: '2023-10-16', // Use a stable API version
       httpClient: Stripe.createFetchHttpClient(),
     });
@@ -34,10 +64,8 @@ serve(async (req) => {
       });
     }
 
-    // Get the webhook secret
-    const webhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET');
     if (!webhookSecret) {
-      // console.error("Stripe webhook secret not configured");
+      // console.error(`STRIPE_WEBHOOK_SECRET for ${environment} not configured`);
       return new Response(JSON.stringify({ error: 'Webhook secret missing' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500,

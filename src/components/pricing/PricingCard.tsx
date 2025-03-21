@@ -20,7 +20,8 @@ export const PricingCard = ({ plan, isAnnual, isLoading, onSelect }: PricingCard
   const stripeBuyButtonRef = useRef<HTMLDivElement>(null);
   
   // Use the getEnvironment function to determine if we're in production
-  const isProduction = getEnvironment() === 'production';
+  const environment = getEnvironment();
+  const isProduction = environment === 'production';
   
   // Get the appropriate Buy Button ID based on the plan and billing cycle
   const getBuyButtonId = () => {
@@ -34,6 +35,13 @@ export const PricingCard = ({ plan, isAnnual, isLoading, onSelect }: PricingCard
         (isProduction ? 'buy_btn_production_grandmaster_monthly' : 'buy_btn_1Qyl4ZGYVYFmwG4FG2AQZ2rS');
     }
     return '';
+  };
+  
+  // Get the appropriate Stripe publishable key based on environment
+  const getStripePublishableKey = () => {
+    return isProduction
+      ? "pk_live_51QoMVlGYVYFmwG4FPrkGwZ5kCHKOVBofIxl2Sg4xTb1AQcLGEubfvEzEXcRsF0uGrOrEpJeRfaIH7WBEPwAi7oD800pTILEWE6"
+      : "pk_test_51QoMVlGYVYFmwG4FYQ68QZ4salYBAwr7cSFzqypObpzyEDTZg9woA7v2xoUdwFFY9aks19KioxyCy3GTBAFUzMOd00N0xm7sdi";
   };
   
   const buyButtonId = getBuyButtonId();
@@ -70,7 +78,7 @@ export const PricingCard = ({ plan, isAnnual, isLoading, onSelect }: PricingCard
         // @ts-ignore - TypeScript doesn't know about this custom element
         <stripe-buy-button
           buy-button-id={buyButtonId}
-          publishable-key="pk_test_51QoMVlGYVYFmwG4FYQ68QZ4salYBAwr7cSFzqypObpzyEDTZg9woA7v2xoUdwFFY9aks19KioxyCy3GTBAFUzMOd00N0xm7sdi"
+          publishable-key={getStripePublishableKey()}
         />
       );
     }

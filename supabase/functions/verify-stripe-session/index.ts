@@ -6,11 +6,6 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
 
 // console.log("Hello from verify-stripe-session Edge Function!");
 
-// Initialize Stripe
-const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') as string, {
-  httpClient: Stripe.createFetchHttpClient(),
-});
-
 // Initialize Supabase client
 const supabaseUrl = Deno.env.get('SUPABASE_URL') as string;
 const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') as string;
@@ -29,6 +24,42 @@ serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+
+    // Extract environment from request headers
+    const origin = req.headers.get('origin') || '';
+    
+    // Determine environment based on origin
+    let environment = 'staging';
+    if (origin.includes('resumealchemist.com') || origin.includes('resumealchemist.qwizai.com')) {
+      environment = 'production';
+    } else if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
+      environment = 'development';
+    } else if (origin.includes('staging.resumealchemist')) {
+      environment = 'staging';
+    }
+    
+    // console.log(`Detected environment for session verification: ${environment}`);
+    
+    // Get appropriate secret key based on environment
+    const stripeSecretKey = environment === 'production'
+      ? Deno.env.get('STRIPE_SECRET_KEY_PRODUCTION')
+      : Deno.env.get('STRIPE_SECRET_KEY');
+    
+    if (!stripeSecretKey) {
+      // console.error(`STRIPE_SECRET_KEY for ${environment} not configured`);
+      return new Response(JSON.stringify({ 
+        success: false, 
+        error: 'Stripe configuration error' 
+      }), {
+        status: 200, // Use 200 to ensure frontend receives the error
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    
+    // Initialize Stripe with the appropriate key
+    const stripe = new Stripe(stripeSecretKey, {
+      httpClient: Stripe.createFetchHttpClient(),
+    });
 
     // Get the session ID from the request body
     const { sessionId } = await req.json();
