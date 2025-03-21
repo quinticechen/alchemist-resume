@@ -154,11 +154,12 @@ serve(async (req) => {
         if (customer && !customer.deleted && customer.metadata && customer.metadata.user_id) {
           userId = customer.metadata.user_id;
         } else {
-          // Look up the user from our database
+          // Look up the user from our database, checking the appropriate customer ID field
+          const customerField = sessionEnvironment === 'production' ? 'stripe_customer_id_production' : 'stripe_customer_id';
           const { data, error } = await supabase
             .from('profiles')
             .select('id')
-            .eq('stripe_customer_id', customerId)
+            .eq(customerField, customerId)
             .single();
 
           if (error || !data) {

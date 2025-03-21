@@ -109,6 +109,7 @@ export type Database = {
             | null
           provider: string | null
           stripe_customer_id: string | null
+          stripe_customer_id_production: string | null
           subscription_status:
             | Database["public"]["Enums"]["subscription_tier"]
             | null
@@ -131,6 +132,7 @@ export type Database = {
             | null
           provider?: string | null
           stripe_customer_id?: string | null
+          stripe_customer_id_production?: string | null
           subscription_status?:
             | Database["public"]["Enums"]["subscription_tier"]
             | null
@@ -153,6 +155,7 @@ export type Database = {
             | null
           provider?: string | null
           stripe_customer_id?: string | null
+          stripe_customer_id_production?: string | null
           subscription_status?:
             | Database["public"]["Enums"]["subscription_tier"]
             | null
