@@ -182,7 +182,7 @@ serve(async (req) => {
     // Get user profile information
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('email, stripe_customer_id')
+      .select('email, stripe_customer_id, stripe_customer_id_production')
       .eq('id', userId)
       .single();
 
@@ -195,8 +195,13 @@ serve(async (req) => {
     }
 
     const userEmail = user.email;
-    let stripeCustomerId = profile?.stripe_customer_id;
-    console.log(`User email: ${userEmail}, Stripe customer ID: ${stripeCustomerId || 'not set'}`);
+    
+    // Choose the correct customer ID field based on environment
+    let stripeCustomerId = environment === 'production' 
+      ? profile?.stripe_customer_id_production 
+      : profile?.stripe_customer_id;
+      
+    console.log(`User email: ${userEmail}, Stripe ${environment} customer ID: ${stripeCustomerId || 'not set'}`);
 
     try {
       // Initialize Stripe with a compatible API version
@@ -210,7 +215,7 @@ serve(async (req) => {
 
       // Create Stripe customer if not exists
       if (!stripeCustomerId) {
-        console.log('Creating new Stripe customer');
+        console.log(`Creating new Stripe customer in ${environment} environment`);
         const customer = await stripe.customers.create({
           email: userEmail,
           metadata: {
@@ -220,14 +225,53 @@ serve(async (req) => {
         stripeCustomerId = customer.id;
         console.log(`Created Stripe customer: ${stripeCustomerId}`);
 
-        // Update profile with Stripe customer ID
+        // Update profile with appropriate Stripe customer ID
+        const updateData = environment === 'production'
+          ? { stripe_customer_id_production: stripeCustomerId }
+          : { stripe_customer_id: stripeCustomerId };
+          
         const { error: updateError } = await supabase
           .from('profiles')
-          .update({ stripe_customer_id: stripeCustomerId })
+          .update(updateData)
           .eq('id', userId);
           
         if (updateError) {
-          console.error('Error updating profile with Stripe customer ID:', updateError);
+          console.error(`Error updating profile with Stripe ${environment} customer ID:`, updateError);
+        }
+      } else {
+        // Verify that the customer exists in the current environment
+        try {
+          console.log(`Verifying Stripe customer in ${environment} environment: ${stripeCustomerId}`);
+          await stripe.customers.retrieve(stripeCustomerId);
+          console.log(`Stripe customer verified: ${stripeCustomerId}`);
+        } catch (customerError: any) {
+          if (customerError.code === 'resource_missing') {
+            console.log(`Customer does not exist in ${environment} environment. Creating new customer.`);
+            const customer = await stripe.customers.create({
+              email: userEmail,
+              metadata: {
+                user_id: userId
+              }
+            });
+            stripeCustomerId = customer.id;
+            console.log(`Created new Stripe customer: ${stripeCustomerId}`);
+            
+            // Update profile with appropriate Stripe customer ID
+            const updateData = environment === 'production'
+              ? { stripe_customer_id_production: stripeCustomerId }
+              : { stripe_customer_id: stripeCustomerId };
+              
+            const { error: updateError } = await supabase
+              .from('profiles')
+              .update(updateData)
+              .eq('id', userId);
+              
+            if (updateError) {
+              console.error(`Error updating profile with Stripe ${environment} customer ID:`, updateError);
+            }
+          } else {
+            throw customerError;
+          }
         }
       }
 
