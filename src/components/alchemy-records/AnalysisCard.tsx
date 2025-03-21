@@ -148,7 +148,7 @@ const AnalysisCard = ({
           </Button>
         )}
 
-        <Button
+        {/* <Button
           variant="outline"
           size="sm"
           onClick={() => navigate('/resume-refine', {
@@ -163,7 +163,7 @@ const AnalysisCard = ({
         >
           <Pencil className="h-4 w-4 mr-2" />
           Edit Resume
-        </Button>
+        </Button> */}
       </div>
     </div>
   );
