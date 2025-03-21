@@ -4,8 +4,6 @@ import { corsHeaders } from "../_shared/cors.ts";
 import Stripe from "https://esm.sh/stripe@13.2.0?target=deno";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
 
-// console.log("Hello from verify-stripe-session Edge Function!");
-
 // Initialize Supabase client
 const supabaseUrl = Deno.env.get('SUPABASE_URL') as string;
 const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') as string;
@@ -27,18 +25,28 @@ serve(async (req) => {
 
     // Extract environment from request headers
     const origin = req.headers.get('origin') || '';
+    const xEnvironment = req.headers.get('x-environment');
     
-    // Determine environment based on origin
+    // Determine environment based on headers
     let environment = 'staging';
-    if (origin.includes('resumealchemist.com') || origin.includes('resumealchemist.qwizai.com')) {
+    
+    // First check if x-environment header was sent (highest priority)
+    if (xEnvironment) {
+      environment = xEnvironment;
+    }
+    // If not, fallback to origin detection
+    else if (origin.includes('resumealchemist.com') || origin.includes('resumealchemist.qwizai.com')) {
       environment = 'production';
     } else if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
       environment = 'development';
     } else if (origin.includes('staging.resumealchemist')) {
       environment = 'staging';
+    } else if (origin.includes('vercel.app')) {
+      // Check if it's a preview deployment
+      if (origin.includes('-git-') || origin.includes('-pr-')) {
+        environment = 'preview';
+      }
     }
-    
-    // console.log(`Detected environment for session verification: ${environment}`);
     
     // Get appropriate secret key based on environment
     const stripeSecretKey = environment === 'production'
@@ -46,7 +54,6 @@ serve(async (req) => {
       : Deno.env.get('STRIPE_SECRET_KEY');
     
     if (!stripeSecretKey) {
-      // console.error(`STRIPE_SECRET_KEY for ${environment} not configured`);
       return new Response(JSON.stringify({ 
         success: false, 
         error: 'Stripe configuration error' 
@@ -75,7 +82,6 @@ serve(async (req) => {
 
     // Check if session ID is the placeholder value and return a helpful error
     if (sessionId === '{CHECKOUT_SESSION_ID}') {
-      // console.error("Received placeholder session ID instead of actual value");
       return new Response(JSON.stringify({ 
         success: false, 
         error: 'Invalid session ID: received placeholder {CHECKOUT_SESSION_ID} instead of actual session ID' 
@@ -85,8 +91,6 @@ serve(async (req) => {
       });
     }
 
-    // console.log(`Verifying Stripe checkout session: ${sessionId}`);
-
     // First check if we already have a transaction record for this session
     const { data: existingTransaction, error: txError } = await supabase
       .from('transactions')
@@ -95,9 +99,7 @@ serve(async (req) => {
       .single();
 
     if (existingTransaction) {
-      // console.log(`Transaction already exists for session: ${sessionId}`);
       // Make sure we pass all necessary data and indicate success
-      
       return new Response(JSON.stringify({ 
         success: true, 
         message: 'Transaction already recorded',
@@ -105,7 +107,8 @@ serve(async (req) => {
         isAnnual: existingTransaction.payment_period === 'annual',
         userId: existingTransaction.user_id,
         sessionId: sessionId,
-        transactionData: existingTransaction
+        transactionData: existingTransaction,
+        environment: environment
       }), {
         status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -141,8 +144,8 @@ serve(async (req) => {
       const isAnnual = session.metadata?.is_annual === 'true';
       const customerId = session.customer as string;
       const subscriptionId = session.subscription as string;
-
-      // console.log(`Session verified: plan=${planId}, isAnnual=${isAnnual}, customer=${customerId}, subscription=${subscriptionId}`);
+      // Check if environment is specified in metadata
+      const sessionEnvironment = session.metadata?.environment || environment;
 
       // Retrieve the user ID from the customer metadata or from our database
       let userId;
@@ -170,7 +173,6 @@ serve(async (req) => {
           });
         }
       } catch (error) {
-        // console.error('Error getting user ID:', error);
         return new Response(JSON.stringify({ 
           success: false, 
           error: 'Could not verify user' 
@@ -187,12 +189,12 @@ serve(async (req) => {
         isAnnual: isAnnual,
         userId: userId,
         sessionId: sessionId,
+        environment: sessionEnvironment,
       }), {
         status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     } catch (stripeError) {
-      // console.error(`Stripe API error: ${stripeError.message}`);
       return new Response(JSON.stringify({ 
         success: false, 
         error: `Stripe API error: ${stripeError.message}` 
@@ -202,7 +204,6 @@ serve(async (req) => {
       });
     }
   } catch (error) {
-    // console.error(`Error verifying Stripe session: ${error.message}`);
     return new Response(JSON.stringify({ 
       success: false, 
       error: error.message 

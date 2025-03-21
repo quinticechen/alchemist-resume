@@ -5,7 +5,6 @@ import { corsHeaders } from "../_shared/cors.ts";
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    // console.log("Handling OPTIONS preflight request");
     return new Response(null, { 
       status: 204, 
       headers: corsHeaders 
@@ -13,22 +12,30 @@ serve(async (req) => {
   }
 
   try {
-    // console.log("get-stripe-key function called");
-    
     // Extract environment from request headers
     const origin = req.headers.get('origin') || '';
+    const xEnvironment = req.headers.get('x-environment');
     
-    // Determine environment based on origin
+    // Determine environment based on headers
     let environment = 'staging';
-    if (origin.includes('resumealchemist.com') || origin.includes('resumealchemist.qwizai.com')) {
+    
+    // First check if x-environment header was sent (highest priority)
+    if (xEnvironment) {
+      environment = xEnvironment;
+    }
+    // If not, fallback to origin detection
+    else if (origin.includes('resumealchemist.com') || origin.includes('resumealchemist.qwizai.com')) {
       environment = 'production';
     } else if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
       environment = 'development';
     } else if (origin.includes('staging.resumealchemist')) {
       environment = 'staging';
+    } else if (origin.includes('vercel.app')) {
+      // Check if it's a preview deployment
+      if (origin.includes('-git-') || origin.includes('-pr-')) {
+        environment = 'preview';
+      }
     }
-    
-    // console.log(`Detected environment: ${environment}`);
     
     // Get appropriate publishable key based on environment
     const stripePublishableKey = environment === 'production' 
@@ -36,7 +43,6 @@ serve(async (req) => {
       : Deno.env.get('STRIPE_PUBLISHABLE_KEY');
     
     if (!stripePublishableKey) {
-      // console.error(`${environment.toUpperCase()}_STRIPE_PUBLISHABLE_KEY is not set in environment variables`);
       return new Response(
         JSON.stringify({ 
           error: 'Stripe publishable key is not configured on the server' 
@@ -47,19 +53,16 @@ serve(async (req) => {
         }
       );
     }
-
-    // console.log(`Successfully retrieved Stripe publishable key for ${environment}`);
     
     // Return the publishable key
     return new Response(
-      JSON.stringify({ key: stripePublishableKey }),
+      JSON.stringify({ key: stripePublishableKey, environment }),
       { 
         status: 200, 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     );
   } catch (error) {
-    // console.error('Error in get-stripe-key function:', error);
     return new Response(
       JSON.stringify({ error: error.message || 'An unexpected error occurred' }),
       { 
