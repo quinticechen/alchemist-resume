@@ -1,4 +1,3 @@
-
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -177,11 +176,9 @@ const Pricing = () => {
         throw new Error("No price ID available for the selected plan");
       }
 
-      // Add environment to the request for better debugging
-      const environment = window.location.hostname.includes('resumealchemist.com') ? 'production' : 'staging';
-      console.log(`Attempting to create Stripe checkout session in ${environment} environment`);
+      const environment = getEnvironment();
+      console.log(`Creating Stripe checkout session in ${environment} environment`);
       
-      // Improve error handling with retry logic
       let retryCount = 0;
       const maxRetries = 2;
       let lastError = null;
@@ -204,7 +201,6 @@ const Pricing = () => {
             lastError = error;
             retryCount++;
             
-            // Wait before retrying (exponential backoff)
             if (retryCount <= maxRetries) {
               await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
               continue;
@@ -216,7 +212,6 @@ const Pricing = () => {
             throw new Error("No checkout URL received from payment function");
           }
 
-          // Success! Redirect to the checkout page
           window.location.href = data.sessionUrl;
           return;
         } catch (err) {
@@ -224,7 +219,6 @@ const Pricing = () => {
           lastError = err;
           retryCount++;
           
-          // Wait before retrying
           if (retryCount <= maxRetries) {
             await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
           } else {
@@ -233,7 +227,6 @@ const Pricing = () => {
         }
       }
       
-      // If we get here, all retries failed
       throw lastError || new Error("Failed to create checkout session after multiple attempts");
     } catch (error: any) {
       const errorMessage = error.message || "Failed to initiate payment. Please try again.";

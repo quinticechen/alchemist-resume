@@ -39,20 +39,26 @@ const determineEnvironment = (req: Request): string => {
 };
 
 const getStripeSecretKey = (environment: string): string | null => {
-  const key = environment === 'production'
-    ? Deno.env.get('STRIPE_SECRET_KEY_PRODUCTION')
-    : Deno.env.get('STRIPE_SECRET_KEY');
+  const keyName = environment === 'production'
+    ? 'STRIPE_SECRET_KEY_PRODUCTION'
+    : 'STRIPE_SECRET_KEY';
     
+  const key = Deno.env.get(keyName);
+  
   if (!key) {
-    console.error(`No Stripe secret key found for environment: ${environment}`);
+    console.error(`No Stripe secret key found for environment: ${environment} (${keyName})`);
     return null;
   }
   
-  console.log(`Successfully retrieved Stripe secret key for environment: ${environment}`);
+  console.log(`Successfully retrieved Stripe secret key for environment: ${environment} (${keyName})`);
   return key;
 };
 
 const validateRequestData = (data: any) => {
+  if (!data) {
+    return { isValid: false, error: 'Missing request data' };
+  }
+  
   if (!data.planId || !data.priceId) {
     return { isValid: false, error: 'Missing plan or price information' };
   }
@@ -93,6 +99,11 @@ serve(async (req) => {
 
     // Determine environment
     const environment = determineEnvironment(req);
+    console.log(`Environment for this request: ${environment}`);
+    
+    // Log origin and headers for debugging
+    console.log(`Request origin: ${req.headers.get('origin') || 'not set'}`);
+    console.log(`x-environment header: ${req.headers.get('x-environment') || 'not set'}`);
     
     // Parse request body
     let requestData;
@@ -190,6 +201,8 @@ serve(async (req) => {
     try {
       // Initialize Stripe with a compatible API version
       console.log(`Initializing Stripe for environment: ${environment}`);
+      console.log(`Using Stripe secret key: ${stripeSecretKey.substring(0, 8)}...`);
+      
       const stripe = new Stripe(stripeSecretKey, {
         apiVersion: '2023-10-16',
         httpClient: Stripe.createFetchHttpClient(),
@@ -268,9 +281,13 @@ serve(async (req) => {
       });
     } catch (stripeError: any) {
       console.error('Stripe error:', stripeError);
+      const errorDetails = environment === 'production' 
+        ? 'Stripe production configuration error' 
+        : JSON.stringify(stripeError);
+        
       return new Response(JSON.stringify({ 
         error: stripeError.message || 'Error creating checkout session',
-        details: environment === 'production' ? 'Stripe production configuration error' : stripeError
+        details: errorDetails
       }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
