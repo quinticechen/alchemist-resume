@@ -1,6 +1,7 @@
+
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, getEnvironment } from "@/integrations/supabase/client";
 import { useState, useEffect, useRef } from "react";
 import { useStripeInit } from "@/hooks/useStripeInit";
 import { useAuthAndSurvey } from "@/hooks/useAuthAndSurvey";
