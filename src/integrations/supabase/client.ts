@@ -8,22 +8,36 @@ const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 
 // Get the current environment
 export const getEnvironment = () => {
+  // Check if window is defined (client-side)
+  if (typeof window === 'undefined') return 'development';
+  
   const hostname = window.location.hostname;
+  
+  console.log(`Detecting environment from hostname: ${hostname}`);
+  
+  // Production domains
+  if (hostname.includes('resumealchemist.com') || hostname.includes('resumealchemist.qwizai.com')) {
+    return 'production';
+  }
+  
+  // Local development
   if (hostname.includes('localhost') || hostname.includes('127.0.0.1')) {
     return 'development';
   }
-  if (hostname.includes('staging.resumealchemist') || hostname.includes('127.0.0.1')) {
+  
+  // Staging
+  if (hostname.includes('staging.resumealchemist')) {
     return 'staging';
   }
+  
+  // Vercel preview deployments
   if (hostname.includes('vercel.app')) {
-    // Check if it's a preview deployment
     if (hostname.includes('-git-') || hostname.includes('-pr-')) {
       return 'preview';
     }
   }
-  if (hostname.includes('resumealchemist') || hostname.includes('127.0.0.1')) {
-    return 'production';
-  }
+  
+  // Default to staging for safety
   return 'staging';
 };
 
