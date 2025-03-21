@@ -6,7 +6,7 @@ import { useStripeInit } from "@/hooks/useStripeInit";
 import { useAuthAndSurvey } from "@/hooks/useAuthAndSurvey";
 import { PricingToggle } from "@/components/pricing/PricingToggle";
 import { PricingCard } from "@/components/pricing/PricingCard";
-import { pricingPlans } from "@/data/pricingPlans";
+import { pricingPlans, getPriceId } from "@/data/pricingPlans";
 import { Session } from "@supabase/supabase-js";
 import { Badge } from "@/components/ui/badge";
 import { trackBeginCheckout } from "@/utils/gtm";
@@ -82,8 +82,6 @@ const Pricing = () => {
 
   const fetchUsageInfo = async (userId: string) => {
     try {
-      // console.log("Fetching usage info for user:", userId);
-      
       const { data: profileData, error: profileError } = await supabase
         .from("profiles")
         .select(
@@ -93,18 +91,15 @@ const Pricing = () => {
         .single();
 
       if (profileError) {
-        // console.error("Error fetching profile info:", profileError);
         return;
       }
       
-      // console.log("Usage and subscription info fetched:", profileData);
       setUsageInfo(profileData);
       
       if (profileData.payment_period === 'annual') {
         setIsAnnual(true);
       }
     } catch (err) {
-      // console.error("Unexpected error fetching usage info:", err);
     }
   };
 
@@ -175,18 +170,11 @@ const Pricing = () => {
         throw new Error("Invalid plan selected");
       }
 
-      const priceId = isAnnual
-        ? selectedPlan.priceId.annual
-        : selectedPlan.priceId.monthly;
+      const priceId = getPriceId(selectedPlan, isAnnual);
+      
       if (!priceId) {
         throw new Error("No price ID available for the selected plan");
       }
-
-      // console.log("Making request to stripe-payment function with:", {
-      //   planId,
-      //   priceId,
-      //   isAnnual,
-      // });
 
       const { data, error } = await supabase.functions.invoke(
         "stripe-payment",
@@ -199,19 +187,15 @@ const Pricing = () => {
       );
 
       if (error) {
-        // console.error("Stripe payment function error:", error);
         throw error;
       }
 
       if (!data?.sessionUrl) {
-        // console.error("No checkout URL received from payment function:", data);
         throw new Error("No checkout URL received from payment function");
       }
 
-      // console.log("Redirecting to Stripe checkout URL:", data.sessionUrl);
       window.location.href = data.sessionUrl;
     } catch (error: any) {
-      // console.error("Payment error:", error);
       toast({
         title: "Payment Error",
         description:

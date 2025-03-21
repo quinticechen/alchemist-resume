@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Check } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { PricingPlan } from "@/data/pricingPlans";
+import { PricingPlan, getPriceId } from "@/data/pricingPlans";
 import { useEffect, useRef } from "react";
 
 interface PricingCardProps {
@@ -18,12 +18,21 @@ export const PricingCard = ({ plan, isAnnual, isLoading, onSelect }: PricingCard
   const billingPeriod = isAnnual ? "/year" : "/month";
   const stripeBuyButtonRef = useRef<HTMLDivElement>(null);
   
+  // Determine if we're in production
+  const isProduction = typeof window !== 'undefined' && 
+    (window.location.hostname === 'resumealchemist.qwizai.com' || 
+     window.location.hostname === 'www.resumealchemist.qwizai.com');
+  
   // Get the appropriate Buy Button ID based on the plan and billing cycle
   const getBuyButtonId = () => {
     if (plan.planId === 'alchemist') {
-      return isAnnual ? 'buy_btn_1QylBKGYVYFmwG4FNJM8Iuuy' : 'buy_btn_1QylA3GYVYFmwG4FMrFQJlHz';
+      return isAnnual ? 
+        (isProduction ? 'buy_btn_production_alchemist_annual' : 'buy_btn_1QylBKGYVYFmwG4FNJM8Iuuy') : 
+        (isProduction ? 'buy_btn_production_alchemist_monthly' : 'buy_btn_1QylA3GYVYFmwG4FMrFQJlHz');
     } else if (plan.planId === 'grandmaster') {
-      return isAnnual ? 'buy_btn_1Qyl8pGYVYFmwG4FhZ9EFDJO' : 'buy_btn_1Qyl4ZGYVYFmwG4FG2AQZ2rS';
+      return isAnnual ? 
+        (isProduction ? 'buy_btn_production_grandmaster_annual' : 'buy_btn_1Qyl8pGYVYFmwG4FhZ9EFDJO') : 
+        (isProduction ? 'buy_btn_production_grandmaster_monthly' : 'buy_btn_1Qyl4ZGYVYFmwG4FG2AQZ2rS');
     }
     return '';
   };

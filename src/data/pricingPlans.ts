@@ -7,8 +7,14 @@ export interface PricingPlan {
     annual: string;
   };
   priceId: {
-    monthly: string;
-    annual: string;
+    monthly: {
+      production: string;
+      staging: string;
+    };
+    annual: {
+      production: string;
+      staging: string;
+    };
   };
   features: string[];
   buttonText: string;
@@ -17,6 +23,11 @@ export interface PricingPlan {
   isCurrentPlan?: boolean;
   mostPopular?: boolean;
 }
+
+// Determine if we're in production based on the current URL
+const isProduction = typeof window !== 'undefined' && 
+  (window.location.hostname === 'resumealchemist.qwizai.com' || 
+   window.location.hostname === 'www.resumealchemist.qwizai.com');
 
 export const pricingPlans: PricingPlan[] = [
   {
@@ -27,8 +38,14 @@ export const pricingPlans: PricingPlan[] = [
       annual: "$0",
     },
     priceId: {
-      monthly: "",
-      annual: "",
+      monthly: {
+        production: "",
+        staging: "",
+      },
+      annual: {
+        production: "",
+        staging: "",
+      },
     },
     features: [
       "3 Resume Customizations",
@@ -47,8 +64,14 @@ export const pricingPlans: PricingPlan[] = [
       annual: "$359.99",
     },
     priceId: {
-      monthly: "price_1Qs0CVGYVYFmwG4FmEwa1iWO",
-      annual: "price_1Qs0ECGYVYFmwG4FluFhUdQH",
+      monthly: {
+        production: "price_1R4woGGYVYFmwG4FMr8genM9", // Production Monthly Alchemist
+        staging: "price_1Qs0CVGYVYFmwG4FmEwa1iWO", // Staging Monthly Alchemist
+      },
+      annual: {
+        production: "price_1R4wlsGYVYFmwG4F9amzotAs", // Production Annual Alchemist
+        staging: "price_1Qs0ECGYVYFmwG4FluFhUdQH", // Staging Annual Alchemist
+      },
     },
     features: [
       "Everything in Apprentice plan",
@@ -70,8 +93,14 @@ export const pricingPlans: PricingPlan[] = [
       annual: "$899.99",
     },
     priceId: {
-      monthly: "price_1Qs0BTGYVYFmwG4FFDbYpi5v",
-      annual: "price_1Qs0BtGYVYFmwG4FrtkMrNNx",
+      monthly: {
+        production: "price_1R4wolGYVYFmwG4FJZIGms32", // Production Monthly Grandmaster
+        staging: "price_1Qs0BTGYVYFmwG4FFDbYpi5v", // Staging Monthly Grandmaster
+      },
+      annual: {
+        production: "price_1R4woYGYVYFmwG4F7lMm9pKK", // Production Annual Grandmaster
+        staging: "price_1Qs0BtGYVYFmwG4FrtkMrNNx", // Staging Annual Grandmaster
+      },
     },
     features: [
       "Everything in Alchemist plan",
@@ -85,3 +114,9 @@ export const pricingPlans: PricingPlan[] = [
     showButton: true,
   },
 ];
+
+// Helper function to get the correct price ID based on environment
+export function getPriceId(plan: PricingPlan, isAnnual: boolean): string {
+  const env = isProduction ? 'production' : 'staging';
+  return isAnnual ? plan.priceId.annual[env] : plan.priceId.monthly[env];
+}
