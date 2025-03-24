@@ -62,7 +62,8 @@ export const pricingPlans: PricingPlan[] = [
     },
     priceId: {
       monthly: {
-        production: "price_1R4woGGYVYFmwG4FMr8genM9", // Production Monthly Alchemist
+        production: "price_1R69KsGYVYFmwG4FMgDIe1rj", // Production Monthly Alchemist
+        //  $0 price_1R4woGGYVYFmwG4FMr8genM9
         staging: "price_1Qs0CVGYVYFmwG4FmEwa1iWO", // Staging Monthly Alchemist
       },
       annual: {
