@@ -17,7 +17,7 @@ interface JobUrlInputProps {
 }
 
 export const SUPPORTED_JOB_SITES = [
-  "linkedin.com",
+  ".com",
   "indeed.com",
   "glassdoor.com",
   "foundit",
@@ -27,6 +27,7 @@ export const SUPPORTED_JOB_SITES = [
   "1111.com.tw",
   "jobsdb.com",
   "next.rikunabi.com",
+  "aijobs.ai",
 ];
 
 // Environment-specific webhook URLs
