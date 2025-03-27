@@ -169,6 +169,8 @@ export type Database = {
           created_at: string
           error: string | null
           feedback: boolean | null
+          formatted_golden_resume: Json | null
+          formatted_original_resume: Json | null
           golden_resume: string | null
           google_doc_url: string | null
           id: string
@@ -183,6 +185,8 @@ export type Database = {
           created_at?: string
           error?: string | null
           feedback?: boolean | null
+          formatted_golden_resume?: Json | null
+          formatted_original_resume?: Json | null
           golden_resume?: string | null
           google_doc_url?: string | null
           id?: string
@@ -197,6 +201,8 @@ export type Database = {
           created_at?: string
           error?: string | null
           feedback?: boolean | null
+          formatted_golden_resume?: Json | null
+          formatted_original_resume?: Json | null
           golden_resume?: string | null
           google_doc_url?: string | null
           id?: string

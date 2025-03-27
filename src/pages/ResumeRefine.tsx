@@ -32,16 +32,32 @@ const ResumeRefine = () => {
         try {
           const { data, error } = await supabase
             .from('resume_analyses')
-            .select('id, resume_id, golden_resume, job_title')
+            .select('id, resume_id, golden_resume, formatted_golden_resume, job_title')
             .eq('id', analysisId)
             .single();
           
           if (error) throw error;
           
           if (data) {
+            // Prefer formatted_golden_resume if available, otherwise fallback to golden_resume
+            let resumeContent = null;
+            
+            if (data.formatted_golden_resume) {
+              resumeContent = JSON.stringify(data.formatted_golden_resume, null, 2);
+            } else if (data.golden_resume) {
+              // Try to parse golden_resume as JSON if it's a string
+              try {
+                const parsedContent = JSON.parse(data.golden_resume);
+                resumeContent = JSON.stringify(parsedContent, null, 2);
+              } catch {
+                // If parsing fails, use raw string
+                resumeContent = data.golden_resume;
+              }
+            }
+            
             setResumeData({
               resumeId: data.resume_id,
-              goldenResume: data.golden_resume,
+              goldenResume: resumeContent,
               analysisId: data.id,
               jobTitle: data.job_title
             });
@@ -56,9 +72,23 @@ const ResumeRefine = () => {
           navigate('/alchemy-records');
         }
       } else if (resumeId && analysisId) {
+        // Format goldenResume if it's provided directly
+        let formattedGoldenResume = goldenResume;
+        
+        if (goldenResume) {
+          try {
+            // Check if it's already JSON and format it
+            const parsedContent = JSON.parse(goldenResume);
+            formattedGoldenResume = JSON.stringify(parsedContent, null, 2);
+          } catch {
+            // If parsing fails, use raw string
+            formattedGoldenResume = goldenResume;
+          }
+        }
+        
         setResumeData({
           resumeId,
-          goldenResume,
+          goldenResume: formattedGoldenResume,
           analysisId,
           jobTitle
         });
@@ -68,7 +98,7 @@ const ResumeRefine = () => {
     if (session && analysisId) {
       fetchResumeData();
     }
-  }, [session, analysisId, resumeId, goldenResume, jobTitle]);
+  }, [session, analysisId, resumeId, goldenResume, jobTitle, navigate, toast]);
 
   useEffect(() => {
     if (!isLoading && !session) {

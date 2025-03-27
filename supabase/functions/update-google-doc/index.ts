@@ -117,7 +117,9 @@ Deno.serve(async (req) => {
       goldenResume,
       originalResume,
       matchScore,
-      jobUrl
+      jobUrl,
+      formattedGoldenResume,
+      formattedOriginalResume
     } = requestBody;
 
     // Initialize Supabase client
@@ -139,6 +141,22 @@ Deno.serve(async (req) => {
 
     // Update the jobs table with job information including job_url
     if (analysis.job_id) {
+      // Process job description - could be string or object
+      let jobDescriptionData;
+      
+      if (typeof jobDescription === 'string') {
+        try {
+          // Try to parse if it's a JSON string
+          jobDescriptionData = JSON.parse(jobDescription);
+        } catch {
+          // If it's not valid JSON, use as-is
+          jobDescriptionData = jobDescription;
+        }
+      } else {
+        // Already an object
+        jobDescriptionData = jobDescription;
+      }
+
       const { error: jobUpdateError } = await supabaseClient
         .from('jobs')
         .update({
@@ -147,9 +165,7 @@ Deno.serve(async (req) => {
           job_title: jobTitle,
           language: jobLanguage,
           job_url: jobUrl,
-          job_description: typeof jobDescription === 'string' 
-            ? (jobDescription.startsWith('{') ? JSON.parse(jobDescription) : jobDescription) 
-            : jobDescription
+          job_description: jobDescriptionData
         })
         .eq('id', analysis.job_id);
 
@@ -172,12 +188,21 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Update the analysis with Google Doc URL, golden resume, and match score
+    // Update the analysis with Google Doc URL, golden resume, formatted resumes, and match score
     const updateData: any = {
       google_doc_url: googleDocUrl,
       golden_resume: goldenResume,
       status: 'success' // Using the new enumerated type value
     };
+    
+    // Add formatted resume data if available
+    if (formattedGoldenResume) {
+      updateData.formatted_golden_resume = formattedGoldenResume;
+    }
+    
+    if (formattedOriginalResume) {
+      updateData.formatted_original_resume = formattedOriginalResume;
+    }
     
     if (matchScore) {
       updateData.match_score = parseFloat(matchScore);

@@ -38,10 +38,22 @@ const ResumeEditor = ({ resumeId, goldenResume, analysisId, onClose, setHasUnsav
           throw editorError;
         }
 
+        let editorContent = '';
+
         if (editorData) {
           // Use existing editor content
-          setEditorContent(editorData.content?.toString() || '');
-          setSavedContent(editorData.content?.toString() || '');
+          const content = editorData.content;
+          
+          // Handle different content formats (string or JSON)
+          if (typeof content === 'string') {
+            editorContent = content;
+          } else if (content) {
+            // Format JSON data nicely
+            editorContent = JSON.stringify(content, null, 2);
+          }
+          
+          setEditorContent(editorContent);
+          setSavedContent(editorContent);
           setEditorId(editorData.id);
         } else {
           // No editor record exists, initialize with golden resume and create a new record
@@ -52,15 +64,16 @@ const ResumeEditor = ({ resumeId, goldenResume, analysisId, onClose, setHasUnsav
             .from('resume_editors')
             .insert({
               analysis_id: analysisId,
-              content: initialContent
+              content: initialContent ? JSON.parse(initialContent) : {}
             })
             .select('id')
             .single();
           
           if (createError) throw createError;
           
-          setEditorContent(initialContent);
-          setSavedContent(initialContent);
+          editorContent = initialContent;
+          setEditorContent(editorContent);
+          setSavedContent(editorContent);
           setEditorId(newEditor.id);
         }
       } catch (error: any) {
@@ -90,6 +103,15 @@ const ResumeEditor = ({ resumeId, goldenResume, analysisId, onClose, setHasUnsav
     setEditorContent(e.target.value);
   };
 
+  const validateJSON = (jsonString: string): boolean => {
+    try {
+      JSON.parse(jsonString);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  };
+
   const handleSaveContent = async () => {
     if (!editorContent || editorContent === savedContent || !editorId) {
       toast({
@@ -99,12 +121,22 @@ const ResumeEditor = ({ resumeId, goldenResume, analysisId, onClose, setHasUnsav
       return;
     }
 
+    // Validate JSON content
+    if (!validateJSON(editorContent)) {
+      toast({
+        title: "Invalid JSON format",
+        description: "Please ensure your content is in valid JSON format before saving.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsSaving(true);
     try {
       const { error } = await supabase
         .from('resume_editors')
         .update({ 
-          content: editorContent,
+          content: JSON.parse(editorContent),
           last_saved: new Date().toISOString()
         })
         .eq('id', editorId);
@@ -143,8 +175,8 @@ const ResumeEditor = ({ resumeId, goldenResume, analysisId, onClose, setHasUnsav
               ref={textareaRef}
               value={editorContent}
               onChange={handleEditorChange}
-              className="w-full h-[600px] p-4 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-md resize-none font-sans text-base"
-              placeholder="Edit your resume here..."
+              className="w-full h-[600px] p-4 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-md resize-none font-mono text-base"
+              placeholder="Edit your resume here in JSON format..."
             />
           </div>
           <div className="flex justify-between mt-4">
