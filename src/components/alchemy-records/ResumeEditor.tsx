@@ -1,10 +1,9 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Editor } from '@tinymce/tinymce-react';
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { CheckCircle, AlertTriangle } from 'lucide-react';
+import { CheckCircle, Save, AlertTriangle } from 'lucide-react';
 
 export interface ResumeEditorProps {
   resumeId: string;
@@ -20,31 +19,55 @@ const ResumeEditor = ({ resumeId, goldenResume, analysisId, onClose, setHasUnsav
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [savedContent, setSavedContent] = useState<string>('');
   const [hasUnsavedChanges, setLocalHasUnsavedChanges] = useState<boolean>(false);
+  const [editorId, setEditorId] = useState<string | null>(null);
   const { toast } = useToast();
-  const editorRef = useRef<any>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    const fetchResumeContent = async () => {
+    const fetchOrCreateEditorContent = async () => {
       setIsLoading(true);
       try {
-        const { data, error } = await supabase
-          .from('resumes')
-          .select('content')
-          .eq('id', resumeId)
-          .single();
+        // First check if there's an existing editor record for this analysis
+        const { data: editorData, error: editorError } = await supabase
+          .from('resume_editors')
+          .select('id, content')
+          .eq('analysis_id', analysisId)
+          .maybeSingle();
 
-        if (error) {
-          throw error;
+        if (editorError && editorError.code !== 'PGRST116') {
+          throw editorError;
         }
 
-        if (data) {
-          setEditorContent(data.content || '');
-          setSavedContent(data.content || '');
+        if (editorData) {
+          // Use existing editor content
+          setEditorContent(editorData.content?.toString() || '');
+          setSavedContent(editorData.content?.toString() || '');
+          setEditorId(editorData.id);
+        } else {
+          // No editor record exists, initialize with golden resume and create a new record
+          const initialContent = goldenResume || '';
+          
+          // Create a new editor record
+          const { data: newEditor, error: createError } = await supabase
+            .from('resume_editors')
+            .insert({
+              analysis_id: analysisId,
+              content: initialContent
+            })
+            .select('id')
+            .single();
+          
+          if (createError) throw createError;
+          
+          setEditorContent(initialContent);
+          setSavedContent(initialContent);
+          setEditorId(newEditor.id);
         }
       } catch (error: any) {
+        console.error('Error fetching or creating editor content:', error);
         toast({
           title: "Error",
-          description: "Failed to load resume content.",
+          description: "Failed to load or initialize resume content.",
           variant: "destructive"
         });
       } finally {
@@ -52,10 +75,10 @@ const ResumeEditor = ({ resumeId, goldenResume, analysisId, onClose, setHasUnsav
       }
     };
 
-    if (resumeId) {
-      fetchResumeContent();
+    if (analysisId) {
+      fetchOrCreateEditorContent();
     }
-  }, [resumeId, toast]);
+  }, [analysisId, goldenResume, toast]);
 
   useEffect(() => {
     const contentChanged = editorContent !== savedContent && savedContent !== '';
@@ -63,12 +86,12 @@ const ResumeEditor = ({ resumeId, goldenResume, analysisId, onClose, setHasUnsav
     setHasUnsavedChanges(contentChanged);
   }, [editorContent, savedContent, setHasUnsavedChanges]);
 
-  const handleEditorChange = (content: string, editor: any) => {
-    setEditorContent(content);
+  const handleEditorChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setEditorContent(e.target.value);
   };
 
   const handleSaveContent = async () => {
-    if (!editorContent || editorContent === savedContent) {
+    if (!editorContent || editorContent === savedContent || !editorId) {
       toast({
         title: "No changes to save",
         description: "You haven't made any changes to your resume.",
@@ -79,9 +102,12 @@ const ResumeEditor = ({ resumeId, goldenResume, analysisId, onClose, setHasUnsav
     setIsSaving(true);
     try {
       const { error } = await supabase
-        .from('resumes')
-        .update({ content: editorContent })
-        .eq('id', resumeId);
+        .from('resume_editors')
+        .update({ 
+          content: editorContent,
+          last_saved: new Date().toISOString()
+        })
+        .eq('id', editorId);
 
       if (error) {
         throw error;
@@ -112,37 +138,41 @@ const ResumeEditor = ({ resumeId, goldenResume, analysisId, onClose, setHasUnsav
         <div className="text-center py-4">Loading editor...</div>
       ) : (
         <>
-          <Editor
-            apiKey="YOUR_TINYMCE_API_KEY"
-            onInit={(evt, editor) => editorRef.current = editor}
-            value={editorContent}
-            onEditorChange={handleEditorChange}
-            init={{
-              height: 600,
-              menubar: false,
-              plugins: [
-                'advlist autolink lists link image charmap print preview anchor',
-                'searchreplace visualblocks code fullscreen',
-                'insertdatetime media table paste code help wordcount'
-              ],
-              toolbar: 'undo redo | formatselect | ' +
-                'bold italic backcolor | alignleft aligncenter ' +
-                'alignright alignjustify | bullist numlist outdent indent | ' +
-                'removeformat | help',
-              content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }'
-            }}
-          />
+          <div className="mb-4 border rounded-md">
+            <textarea
+              ref={textareaRef}
+              value={editorContent}
+              onChange={handleEditorChange}
+              className="w-full h-[600px] p-4 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-md resize-none font-sans text-base"
+              placeholder="Edit your resume here..."
+            />
+          </div>
           <div className="flex justify-between mt-4">
             <Button variant="secondary" onClick={onClose} disabled={isSaving}>
               Close
             </Button>
-            <Button
-              onClick={handleSaveContent}
-              disabled={isSaving || editorContent === savedContent}
-              className={isSaving ? "cursor-not-allowed" : ""}
-            >
-              {isSaving ? "Saving..." : "Save"}
-            </Button>
+            <div className="flex gap-2 items-center">
+              {hasUnsavedChanges && (
+                <span className="text-amber-500 flex items-center gap-1">
+                  <AlertTriangle className="h-4 w-4" />
+                  Unsaved changes
+                </span>
+              )}
+              <Button
+                onClick={handleSaveContent}
+                disabled={isSaving || editorContent === savedContent}
+                className={isSaving ? "cursor-not-allowed" : ""}
+              >
+                {isSaving ? (
+                  "Saving..."
+                ) : (
+                  <>
+                    <Save className="h-4 w-4 mr-2" />
+                    Save
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         </>
       )}

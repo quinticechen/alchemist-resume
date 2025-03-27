@@ -1,9 +1,11 @@
+
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from "@/contexts/AuthContext";
 import ResumeEditor from '@/components/alchemy-records/ResumeEditor';
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 const ResumeRefine = () => {
   const { session, isLoading } = useAuth();
@@ -13,6 +15,7 @@ const ResumeRefine = () => {
   const paramAnalysisId = params.analysisId;
   const { resumeId, goldenResume, analysisId: locationAnalysisId, jobTitle } = location.state || {};
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
   const [resumeData, setResumeData] = useState<{
     resumeId: string;
     goldenResume: string | null;
@@ -105,14 +108,19 @@ const ResumeRefine = () => {
 
   const handleClose = () => {
     if (hasUnsavedChanges) {
-      toast({
-        title: "Don't forget to save",
-        description: "You have unsaved changes. Make sure to save before leaving.",
-        variant: "destructive" 
-      });
+      setShowUnsavedDialog(true);
     } else {
       navigate('/alchemy-records');
     }
+  };
+
+  const handleConfirmClose = () => {
+    setShowUnsavedDialog(false);
+    navigate('/alchemy-records');
+  };
+
+  const handleCancelClose = () => {
+    setShowUnsavedDialog(false);
   };
 
   return (
@@ -140,6 +148,23 @@ const ResumeRefine = () => {
           </div>
         </div>
       </div>
+
+      <AlertDialog open={showUnsavedDialog} onOpenChange={setShowUnsavedDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Unsaved Changes</AlertDialogTitle>
+            <AlertDialogDescription>
+              You have unsaved changes. Are you sure you want to leave without saving?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCancelClose}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmClose} className="bg-red-500 hover:bg-red-600">
+              Leave without saving
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
