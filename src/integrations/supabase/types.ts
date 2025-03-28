@@ -170,8 +170,6 @@ export type Database = {
           error: string | null
           feedback: boolean | null
           formatted_golden_resume: Json | null
-          formatted_original_resume: Json | null
-          golden_resume: string | null
           google_doc_url: string | null
           id: string
           job_id: string | null
@@ -186,8 +184,6 @@ export type Database = {
           error?: string | null
           feedback?: boolean | null
           formatted_golden_resume?: Json | null
-          formatted_original_resume?: Json | null
-          golden_resume?: string | null
           google_doc_url?: string | null
           id?: string
           job_id?: string | null
@@ -202,8 +198,6 @@ export type Database = {
           error?: string | null
           feedback?: boolean | null
           formatted_golden_resume?: Json | null
-          formatted_original_resume?: Json | null
-          golden_resume?: string | null
           google_doc_url?: string | null
           id?: string
           job_id?: string | null
@@ -271,9 +265,9 @@ export type Database = {
           file_name: string
           file_path: string
           file_size: number
+          formatted_resume: Json | null
           id: string
           mime_type: string
-          original_resume: string | null
           updated_at: string
           user_id: string | null
         }
@@ -282,9 +276,9 @@ export type Database = {
           file_name: string
           file_path: string
           file_size: number
+          formatted_resume?: Json | null
           id?: string
           mime_type: string
-          original_resume?: string | null
           updated_at?: string
           user_id?: string | null
         }
@@ -293,9 +287,9 @@ export type Database = {
           file_name?: string
           file_path?: string
           file_size?: number
+          formatted_resume?: Json | null
           id?: string
           mime_type?: string
-          original_resume?: string | null
           updated_at?: string
           user_id?: string | null
         }

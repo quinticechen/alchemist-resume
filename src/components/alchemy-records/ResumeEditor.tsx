@@ -1,9 +1,14 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { CheckCircle, Save, AlertTriangle } from 'lucide-react';
+import SectionSelector from './SectionSelector';
+import SectionEditor from './sections/SectionEditor';
+import JobDescriptionViewer from './JobDescriptionViewer';
+import { ResumeSection, getFormattedResume } from '@/utils/resumeUtils';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export interface ResumeEditorProps {
   resumeId: string;
@@ -14,20 +19,42 @@ export interface ResumeEditorProps {
 }
 
 const ResumeEditor = ({ resumeId, goldenResume, analysisId, onClose, setHasUnsavedChanges }: ResumeEditorProps) => {
-  const [editorContent, setEditorContent] = useState<string>('');
+  const [resumeData, setResumeData] = useState<any>(null);
+  const [jobData, setJobData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isSaving, setIsSaving] = useState<boolean>(false);
-  const [savedContent, setSavedContent] = useState<string>('');
+  const [savedData, setSavedData] = useState<any>(null);
   const [hasUnsavedChanges, setLocalHasUnsavedChanges] = useState<boolean>(false);
   const [editorId, setEditorId] = useState<string | null>(null);
+  const [activeSection, setActiveSection] = useState<ResumeSection>('personalInfo');
+  const [viewMode, setViewMode] = useState<'visual' | 'json'>('visual');
   const { toast } = useToast();
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    const fetchOrCreateEditorContent = async () => {
+    const fetchResumeAndJobData = async () => {
       setIsLoading(true);
       try {
-        // First check if there's an existing editor record for this analysis
+        // Fetch the job data first
+        const { data: analysisData, error: analysisError } = await supabase
+          .from('resume_analyses')
+          .select('job_id')
+          .eq('id', analysisId)
+          .single();
+
+        if (analysisError) throw analysisError;
+
+        if (analysisData.job_id) {
+          const { data: jobData, error: jobError } = await supabase
+            .from('jobs')
+            .select('job_description')
+            .eq('id', analysisData.job_id)
+            .single();
+
+          if (jobError) throw jobError;
+          setJobData(jobData.job_description);
+        }
+
+        // Then check for the editor record
         const { data: editorData, error: editorError } = await supabase
           .from('resume_editors')
           .select('id, content')
@@ -38,19 +65,11 @@ const ResumeEditor = ({ resumeId, goldenResume, analysisId, onClose, setHasUnsav
           throw editorError;
         }
 
-        let editorContent = '';
-
         if (editorData) {
           // Use existing editor content
           const content = editorData.content;
-          
-          // Format JSON data nicely
-          editorContent = typeof content === 'string' 
-            ? content 
-            : JSON.stringify(content, null, 2);
-          
-          setEditorContent(editorContent);
-          setSavedContent(editorContent);
+          setResumeData(content);
+          setSavedData(JSON.stringify(content));
           setEditorId(editorData.id);
         } else {
           // No editor record exists, initialize with golden resume and create a new record
@@ -81,9 +100,8 @@ const ResumeEditor = ({ resumeId, goldenResume, analysisId, onClose, setHasUnsav
           
           if (createError) throw createError;
           
-          editorContent = JSON.stringify(initialContent, null, 2);
-          setEditorContent(editorContent);
-          setSavedContent(editorContent);
+          setResumeData(initialContent);
+          setSavedData(JSON.stringify(initialContent));
           setEditorId(newEditor.id);
         }
       } catch (error: any) {
@@ -99,23 +117,35 @@ const ResumeEditor = ({ resumeId, goldenResume, analysisId, onClose, setHasUnsav
     };
 
     if (analysisId) {
-      fetchOrCreateEditorContent();
+      fetchResumeAndJobData();
     }
   }, [analysisId, goldenResume, toast]);
 
   useEffect(() => {
-    const contentChanged = editorContent !== savedContent && savedContent !== '';
+    const contentChanged = JSON.stringify(resumeData) !== savedData && savedData !== '';
     setLocalHasUnsavedChanges(contentChanged);
     setHasUnsavedChanges(contentChanged);
-  }, [editorContent, savedContent, setHasUnsavedChanges]);
+  }, [resumeData, savedData, setHasUnsavedChanges]);
 
-  const handleEditorChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setEditorContent(e.target.value);
+  const handleSectionChange = (section: ResumeSection) => {
+    setActiveSection(section);
   };
 
-  const validateJSON = (jsonString: string): boolean => {
+  const handleResumeDataChange = (updatedData: any) => {
+    setResumeData(prevData => {
+      return {
+        ...prevData,
+        resume: updatedData
+      };
+    });
+  };
+
+  const validateResumeData = (data: any): boolean => {
     try {
-      JSON.parse(jsonString);
+      // Simple validation to ensure it's a valid object
+      if (typeof data !== 'object' || data === null) {
+        return false;
+      }
       return true;
     } catch (e) {
       return false;
@@ -123,7 +153,7 @@ const ResumeEditor = ({ resumeId, goldenResume, analysisId, onClose, setHasUnsav
   };
 
   const handleSaveContent = async () => {
-    if (!editorContent || editorContent === savedContent || !editorId) {
+    if (!resumeData || JSON.stringify(resumeData) === savedData || !editorId) {
       toast({
         title: "No changes to save",
         description: "You haven't made any changes to your resume.",
@@ -131,11 +161,11 @@ const ResumeEditor = ({ resumeId, goldenResume, analysisId, onClose, setHasUnsav
       return;
     }
 
-    // Validate JSON content
-    if (!validateJSON(editorContent)) {
+    // Validate resume data
+    if (!validateResumeData(resumeData)) {
       toast({
-        title: "Invalid JSON format",
-        description: "Please ensure your content is in valid JSON format before saving.",
+        title: "Invalid resume format",
+        description: "Please ensure your resume is properly formatted before saving.",
         variant: "destructive"
       });
       return;
@@ -146,7 +176,7 @@ const ResumeEditor = ({ resumeId, goldenResume, analysisId, onClose, setHasUnsav
       const { error } = await supabase
         .from('resume_editors')
         .update({ 
-          content: JSON.parse(editorContent),
+          content: resumeData,
           last_saved: new Date().toISOString()
         })
         .eq('id', editorId);
@@ -160,7 +190,7 @@ const ResumeEditor = ({ resumeId, goldenResume, analysisId, onClose, setHasUnsav
         description: "Resume saved successfully!",
         duration: 3000,
       });
-      setSavedContent(editorContent);
+      setSavedData(JSON.stringify(resumeData));
       setLocalHasUnsavedChanges(false);
       setHasUnsavedChanges(false);
     } catch (error: any) {
@@ -174,50 +204,103 @@ const ResumeEditor = ({ resumeId, goldenResume, analysisId, onClose, setHasUnsav
     }
   };
 
+  const handleRawJsonChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    try {
+      const parsed = JSON.parse(e.target.value);
+      setResumeData(parsed);
+    } catch (error) {
+      // Don't update the state if the JSON is invalid
+      console.error("Invalid JSON:", error);
+    }
+  };
+
+  if (isLoading) {
+    return <div className="text-center py-4">Loading editor...</div>;
+  }
+
   return (
     <div>
-      {isLoading ? (
-        <div className="text-center py-4">Loading editor...</div>
-      ) : (
-        <>
-          <div className="mb-4 border rounded-md">
+      <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as 'visual' | 'json')} className="mb-4">
+        <TabsList className="grid w-[400px] grid-cols-2">
+          <TabsTrigger value="visual">Visual Editor</TabsTrigger>
+          <TabsTrigger value="json">JSON Editor</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="visual" className="mt-4">
+          <div className="grid grid-cols-[1fr_2fr_1fr] gap-4">
+            {/* Job Description Panel */}
+            <div className="border rounded-md p-4 h-[600px] overflow-auto">
+              <JobDescriptionViewer jobData={jobData} />
+            </div>
+            
+            {/* Section Editor Panel */}
+            <div className="border rounded-md p-4 h-[600px] overflow-auto">
+              <h2 className="text-xl font-semibold mb-4">
+                {activeSection === 'personalInfo' ? 'Personal Information' : 
+                 activeSection === 'professionalSummary' ? 'Professional Summary' : 
+                 activeSection === 'professionalExperience' ? 'Professional Experience' :
+                 activeSection === 'education' ? 'Education' :
+                 activeSection === 'skills' ? 'Skills' :
+                 activeSection === 'projects' ? 'Projects' :
+                 activeSection === 'volunteer' ? 'Volunteer Experience' :
+                 activeSection === 'certifications' ? 'Certifications' : 'Resume Section'}
+              </h2>
+              <SectionEditor 
+                section={activeSection} 
+                resumeData={resumeData} 
+                onChange={handleResumeDataChange} 
+              />
+            </div>
+            
+            {/* Section Selector Panel */}
+            <div className="border rounded-md p-4 h-[600px] overflow-auto">
+              <SectionSelector 
+                currentSection={activeSection} 
+                onSectionChange={handleSectionChange} 
+              />
+            </div>
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="json" className="mt-4">
+          <div className="border rounded-md">
             <textarea
-              ref={textareaRef}
-              value={editorContent}
-              onChange={handleEditorChange}
+              value={JSON.stringify(resumeData, null, 2)}
+              onChange={handleRawJsonChange}
               className="w-full h-[600px] p-4 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-md resize-none font-mono text-base"
               placeholder="Edit your resume here in JSON format..."
             />
           </div>
-          <div className="flex justify-between mt-4">
-            <Button variant="secondary" onClick={onClose} disabled={isSaving}>
-              Close
-            </Button>
-            <div className="flex gap-2 items-center">
-              {hasUnsavedChanges && (
-                <span className="text-amber-500 flex items-center gap-1">
-                  <AlertTriangle className="h-4 w-4" />
-                  Unsaved changes
-                </span>
-              )}
-              <Button
-                onClick={handleSaveContent}
-                disabled={isSaving || editorContent === savedContent}
-                className={isSaving ? "cursor-not-allowed" : ""}
-              >
-                {isSaving ? (
-                  "Saving..."
-                ) : (
-                  <>
-                    <Save className="h-4 w-4 mr-2" />
-                    Save
-                  </>
-                )}
-              </Button>
-            </div>
-          </div>
-        </>
-      )}
+        </TabsContent>
+      </Tabs>
+      
+      <div className="flex justify-between mt-4">
+        <Button variant="secondary" onClick={onClose} disabled={isSaving}>
+          Close
+        </Button>
+        <div className="flex gap-2 items-center">
+          {hasUnsavedChanges && (
+            <span className="text-amber-500 flex items-center gap-1">
+              <AlertTriangle className="h-4 w-4" />
+              Unsaved changes
+            </span>
+          )}
+          <Button
+            onClick={handleSaveContent}
+            disabled={isSaving || !hasUnsavedChanges}
+            className={isSaving ? "cursor-not-allowed" : ""}
+          >
+            {isSaving ? (
+              "Saving..."
+            ) : (
+              <>
+                <Save className="h-4 w-4 mr-2" />
+                Save
+              </>
+            )}
+          </Button>
+        </div>
+      </div>
     </div>
   );
 };

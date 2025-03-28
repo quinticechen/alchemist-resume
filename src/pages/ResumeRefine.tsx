@@ -37,27 +37,18 @@ const ResumeRefine = () => {
         try {
           const { data, error } = await supabase
             .from('resume_analyses')
-            .select('id, resume_id, golden_resume, formatted_golden_resume, job:job_id(job_title)')
+            .select('id, resume_id, formatted_golden_resume, job:job_id(job_title)')
             .eq('id', analysisId)
             .single();
           
           if (error) throw error;
           
           if (data) {
-            // Prefer formatted_golden_resume if available, otherwise fallback to golden_resume
+            // Get the formatted_golden_resume
             let resumeContent = null;
             
             if (data.formatted_golden_resume) {
               resumeContent = JSON.stringify(data.formatted_golden_resume, null, 2);
-            } else if (data.golden_resume) {
-              // Try to parse golden_resume as JSON if it's a string
-              try {
-                const parsedContent = JSON.parse(data.golden_resume);
-                resumeContent = JSON.stringify(parsedContent, null, 2);
-              } catch {
-                // If parsing fails, use raw string
-                resumeContent = data.golden_resume;
-              }
             }
             
             // Extract job title safely, handling all possible data shapes from Supabase
@@ -94,7 +85,7 @@ const ResumeRefine = () => {
           navigate('/alchemy-records');
         }
       } else if (resumeId && analysisId) {
-        // Format goldenResume if it's provided directly
+        // Format goldenResume if it's provided directly through location state
         let formattedGoldenResume = goldenResume;
         
         if (goldenResume) {
@@ -178,7 +169,7 @@ const ResumeRefine = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100">
       <div className="container mx-auto px-4 py-12">
-        <div className="max-w-5xl mx-auto">
+        <div className="max-w-7xl mx-auto">
           <h1 className="text-4xl font-bold mb-8 bg-gradient-primary text-transparent bg-clip-text">
             Resume Refine 
             {resumeData?.jobTitle ? ` - ${resumeData.jobTitle}` : ''}
@@ -187,7 +178,7 @@ const ResumeRefine = () => {
             </span>
           </h1>
           
-          <div className="bg-white rounded-xl p-6 shadow-apple min-h-[600px]">
+          <div className="bg-white rounded-xl p-6 shadow-apple">
             {resumeData && (
               <ResumeEditor 
                 resumeId={resumeData.resumeId} 
