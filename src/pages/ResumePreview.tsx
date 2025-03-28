@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from "@/contexts/AuthContext";
@@ -45,6 +46,8 @@ interface EditorContent {
   };
 }
 
+const LOCAL_STORAGE_STYLE_KEY = 'resumePreviewStyle';
+
 const ResumePreview = () => {
   const { session, isLoading } = useAuth();
   const navigate = useNavigate();
@@ -52,7 +55,10 @@ const ResumePreview = () => {
   const { toast } = useToast();
   const [resumeData, setResumeData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [style, setStyle] = useState<string>('classic');
+  const [style, setStyle] = useState<string>(() => {
+    // Get the style from localStorage or use the default
+    return localStorage.getItem(LOCAL_STORAGE_STYLE_KEY) || 'classic';
+  });
   const [styleDialogOpen, setStyleDialogOpen] = useState(false);
   const resumeRef = useRef<HTMLDivElement>(null);
   const { analysisId } = location.state || {};
@@ -192,6 +198,11 @@ const ResumePreview = () => {
     fetchResumeData();
   }, [session, isLoading, navigate, analysisId, toast]);
 
+  // Store style in localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem(LOCAL_STORAGE_STYLE_KEY, style);
+  }, [style]);
+
   const handleEditClick = () => {
     navigate('/resume-refine', { state: { analysisId } });
   };
@@ -205,25 +216,91 @@ const ResumePreview = () => {
         description: "Your resume is being converted to PDF...", 
       });
 
-      // Create canvas from DOM element
-      const canvas = await html2canvas(resumeRef.current, {
+      // Get the current height of the resume element
+      const resumeElement = resumeRef.current;
+      const originalHeight = resumeElement.scrollHeight;
+      const originalWidth = resumeElement.offsetWidth;
+      
+      // Create a clone of the resume element for manipulation
+      const clone = resumeElement.cloneNode(true) as HTMLElement;
+      clone.style.width = `${originalWidth}px`;
+      clone.style.height = 'auto';
+      clone.style.position = 'absolute';
+      clone.style.top = '-9999px';
+      clone.style.left = '-9999px';
+      document.body.appendChild(clone);
+      
+      // Get the background color based on the style
+      const bgColor = style === 'classic' ? '#ffffff' : 
+        style === 'modern' ? '#EFF6FF' : 
+        style === 'minimal' ? '#F9FAFB' : 
+        style === 'professional' ? '#FFFBEB' : 
+        style === 'creative' ? '#F5F3FF' : '#ffffff';
+      
+      // Create PDF (A4 size)
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      
+      // Render the element to canvas - using the clone
+      const canvas = await html2canvas(clone, {
         scale: 2, // Higher resolution
         useCORS: true,
         logging: false,
-        backgroundColor: style === 'classic' ? '#ffffff' : 
-          style === 'modern' ? '#EFF6FF' : 
-          style === 'minimal' ? '#F9FAFB' : 
-          style === 'professional' ? '#FFFBEB' : 
-          style === 'creative' ? '#F5F3FF' : '#ffffff'
+        backgroundColor: bgColor,
       });
-
-      // Create PDF (A4 size)
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const imgWidth = 210; // A4 width in mm
+      
+      document.body.removeChild(clone);
+      
+      // Calculate scaling
+      const imgWidth = pageWidth;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      const imgData = canvas.toDataURL('image/jpeg', 1.0);
-
-      pdf.addImage(imgData, 'JPEG', 0, 0, imgWidth, imgHeight);
+      
+      // Split into multiple pages if needed
+      let remainingHeight = canvas.height;
+      let position = 0;
+      
+      while (remainingHeight > 0) {
+        // Convert to data URL
+        const imgData = canvas.toDataURL('image/jpeg', 1.0);
+        
+        // If not the first page, add a new page
+        if (position > 0) {
+          pdf.addPage();
+        }
+        
+        // Calculate the height for this page (in canvas pixels)
+        const canvasPageHeight = Math.min(canvas.width * (pageHeight / pageWidth), remainingHeight);
+        
+        // Calculate the source area from the canvas
+        const sourceY = position;
+        const sourceHeight = canvasPageHeight;
+        
+        // Create a temporary canvas for the current page
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = canvas.width;
+        tempCanvas.height = sourceHeight;
+        const tempContext = tempCanvas.getContext('2d');
+        
+        if (tempContext) {
+          // Draw the portion of the original canvas
+          tempContext.fillStyle = bgColor;
+          tempContext.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+          tempContext.drawImage(
+            canvas, 
+            0, sourceY, canvas.width, sourceHeight, 
+            0, 0, tempCanvas.width, tempCanvas.height
+          );
+          
+          // Add the image to the PDF
+          const pageImgData = tempCanvas.toDataURL('image/jpeg', 1.0);
+          pdf.addImage(pageImgData, 'JPEG', 0, 0, pageWidth, pageHeight);
+        }
+        
+        // Move to the next part of the canvas
+        position += canvasPageHeight;
+        remainingHeight -= canvasPageHeight;
+      }
       
       // Download the PDF
       const fileName = resumeData?.jobTitle 
