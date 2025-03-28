@@ -137,7 +137,7 @@ const AlchemistWorkshop = () => {
       const makeWebhookUrl =
         currentEnv === "production"
           ? "https://hook.eu2.make.com/pthisc4aefvf15i7pj4ja99a84dp7kce"
-          : "https://hook.eu2.make.com/498k5fa5h8kc3huriwiaqoarossdf4os";
+          : "https://hook.eu2.make.com/u7vybasfz94l385gpmapxwn15c9t3bpr";
 
       const webhookResponse = await fetch(makeWebhookUrl, {
         method: "POST",
