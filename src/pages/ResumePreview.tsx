@@ -33,6 +33,17 @@ interface JobData {
   job_url?: string | null;
 }
 
+interface EditorContent {
+  personalInfo?: any;
+  professionalSummary?: string;
+  professionalExperience?: any[];
+  education?: any;
+  skills?: any;
+  projects?: any[];
+  volunteer?: any[];
+  certifications?: any[];
+}
+
 const ResumePreview = () => {
   const { session, isLoading } = useAuth();
   const navigate = useNavigate();
@@ -59,6 +70,8 @@ const ResumePreview = () => {
     const fetchResumeData = async () => {
       try {
         setLoading(true);
+
+        console.log("Fetching data for analysis ID:", analysisId);
         
         // First, fetch the resume editor content which has our formatted resume
         const { data: editorData, error: editorError } = await supabase
@@ -67,9 +80,13 @@ const ResumePreview = () => {
           .eq('analysis_id', analysisId)
           .maybeSingle();
         
-        if (editorError) throw editorError;
+        if (editorError) {
+          console.error('Editor data error:', editorError);
+          throw editorError;
+        }
         
         if (!editorData || !editorData.content) {
+          console.error('No editor content found');
           toast({ 
             title: "Resume content not found", 
             description: "Could not find resume content for preview", 
@@ -78,6 +95,8 @@ const ResumePreview = () => {
           navigate('/alchemy-records');
           return;
         }
+
+        console.log("Found editor content:", editorData.content);
         
         // Then fetch the analysis to get job and resume details
         const { data: analysisData, error: analysisError } = await supabase
@@ -91,9 +110,13 @@ const ResumePreview = () => {
           .eq('id', analysisId)
           .single();
         
-        if (analysisError) throw analysisError;
+        if (analysisError) {
+          console.error('Analysis data error:', analysisError);
+          throw analysisError;
+        }
         
         if (!analysisData) {
+          console.error('No analysis data found');
           toast({ 
             title: "Resume not found", 
             description: "The requested resume could not be found", 
@@ -102,6 +125,8 @@ const ResumePreview = () => {
           navigate('/alchemy-records');
           return;
         }
+
+        console.log("Found analysis data:", analysisData);
 
         // Initialize with default values
         let jobTitle = 'Unnamed Position';
@@ -141,9 +166,12 @@ const ResumePreview = () => {
           }
         }
 
+        const content = editorData.content as EditorContent;
+        console.log("Preparing resume data with content:", content);
+
         setResumeData({
           ...analysisData,
-          resume: editorData.content, // Use content from resume_editors
+          resume: content, // Use content from resume_editors
           jobTitle,
           fileName,
           googleDocUrl: analysisData.google_doc_url
@@ -225,6 +253,8 @@ const ResumePreview = () => {
   if (!resumeData) {
     return null;
   }
+
+  console.log("Rendering with resume data:", resumeData);
 
   // Extract resume data for displaying in style previews
   const personalInfo = resumeData.resume?.personalInfo || {};
@@ -543,6 +573,7 @@ const ResumePreview = () => {
               >
                 <h3 className="font-semibold mb-2">{styleOption.name}</h3>
                 <div className="h-40 overflow-hidden">
+                  {/* Use actual user data in style preview */}
                   <div className={`text-xs p-2 ${
                     styleOption.id === 'modern' ? 'border-b-2 border-blue-300' : 
                     styleOption.id === 'minimal' ? 'border-b border-gray-200' : 
