@@ -25,7 +25,7 @@ interface AnalysisData {
   google_doc_url: string | null;
   match_score: number | null;
   error: string | null;
-  status: string | null;
+  status: ProcessingStatus | null;
 }
 
 const ProcessingPreview = ({
@@ -70,6 +70,13 @@ const ProcessingPreview = ({
     setError(null);
   }, [analysisId, isTimeout]);
 
+  // Debugging log
+  useEffect(() => {
+    if (analysisId) {
+      console.log(`ProcessingPreview: Monitoring analysis ${analysisId} with status ${status}`);
+    }
+  }, [analysisId, status]);
+
   // Set up subscription and initial fetch
   useEffect(() => {
     if (!analysisId) return;
@@ -83,15 +90,25 @@ const ProcessingPreview = ({
     // Initial fetch of the analysis
     const fetchAnalysis = async () => {
       try {
+        console.log(`Fetching analysis data for ID: ${analysisId}`);
         const { data, error: fetchError } = await supabase
           .from("resume_analyses")
           .select("google_doc_url, match_score, error, status")
           .eq("id", analysisId)
-          .single();
+          .maybeSingle();
 
         if (fetchError) {
+          console.error("Error fetching analysis:", fetchError);
           setStatus("error");
           setError("Failed to fetch analysis data");
+          return;
+        }
+
+        console.log("Fetched analysis data:", data);
+
+        // Handle case when no data is found
+        if (!data) {
+          console.log("No data found for analysis ID:", analysisId);
           return;
         }
 
@@ -117,6 +134,7 @@ const ProcessingPreview = ({
         }
 
         if (analysisData.google_doc_url) {
+          console.log("Google Doc URL found, setting success state:", analysisData.google_doc_url);
           setGoogleDocUrl(analysisData.google_doc_url);
           setMatchScore(analysisData.match_score);
           setStatus("success");
@@ -127,6 +145,7 @@ const ProcessingPreview = ({
           setStatus("pending");
         }
       } catch (error) {
+        console.error("Exception in fetchAnalysis:", error);
         setStatus("error");
         setError("Failed to fetch analysis results");
       }
@@ -146,11 +165,14 @@ const ProcessingPreview = ({
           filter: `id=eq.${analysisId}`,
         },
         (payload) => {
+          console.log("Real-time update received:", payload);
+          
           // Cast the new data to our expected type for type safety
           const newData = payload.new as AnalysisData;
 
           // Check if there's an error in the update
           if (newData.error || newData.status === "error") {
+            console.log("Error status detected in real-time update");
             setStatus("error");
             setError(newData.error || "An error occurred during processing");
 
@@ -162,6 +184,7 @@ const ProcessingPreview = ({
 
           // Check if status is timeout
           if (newData.status === "timeout") {
+            console.log("Timeout status detected in real-time update");
             setStatus("timeout");
             setError(newData.error || "Resume generation took too long. Please try again later.");
             if (setIsProcessing) {
@@ -172,6 +195,7 @@ const ProcessingPreview = ({
 
           // Check if google_doc_url is now available
           if (newData.google_doc_url) {
+            console.log("Success status detected in real-time update");
             setGoogleDocUrl(newData.google_doc_url);
             setMatchScore(newData.match_score);
             setStatus("success");
@@ -184,12 +208,17 @@ const ProcessingPreview = ({
             if (onGenerationComplete) {
               onGenerationComplete();
             }
+          } else if (newData.status === "success") {
+            // Handle case where status is success but google_doc_url might be delayed
+            console.log("Success status but no Google Doc URL yet, checking again...");
+            fetchAnalysis();
           }
         }
       )
       .subscribe();
 
     return () => {
+      console.log(`Unsubscribing from channel for analysis ${analysisId}`);
       supabase.removeChannel(channel);
     };
   }, [analysisId, toast, onGenerationComplete, setIsProcessing, isTimeout]);
