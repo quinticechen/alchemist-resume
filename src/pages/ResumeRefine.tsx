@@ -55,9 +55,20 @@ const ResumeRefine = () => {
               }
             }
             
-            // Fix: Correct type handling for job_title
-            // Ensure job is an object (not an array) and access job_title safely
-            const fetchedJobTitle = data.job?.job_title || null;
+            // Fix: Handle job data correctly when it's returned as an array
+            let fetchedJobTitle = null;
+            
+            // Check if job data exists and extract job_title properly
+            if (data.job) {
+              // If job is an array (which happens with some Supabase joins)
+              if (Array.isArray(data.job) && data.job.length > 0) {
+                fetchedJobTitle = data.job[0]?.job_title || null;
+              } 
+              // If job is an object
+              else if (typeof data.job === 'object' && data.job !== null) {
+                fetchedJobTitle = data.job.job_title || null;
+              }
+            }
             
             setResumeData({
               resumeId: data.resume_id,
