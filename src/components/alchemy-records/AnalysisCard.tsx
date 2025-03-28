@@ -10,7 +10,7 @@ import FeedbackButtons from './FeedbackButtons';
 interface Resume {
   file_name: string;
   file_path: string;
-  original_resume: string | null;
+  formatted_resume: any | null;
 }
 
 interface Job {
@@ -24,7 +24,6 @@ interface AnalysisCardProps {
   id: string;
   created_at: string;
   google_doc_url: string | null;
-  golden_resume: string | null;
   match_score: number | null;
   feedback: boolean | null;
   resume: Resume;
@@ -40,7 +39,6 @@ const AnalysisCard = ({
   id,
   created_at,
   google_doc_url,
-  golden_resume,
   match_score,
   feedback,
   resume,
@@ -110,24 +108,14 @@ const AnalysisCard = ({
           variant="outline"
           size="sm"
           onClick={() => {
-            // First check if we have a file path to the original resume
+            // Get the public URL from Supabase storage
             if (resume?.file_path) {
-              // Get the public URL from Supabase storage
               const { data } = supabase.storage
                 .from('resumes')
                 .getPublicUrl(resume.file_path);
               
               // Open the original resume document in a new tab
               window.open(data.publicUrl, '_blank');
-            } 
-            // Fallback to original_resume HTML content if file_path doesn't work
-            else if (resume?.original_resume) {
-              // Open original resume content in a new tab
-              const newTab = window.open();
-              if (newTab) {
-                newTab.document.write(`<html><head><title>Original Resume</title></head><body>${resume.original_resume}</body></html>`);
-                newTab.document.close();
-              }
             }
           }}
           className="text-primary border-primary/20 hover:bg-primary/5"
@@ -154,7 +142,6 @@ const AnalysisCard = ({
           onClick={() => navigate('/resume-refine', {
             state: {
               resumeId: resume?.file_path,
-              goldenResume: golden_resume,
               analysisId: id,
               jobTitle: jobTitle
             }

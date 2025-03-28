@@ -7,13 +7,12 @@ export interface ResumeAnalysis {
   id: string;
   created_at: string;
   google_doc_url: string | null;
-  golden_resume: string | null;
   match_score: number | null;
   feedback: boolean | null;
   resume: {
     file_name: string;
     file_path: string;
-    original_resume: string | null;
+    formatted_resume: any | null;
   };
   job: {
     job_title: string;
@@ -57,14 +56,13 @@ export const useAlchemyRecords = () => {
         }
 
         // Fetch only records with google_doc_url
-        // Updated to include job_url from the jobs table
+        // Updated to include formatted_resume from the resumes table
         const { data: analysesData, error } = await supabase
           .from('resume_analyses')
           .select(`
             id,
             created_at,
             google_doc_url,
-            golden_resume,
             match_score,
             feedback,
             job:job_id (
@@ -73,10 +71,10 @@ export const useAlchemyRecords = () => {
               company_url,
               job_url
             ),
-            resume:resumes!resume_id (
+            resume:resume_id (
               file_name,
               file_path,
-              original_resume
+              formatted_resume
             )
           `)
           .not('google_doc_url', 'is', null)
@@ -107,7 +105,6 @@ export const useAlchemyRecords = () => {
             id: item.id,
             created_at: item.created_at,
             google_doc_url: item.google_doc_url,
-            golden_resume: item.golden_resume,
             match_score: item.match_score,
             feedback: item.feedback,
             resume: resumeData,
@@ -117,7 +114,7 @@ export const useAlchemyRecords = () => {
 
         setAnalyses(transformedData);
       } catch (error) {
-        // Error handling
+        console.error('Error fetching alchemy records:', error);
       } finally {
         setLoading(false);
       }
@@ -134,7 +131,6 @@ export const useAlchemyRecords = () => {
 
       // Database update is handled in the FeedbackButtons component
     } catch (error) {
-      // console.error('Error updating feedback:', error);
       toast({
         title: "Error",
         description: "Failed to update feedback",
@@ -177,7 +173,6 @@ export const useAlchemyRecords = () => {
         description: "Position name has been updated successfully",
       });
     } catch (error) {
-      // console.error('Error updating title:', error);
       toast({
         title: "Error",
         description: "Failed to update position name",

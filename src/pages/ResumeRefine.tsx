@@ -35,43 +35,52 @@ const ResumeRefine = () => {
     const fetchResumeData = async () => {
       if (analysisId && !resumeId && session?.user?.id) {
         try {
-          const { data, error } = await supabase
+          // First get the analysis record to get the resume_id
+          const { data: analysisData, error: analysisError } = await supabase
             .from('resume_analyses')
-            .select('id, resume_id, formatted_golden_resume, job:job_id(job_title)')
+            .select('id, resume_id, job:job_id(job_title)')
             .eq('id', analysisId)
             .single();
           
-          if (error) throw error;
+          if (analysisError) throw analysisError;
           
-          if (data) {
-            // Get the formatted_golden_resume
-            let resumeContent = null;
+          if (analysisData) {
+            // Now get the editor content which has the formatted resume
+            const { data: editorData, error: editorError } = await supabase
+              .from('resume_editors')
+              .select('content')
+              .eq('analysis_id', analysisId)
+              .single();
+              
+            if (editorError) throw editorError;
             
-            if (data.formatted_golden_resume) {
-              resumeContent = JSON.stringify(data.formatted_golden_resume, null, 2);
+            // Get the formatted resume content
+            let resumeContent = null;
+            if (editorData?.content) {
+              resumeContent = JSON.stringify(editorData.content, null, 2);
             }
             
             // Extract job title safely, handling all possible data shapes from Supabase
             let fetchedJobTitle: string | null = null;
             
-            if (data.job) {
+            if (analysisData.job) {
               // Case 1: job is an array (happens with some Supabase joins)
-              if (Array.isArray(data.job)) {
-                if (data.job.length > 0 && typeof data.job[0] === 'object') {
+              if (Array.isArray(analysisData.job)) {
+                if (analysisData.job.length > 0 && typeof analysisData.job[0] === 'object') {
                   // Access first array element's job_title
-                  fetchedJobTitle = data.job[0].job_title || null;
+                  fetchedJobTitle = analysisData.job[0].job_title || null;
                 }
               } 
               // Case 2: job is an object (direct relation)
-              else if (typeof data.job === 'object' && data.job !== null) {
-                fetchedJobTitle = (data.job as JobData).job_title || null;
+              else if (typeof analysisData.job === 'object' && analysisData.job !== null) {
+                fetchedJobTitle = (analysisData.job as JobData).job_title || null;
               }
             }
             
             setResumeData({
-              resumeId: data.resume_id,
+              resumeId: analysisData.resume_id,
               goldenResume: resumeContent,
-              analysisId: data.id,
+              analysisId: analysisData.id,
               jobTitle: fetchedJobTitle
             });
           }

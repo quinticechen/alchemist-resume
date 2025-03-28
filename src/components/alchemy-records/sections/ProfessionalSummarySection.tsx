@@ -12,7 +12,10 @@ const ProfessionalSummarySection = ({ data, onChange }: ProfessionalSummarySecti
   const handleChange = (value: string) => {
     onChange({
       ...data,
-      professionalSummary: value
+      resume: {
+        ...data.resume,
+        professionalSummary: value
+      }
     });
   };
 
@@ -23,7 +26,7 @@ const ProfessionalSummarySection = ({ data, onChange }: ProfessionalSummarySecti
         <Textarea 
           id="professionalSummary"
           rows={8}
-          value={data?.professionalSummary || ''}
+          value={data?.resume?.professionalSummary || ''}
           onChange={(e) => handleChange(e.target.value)}
           placeholder="Write a concise summary of your professional background, skills, and career objectives..."
           className="min-h-[200px]"
