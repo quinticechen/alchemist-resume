@@ -36,7 +36,7 @@ export const getWebhookUrl = () => {
   if (env === "production") {
     return "https://hook.eu2.make.com/pthisc4aefvf15i7pj4ja99a84dp7kce";
   } else {
-    return "https://hook.eu2.make.com/2up5vi5mr8jhhdl1eclyw3shu99uoxlb";
+    return "https://hook.eu2.make.com/498k5fa5h8kc3huriwiaqoarossdf4os";
   }
 };
 
