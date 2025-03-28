@@ -6,6 +6,7 @@ import Home from "@/pages/Home";
 import AlchemistWorkshop from "@/pages/AlchemistWorkshop";
 import AlchemyRecords from "@/pages/AlchemyRecords";
 import ResumeRefine from "@/pages/ResumeRefine";
+import ResumePreview from "@/pages/ResumePreview";
 import Account from "@/pages/Account";
 import Login from "@/pages/Login";
 import Terms from "@/pages/Terms";
@@ -44,6 +45,10 @@ const App = () => {
               <Route 
                 path="/resume-refine/:analysisId" 
                 element={<ResumeRefine />}
+              />
+              <Route 
+                path="/resume-preview" 
+                element={<ResumePreview />}
               />
               <Route path="/account" element={<Account />} />
               <Route path="/login" element={<Login />} />

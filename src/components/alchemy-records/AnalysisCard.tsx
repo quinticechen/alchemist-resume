@@ -131,10 +131,24 @@ const AnalysisCard = ({
             onClick={() => window.open(google_doc_url, '_blank')}
             className="text-info border-info/20 hover:bg-info/5"
           >
-            <Crown className="h-4 w-4 mr-2" />
-            Golden Resume
+            <FileText className="h-4 w-4 mr-2" />
+            Google Doc Resume
           </Button>
         )}
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => navigate('/resume-preview', {
+            state: {
+              analysisId: id
+            }
+          })}
+          className="text-success border-success/20 hover:bg-success/5"
+        >
+          <Crown className="h-4 w-4 mr-2" />
+          Golden Resume
+        </Button>
 
         <Button
           variant="outline"
