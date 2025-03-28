@@ -65,11 +65,41 @@ const ResumePreview = () => {
           return;
         }
 
+        // Handle potential array or object responses from Supabase
+        let jobTitle = 'Unnamed Position';
+        let fileName = 'Resume';
+
+        // Extract job title - safely handle different data structures
+        if (data.job) {
+          if (Array.isArray(data.job)) {
+            // If job is an array, take the first item's job_title
+            if (data.job.length > 0) {
+              jobTitle = data.job[0].job_title || jobTitle;
+            }
+          } else if (typeof data.job === 'object') {
+            // If job is an object (direct relation)
+            jobTitle = data.job.job_title || jobTitle;
+          }
+        }
+
+        // Extract file name - safely handle different data structures
+        if (data.resume) {
+          if (Array.isArray(data.resume)) {
+            // If resume is an array, take the first item's file_name
+            if (data.resume.length > 0) {
+              fileName = data.resume[0].file_name || fileName;
+            }
+          } else if (typeof data.resume === 'object') {
+            // If resume is an object (direct relation)
+            fileName = data.resume.file_name || fileName;
+          }
+        }
+
         setResumeData({
           ...data,
           resume: getFormattedResume(data.formatted_golden_resume),
-          jobTitle: data.job?.job_title || 'Unnamed Position',
-          fileName: data.resume?.file_name || 'Resume'
+          jobTitle,
+          fileName
         });
       } catch (error) {
         console.error('Error fetching resume data:', error);
