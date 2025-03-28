@@ -20,6 +20,14 @@ interface ProcessingPreviewProps {
 
 type ProcessingStatus = "pending" | "error" | "timeout" | "success";
 
+// Define an interface for the data shape we expect from Supabase
+interface AnalysisData {
+  google_doc_url: string | null;
+  match_score: number | null;
+  error: string | null;
+  status: string | null;
+}
+
 const ProcessingPreview = ({
   analysisId,
   jobUrl,
@@ -75,39 +83,42 @@ const ProcessingPreview = ({
     // Initial fetch of the analysis
     const fetchAnalysis = async () => {
       try {
-        const { data, error } = await supabase
+        const { data, error: fetchError } = await supabase
           .from("resume_analyses")
           .select("google_doc_url, match_score, error, status")
           .eq("id", analysisId)
           .single();
 
-        if (error) {
+        if (fetchError) {
           setStatus("error");
           setError("Failed to fetch analysis data");
           return;
         }
 
-        if (data?.error || data?.status === "error") {
+        // Safely cast data to our expected type
+        const analysisData = data as AnalysisData;
+
+        if (analysisData.error || analysisData.status === "error") {
           setStatus("error");
-          setError(data.error || "An error occurred during processing");
+          setError(analysisData.error || "An error occurred during processing");
           if (setIsProcessing) {
             setIsProcessing(false);
           }
           return;
         }
 
-        if (data?.status === "timeout") {
+        if (analysisData.status === "timeout") {
           setStatus("timeout");
-          setError(data.error || "Resume generation timed out. Please try again later.");
+          setError(analysisData.error || "Resume generation timed out. Please try again later.");
           if (setIsProcessing) {
             setIsProcessing(false);
           }
           return;
         }
 
-        if (data?.google_doc_url) {
-          setGoogleDocUrl(data.google_doc_url);
-          setMatchScore(data.match_score || null);
+        if (analysisData.google_doc_url) {
+          setGoogleDocUrl(analysisData.google_doc_url);
+          setMatchScore(analysisData.match_score);
           setStatus("success");
           if (onGenerationComplete) {
             onGenerationComplete();
@@ -135,7 +146,8 @@ const ProcessingPreview = ({
           filter: `id=eq.${analysisId}`,
         },
         (payload) => {
-          const newData = payload.new;
+          // Cast the new data to our expected type for type safety
+          const newData = payload.new as AnalysisData;
 
           // Check if there's an error in the update
           if (newData.error || newData.status === "error") {
@@ -161,7 +173,7 @@ const ProcessingPreview = ({
           // Check if google_doc_url is now available
           if (newData.google_doc_url) {
             setGoogleDocUrl(newData.google_doc_url);
-            setMatchScore(newData.match_score || null);
+            setMatchScore(newData.match_score);
             setStatus("success");
 
             toast({
