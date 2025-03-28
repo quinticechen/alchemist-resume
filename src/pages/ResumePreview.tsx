@@ -1,13 +1,16 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Pencil, FileText } from "lucide-react";
+import { Pencil, FileText, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { getFormattedResume } from "@/utils/resumeUtils";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 
 // Resume style variants
 const RESUME_STYLES = [
@@ -26,6 +29,8 @@ const ResumePreview = () => {
   const [resumeData, setResumeData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [style, setStyle] = useState<string>('classic');
+  const [styleDialogOpen, setStyleDialogOpen] = useState(false);
+  const resumeRef = useRef<HTMLDivElement>(null);
   const { analysisId } = location.state || {};
 
   useEffect(() => {
@@ -42,20 +47,41 @@ const ResumePreview = () => {
     const fetchResumeData = async () => {
       try {
         setLoading(true);
-        const { data, error } = await supabase
+        
+        // First, fetch the resume editor content which has our formatted resume
+        const { data: editorData, error: editorError } = await supabase
+          .from('resume_editors')
+          .select('content')
+          .eq('analysis_id', analysisId)
+          .single();
+        
+        if (editorError) throw editorError;
+        
+        if (!editorData || !editorData.content) {
+          toast({ 
+            title: "Resume content not found", 
+            description: "Could not find resume content for preview", 
+            variant: "destructive" 
+          });
+          navigate('/alchemy-records');
+          return;
+        }
+        
+        // Then fetch the analysis to get job and resume details
+        const { data: analysisData, error: analysisError } = await supabase
           .from('resume_analyses')
           .select(`
             id,
-            formatted_golden_resume,
+            google_doc_url,
             resume:resume_id(file_name),
             job:job_id(job_title)
           `)
           .eq('id', analysisId)
-          .maybeSingle();
-
-        if (error) throw error;
+          .single();
         
-        if (!data) {
+        if (analysisError) throw analysisError;
+        
+        if (!analysisData) {
           toast({ 
             title: "Resume not found", 
             description: "The requested resume could not be found", 
@@ -65,41 +91,38 @@ const ResumePreview = () => {
           return;
         }
 
-        // Handle potential array or object responses from Supabase
+        // Extract job title and file name safely
         let jobTitle = 'Unnamed Position';
         let fileName = 'Resume';
 
-        // Extract job title - safely handle different data structures
-        if (data.job) {
-          if (Array.isArray(data.job)) {
-            // If job is an array, take the first item's job_title
-            if (data.job.length > 0) {
-              jobTitle = data.job[0].job_title || jobTitle;
+        // Handle job data extraction
+        if (analysisData.job) {
+          if (Array.isArray(analysisData.job)) {
+            if (analysisData.job.length > 0 && typeof analysisData.job[0] === 'object') {
+              jobTitle = analysisData.job[0].job_title || jobTitle;
             }
-          } else if (typeof data.job === 'object') {
-            // If job is an object (direct relation)
-            jobTitle = data.job.job_title || jobTitle;
+          } else if (typeof analysisData.job === 'object' && analysisData.job !== null) {
+            jobTitle = analysisData.job.job_title || jobTitle;
           }
         }
 
-        // Extract file name - safely handle different data structures
-        if (data.resume) {
-          if (Array.isArray(data.resume)) {
-            // If resume is an array, take the first item's file_name
-            if (data.resume.length > 0) {
-              fileName = data.resume[0].file_name || fileName;
+        // Handle resume data extraction
+        if (analysisData.resume) {
+          if (Array.isArray(analysisData.resume)) {
+            if (analysisData.resume.length > 0 && typeof analysisData.resume[0] === 'object') {
+              fileName = analysisData.resume[0].file_name || fileName;
             }
-          } else if (typeof data.resume === 'object') {
-            // If resume is an object (direct relation)
-            fileName = data.resume.file_name || fileName;
+          } else if (typeof analysisData.resume === 'object' && analysisData.resume !== null) {
+            fileName = analysisData.resume.file_name || fileName;
           }
         }
 
         setResumeData({
-          ...data,
-          resume: getFormattedResume(data.formatted_golden_resume),
+          ...analysisData,
+          resume: editorData.content, // Use content from resume_editors
           jobTitle,
-          fileName
+          fileName,
+          googleDocUrl: analysisData.google_doc_url
         });
       } catch (error) {
         console.error('Error fetching resume data:', error);
@@ -118,6 +141,57 @@ const ResumePreview = () => {
 
   const handleEditClick = () => {
     navigate('/resume-refine', { state: { analysisId } });
+  };
+
+  const handleExportPDF = async () => {
+    if (!resumeRef.current) return;
+
+    try {
+      toast({ 
+        title: "Preparing PDF", 
+        description: "Your resume is being converted to PDF...", 
+      });
+
+      // Create canvas from DOM element
+      const canvas = await html2canvas(resumeRef.current, {
+        scale: 2, // Higher resolution
+        useCORS: true,
+        logging: false,
+        backgroundColor: style === 'classic' ? '#ffffff' : 
+          style === 'modern' ? '#EFF6FF' : 
+          style === 'minimal' ? '#F9FAFB' : 
+          style === 'professional' ? '#FFFBEB' : 
+          style === 'creative' ? '#F5F3FF' : '#ffffff'
+      });
+
+      // Create PDF (A4 size)
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgWidth = 210; // A4 width in mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      const imgData = canvas.toDataURL('image/jpeg', 1.0);
+
+      pdf.addImage(imgData, 'JPEG', 0, 0, imgWidth, imgHeight);
+      
+      // Download the PDF
+      const fileName = resumeData?.jobTitle 
+        ? `Resume_${resumeData.jobTitle.replace(/\s+/g, '_')}.pdf` 
+        : 'Resume.pdf';
+      
+      pdf.save(fileName);
+      
+      toast({ 
+        title: "PDF Exported", 
+        description: "Your resume has been successfully downloaded", 
+        variant: "default" 
+      });
+    } catch (error) {
+      console.error('Error exporting PDF:', error);
+      toast({ 
+        title: "Export Failed", 
+        description: "Failed to export resume to PDF. Please try again.", 
+        variant: "destructive" 
+      });
+    }
   };
 
   if (isLoading || loading) {
@@ -146,44 +220,36 @@ const ResumePreview = () => {
                 Edit Resume
               </Button>
               
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className="flex items-center gap-2">
-                    <FileText className="h-4 w-4" />
-                    Change Style
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-56">
-                  <div className="grid gap-2">
-                    <h3 className="font-medium text-sm">Resume Style</h3>
-                    <div className="grid grid-cols-2 gap-2">
-                      {RESUME_STYLES.map((styleOption) => (
-                        <button
-                          key={styleOption.id}
-                          className={`p-2 rounded-md text-sm transition-colors ${
-                            style === styleOption.id 
-                              ? 'bg-primary text-white' 
-                              : `${styleOption.color} hover:bg-neutral-100`
-                          }`}
-                          onClick={() => setStyle(styleOption.id)}
-                        >
-                          {styleOption.name}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </PopoverContent>
-              </Popover>
+              <Button 
+                variant="outline" 
+                onClick={() => setStyleDialogOpen(true)}
+                className="flex items-center gap-2"
+              >
+                <FileText className="h-4 w-4" />
+                Change Style
+              </Button>
+
+              <Button 
+                variant="outline" 
+                onClick={handleExportPDF}
+                className="flex items-center gap-2"
+              >
+                <Download className="h-4 w-4" />
+                Export PDF
+              </Button>
             </div>
           </div>
 
           {/* Resume Content */}
-          <div className={`bg-white rounded-xl p-8 shadow-apple relative group ${
-            style === 'modern' ? 'bg-blue-50' : 
-            style === 'minimal' ? 'bg-gray-50' : 
-            style === 'professional' ? 'bg-amber-50' : 
-            style === 'creative' ? 'bg-purple-50' : 'bg-white'
-          }`}>
+          <div 
+            ref={resumeRef}
+            className={`bg-white rounded-xl p-8 shadow-apple relative group ${
+              style === 'modern' ? 'bg-blue-50' : 
+              style === 'minimal' ? 'bg-gray-50' : 
+              style === 'professional' ? 'bg-amber-50' : 
+              style === 'creative' ? 'bg-purple-50' : 'bg-white'
+            }`}
+          >
             {/* Edit button that appears on hover */}
             <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
               <Button
@@ -414,6 +480,53 @@ const ResumePreview = () => {
           </div>
         </div>
       </div>
+
+      {/* Style Dialog */}
+      <Dialog open={styleDialogOpen} onOpenChange={setStyleDialogOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Choose Resume Style</DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+            {RESUME_STYLES.map((styleOption) => (
+              <div 
+                key={styleOption.id} 
+                className={`border rounded-md p-4 cursor-pointer transition-all ${
+                  style === styleOption.id 
+                    ? 'ring-2 ring-primary border-primary' 
+                    : 'hover:border-gray-400'
+                } ${styleOption.color}`}
+                onClick={() => {
+                  setStyle(styleOption.id);
+                  setStyleDialogOpen(false);
+                }}
+              >
+                <h3 className="font-semibold mb-2">{styleOption.name}</h3>
+                <div className="h-40 overflow-hidden">
+                  <div className={`text-xs p-2 ${
+                    styleOption.id === 'modern' ? 'border-b-2 border-blue-300' : 
+                    styleOption.id === 'minimal' ? 'border-b border-gray-200' : 
+                    styleOption.id === 'professional' ? 'border-b-2 border-amber-300' : 
+                    styleOption.id === 'creative' ? 'border-b-2 border-purple-300' : 'border-b-2 border-neutral-200'
+                  }`}>
+                    <p className="font-bold">John Smith</p>
+                    <p className="text-xs text-gray-600">john@example.com • (123) 456-7890</p>
+                  </div>
+                  <div className="mt-2">
+                    <p className={`font-bold text-xs ${
+                      styleOption.id === 'modern' ? 'text-blue-600' : 
+                      styleOption.id === 'professional' ? 'text-amber-600' : 
+                      styleOption.id === 'creative' ? 'text-purple-600' : 'text-gray-800'
+                    }`}>Professional Experience</p>
+                    <p className="text-xs mt-1 font-semibold">Software Developer</p>
+                    <p className="text-xs text-gray-600">Tech Company, 2020-Present</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

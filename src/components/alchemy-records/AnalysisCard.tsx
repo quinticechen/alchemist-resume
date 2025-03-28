@@ -149,22 +149,6 @@ const AnalysisCard = ({
           <Crown className="h-4 w-4 mr-2" />
           Golden Resume
         </Button>
-
-        {/* <Button
-          variant="outline"
-          size="sm"
-          onClick={() => navigate('/resume-refine', {
-            state: {
-              resumeId: resume?.file_path,
-              analysisId: id,
-              jobTitle: jobTitle
-            }
-          })}
-          className="text-success border-success/20 hover:bg-success/5"
-        >
-          <Pencil className="h-4 w-4 mr-2" />
-          Edit Resume
-        </Button> */}
       </div>
     </div>
   );
