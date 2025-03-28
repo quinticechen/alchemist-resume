@@ -6,8 +6,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Pencil, FileText, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { getFormattedResume } from "@/utils/resumeUtils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
@@ -91,28 +89,34 @@ const ResumePreview = () => {
           return;
         }
 
-        // Extract job title and file name safely
+        // Initialize with default values
         let jobTitle = 'Unnamed Position';
         let fileName = 'Resume';
 
-        // Handle job data extraction
+        // Handle job data extraction safely
         if (analysisData.job) {
+          // Check if job is an array
           if (Array.isArray(analysisData.job)) {
             if (analysisData.job.length > 0 && typeof analysisData.job[0] === 'object') {
               jobTitle = analysisData.job[0].job_title || jobTitle;
             }
-          } else if (typeof analysisData.job === 'object' && analysisData.job !== null) {
+          } 
+          // Check if job is an object
+          else if (typeof analysisData.job === 'object' && analysisData.job !== null) {
             jobTitle = analysisData.job.job_title || jobTitle;
           }
         }
 
-        // Handle resume data extraction
+        // Handle resume data extraction safely
         if (analysisData.resume) {
+          // Check if resume is an array
           if (Array.isArray(analysisData.resume)) {
             if (analysisData.resume.length > 0 && typeof analysisData.resume[0] === 'object') {
               fileName = analysisData.resume[0].file_name || fileName;
             }
-          } else if (typeof analysisData.resume === 'object' && analysisData.resume !== null) {
+          } 
+          // Check if resume is an object
+          else if (typeof analysisData.resume === 'object' && analysisData.resume !== null) {
             fileName = analysisData.resume.file_name || fileName;
           }
         }
