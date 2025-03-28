@@ -55,11 +55,15 @@ const ResumeRefine = () => {
               }
             }
             
+            // Fix: Correct type handling for job_title
+            // Ensure job is an object (not an array) and access job_title safely
+            const fetchedJobTitle = data.job?.job_title || null;
+            
             setResumeData({
               resumeId: data.resume_id,
               goldenResume: resumeContent,
               analysisId: data.id,
-              jobTitle: data.job?.job_title
+              jobTitle: fetchedJobTitle
             });
           }
         } catch (error) {
