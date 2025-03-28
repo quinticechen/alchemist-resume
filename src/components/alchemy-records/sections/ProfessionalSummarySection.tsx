@@ -9,13 +9,15 @@ interface ProfessionalSummarySectionProps {
 }
 
 const ProfessionalSummarySection = ({ data, onChange }: ProfessionalSummarySectionProps) => {
+  // Log the data structure to help with debugging
+  console.log('ProfessionalSummarySection data:', data);
+  
+  const professionalSummary = data?.professionalSummary || '';
+
   const handleChange = (value: string) => {
     onChange({
       ...data,
-      resume: {
-        ...data.resume,
-        professionalSummary: value
-      }
+      professionalSummary: value
     });
   };
 
@@ -26,7 +28,7 @@ const ProfessionalSummarySection = ({ data, onChange }: ProfessionalSummarySecti
         <Textarea 
           id="professionalSummary"
           rows={8}
-          value={data?.resume?.professionalSummary || ''}
+          value={professionalSummary}
           onChange={(e) => handleChange(e.target.value)}
           placeholder="Write a concise summary of your professional background, skills, and career objectives..."
           className="min-h-[200px]"

@@ -17,7 +17,11 @@ interface SectionEditorProps {
 }
 
 const SectionEditor = ({ section, resumeData, onChange }: SectionEditorProps) => {
-  const data = resumeData?.resume || {};
+  console.log('SectionEditor resumeData:', resumeData);
+  
+  // Extract resume from the data structure if it exists, otherwise use the data as is
+  const data = resumeData?.resume || resumeData || {};
+  console.log('SectionEditor extracted data:', data);
 
   switch (section) {
     case 'personalInfo':

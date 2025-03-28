@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -34,7 +33,6 @@ const ResumeEditor = ({ resumeId, goldenResume, analysisId, onClose, setHasUnsav
     const fetchResumeAndJobData = async () => {
       setIsLoading(true);
       try {
-        // Fetch the job data first
         const { data: analysisData, error: analysisError } = await supabase
           .from('resume_analyses')
           .select('job_id')
@@ -54,7 +52,6 @@ const ResumeEditor = ({ resumeId, goldenResume, analysisId, onClose, setHasUnsav
           setJobData(jobData.job_description);
         }
 
-        // Then check for the editor record
         const { data: editorData, error: editorError } = await supabase
           .from('resume_editors')
           .select('id, content')
@@ -66,29 +63,25 @@ const ResumeEditor = ({ resumeId, goldenResume, analysisId, onClose, setHasUnsav
         }
 
         if (editorData) {
-          // Use existing editor content
           const content = editorData.content;
+          console.log('Editor content loaded:', content);
           setResumeData(content);
           setSavedData(JSON.stringify(content));
           setEditorId(editorData.id);
         } else {
-          // No editor record exists, initialize with golden resume and create a new record
           let initialContent = {};
           
           if (goldenResume) {
             try {
-              // Try to parse if it's a JSON string
               initialContent = typeof goldenResume === 'string' 
                 ? JSON.parse(goldenResume) 
                 : goldenResume;
             } catch (e) {
-              // If parsing fails, use empty object
               console.error("Failed to parse golden resume:", e);
               initialContent = {};
             }
           }
           
-          // Create a new editor record
           const { data: newEditor, error: createError } = await supabase
             .from('resume_editors')
             .insert({
@@ -132,17 +125,12 @@ const ResumeEditor = ({ resumeId, goldenResume, analysisId, onClose, setHasUnsav
   };
 
   const handleResumeDataChange = (updatedData: any) => {
-    setResumeData(prevData => {
-      return {
-        ...prevData,
-        resume: updatedData
-      };
-    });
+    console.log('Resume data being updated:', updatedData);
+    setResumeData(updatedData);
   };
 
   const validateResumeData = (data: any): boolean => {
     try {
-      // Simple validation to ensure it's a valid object
       if (typeof data !== 'object' || data === null) {
         return false;
       }
@@ -161,7 +149,6 @@ const ResumeEditor = ({ resumeId, goldenResume, analysisId, onClose, setHasUnsav
       return;
     }
 
-    // Validate resume data
     if (!validateResumeData(resumeData)) {
       toast({
         title: "Invalid resume format",
@@ -209,7 +196,6 @@ const ResumeEditor = ({ resumeId, goldenResume, analysisId, onClose, setHasUnsav
       const parsed = JSON.parse(e.target.value);
       setResumeData(parsed);
     } catch (error) {
-      // Don't update the state if the JSON is invalid
       console.error("Invalid JSON:", error);
     }
   };
@@ -228,12 +214,10 @@ const ResumeEditor = ({ resumeId, goldenResume, analysisId, onClose, setHasUnsav
         
         <TabsContent value="visual" className="mt-4">
           <div className="grid grid-cols-[1fr_2fr_1fr] gap-4">
-            {/* Job Description Panel */}
             <div className="border rounded-md p-4 h-[600px] overflow-auto">
               <JobDescriptionViewer jobData={jobData} />
             </div>
             
-            {/* Section Editor Panel */}
             <div className="border rounded-md p-4 h-[600px] overflow-auto">
               <h2 className="text-xl font-semibold mb-4">
                 {activeSection === 'personalInfo' ? 'Personal Information' : 
@@ -252,7 +236,6 @@ const ResumeEditor = ({ resumeId, goldenResume, analysisId, onClose, setHasUnsav
               />
             </div>
             
-            {/* Section Selector Panel */}
             <div className="border rounded-md p-4 h-[600px] overflow-auto">
               <SectionSelector 
                 currentSection={activeSection} 
