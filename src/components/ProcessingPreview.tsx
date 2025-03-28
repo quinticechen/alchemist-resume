@@ -133,13 +133,23 @@ const ProcessingPreview = ({
           return;
         }
 
-        if (analysisData.google_doc_url) {
-          console.log("Google Doc URL found, setting success state:", analysisData.google_doc_url);
-          setGoogleDocUrl(analysisData.google_doc_url);
-          setMatchScore(analysisData.match_score);
+        // If the status is success, mark the generation as complete
+        // regardless of whether googleDocUrl is available
+        if (analysisData.status === "success") {
           setStatus("success");
+          
+          if (analysisData.google_doc_url) {
+            console.log("Google Doc URL found, setting success state:", analysisData.google_doc_url);
+            setGoogleDocUrl(analysisData.google_doc_url);
+            setMatchScore(analysisData.match_score);
+          }
+          
           if (onGenerationComplete) {
             onGenerationComplete();
+          }
+          
+          if (setIsProcessing) {
+            setIsProcessing(false);
           }
         } else {
           setStatus("pending");
@@ -193,12 +203,17 @@ const ProcessingPreview = ({
             return;
           }
 
-          // Check if google_doc_url is now available
-          if (newData.google_doc_url) {
+          // If status is success, consider generation complete
+          // regardless of whether googleDocUrl exists
+          if (newData.status === "success") {
             console.log("Success status detected in real-time update");
-            setGoogleDocUrl(newData.google_doc_url);
-            setMatchScore(newData.match_score);
             setStatus("success");
+            
+            // Set googleDocUrl and matchScore if available
+            if (newData.google_doc_url) {
+              setGoogleDocUrl(newData.google_doc_url);
+              setMatchScore(newData.match_score);
+            }
 
             toast({
               title: "Resume generation complete",
@@ -208,10 +223,10 @@ const ProcessingPreview = ({
             if (onGenerationComplete) {
               onGenerationComplete();
             }
-          } else if (newData.status === "success") {
-            // Handle case where status is success but google_doc_url might be delayed
-            console.log("Success status but no Google Doc URL yet, checking again...");
-            fetchAnalysis();
+            
+            if (setIsProcessing) {
+              setIsProcessing(false);
+            }
           }
         }
       )
@@ -253,17 +268,19 @@ const ProcessingPreview = ({
       </div>
 
       <div className="space-y-4">
-        {status === "success" && googleDocUrl && (
+        {status === "success" && (
           <div className="flex text-center flex-wrap gap-3 pt-2 justify-center">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => window.open(googleDocUrl, "_blank")}
-              className="text-info border-info/20 hover:bg-info/5"
-            >
-              <Crown className="h-4 w-4 mr-2" />
-              Golden Resume
-            </Button>
+            {googleDocUrl && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.open(googleDocUrl, "_blank")}
+                className="text-info border-info/20 hover:bg-info/5"
+              >
+                <Crown className="h-4 w-4 mr-2" />
+                Golden Resume
+              </Button>
+            )}
 
             <Button
               variant="outline"
