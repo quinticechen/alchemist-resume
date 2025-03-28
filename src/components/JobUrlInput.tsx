@@ -34,9 +34,12 @@ export const SUPPORTED_JOB_SITES = [
 export const getWebhookUrl = () => {
   const env = getEnvironment();
   if (env === "production") {
-    return "https://hook.eu2.make.com/pthisc4aefvf15i7pj4ja99a84dp7kce";
+    return "https://hook.eu2.make.com/msh4g0nvpnjivqf3axktc8r9psd7qi2x";
+    // Original: https://hook.eu2.make.com/pthisc4aefvf15i7pj4ja99a84dp7kce
   } else {
     return "https://hook.eu2.make.com/u7vybasfz94l385gpmapxwn15c9t3bpr";
+    // test failed: https://hook.eu2.make.com/498k5fa5h8kc3huriwiaqoarossdf4os
+    // Original: https://hook.eu2.make.com/2up5vi5mr8jhhdl1eclyw3shu99uoxlb
   }
 };
 
