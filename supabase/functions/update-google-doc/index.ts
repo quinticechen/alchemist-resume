@@ -157,11 +157,12 @@ Deno.serve(async (req) => {
     }
 
     // Update the resume with original resume content
+    // Now storing formatted resume data in the resumes table
     if (analysis.resume_id && originalResume) {
       const { error: resumeUpdateError } = await supabaseClient
         .from('resumes')
         .update({
-          original_resume: originalResume
+          formatted_resume: originalResume // Use the new column name
         })
         .eq('id', analysis.resume_id);
 
@@ -170,22 +171,12 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Update the analysis with Google Doc URL, golden resume, and match score
+    // Update the analysis with Google Doc URL and match score
+    // No longer storing golden_resume or formatted_original_resume in resume_analyses
     const updateData: any = {
       google_doc_url: googleDocUrl,
       status: 'success', // Using the new enumerated type value
     };
-    
-    // Add golden resume data if available
-    if (goldenResume) {
-      updateData.golden_resume = JSON.stringify(goldenResume);
-      updateData.formatted_golden_resume = goldenResume;
-    }
-    
-    // Add original resume data if available
-    if (originalResume) {
-      updateData.formatted_original_resume = originalResume;
-    }
     
     if (matchScore) {
       updateData.match_score = parseFloat(matchScore);
@@ -198,6 +189,48 @@ Deno.serve(async (req) => {
 
     if (analysisUpdateError) {
       throw analysisUpdateError;
+    }
+
+    // If we have a golden resume, store it in the resume_editors table
+    if (goldenResume && analysis.resume_id) {
+      // Check if a resume editor record exists
+      const { data: editorData, error: editorCheckError } = await supabaseClient
+        .from('resume_editors')
+        .select('id')
+        .eq('analysis_id', analysisId)
+        .maybeSingle();
+
+      if (editorCheckError && editorCheckError.code !== 'PGRST116') {
+        throw editorCheckError;
+      }
+
+      if (editorData) {
+        // Update existing editor record
+        const { error: editorUpdateError } = await supabaseClient
+          .from('resume_editors')
+          .update({
+            content: goldenResume,
+            last_saved: new Date().toISOString()
+          })
+          .eq('id', editorData.id);
+
+        if (editorUpdateError) {
+          throw editorUpdateError;
+        }
+      } else {
+        // Create new editor record
+        const { error: editorInsertError } = await supabaseClient
+          .from('resume_editors')
+          .insert({
+            analysis_id: analysisId,
+            content: goldenResume,
+            last_saved: new Date().toISOString()
+          });
+
+        if (editorInsertError) {
+          throw editorInsertError;
+        }
+      }
     }
 
     // console.log('Successfully updated records for analysis ID:', analysisId);
