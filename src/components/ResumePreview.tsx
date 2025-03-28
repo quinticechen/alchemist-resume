@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,7 +12,7 @@ interface ResumePreviewProps {
 }
 
 const ResumePreview = ({ file, filePath, publicUrl, onCancel }: ResumePreviewProps) => {
-  if (!file || !publicUrl) return null;
+  if (!file) return null;
 
   return (
     <Card className="w-full">
@@ -26,15 +27,17 @@ const ResumePreview = ({ file, filePath, publicUrl, onCancel }: ResumePreviewPro
           </div>
           
           <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => window.open(publicUrl, '_blank')}
-              className="flex items-center gap-2"
-            >
-              <Eye className="h-4 w-4" />
-              Preview PDF
-            </Button>
+            {publicUrl && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.open(publicUrl, '_blank')}
+                className="flex items-center gap-2"
+              >
+                <Eye className="h-4 w-4" />
+                Preview PDF
+              </Button>
+            )}
             
             <Button
               variant="destructive"

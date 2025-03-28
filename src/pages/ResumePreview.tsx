@@ -51,7 +51,7 @@ const ResumePreview = () => {
           .from('resume_editors')
           .select('content')
           .eq('analysis_id', analysisId)
-          .single();
+          .maybeSingle();
         
         if (editorError) throw editorError;
         
@@ -93,31 +93,35 @@ const ResumePreview = () => {
         let jobTitle = 'Unnamed Position';
         let fileName = 'Resume';
 
-        // Handle job data extraction safely
+        // Handle job data extraction safely with proper TypeScript checks
         if (analysisData.job) {
-          // Check if job is an array
           if (Array.isArray(analysisData.job)) {
-            if (analysisData.job.length > 0 && typeof analysisData.job[0] === 'object') {
-              jobTitle = analysisData.job[0].job_title || jobTitle;
+            // If job is an array, try to get the first item
+            const firstItem = analysisData.job[0];
+            if (firstItem && typeof firstItem === 'object' && 'job_title' in firstItem) {
+              jobTitle = firstItem.job_title || jobTitle;
             }
-          } 
-          // Check if job is an object
-          else if (typeof analysisData.job === 'object' && analysisData.job !== null) {
-            jobTitle = analysisData.job.job_title || jobTitle;
+          } else if (typeof analysisData.job === 'object' && analysisData.job !== null) {
+            // If job is an object with job_title property
+            if ('job_title' in analysisData.job) {
+              jobTitle = analysisData.job.job_title || jobTitle;
+            }
           }
         }
 
-        // Handle resume data extraction safely
+        // Handle resume data extraction safely with proper TypeScript checks
         if (analysisData.resume) {
-          // Check if resume is an array
           if (Array.isArray(analysisData.resume)) {
-            if (analysisData.resume.length > 0 && typeof analysisData.resume[0] === 'object') {
-              fileName = analysisData.resume[0].file_name || fileName;
+            // If resume is an array, try to get the first item
+            const firstItem = analysisData.resume[0];
+            if (firstItem && typeof firstItem === 'object' && 'file_name' in firstItem) {
+              fileName = firstItem.file_name || fileName;
             }
-          } 
-          // Check if resume is an object
-          else if (typeof analysisData.resume === 'object' && analysisData.resume !== null) {
-            fileName = analysisData.resume.file_name || fileName;
+          } else if (typeof analysisData.resume === 'object' && analysisData.resume !== null) {
+            // If resume is an object with file_name property
+            if ('file_name' in analysisData.resume) {
+              fileName = analysisData.resume.file_name || fileName;
+            }
           }
         }
 
@@ -205,6 +209,22 @@ const ResumePreview = () => {
   if (!resumeData) {
     return null;
   }
+
+  // Extract resume data for displaying in style previews
+  const personalInfo = resumeData.resume?.personalInfo || {};
+  const experiences = resumeData.resume?.professionalExperience || [];
+  const firstName = personalInfo.firstName || 'John';
+  const lastName = personalInfo.lastName || 'Smith';
+  const email = personalInfo.email || 'email@example.com';
+  const phone = personalInfo.phone || '(123) 456-7890';
+  
+  // Get the most recent experience for the style previews
+  const latestExperience = experiences && experiences.length > 0 ? experiences[0] : {
+    jobTitle: 'Software Developer',
+    companyName: 'Tech Company',
+    startDate: '2020',
+    endDate: 'Present'
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100">
@@ -513,8 +533,8 @@ const ResumePreview = () => {
                     styleOption.id === 'professional' ? 'border-b-2 border-amber-300' : 
                     styleOption.id === 'creative' ? 'border-b-2 border-purple-300' : 'border-b-2 border-neutral-200'
                   }`}>
-                    <p className="font-bold">John Smith</p>
-                    <p className="text-xs text-gray-600">john@example.com • (123) 456-7890</p>
+                    <p className="font-bold">{firstName} {lastName}</p>
+                    <p className="text-xs text-gray-600">{email} • {phone}</p>
                   </div>
                   <div className="mt-2">
                     <p className={`font-bold text-xs ${
@@ -522,8 +542,8 @@ const ResumePreview = () => {
                       styleOption.id === 'professional' ? 'text-amber-600' : 
                       styleOption.id === 'creative' ? 'text-purple-600' : 'text-gray-800'
                     }`}>Professional Experience</p>
-                    <p className="text-xs mt-1 font-semibold">Software Developer</p>
-                    <p className="text-xs text-gray-600">Tech Company, 2020-Present</p>
+                    <p className="text-xs mt-1 font-semibold">{latestExperience.jobTitle}</p>
+                    <p className="text-xs text-gray-600">{latestExperience.companyName}, {latestExperience.startDate}-{latestExperience.endDate || 'Present'}</p>
                   </div>
                 </div>
               </div>
