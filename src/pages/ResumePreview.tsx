@@ -19,6 +19,20 @@ const RESUME_STYLES = [
   { id: 'creative', name: 'Creative', color: 'bg-purple-50' },
 ];
 
+// Define more specific interface types for Supabase responses
+interface ResumeData {
+  file_name?: string;
+  file_path?: string;
+  formatted_resume?: any;
+}
+
+interface JobData {
+  job_title?: string;
+  company_name?: string | null;
+  company_url?: string | null;
+  job_url?: string | null;
+}
+
 const ResumePreview = () => {
   const { session, isLoading } = useAuth();
   const navigate = useNavigate();
@@ -93,34 +107,36 @@ const ResumePreview = () => {
         let jobTitle = 'Unnamed Position';
         let fileName = 'Resume';
 
-        // Handle job data extraction safely with proper TypeScript checks
+        // Handle job data extraction safely
         if (analysisData.job) {
           if (Array.isArray(analysisData.job)) {
             // If job is an array, try to get the first item
-            const firstItem = analysisData.job[0];
-            if (firstItem && typeof firstItem === 'object' && 'job_title' in firstItem) {
-              jobTitle = firstItem.job_title || jobTitle;
+            const firstJob = analysisData.job[0] as JobData;
+            if (firstJob && firstJob.job_title) {
+              jobTitle = firstJob.job_title;
             }
           } else if (typeof analysisData.job === 'object' && analysisData.job !== null) {
             // If job is an object with job_title property
-            if ('job_title' in analysisData.job) {
-              jobTitle = analysisData.job.job_title || jobTitle;
+            const jobObj = analysisData.job as JobData;
+            if (jobObj.job_title) {
+              jobTitle = jobObj.job_title;
             }
           }
         }
 
-        // Handle resume data extraction safely with proper TypeScript checks
+        // Handle resume data extraction safely
         if (analysisData.resume) {
           if (Array.isArray(analysisData.resume)) {
             // If resume is an array, try to get the first item
-            const firstItem = analysisData.resume[0];
-            if (firstItem && typeof firstItem === 'object' && 'file_name' in firstItem) {
-              fileName = firstItem.file_name || fileName;
+            const firstResume = analysisData.resume[0] as ResumeData;
+            if (firstResume && firstResume.file_name) {
+              fileName = firstResume.file_name;
             }
           } else if (typeof analysisData.resume === 'object' && analysisData.resume !== null) {
             // If resume is an object with file_name property
-            if ('file_name' in analysisData.resume) {
-              fileName = analysisData.resume.file_name || fileName;
+            const resumeObj = analysisData.resume as ResumeData;
+            if (resumeObj.file_name) {
+              fileName = resumeObj.file_name;
             }
           }
         }
