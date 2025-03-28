@@ -122,14 +122,29 @@ Deno.serve(async (req) => {
     );
 
     // First, get the analysis to find the job_id and resume_id
+    // Use maybeSingle() instead of single() to handle the case when no record is found
     const { data: analysis, error: analysisError } = await supabaseClient
       .from('resume_analyses')
       .select('job_id, resume_id')
       .eq('id', analysisId)
-      .single();
+      .maybeSingle();
 
     if (analysisError) {
       throw analysisError;
+    }
+
+    // If no analysis record found, return an error
+    if (!analysis) {
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          message: `No analysis record found with ID: ${analysisId}` 
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 404,
+        }
+      );
     }
 
     // Update the jobs table with job information 
