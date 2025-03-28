@@ -7,6 +7,11 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
+// Define a more precise type for job data
+interface JobData {
+  job_title?: string;
+}
+
 const ResumeRefine = () => {
   const { session, isLoading } = useAuth();
   const navigate = useNavigate();
@@ -55,18 +60,20 @@ const ResumeRefine = () => {
               }
             }
             
-            // Fix: Handle job data correctly when it's returned as an array
-            let fetchedJobTitle = null;
+            // Extract job title safely, handling all possible data shapes from Supabase
+            let fetchedJobTitle: string | null = null;
             
-            // Check if job data exists and extract job_title properly
             if (data.job) {
-              // If job is an array (which happens with some Supabase joins)
-              if (Array.isArray(data.job) && data.job.length > 0) {
-                fetchedJobTitle = data.job[0]?.job_title || null;
+              // Case 1: job is an array (happens with some Supabase joins)
+              if (Array.isArray(data.job)) {
+                if (data.job.length > 0 && typeof data.job[0] === 'object') {
+                  // Access first array element's job_title
+                  fetchedJobTitle = data.job[0].job_title || null;
+                }
               } 
-              // If job is an object
+              // Case 2: job is an object (direct relation)
               else if (typeof data.job === 'object' && data.job !== null) {
-                fetchedJobTitle = data.job.job_title || null;
+                fetchedJobTitle = (data.job as JobData).job_title || null;
               }
             }
             
