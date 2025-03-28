@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from "@/contexts/AuthContext";
@@ -34,14 +33,16 @@ interface JobData {
 }
 
 interface EditorContent {
-  personalInfo?: any;
-  professionalSummary?: string;
-  professionalExperience?: any[];
-  education?: any;
-  skills?: any;
-  projects?: any[];
-  volunteer?: any[];
-  certifications?: any[];
+  resume?: {
+    personalInfo?: any;
+    professionalSummary?: string;
+    professionalExperience?: any[];
+    education?: any;
+    skills?: any;
+    projects?: any[];
+    volunteer?: any[];
+    certifications?: any[];
+  };
 }
 
 const ResumePreview = () => {
@@ -171,7 +172,7 @@ const ResumePreview = () => {
 
         setResumeData({
           ...analysisData,
-          resume: content, // Use content from resume_editors
+          resume: content.resume || {}, // Make sure we're extracting the 'resume' property from content
           jobTitle,
           fileName,
           googleDocUrl: analysisData.google_doc_url
