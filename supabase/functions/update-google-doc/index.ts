@@ -109,17 +109,10 @@ Deno.serve(async (req) => {
     const {
       analysisId,
       googleDocUrl,
-      companyName,
-      companyUrl,
-      jobTitle,
-      jobLanguage,
       jobDescription,
       goldenResume,
       originalResume,
       matchScore,
-      jobUrl,
-      formattedGoldenResume,
-      formattedOriginalResume
     } = requestBody;
 
     // Initialize Supabase client
@@ -139,24 +132,14 @@ Deno.serve(async (req) => {
       throw analysisError;
     }
 
-    // Update the jobs table with job information including job_url
-    if (analysis.job_id) {
-      // Process job description - could be string or object
-      let jobDescriptionData;
+    // Update the jobs table with job information 
+    if (analysis.job_id && jobDescription) {
+      // Extract company and job information from jobDescription
+      const companyName = jobDescription?.company?.name || null;
+      const companyUrl = jobDescription?.company?.url || null;
+      const jobTitle = jobDescription?.job?.title || null;
+      const jobLanguage = jobDescription?.job?.language || null;
       
-      if (typeof jobDescription === 'string') {
-        try {
-          // Try to parse if it's a JSON string
-          jobDescriptionData = JSON.parse(jobDescription);
-        } catch {
-          // If it's not valid JSON, use as-is
-          jobDescriptionData = jobDescription;
-        }
-      } else {
-        // Already an object
-        jobDescriptionData = jobDescription;
-      }
-
       const { error: jobUpdateError } = await supabaseClient
         .from('jobs')
         .update({
@@ -164,8 +147,7 @@ Deno.serve(async (req) => {
           company_url: companyUrl,
           job_title: jobTitle,
           language: jobLanguage,
-          job_url: jobUrl,
-          job_description: jobDescriptionData
+          job_description: jobDescription, // Store the entire jobDescription as JSONB
         })
         .eq('id', analysis.job_id);
 
@@ -188,20 +170,21 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Update the analysis with Google Doc URL, golden resume, formatted resumes, and match score
+    // Update the analysis with Google Doc URL, golden resume, and match score
     const updateData: any = {
       google_doc_url: googleDocUrl,
-      golden_resume: goldenResume,
-      status: 'success' // Using the new enumerated type value
+      status: 'success', // Using the new enumerated type value
     };
     
-    // Add formatted resume data if available
-    if (formattedGoldenResume) {
-      updateData.formatted_golden_resume = formattedGoldenResume;
+    // Add golden resume data if available
+    if (goldenResume) {
+      updateData.golden_resume = JSON.stringify(goldenResume);
+      updateData.formatted_golden_resume = goldenResume;
     }
     
-    if (formattedOriginalResume) {
-      updateData.formatted_original_resume = formattedOriginalResume;
+    // Add original resume data if available
+    if (originalResume) {
+      updateData.formatted_original_resume = originalResume;
     }
     
     if (matchScore) {

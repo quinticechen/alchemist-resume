@@ -32,7 +32,7 @@ const ResumeRefine = () => {
         try {
           const { data, error } = await supabase
             .from('resume_analyses')
-            .select('id, resume_id, golden_resume, formatted_golden_resume, job_title')
+            .select('id, resume_id, golden_resume, formatted_golden_resume, job:job_id(job_title)')
             .eq('id', analysisId)
             .single();
           
@@ -59,7 +59,7 @@ const ResumeRefine = () => {
               resumeId: data.resume_id,
               goldenResume: resumeContent,
               analysisId: data.id,
-              jobTitle: data.job_title
+              jobTitle: data.job?.job_title
             });
           }
         } catch (error) {

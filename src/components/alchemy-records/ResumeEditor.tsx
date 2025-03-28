@@ -44,34 +44,44 @@ const ResumeEditor = ({ resumeId, goldenResume, analysisId, onClose, setHasUnsav
           // Use existing editor content
           const content = editorData.content;
           
-          // Handle different content formats (string or JSON)
-          if (typeof content === 'string') {
-            editorContent = content;
-          } else if (content) {
-            // Format JSON data nicely
-            editorContent = JSON.stringify(content, null, 2);
-          }
+          // Format JSON data nicely
+          editorContent = typeof content === 'string' 
+            ? content 
+            : JSON.stringify(content, null, 2);
           
           setEditorContent(editorContent);
           setSavedContent(editorContent);
           setEditorId(editorData.id);
         } else {
           // No editor record exists, initialize with golden resume and create a new record
-          const initialContent = goldenResume || '';
+          let initialContent = {};
+          
+          if (goldenResume) {
+            try {
+              // Try to parse if it's a JSON string
+              initialContent = typeof goldenResume === 'string' 
+                ? JSON.parse(goldenResume) 
+                : goldenResume;
+            } catch (e) {
+              // If parsing fails, use empty object
+              console.error("Failed to parse golden resume:", e);
+              initialContent = {};
+            }
+          }
           
           // Create a new editor record
           const { data: newEditor, error: createError } = await supabase
             .from('resume_editors')
             .insert({
               analysis_id: analysisId,
-              content: initialContent ? JSON.parse(initialContent) : {}
+              content: initialContent
             })
             .select('id')
             .single();
           
           if (createError) throw createError;
           
-          editorContent = initialContent;
+          editorContent = JSON.stringify(initialContent, null, 2);
           setEditorContent(editorContent);
           setSavedContent(editorContent);
           setEditorId(newEditor.id);
