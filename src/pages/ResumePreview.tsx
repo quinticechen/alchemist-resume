@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from "@/contexts/AuthContext";
@@ -10,7 +9,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 
-// Resume style variants
 const RESUME_STYLES = [
   { id: 'classic', name: 'Classic', color: 'bg-white' },
   { id: 'modern', name: 'Modern', color: 'bg-blue-50' },
@@ -19,7 +17,6 @@ const RESUME_STYLES = [
   { id: 'creative', name: 'Creative', color: 'bg-purple-50' },
 ];
 
-// Define more specific interface types for Supabase responses
 interface ResumeData {
   file_name?: string;
   file_path?: string;
@@ -56,7 +53,6 @@ const ResumePreview = () => {
   const [resumeData, setResumeData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [style, setStyle] = useState<string>(() => {
-    // Get the style from localStorage or use the default
     return localStorage.getItem(LOCAL_STORAGE_STYLE_KEY) || 'classic';
   });
   const [styleDialogOpen, setStyleDialogOpen] = useState(false);
@@ -80,7 +76,6 @@ const ResumePreview = () => {
 
         console.log("Fetching data for analysis ID:", analysisId);
         
-        // First, fetch the resume editor content which has our formatted resume
         const { data: editorData, error: editorError } = await supabase
           .from('resume_editors')
           .select('content')
@@ -105,7 +100,6 @@ const ResumePreview = () => {
 
         console.log("Found editor content:", editorData.content);
         
-        // Then fetch the analysis to get job and resume details
         const { data: analysisData, error: analysisError } = await supabase
           .from('resume_analyses')
           .select(`
@@ -135,20 +129,16 @@ const ResumePreview = () => {
 
         console.log("Found analysis data:", analysisData);
 
-        // Initialize with default values
         let jobTitle = 'Unnamed Position';
         let fileName = 'Resume';
 
-        // Handle job data extraction safely
         if (analysisData.job) {
           if (Array.isArray(analysisData.job)) {
-            // If job is an array, try to get the first item
             const firstJob = analysisData.job[0] as JobData;
             if (firstJob && firstJob.job_title) {
               jobTitle = firstJob.job_title;
             }
           } else if (typeof analysisData.job === 'object' && analysisData.job !== null) {
-            // If job is an object with job_title property
             const jobObj = analysisData.job as JobData;
             if (jobObj.job_title) {
               jobTitle = jobObj.job_title;
@@ -156,16 +146,13 @@ const ResumePreview = () => {
           }
         }
 
-        // Handle resume data extraction safely
         if (analysisData.resume) {
           if (Array.isArray(analysisData.resume)) {
-            // If resume is an array, try to get the first item
             const firstResume = analysisData.resume[0] as ResumeData;
             if (firstResume && firstResume.file_name) {
               fileName = firstResume.file_name;
             }
           } else if (typeof analysisData.resume === 'object' && analysisData.resume !== null) {
-            // If resume is an object with file_name property
             const resumeObj = analysisData.resume as ResumeData;
             if (resumeObj.file_name) {
               fileName = resumeObj.file_name;
@@ -178,7 +165,7 @@ const ResumePreview = () => {
 
         setResumeData({
           ...analysisData,
-          resume: content.resume || {}, // Make sure we're extracting the 'resume' property from content
+          resume: content.resume || {},
           jobTitle,
           fileName,
           googleDocUrl: analysisData.google_doc_url
@@ -198,7 +185,6 @@ const ResumePreview = () => {
     fetchResumeData();
   }, [session, isLoading, navigate, analysisId, toast]);
 
-  // Store style in localStorage whenever it changes
   useEffect(() => {
     localStorage.setItem(LOCAL_STORAGE_STYLE_KEY, style);
   }, [style]);
@@ -216,12 +202,10 @@ const ResumePreview = () => {
         description: "Your resume is being converted to PDF...", 
       });
 
-      // Get the current height of the resume element
       const resumeElement = resumeRef.current;
       const originalHeight = resumeElement.scrollHeight;
       const originalWidth = resumeElement.offsetWidth;
       
-      // Create a clone of the resume element for manipulation
       const clone = resumeElement.cloneNode(true) as HTMLElement;
       clone.style.width = `${originalWidth}px`;
       clone.style.height = 'auto';
@@ -230,21 +214,18 @@ const ResumePreview = () => {
       clone.style.left = '-9999px';
       document.body.appendChild(clone);
       
-      // Get the background color based on the style
       const bgColor = style === 'classic' ? '#ffffff' : 
         style === 'modern' ? '#EFF6FF' : 
         style === 'minimal' ? '#F9FAFB' : 
         style === 'professional' ? '#FFFBEB' : 
         style === 'creative' ? '#F5F3FF' : '#ffffff';
       
-      // Create PDF (A4 size)
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
       
-      // Render the element to canvas - using the clone
       const canvas = await html2canvas(clone, {
-        scale: 2, // Higher resolution
+        scale: 2,
         useCORS: true,
         logging: false,
         backgroundColor: bgColor,
@@ -252,38 +233,30 @@ const ResumePreview = () => {
       
       document.body.removeChild(clone);
       
-      // Calculate scaling
       const imgWidth = pageWidth;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
       
-      // Split into multiple pages if needed
       let remainingHeight = canvas.height;
       let position = 0;
       
       while (remainingHeight > 0) {
-        // Convert to data URL
         const imgData = canvas.toDataURL('image/jpeg', 1.0);
         
-        // If not the first page, add a new page
         if (position > 0) {
           pdf.addPage();
         }
         
-        // Calculate the height for this page (in canvas pixels)
         const canvasPageHeight = Math.min(canvas.width * (pageHeight / pageWidth), remainingHeight);
         
-        // Calculate the source area from the canvas
         const sourceY = position;
         const sourceHeight = canvasPageHeight;
         
-        // Create a temporary canvas for the current page
         const tempCanvas = document.createElement('canvas');
         tempCanvas.width = canvas.width;
         tempCanvas.height = sourceHeight;
         const tempContext = tempCanvas.getContext('2d');
         
         if (tempContext) {
-          // Draw the portion of the original canvas
           tempContext.fillStyle = bgColor;
           tempContext.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
           tempContext.drawImage(
@@ -292,17 +265,14 @@ const ResumePreview = () => {
             0, 0, tempCanvas.width, tempCanvas.height
           );
           
-          // Add the image to the PDF
           const pageImgData = tempCanvas.toDataURL('image/jpeg', 1.0);
           pdf.addImage(pageImgData, 'JPEG', 0, 0, pageWidth, pageHeight);
         }
         
-        // Move to the next part of the canvas
         position += canvasPageHeight;
         remainingHeight -= canvasPageHeight;
       }
       
-      // Download the PDF
       const fileName = resumeData?.jobTitle 
         ? `Resume_${resumeData.jobTitle.replace(/\s+/g, '_')}.pdf` 
         : 'Resume.pdf';
@@ -334,15 +304,13 @@ const ResumePreview = () => {
 
   console.log("Rendering with resume data:", resumeData);
 
-  // Extract resume data for displaying in style previews
   const personalInfo = resumeData.resume?.personalInfo || {};
   const experiences = resumeData.resume?.professionalExperience || [];
   const firstName = personalInfo.firstName || 'John';
   const lastName = personalInfo.lastName || 'Smith';
   const email = personalInfo.email || 'email@example.com';
   const phone = personalInfo.phone || '(123) 456-7890';
-  
-  // Get the most recent experience for the style previews
+
   const latestExperience = experiences && experiences.length > 0 ? experiences[0] : {
     jobTitle: 'Software Developer',
     companyName: 'Tech Company',
@@ -388,7 +356,6 @@ const ResumePreview = () => {
             </div>
           </div>
 
-          {/* Resume Content */}
           <div 
             ref={resumeRef}
             className={`bg-white rounded-xl p-8 shadow-apple relative group ${
@@ -398,7 +365,6 @@ const ResumePreview = () => {
               style === 'creative' ? 'bg-purple-50' : 'bg-white'
             }`}
           >
-            {/* Edit button that appears on hover */}
             <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
               <Button
                 size="sm"
@@ -411,7 +377,6 @@ const ResumePreview = () => {
               </Button>
             </div>
 
-            {/* Personal Info Section */}
             <div className={`mb-6 pb-4 ${style === 'modern' ? 'border-b-2 border-blue-300' : 
               style === 'minimal' ? 'border-b border-gray-200' : 
               style === 'professional' ? 'border-b-2 border-amber-300' : 
@@ -439,7 +404,6 @@ const ResumePreview = () => {
               </div>
             </div>
 
-            {/* Professional Summary */}
             {resumeData.resume?.professionalSummary && (
               <div className="mb-6">
                 <h2 className={`text-xl font-bold mb-2 ${
@@ -453,7 +417,6 @@ const ResumePreview = () => {
               </div>
             )}
 
-            {/* Professional Experience */}
             {resumeData.resume?.professionalExperience?.length > 0 && (
               <div className="mb-6">
                 <h2 className={`text-xl font-bold mb-2 ${
@@ -486,7 +449,6 @@ const ResumePreview = () => {
               </div>
             )}
 
-            {/* Education */}
             {resumeData.resume?.education && (
               <div className="mb-6">
                 <h2 className={`text-xl font-bold mb-2 ${
@@ -496,16 +458,35 @@ const ResumePreview = () => {
                 }`}>
                   Education
                 </h2>
-                <div>
-                  <h3 className="font-bold text-gray-800">{resumeData.resume.education.degreeName}</h3>
-                  <p className="text-gray-600">{resumeData.resume.education.institution}</p>
-                  <p className="text-gray-500">Graduated: {resumeData.resume.education.graduationDate}</p>
-                  {resumeData.resume.education.gpa && <p className="text-gray-500">GPA: {resumeData.resume.education.gpa}</p>}
-                </div>
+                
+                {Array.isArray(resumeData.resume.education) ? (
+                  resumeData.resume.education.map((edu: any, index: number) => (
+                    <div key={index} className="mb-3">
+                      <h3 className="font-bold text-gray-800">{edu.degreeName}</h3>
+                      <p className="text-gray-600">{edu.institution}</p>
+                      {edu.enrollmentDate && edu.graduationDate ? (
+                        <p className="text-gray-500">{edu.enrollmentDate} - {edu.graduationDate}</p>
+                      ) : (
+                        <p className="text-gray-500">Graduated: {edu.graduationDate}</p>
+                      )}
+                      {edu.gpa && <p className="text-gray-500">GPA: {edu.gpa}</p>}
+                    </div>
+                  ))
+                ) : (
+                  <div>
+                    <h3 className="font-bold text-gray-800">{resumeData.resume.education.degreeName}</h3>
+                    <p className="text-gray-600">{resumeData.resume.education.institution}</p>
+                    {resumeData.resume.education.enrollmentDate && resumeData.resume.education.graduationDate ? (
+                      <p className="text-gray-500">{resumeData.resume.education.enrollmentDate} - {resumeData.resume.education.graduationDate}</p>
+                    ) : (
+                      <p className="text-gray-500">Graduated: {resumeData.resume.education.graduationDate}</p>
+                    )}
+                    {resumeData.resume.education.gpa && <p className="text-gray-500">GPA: {resumeData.resume.education.gpa}</p>}
+                  </div>
+                )}
               </div>
             )}
 
-            {/* Skills */}
             {resumeData.resume?.skills && (
               <div className="mb-6">
                 <h2 className={`text-xl font-bold mb-2 ${
@@ -541,7 +522,6 @@ const ResumePreview = () => {
               </div>
             )}
 
-            {/* Projects */}
             {resumeData.resume?.projects?.length > 0 && (
               <div className="mb-6">
                 <h2 className={`text-xl font-bold mb-2 ${
@@ -573,7 +553,6 @@ const ResumePreview = () => {
               </div>
             )}
 
-            {/* Certifications */}
             {resumeData.resume?.certifications?.length > 0 && (
               <div className="mb-6">
                 <h2 className={`text-xl font-bold mb-2 ${
@@ -587,14 +566,15 @@ const ResumePreview = () => {
                   {resumeData.resume.certifications.map((cert: any, i: number) => (
                     <li key={i}>
                       {cert.name} 
-                      {cert.dateAchieved && <span className="text-gray-500"> ({cert.dateAchieved})</span>}
+                      {cert.dateAchieved && <span className="text-gray-500"> (Achieved: {cert.dateAchieved}</span>}
+                      {cert.expiredDate && <span className="text-gray-500">, Expires: {cert.expiredDate}</span>}
+                      {cert.dateAchieved && <span className="text-gray-500">)</span>}
                     </li>
                   ))}
                 </ul>
               </div>
             )}
 
-            {/* Volunteer */}
             {resumeData.resume?.volunteer?.length > 0 && (
               <div className="mb-6">
                 <h2 className={`text-xl font-bold mb-2 ${
@@ -629,7 +609,6 @@ const ResumePreview = () => {
         </div>
       </div>
 
-      {/* Style Dialog */}
       <Dialog open={styleDialogOpen} onOpenChange={setStyleDialogOpen}>
         <DialogContent className="max-w-3xl">
           <DialogHeader>
@@ -651,7 +630,6 @@ const ResumePreview = () => {
               >
                 <h3 className="font-semibold mb-2">{styleOption.name}</h3>
                 <div className="h-40 overflow-hidden">
-                  {/* Use actual user data in style preview */}
                   <div className={`text-xs p-2 ${
                     styleOption.id === 'modern' ? 'border-b-2 border-blue-300' : 
                     styleOption.id === 'minimal' ? 'border-b border-gray-200' : 

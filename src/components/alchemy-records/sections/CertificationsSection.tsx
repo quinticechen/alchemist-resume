@@ -18,17 +18,21 @@ const CertificationsSection = ({ data, onChange }: CertificationsSectionProps) =
   
   const certificationsList = data?.certifications || [];
   
+  console.log('Certifications data:', certificationsList);
+  
   const initEditForm = (idx: number | null) => {
     if (idx !== null && certificationsList[idx]) {
       const cert = certificationsList[idx];
       setEditing({
         name: cert.name || '',
         dateAchieved: cert.dateAchieved || '',
+        expiredDate: cert.expiredDate || '',
       });
     } else {
       setEditing({
         name: '',
         dateAchieved: '',
+        expiredDate: '',
       });
     }
     setActiveCertIndex(idx);
@@ -121,6 +125,7 @@ const CertificationsSection = ({ data, onChange }: CertificationsSectionProps) =
                 <TableRow>
                   <TableHead>Certification Name</TableHead>
                   <TableHead>Date Achieved</TableHead>
+                  <TableHead>Expiration Date</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -129,6 +134,7 @@ const CertificationsSection = ({ data, onChange }: CertificationsSectionProps) =
                   <TableRow key={idx}>
                     <TableCell className="font-medium">{cert.name}</TableCell>
                     <TableCell>{cert.dateAchieved}</TableCell>
+                    <TableCell>{cert.expiredDate || 'N/A'}</TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
                         <Button 
@@ -192,14 +198,26 @@ const CertificationsSection = ({ data, onChange }: CertificationsSectionProps) =
               />
             </div>
             
-            <div className="space-y-2">
-              <Label htmlFor="dateAchieved">Date Achieved (YYYY-MM)</Label>
-              <Input 
-                id="dateAchieved" 
-                value={editing.dateAchieved} 
-                onChange={(e) => handleEditingChange('dateAchieved', e.target.value)}
-                placeholder="YYYY-MM"
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="dateAchieved">Date Achieved (YYYY-MM)</Label>
+                <Input 
+                  id="dateAchieved" 
+                  value={editing.dateAchieved} 
+                  onChange={(e) => handleEditingChange('dateAchieved', e.target.value)}
+                  placeholder="YYYY-MM"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="expiredDate">Expiration Date (YYYY-MM)</Label>
+                <Input 
+                  id="expiredDate" 
+                  value={editing.expiredDate} 
+                  onChange={(e) => handleEditingChange('expiredDate', e.target.value)}
+                  placeholder="YYYY-MM"
+                />
+              </div>
             </div>
           </CardContent>
           <CardFooter className="flex justify-between">

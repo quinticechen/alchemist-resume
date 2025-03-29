@@ -16,14 +16,20 @@ const EducationSection = ({ data, onChange }: EducationSectionProps) => {
   const [activeEduIndex, setActiveEduIndex] = useState<number | null>(null);
   const [editing, setEditing] = useState<{ [key: string]: string }>({});
   
-  const educationList = data?.education || [];
+  // Handle the case where education is an array or a single object
+  const educationArray = Array.isArray(data?.education) 
+    ? data.education 
+    : (data?.education ? [data.education] : []);
+  
+  console.log('Education data:', educationArray);
   
   const initEditForm = (idx: number | null) => {
-    if (idx !== null && educationList[idx]) {
-      const edu = educationList[idx];
+    if (idx !== null && educationArray[idx]) {
+      const edu = educationArray[idx];
       setEditing({
         degreeName: edu.degreeName || '',
         institution: edu.institution || '',
+        enrollmentDate: edu.enrollmentDate || '',
         graduationDate: edu.graduationDate || '',
         gpa: edu.gpa?.toString() || '',
       });
@@ -31,6 +37,7 @@ const EducationSection = ({ data, onChange }: EducationSectionProps) => {
       setEditing({
         degreeName: '',
         institution: '',
+        enrollmentDate: '',
         graduationDate: '',
         gpa: '',
       });
@@ -39,7 +46,7 @@ const EducationSection = ({ data, onChange }: EducationSectionProps) => {
   };
   
   const handleSaveEducation = () => {
-    const updatedEducation = [...educationList];
+    const updatedEducation = [...educationArray];
     
     const educationItem = {
       ...editing,
@@ -64,7 +71,7 @@ const EducationSection = ({ data, onChange }: EducationSectionProps) => {
   };
   
   const handleRemoveEducation = (idx: number) => {
-    const updatedEducation = [...educationList];
+    const updatedEducation = [...educationArray];
     updatedEducation.splice(idx, 1);
     
     onChange({
@@ -79,11 +86,11 @@ const EducationSection = ({ data, onChange }: EducationSectionProps) => {
   
   const handleMoveEducation = (idx: number, direction: 'up' | 'down') => {
     if ((direction === 'up' && idx === 0) || 
-        (direction === 'down' && idx === educationList.length - 1)) {
+        (direction === 'down' && idx === educationArray.length - 1)) {
       return;
     }
     
-    const updatedEducation = [...educationList];
+    const updatedEducation = [...educationArray];
     const newIdx = direction === 'up' ? idx - 1 : idx + 1;
     
     [updatedEducation[idx], updatedEducation[newIdx]] = 
@@ -120,22 +127,26 @@ const EducationSection = ({ data, onChange }: EducationSectionProps) => {
             <PlusCircle className="h-4 w-4 mr-2" />Add Education
           </Button>
           
-          {educationList.length > 0 ? (
+          {educationArray.length > 0 ? (
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Degree</TableHead>
                   <TableHead>Institution</TableHead>
-                  <TableHead>Graduation Date</TableHead>
+                  <TableHead>Dates</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {educationList.map((edu: any, idx: number) => (
+                {educationArray.map((edu: any, idx: number) => (
                   <TableRow key={idx}>
                     <TableCell className="font-medium">{edu.degreeName}</TableCell>
                     <TableCell>{edu.institution}</TableCell>
-                    <TableCell>{edu.graduationDate}</TableCell>
+                    <TableCell>
+                      {edu.enrollmentDate && edu.graduationDate ? 
+                        `${edu.enrollmentDate} to ${edu.graduationDate}` : 
+                        edu.graduationDate || 'No date'}
+                    </TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
                         <Button 
@@ -164,7 +175,7 @@ const EducationSection = ({ data, onChange }: EducationSectionProps) => {
                           variant="ghost" 
                           size="sm"
                           onClick={() => handleMoveEducation(idx, 'down')}
-                          disabled={idx === educationList.length - 1}
+                          disabled={idx === educationArray.length - 1}
                         >
                           <MoveDown className="h-4 w-4" />
                         </Button>
@@ -210,6 +221,15 @@ const EducationSection = ({ data, onChange }: EducationSectionProps) => {
             
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
+                <Label htmlFor="enrollmentDate">Enrollment Date (YYYY-MM)</Label>
+                <Input 
+                  id="enrollmentDate" 
+                  value={editing.enrollmentDate} 
+                  onChange={(e) => handleEditingChange('enrollmentDate', e.target.value)}
+                  placeholder="YYYY-MM"
+                />
+              </div>
+              <div className="space-y-2">
                 <Label htmlFor="graduationDate">Graduation Date (YYYY-MM)</Label>
                 <Input 
                   id="graduationDate" 
@@ -218,15 +238,16 @@ const EducationSection = ({ data, onChange }: EducationSectionProps) => {
                   placeholder="YYYY-MM"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="gpa">GPA (Optional)</Label>
-                <Input 
-                  id="gpa" 
-                  value={editing.gpa} 
-                  onChange={(e) => handleEditingChange('gpa', e.target.value)}
-                  placeholder="e.g. 3.8"
-                />
-              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="gpa">GPA (Optional)</Label>
+              <Input 
+                id="gpa" 
+                value={editing.gpa} 
+                onChange={(e) => handleEditingChange('gpa', e.target.value)}
+                placeholder="e.g. 3.8"
+              />
             </div>
           </CardContent>
           <CardFooter className="flex justify-between">

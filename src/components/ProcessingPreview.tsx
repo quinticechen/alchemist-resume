@@ -26,6 +26,7 @@ interface AnalysisData {
   match_score: number | null;
   error: string | null;
   status: ProcessingStatus | null;
+  formatted_golden_resume: any;
 }
 
 const ProcessingPreview = ({
@@ -40,6 +41,7 @@ const ProcessingPreview = ({
   const [matchScore, setMatchScore] = useState<number | null>(null);
   const [status, setStatus] = useState<ProcessingStatus>(isTimeout ? "timeout" : "pending");
   const [error, setError] = useState<string | null>(null);
+  const [formattedGoldenResume, setFormattedGoldenResume] = useState<any | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -68,6 +70,7 @@ const ProcessingPreview = ({
     setMatchScore(null);
     setStatus(isTimeout ? "timeout" : "pending");
     setError(null);
+    setFormattedGoldenResume(null);
   }, [analysisId, isTimeout]);
 
   // Debugging log
@@ -93,7 +96,7 @@ const ProcessingPreview = ({
         console.log(`Fetching analysis data for ID: ${analysisId}`);
         const { data, error: fetchError } = await supabase
           .from("resume_analyses")
-          .select("google_doc_url, match_score, error, status")
+          .select("google_doc_url, match_score, error, status, formatted_golden_resume")
           .eq("id", analysisId)
           .maybeSingle();
 
@@ -131,6 +134,11 @@ const ProcessingPreview = ({
             setIsProcessing(false);
           }
           return;
+        }
+
+        // Store formatted golden resume if available
+        if (analysisData.formatted_golden_resume) {
+          setFormattedGoldenResume(analysisData.formatted_golden_resume);
         }
 
         // If the status is success, mark the generation as complete
@@ -179,6 +187,11 @@ const ProcessingPreview = ({
           
           // Cast the new data to our expected type for type safety
           const newData = payload.new as AnalysisData;
+
+          // Store formatted golden resume if available
+          if (newData.formatted_golden_resume) {
+            setFormattedGoldenResume(newData.formatted_golden_resume);
+          }
 
           // Check if there's an error in the update
           if (newData.error || newData.status === "error") {
@@ -238,6 +251,13 @@ const ProcessingPreview = ({
     };
   }, [analysisId, toast, onGenerationComplete, setIsProcessing, isTimeout]);
 
+  // Navigate to resume preview
+  const handleViewGoldenResume = () => {
+    navigate('/resume-preview', { 
+      state: { analysisId }
+    });
+  };
+
   // Always render the component based on status
   return (
     <div className="w-full text-center mt-4">
@@ -281,6 +301,16 @@ const ProcessingPreview = ({
                 Edit with Google Doc
               </Button>
             )}
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleViewGoldenResume}
+              className="text-yellow-600 border-yellow-600/20 hover:bg-yellow-50"
+            >
+              <Crown className="h-4 w-4 mr-2" />
+              View Golden Resume
+            </Button>
 
             <Button
               variant="outline"
