@@ -1,13 +1,15 @@
+
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Pencil, FileText, Download } from "lucide-react";
+import { Pencil, FileText, Download, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
+import { ResumeSection } from '@/utils/resumeUtils';
 
 const RESUME_STYLES = [
   { id: 'classic', name: 'Classic', color: 'bg-white' },
@@ -41,6 +43,7 @@ interface EditorContent {
     volunteer?: any[];
     certifications?: any[];
   };
+  sectionOrder?: ResumeSection[];
 }
 
 const LOCAL_STORAGE_STYLE_KEY = 'resumePreviewStyle';
@@ -49,6 +52,7 @@ const ResumePreview = () => {
   const { session, isLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const params = useParams();
   const { toast } = useToast();
   const [resumeData, setResumeData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -57,7 +61,12 @@ const ResumePreview = () => {
   });
   const [styleDialogOpen, setStyleDialogOpen] = useState(false);
   const resumeRef = useRef<HTMLDivElement>(null);
-  const { analysisId } = location.state || {};
+  const locationState = location.state || {};
+  const paramAnalysisId = params.analysisId;
+  const { analysisId: locationAnalysisId } = locationState;
+  
+  // Use the ID from URL params if available, otherwise from location state
+  const analysisId = paramAnalysisId || locationAnalysisId;
 
   useEffect(() => {
     if (!isLoading && !session) {
@@ -166,6 +175,7 @@ const ResumePreview = () => {
         setResumeData({
           ...analysisData,
           resume: content.resume || {},
+          sectionOrder: content.sectionOrder || [],
           jobTitle,
           fileName,
           googleDocUrl: analysisData.google_doc_url
@@ -189,8 +199,19 @@ const ResumePreview = () => {
     localStorage.setItem(LOCAL_STORAGE_STYLE_KEY, style);
   }, [style]);
 
+  const handleEditSection = (section: ResumeSection) => {
+    navigate(`/resume-refine/${analysisId}`, { 
+      state: { 
+        analysisId,
+        section 
+      } 
+    });
+  };
+
   const handleEditClick = () => {
-    navigate('/resume-refine', { state: { analysisId } });
+    navigate(`/resume-refine/${analysisId}`, { 
+      state: { analysisId } 
+    });
   };
 
   const handleExportPDF = async () => {
@@ -203,16 +224,6 @@ const ResumePreview = () => {
       });
 
       const resumeElement = resumeRef.current;
-      const originalHeight = resumeElement.scrollHeight;
-      const originalWidth = resumeElement.offsetWidth;
-      
-      const clone = resumeElement.cloneNode(true) as HTMLElement;
-      clone.style.width = `${originalWidth}px`;
-      clone.style.height = 'auto';
-      clone.style.position = 'absolute';
-      clone.style.top = '-9999px';
-      clone.style.left = '-9999px';
-      document.body.appendChild(clone);
       
       const bgColor = style === 'classic' ? '#ffffff' : 
         style === 'modern' ? '#EFF6FF' : 
@@ -224,14 +235,12 @@ const ResumePreview = () => {
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
       
-      const canvas = await html2canvas(clone, {
+      const canvas = await html2canvas(resumeElement, {
         scale: 2,
         useCORS: true,
         logging: false,
         backgroundColor: bgColor,
       });
-      
-      document.body.removeChild(clone);
       
       const imgWidth = pageWidth;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
@@ -240,37 +249,31 @@ const ResumePreview = () => {
       let position = 0;
       
       while (remainingHeight > 0) {
-        const imgData = canvas.toDataURL('image/jpeg', 1.0);
+        const pageCanvas = document.createElement('canvas');
+        const ctx = pageCanvas.getContext('2d');
         
-        if (position > 0) {
+        pageCanvas.width = canvas.width;
+        pageCanvas.height = Math.min(canvas.width * (pageHeight / pageWidth), remainingHeight);
+        
+        if (ctx) {
+          ctx.fillStyle = bgColor;
+          ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
+          ctx.drawImage(
+            canvas, 
+            0, position, canvas.width, pageCanvas.height, 
+            0, 0, pageCanvas.width, pageCanvas.height
+          );
+        }
+        
+        position += pageCanvas.height;
+        remainingHeight -= pageCanvas.height;
+        
+        if (position > 0 && remainingHeight > 0) {
           pdf.addPage();
         }
         
-        const canvasPageHeight = Math.min(canvas.width * (pageHeight / pageWidth), remainingHeight);
-        
-        const sourceY = position;
-        const sourceHeight = canvasPageHeight;
-        
-        const tempCanvas = document.createElement('canvas');
-        tempCanvas.width = canvas.width;
-        tempCanvas.height = sourceHeight;
-        const tempContext = tempCanvas.getContext('2d');
-        
-        if (tempContext) {
-          tempContext.fillStyle = bgColor;
-          tempContext.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-          tempContext.drawImage(
-            canvas, 
-            0, sourceY, canvas.width, sourceHeight, 
-            0, 0, tempCanvas.width, tempCanvas.height
-          );
-          
-          const pageImgData = tempCanvas.toDataURL('image/jpeg', 1.0);
-          pdf.addImage(pageImgData, 'JPEG', 0, 0, pageWidth, pageHeight);
-        }
-        
-        position += canvasPageHeight;
-        remainingHeight -= canvasPageHeight;
+        const imgData = pageCanvas.toDataURL('image/jpeg', 1.0);
+        pdf.addImage(imgData, 'JPEG', 0, 0, pageWidth, pageHeight);
       }
       
       const fileName = resumeData?.jobTitle 
@@ -322,8 +325,8 @@ const ResumePreview = () => {
     <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100">
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
-          <div className="flex justify-between items-center mb-6">
-            <h1 className="text-3xl font-bold bg-gradient-primary text-transparent bg-clip-text">
+          <div className="flex flex-col items-center mb-6 text-center">
+            <h1 className="text-3xl font-bold bg-gradient-primary text-transparent bg-clip-text mb-4">
               {resumeData.jobTitle}
             </h1>
             <div className="flex gap-4">
@@ -358,29 +361,27 @@ const ResumePreview = () => {
 
           <div 
             ref={resumeRef}
-            className={`bg-white rounded-xl p-8 shadow-apple relative group ${
+            className={`bg-white rounded-xl p-8 shadow-apple relative ${
               style === 'modern' ? 'bg-blue-50' : 
               style === 'minimal' ? 'bg-gray-50' : 
               style === 'professional' ? 'bg-amber-50' : 
               style === 'creative' ? 'bg-purple-50' : 'bg-white'
             }`}
           >
-            <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-              <Button
-                size="sm"
-                variant="outline"
-                className="bg-white/80 backdrop-blur-sm"
-                onClick={handleEditClick}
-              >
-                <Pencil className="h-4 w-4 mr-2" />
-                Edit
-              </Button>
-            </div>
-
-            <div className={`mb-6 pb-4 ${style === 'modern' ? 'border-b-2 border-blue-300' : 
+            <div className={`mb-6 pb-4 relative group ${style === 'modern' ? 'border-b-2 border-blue-300' : 
               style === 'minimal' ? 'border-b border-gray-200' : 
               style === 'professional' ? 'border-b-2 border-amber-300' : 
               style === 'creative' ? 'border-b-2 border-purple-300' : 'border-b-2 border-neutral-200'}`}>
+              <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="rounded-full h-8 w-8 p-0"
+                  onClick={() => handleEditSection('personalInfo')}
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
+              </div>
               <h1 className={`text-3xl font-bold mb-2 ${
                 style === 'modern' ? 'text-blue-700' : 
                 style === 'professional' ? 'text-amber-700' : 
@@ -405,7 +406,17 @@ const ResumePreview = () => {
             </div>
 
             {resumeData.resume?.professionalSummary && (
-              <div className="mb-6">
+              <div className="mb-6 relative group">
+                <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="rounded-full h-8 w-8 p-0"
+                    onClick={() => handleEditSection('professionalSummary')}
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                </div>
                 <h2 className={`text-xl font-bold mb-2 ${
                   style === 'modern' ? 'text-blue-600' : 
                   style === 'professional' ? 'text-amber-600' : 
@@ -418,7 +429,17 @@ const ResumePreview = () => {
             )}
 
             {resumeData.resume?.professionalExperience?.length > 0 && (
-              <div className="mb-6">
+              <div className="mb-6 relative group">
+                <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="rounded-full h-8 w-8 p-0"
+                    onClick={() => handleEditSection('professionalExperience')}
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                </div>
                 <h2 className={`text-xl font-bold mb-2 ${
                   style === 'modern' ? 'text-blue-600' : 
                   style === 'professional' ? 'text-amber-600' : 
@@ -450,7 +471,17 @@ const ResumePreview = () => {
             )}
 
             {resumeData.resume?.education && (
-              <div className="mb-6">
+              <div className="mb-6 relative group">
+                <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="rounded-full h-8 w-8 p-0"
+                    onClick={() => handleEditSection('education')}
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                </div>
                 <h2 className={`text-xl font-bold mb-2 ${
                   style === 'modern' ? 'text-blue-600' : 
                   style === 'professional' ? 'text-amber-600' : 
@@ -488,7 +519,17 @@ const ResumePreview = () => {
             )}
 
             {resumeData.resume?.skills && (
-              <div className="mb-6">
+              <div className="mb-6 relative group">
+                <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="rounded-full h-8 w-8 p-0"
+                    onClick={() => handleEditSection('skills')}
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                </div>
                 <h2 className={`text-xl font-bold mb-2 ${
                   style === 'modern' ? 'text-blue-600' : 
                   style === 'professional' ? 'text-amber-600' : 
@@ -523,7 +564,17 @@ const ResumePreview = () => {
             )}
 
             {resumeData.resume?.projects?.length > 0 && (
-              <div className="mb-6">
+              <div className="mb-6 relative group">
+                <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="rounded-full h-8 w-8 p-0"
+                    onClick={() => handleEditSection('projects')}
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                </div>
                 <h2 className={`text-xl font-bold mb-2 ${
                   style === 'modern' ? 'text-blue-600' : 
                   style === 'professional' ? 'text-amber-600' : 
@@ -554,7 +605,17 @@ const ResumePreview = () => {
             )}
 
             {resumeData.resume?.certifications?.length > 0 && (
-              <div className="mb-6">
+              <div className="mb-6 relative group">
+                <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="rounded-full h-8 w-8 p-0"
+                    onClick={() => handleEditSection('certifications')}
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                </div>
                 <h2 className={`text-xl font-bold mb-2 ${
                   style === 'modern' ? 'text-blue-600' : 
                   style === 'professional' ? 'text-amber-600' : 
@@ -576,7 +637,17 @@ const ResumePreview = () => {
             )}
 
             {resumeData.resume?.volunteer?.length > 0 && (
-              <div className="mb-6">
+              <div className="mb-6 relative group">
+                <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="rounded-full h-8 w-8 p-0"
+                    onClick={() => handleEditSection('volunteer')}
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                </div>
                 <h2 className={`text-xl font-bold mb-2 ${
                   style === 'modern' ? 'text-blue-600' : 
                   style === 'professional' ? 'text-amber-600' : 

@@ -13,8 +13,8 @@ const JobDescriptionViewer = ({ jobData }: JobDescriptionViewerProps) => {
 
   return (
     <Card className="h-full overflow-auto">
-      <CardHeader>
-        <CardTitle>Job Description</CardTitle>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-lg">Job Description</CardTitle>
         <CardDescription>
           {jobData.company?.name && (
             <span className="block">{jobData.company.name}</span>
@@ -27,7 +27,7 @@ const JobDescriptionViewer = ({ jobData }: JobDescriptionViewerProps) => {
           )}
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 pt-0">
         {jobData.job?.title && (
           <div>
             <h3 className="font-medium">Title</h3>

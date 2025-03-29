@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ResumeSection, getSectionDisplayName, getAllSections } from '@/utils/resumeUtils';
 import { Button } from "@/components/ui/button";
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
@@ -8,11 +8,25 @@ import { GripVertical } from "lucide-react";
 interface SectionSelectorProps {
   currentSection: ResumeSection;
   onSectionChange: (section: ResumeSection) => void;
-  onSectionsReorder?: (sections: ResumeSection[]) => void;
+  onSectionsReorder: (sections: ResumeSection[]) => void;
+  initialSections?: ResumeSection[];
 }
 
-const SectionSelector = ({ currentSection, onSectionChange, onSectionsReorder }: SectionSelectorProps) => {
-  const [sections, setSections] = useState<ResumeSection[]>(getAllSections());
+const SectionSelector = ({ 
+  currentSection, 
+  onSectionChange, 
+  onSectionsReorder,
+  initialSections 
+}: SectionSelectorProps) => {
+  const [sections, setSections] = useState<ResumeSection[]>(
+    initialSections || getAllSections()
+  );
+  
+  useEffect(() => {
+    if (initialSections) {
+      setSections(initialSections);
+    }
+  }, [initialSections]);
   
   const handleDragEnd = (result: DropResult) => {
     if (!result.destination) return;
@@ -22,14 +36,12 @@ const SectionSelector = ({ currentSection, onSectionChange, onSectionsReorder }:
     items.splice(result.destination.index, 0, reorderedItem);
     
     setSections(items);
-    if (onSectionsReorder) {
-      onSectionsReorder(items);
-    }
+    onSectionsReorder(items);
   };
   
   return (
     <div className="w-full h-full overflow-auto">
-      <h3 className="font-medium text-base mb-3">Resume Sections</h3>
+      <h3 className="font-medium text-lg mb-3">Resume Sections</h3>
       <p className="text-sm text-muted-foreground mb-4">Drag to reorder sections</p>
       
       <DragDropContext onDragEnd={handleDragEnd}>

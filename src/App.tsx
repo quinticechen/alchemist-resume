@@ -39,6 +39,10 @@ const App = () => {
                 element={<AlchemyRecords />}
               />
               <Route 
+                path="/alchemy-records/:analysisId" 
+                element={<AlchemyRecords />}
+              />
+              <Route 
                 path="/resume-refine" 
                 element={<ResumeRefine />}
               />
@@ -48,6 +52,10 @@ const App = () => {
               />
               <Route 
                 path="/resume-preview" 
+                element={<ResumePreview />}
+              />
+              <Route 
+                path="/resume-preview/:analysisId" 
                 element={<ResumePreview />}
               />
               <Route path="/account" element={<Account />} />

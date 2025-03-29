@@ -6,6 +6,7 @@ import ResumeEditor from '@/components/alchemy-records/ResumeEditor';
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { ResumeSection } from '@/utils/resumeUtils';
 
 // Define a more precise type for job data
 interface JobData {
@@ -18,9 +19,10 @@ const ResumeRefine = () => {
   const location = useLocation();
   const params = useParams();
   const paramAnalysisId = params.analysisId;
-  const { resumeId, goldenResume, analysisId: locationAnalysisId, jobTitle } = location.state || {};
+  const { resumeId, goldenResume, analysisId: locationAnalysisId, jobTitle, section } = location.state || {};
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
+  const [activeSection, setActiveSection] = useState<ResumeSection | undefined>(section as ResumeSection);
   const [resumeData, setResumeData] = useState<{
     resumeId: string;
     goldenResume: string | null;
@@ -146,6 +148,10 @@ const ResumeRefine = () => {
     };
   }, [session, isLoading, navigate, analysisId, hasUnsavedChanges]);
 
+  const handleSectionChange = (section: ResumeSection) => {
+    setActiveSection(section);
+  };
+
   if (isLoading) {
     return <div className="container mx-auto px-4 py-8">Loading...</div>;
   }
@@ -162,12 +168,8 @@ const ResumeRefine = () => {
     <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100">
       <div className="container mx-auto px-4 py-12">
         <div className="max-w-7xl mx-auto">
-          <h1 className="text-4xl font-bold mb-8 bg-gradient-primary text-transparent bg-clip-text">
-            Resume Refine 
-            {resumeData?.jobTitle ? ` - ${resumeData.jobTitle}` : ''}
-            <span className="text-sm ml-2 font-normal text-gray-500">
-              ID: {analysisId}
-            </span>
+          <h1 className="text-4xl font-bold mb-8 bg-gradient-primary text-transparent bg-clip-text text-center">
+            {resumeData?.jobTitle || 'Resume Editor'}
           </h1>
           
           <div className="bg-white rounded-xl p-6 shadow-apple">
@@ -177,6 +179,8 @@ const ResumeRefine = () => {
                 goldenResume={resumeData.goldenResume}
                 analysisId={analysisId}
                 setHasUnsavedChanges={setHasUnsavedChanges}
+                activeSection={activeSection}
+                onSectionChange={handleSectionChange}
               />
             )}
           </div>

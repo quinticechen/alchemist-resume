@@ -7,7 +7,7 @@ import { CheckCircle, Save, AlertTriangle, Eye, FileJson } from 'lucide-react';
 import SectionSelector from './SectionSelector';
 import SectionEditor from './sections/SectionEditor';
 import JobDescriptionViewer from './JobDescriptionViewer';
-import { ResumeSection, getFormattedResume } from '@/utils/resumeUtils';
+import { ResumeSection, getFormattedResume, getAllSections } from '@/utils/resumeUtils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNavigate } from 'react-router-dom';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
@@ -17,9 +17,18 @@ export interface ResumeEditorProps {
   goldenResume: string | null;
   analysisId: string;
   setHasUnsavedChanges: React.Dispatch<React.SetStateAction<boolean>>;
+  activeSection?: ResumeSection;
+  onSectionChange?: (section: ResumeSection) => void;
 }
 
-const ResumeEditor = ({ resumeId, goldenResume, analysisId, setHasUnsavedChanges }: ResumeEditorProps) => {
+const ResumeEditor = ({ 
+  resumeId, 
+  goldenResume, 
+  analysisId, 
+  setHasUnsavedChanges,
+  activeSection: initialActiveSection,
+  onSectionChange: parentSectionChangeHandler
+}: ResumeEditorProps) => {
   const [resumeData, setResumeData] = useState<any>(null);
   const [jobData, setJobData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -27,10 +36,17 @@ const ResumeEditor = ({ resumeId, goldenResume, analysisId, setHasUnsavedChanges
   const [savedData, setSavedData] = useState<any>(null);
   const [hasUnsavedChanges, setLocalHasUnsavedChanges] = useState<boolean>(false);
   const [editorId, setEditorId] = useState<string | null>(null);
-  const [activeSection, setActiveSection] = useState<ResumeSection>('personalInfo');
+  const [activeSection, setActiveSection] = useState<ResumeSection>(initialActiveSection || 'personalInfo');
   const [viewMode, setViewMode] = useState<'visual' | 'json'>('visual');
+  const [sectionOrder, setSectionOrder] = useState<ResumeSection[]>(getAllSections());
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (initialActiveSection) {
+      setActiveSection(initialActiveSection);
+    }
+  }, [initialActiveSection]);
 
   useEffect(() => {
     const fetchResumeAndJobData = async () => {
@@ -68,6 +84,12 @@ const ResumeEditor = ({ resumeId, goldenResume, analysisId, setHasUnsavedChanges
         if (editorData) {
           const content = editorData.content;
           console.log('Editor content loaded:', content);
+          
+          // Extract section order if it exists
+          if (content.sectionOrder && Array.isArray(content.sectionOrder)) {
+            setSectionOrder(content.sectionOrder);
+          }
+          
           setResumeData(content);
           setSavedData(JSON.stringify(content));
           setEditorId(editorData.id);
@@ -125,12 +147,19 @@ const ResumeEditor = ({ resumeId, goldenResume, analysisId, setHasUnsavedChanges
 
   const handleSectionChange = (section: ResumeSection) => {
     setActiveSection(section);
+    if (parentSectionChangeHandler) {
+      parentSectionChangeHandler(section);
+    }
   };
 
   const handleSectionsReorder = (sections: ResumeSection[]) => {
-    // In a real implementation, you would update the resume data with the new section order
-    console.log('Sections reordered:', sections);
-    // This is a placeholder for future implementation
+    setSectionOrder(sections);
+    
+    // Update the resume data with the new section order
+    setResumeData((prevData: any) => ({
+      ...prevData,
+      sectionOrder: sections
+    }));
   };
 
   const handleResumeDataChange = (updatedData: any) => {
@@ -169,10 +198,16 @@ const ResumeEditor = ({ resumeId, goldenResume, analysisId, setHasUnsavedChanges
 
     setIsSaving(true);
     try {
+      // Ensure the section order is included in the saved data
+      const dataToSave = {
+        ...resumeData,
+        sectionOrder: sectionOrder
+      };
+      
       const { error } = await supabase
         .from('resume_editors')
         .update({ 
-          content: resumeData,
+          content: dataToSave,
           last_saved: new Date().toISOString()
         })
         .eq('id', editorId);
@@ -186,7 +221,7 @@ const ResumeEditor = ({ resumeId, goldenResume, analysisId, setHasUnsavedChanges
         description: "Resume saved successfully!",
         duration: 3000,
       });
-      setSavedData(JSON.stringify(resumeData));
+      setSavedData(JSON.stringify(dataToSave));
       setLocalHasUnsavedChanges(false);
       setHasUnsavedChanges(false);
     } catch (error: any) {
@@ -201,7 +236,7 @@ const ResumeEditor = ({ resumeId, goldenResume, analysisId, setHasUnsavedChanges
   };
 
   const handlePreview = () => {
-    navigate('/resume-preview', { 
+    navigate(`/resume-preview/${analysisId}`, { 
       state: { 
         resumeId, 
         goldenResume: JSON.stringify(resumeData), 
@@ -231,14 +266,19 @@ const ResumeEditor = ({ resumeId, goldenResume, analysisId, setHasUnsavedChanges
             <ResizablePanelGroup direction="horizontal" className="h-[600px]">
               <ResizablePanel defaultSize={25} minSize={20}>
                 <div className="h-full p-2">
-                  <JobDescriptionViewer jobData={jobData} />
+                  <SectionSelector 
+                    currentSection={activeSection} 
+                    onSectionChange={handleSectionChange} 
+                    onSectionsReorder={handleSectionsReorder}
+                    initialSections={resumeData?.sectionOrder || sectionOrder}
+                  />
                 </div>
               </ResizablePanel>
 
               <ResizableHandle withHandle />
 
               <ResizablePanel defaultSize={50} minSize={30}>
-                <div className="border rounded-md p-4 h-full overflow-auto">
+                <div className="border rounded-md p-6 h-full overflow-auto">
                   <h2 className="text-xl font-semibold mb-4">
                     {activeSection === 'personalInfo' ? 'Personal Information' : 
                      activeSection === 'professionalSummary' ? 'Professional Summary' : 
@@ -260,12 +300,8 @@ const ResumeEditor = ({ resumeId, goldenResume, analysisId, setHasUnsavedChanges
               <ResizableHandle withHandle />
 
               <ResizablePanel defaultSize={25} minSize={20}>
-                <div className="border rounded-md p-4 h-full overflow-auto">
-                  <SectionSelector 
-                    currentSection={activeSection} 
-                    onSectionChange={handleSectionChange} 
-                    onSectionsReorder={handleSectionsReorder}
-                  />
+                <div className="h-full p-2">
+                  <JobDescriptionViewer jobData={jobData} />
                 </div>
               </ResizablePanel>
             </ResizablePanelGroup>
