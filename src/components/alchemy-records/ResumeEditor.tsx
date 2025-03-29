@@ -1,23 +1,25 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { CheckCircle, Save, AlertTriangle } from 'lucide-react';
+import { CheckCircle, Save, AlertTriangle, Eye, FileJson } from 'lucide-react';
 import SectionSelector from './SectionSelector';
 import SectionEditor from './sections/SectionEditor';
 import JobDescriptionViewer from './JobDescriptionViewer';
 import { ResumeSection, getFormattedResume } from '@/utils/resumeUtils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useNavigate } from 'react-router-dom';
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 
 export interface ResumeEditorProps {
   resumeId: string;
   goldenResume: string | null;
   analysisId: string;
-  onClose: () => void;
   setHasUnsavedChanges: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-const ResumeEditor = ({ resumeId, goldenResume, analysisId, onClose, setHasUnsavedChanges }: ResumeEditorProps) => {
+const ResumeEditor = ({ resumeId, goldenResume, analysisId, setHasUnsavedChanges }: ResumeEditorProps) => {
   const [resumeData, setResumeData] = useState<any>(null);
   const [jobData, setJobData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -28,6 +30,7 @@ const ResumeEditor = ({ resumeId, goldenResume, analysisId, onClose, setHasUnsav
   const [activeSection, setActiveSection] = useState<ResumeSection>('personalInfo');
   const [viewMode, setViewMode] = useState<'visual' | 'json'>('visual');
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchResumeAndJobData = async () => {
@@ -124,6 +127,12 @@ const ResumeEditor = ({ resumeId, goldenResume, analysisId, onClose, setHasUnsav
     setActiveSection(section);
   };
 
+  const handleSectionsReorder = (sections: ResumeSection[]) => {
+    // In a real implementation, you would update the resume data with the new section order
+    console.log('Sections reordered:', sections);
+    // This is a placeholder for future implementation
+  };
+
   const handleResumeDataChange = (updatedData: any) => {
     console.log('Resume data being updated:', updatedData);
     setResumeData(updatedData);
@@ -191,6 +200,16 @@ const ResumeEditor = ({ resumeId, goldenResume, analysisId, onClose, setHasUnsav
     }
   };
 
+  const handlePreview = () => {
+    navigate('/resume-preview', { 
+      state: { 
+        resumeId, 
+        goldenResume: JSON.stringify(resumeData), 
+        analysisId 
+      } 
+    });
+  };
+
   const handleRawJsonChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     try {
       const parsed = JSON.parse(e.target.value);
@@ -205,84 +224,105 @@ const ResumeEditor = ({ resumeId, goldenResume, analysisId, onClose, setHasUnsav
   }
 
   return (
-    <div>
-      <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as 'visual' | 'json')} className="mb-4">
-        <TabsList className="grid w-[400px] grid-cols-2">
-          <TabsTrigger value="visual">Visual Editor</TabsTrigger>
-          <TabsTrigger value="json">JSON Editor</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="visual" className="mt-4">
-          <div className="grid grid-cols-[1fr_2fr_1fr] gap-4">
-            <div className="border rounded-md p-4 h-[600px] overflow-auto">
-              <JobDescriptionViewer jobData={jobData} />
-            </div>
-            
-            <div className="border rounded-md p-4 h-[600px] overflow-auto">
-              <h2 className="text-xl font-semibold mb-4">
-                {activeSection === 'personalInfo' ? 'Personal Information' : 
-                 activeSection === 'professionalSummary' ? 'Professional Summary' : 
-                 activeSection === 'professionalExperience' ? 'Professional Experience' :
-                 activeSection === 'education' ? 'Education' :
-                 activeSection === 'skills' ? 'Skills' :
-                 activeSection === 'projects' ? 'Projects' :
-                 activeSection === 'volunteer' ? 'Volunteer Experience' :
-                 activeSection === 'certifications' ? 'Certifications' : 'Resume Section'}
-              </h2>
-              <SectionEditor 
-                section={activeSection} 
-                resumeData={resumeData} 
-                onChange={handleResumeDataChange} 
+    <div className="flex flex-col h-full">
+      <div className="flex-1 min-h-0">
+        <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as 'visual' | 'json')} className="h-full">
+          <TabsContent value="visual" className="mt-0 h-full">
+            <ResizablePanelGroup direction="horizontal" className="h-[600px]">
+              <ResizablePanel defaultSize={25} minSize={20}>
+                <div className="h-full p-2">
+                  <JobDescriptionViewer jobData={jobData} />
+                </div>
+              </ResizablePanel>
+
+              <ResizableHandle withHandle />
+
+              <ResizablePanel defaultSize={50} minSize={30}>
+                <div className="border rounded-md p-4 h-full overflow-auto">
+                  <h2 className="text-xl font-semibold mb-4">
+                    {activeSection === 'personalInfo' ? 'Personal Information' : 
+                     activeSection === 'professionalSummary' ? 'Professional Summary' : 
+                     activeSection === 'professionalExperience' ? 'Professional Experience' :
+                     activeSection === 'education' ? 'Education' :
+                     activeSection === 'skills' ? 'Skills' :
+                     activeSection === 'projects' ? 'Projects' :
+                     activeSection === 'volunteer' ? 'Volunteer Experience' :
+                     activeSection === 'certifications' ? 'Certifications' : 'Resume Section'}
+                  </h2>
+                  <SectionEditor 
+                    section={activeSection} 
+                    resumeData={resumeData} 
+                    onChange={handleResumeDataChange} 
+                  />
+                </div>
+              </ResizablePanel>
+
+              <ResizableHandle withHandle />
+
+              <ResizablePanel defaultSize={25} minSize={20}>
+                <div className="border rounded-md p-4 h-full overflow-auto">
+                  <SectionSelector 
+                    currentSection={activeSection} 
+                    onSectionChange={handleSectionChange} 
+                    onSectionsReorder={handleSectionsReorder}
+                  />
+                </div>
+              </ResizablePanel>
+            </ResizablePanelGroup>
+          </TabsContent>
+          
+          <TabsContent value="json" className="mt-0 h-full">
+            <div className="border rounded-md h-[600px]">
+              <textarea
+                value={JSON.stringify(resumeData, null, 2)}
+                onChange={handleRawJsonChange}
+                className="w-full h-full p-4 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-md resize-none font-mono text-base"
+                placeholder="Edit your resume here in JSON format..."
               />
             </div>
+          </TabsContent>
+
+          <div className="flex justify-between mt-4">
+            <Button 
+              variant="outline" 
+              onClick={() => setViewMode(viewMode === 'visual' ? 'json' : 'visual')}
+            >
+              <FileJson className="h-4 w-4 mr-2" />
+              {viewMode === 'visual' ? 'JSON Editor' : 'Visual Editor'}
+            </Button>
             
-            <div className="border rounded-md p-4 h-[600px] overflow-auto">
-              <SectionSelector 
-                currentSection={activeSection} 
-                onSectionChange={handleSectionChange} 
-              />
+            <div className="flex gap-2 items-center">
+              {hasUnsavedChanges && (
+                <span className="text-amber-500 flex items-center gap-1">
+                  <AlertTriangle className="h-4 w-4" />
+                  Unsaved changes
+                </span>
+              )}
+              <Button
+                onClick={handlePreview}
+                variant="outline"
+                className="ml-2"
+              >
+                <Eye className="h-4 w-4 mr-2" />
+                Preview
+              </Button>
+              <Button
+                onClick={handleSaveContent}
+                disabled={isSaving || !hasUnsavedChanges}
+                className={isSaving ? "cursor-not-allowed" : ""}
+              >
+                {isSaving ? (
+                  "Saving..."
+                ) : (
+                  <>
+                    <Save className="h-4 w-4 mr-2" />
+                    Save
+                  </>
+                )}
+              </Button>
             </div>
           </div>
-        </TabsContent>
-        
-        <TabsContent value="json" className="mt-4">
-          <div className="border rounded-md">
-            <textarea
-              value={JSON.stringify(resumeData, null, 2)}
-              onChange={handleRawJsonChange}
-              className="w-full h-[600px] p-4 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-md resize-none font-mono text-base"
-              placeholder="Edit your resume here in JSON format..."
-            />
-          </div>
-        </TabsContent>
-      </Tabs>
-      
-      <div className="flex justify-between mt-4">
-        <Button variant="secondary" onClick={onClose} disabled={isSaving}>
-          Close
-        </Button>
-        <div className="flex gap-2 items-center">
-          {hasUnsavedChanges && (
-            <span className="text-amber-500 flex items-center gap-1">
-              <AlertTriangle className="h-4 w-4" />
-              Unsaved changes
-            </span>
-          )}
-          <Button
-            onClick={handleSaveContent}
-            disabled={isSaving || !hasUnsavedChanges}
-            className={isSaving ? "cursor-not-allowed" : ""}
-          >
-            {isSaving ? (
-              "Saving..."
-            ) : (
-              <>
-                <Save className="h-4 w-4 mr-2" />
-                Save
-              </>
-            )}
-          </Button>
-        </div>
+        </Tabs>
       </div>
     </div>
   );

@@ -158,23 +158,6 @@ const ResumeRefine = () => {
     return <div className="container mx-auto px-4 py-8">Loading resume data...</div>;
   }
 
-  const handleClose = () => {
-    if (hasUnsavedChanges) {
-      setShowUnsavedDialog(true);
-    } else {
-      navigate('/alchemy-records');
-    }
-  };
-
-  const handleConfirmClose = () => {
-    setShowUnsavedDialog(false);
-    navigate('/alchemy-records');
-  };
-
-  const handleCancelClose = () => {
-    setShowUnsavedDialog(false);
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100">
       <div className="container mx-auto px-4 py-12">
@@ -193,7 +176,6 @@ const ResumeRefine = () => {
                 resumeId={resumeData.resumeId} 
                 goldenResume={resumeData.goldenResume}
                 analysisId={analysisId}
-                onClose={handleClose}
                 setHasUnsavedChanges={setHasUnsavedChanges}
               />
             )}
@@ -210,8 +192,8 @@ const ResumeRefine = () => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={handleCancelClose}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmClose} className="bg-red-500 hover:bg-red-600">
+            <AlertDialogCancel onClick={() => setShowUnsavedDialog(false)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => navigate('/alchemy-records')} className="bg-red-500 hover:bg-red-600">
               Leave without saving
             </AlertDialogAction>
           </AlertDialogFooter>
