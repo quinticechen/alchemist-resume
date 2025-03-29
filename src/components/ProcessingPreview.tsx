@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from "react";
-import { History, Crown } from "lucide-react";
+import { History, Crown, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -275,10 +275,10 @@ const ProcessingPreview = ({
                 variant="outline"
                 size="sm"
                 onClick={() => window.open(googleDocUrl, "_blank")}
-                className="text-info border-info/20 hover:bg-info/5"
+                className="text-accent-1 border-accent-1/20 hover:bg-accent-2/5"
               >
-                <Crown className="h-4 w-4 mr-2" />
-                Golden Resume
+                <FileText className="h-4 w-4 mr-2" />
+                Edit with Google Doc
               </Button>
             )}
 
