@@ -70,6 +70,7 @@ export default {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
         'gradient-primary': 'linear-gradient(135deg, #6d3666 0%, #8a4683 100%)',
       },
+      background: "ffffff"
     },
   },
   plugins: [require("tailwindcss-animate")],

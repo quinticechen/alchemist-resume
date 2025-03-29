@@ -685,7 +685,7 @@ const ResumePreview = () => {
           <DialogHeader>
             <DialogTitle>Choose Resume Style</DialogTitle>
           </DialogHeader>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 bg-white">
             {RESUME_STYLES.map((styleOption) => (
               <div 
                 key={styleOption.id} 
