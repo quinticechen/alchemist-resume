@@ -2,9 +2,11 @@ import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import ResumeUploader from "@/components/ResumeUploader";
 import ResumeSelector from "@/components/ResumeSelector";
+import ResumePreview from "@/components/ResumePreview";
 import JobUrlInput from "@/components/JobUrlInput";
 import ProcessingPreview from "@/components/ProcessingPreview";
 import JellyfishAnimation from "@/components/JellyfishAnimation";
+import JellyfishDialog from "@/components/JellyfishDialog";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -12,7 +14,7 @@ import { useSubscriptionCheck } from "@/hooks/useSubscriptionCheck";
 import { getEnvironment } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Trash } from "lucide-react";
+import { Trash, MessageCircle } from "lucide-react";
 
 const AlchemistWorkshop = () => {
   const { session, isLoading } = useAuth();
@@ -33,6 +35,10 @@ const AlchemistWorkshop = () => {
   const [activeTab, setActiveTab] = useState<string>("upload");
   const [useSelectedResume, setUseSelectedResume] = useState(false);
   const [selectedResumeName, setSelectedResumeName] = useState<string>("");
+  const [showJellyfishDialog, setShowJellyfishDialog] = useState(false);
+  const [jellyfishMessage, setJellyfishMessage] = useState(
+    "Upload your resume and provide a job description. I'll transform it to match the position perfectly! Hmph!"
+  );
 
   useEffect(() => {
     if (analysisId === "") {
@@ -85,12 +91,10 @@ const AlchemistWorkshop = () => {
     filePath: string
   ) => {
     try {
-      // Get the public URL for the selected resume
       const { data: urlData } = supabase.storage
         .from("resumes")
         .getPublicUrl(filePath);
 
-      // Create a fake File object
       const fakeFile = new File([], fileName, {
         type: "application/pdf",
       });
@@ -266,6 +270,20 @@ const AlchemistWorkshop = () => {
     setActiveTab("upload");
   };
 
+  const handleViewPDF = () => {
+    if (publicUrl) {
+      window.open(publicUrl, '_blank');
+    }
+  };
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowJellyfishDialog(true);
+    }, 1500);
+    
+    return () => clearTimeout(timer);
+  }, []);
+
   useEffect(() => {
     return () => {
       if (timeoutId.current) {
@@ -295,6 +313,15 @@ const AlchemistWorkshop = () => {
             height={120} 
             className="absolute -top-28 right-0 opacity-80 z-10"
           />
+          <Button
+            onClick={() => setShowJellyfishDialog(true)}
+            variant="ghost"
+            size="sm"
+            className="absolute -top-10 right-0 text-xs flex items-center gap-1"
+          >
+            <MessageCircle className="h-3 w-3" />
+            Ask OOze
+          </Button>
         </div>
 
         {!selectedFile ? (
@@ -315,21 +342,29 @@ const AlchemistWorkshop = () => {
         ) : (
           <div className="space-y-4">
             {useSelectedResume ? (
-              <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-medium text-green-800 flex items-center gap-2">
-                    <span>Selected Resume: {selectedResumeName}</span>
-                  </p>
-                  <Button
-                    variant="outline"
-                    onClick={handleResetResume}
-                    className="text-red-500 border-red-200 hover:bg-red-50 flex items-center gap-2"
-                    size="sm"
-                  >
-                    <Trash className="h-4 w-4" />
-                    Remove
-                  </Button>
+              <div className="space-y-4">
+                <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium text-green-800 flex items-center gap-2">
+                      <span>Selected Resume: {selectedResumeName}</span>
+                    </p>
+                    <Button
+                      variant="outline"
+                      onClick={handleResetResume}
+                      className="text-red-500 border-red-200 hover:bg-red-50 flex items-center gap-2"
+                      size="sm"
+                    >
+                      <Trash className="h-4 w-4" />
+                      Remove
+                    </Button>
+                  </div>
                 </div>
+                <ResumePreview 
+                  file={selectedFile} 
+                  publicUrl={publicUrl}
+                  onCancel={handleResetResume}
+                  onViewPDF={handleViewPDF}
+                />
               </div>
             ) : (
               <ResumeUploader onUploadSuccess={handleFileUploadSuccess} />
@@ -360,6 +395,12 @@ const AlchemistWorkshop = () => {
           />
         )}
       </div>
+
+      <JellyfishDialog 
+        open={showJellyfishDialog} 
+        onOpenChange={setShowJellyfishDialog}
+        message={jellyfishMessage}
+      />
     </div>
   );
 };

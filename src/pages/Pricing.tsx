@@ -1,319 +1,223 @@
-
+import React from "react";
+import { useLocation } from "react-router-dom";
+import JellyfishAnimation from "@/components/JellyfishAnimation";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Check } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { supabase, getEnvironment } from "@/integrations/supabase/client";
-import { useState, useEffect, useRef } from "react";
-import { useStripeInit } from "@/hooks/useStripeInit";
-import { useAuthAndSurvey } from "@/hooks/useAuthAndSurvey";
-import { PricingToggle } from "@/components/pricing/PricingToggle";
-import { PricingCard } from "@/components/pricing/PricingCard";
-import { pricingPlans, getPriceId } from "@/data/pricingPlans";
-import { Session } from "@supabase/supabase-js";
-import { Badge } from "@/components/ui/badge";
-import { trackBeginCheckout } from "@/utils/gtm";
-
-interface SubscriptionInfo {
-  subscription_status: "apprentice" | "alchemist" | "grandmaster";
-  payment_period?: "monthly" | "annual";
-  usage_count: number;
-  monthly_usage_count: number | null;
-  free_trial_limit: number;
-}
 
 const Pricing = () => {
+  const location = useLocation();
+  const fromSignup = location.state?.fromSignup || false;
+  const { session } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [isAnnual, setIsAnnual] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [session, setSession] = useState<Session | null>(null);
-  const [usageInfo, setUsageInfo] = useState<SubscriptionInfo | null>(null);
 
-  const {
-    stripePromise,
-    isStripeInitializing,
-    error: stripeError,
-  } = useStripeInit();
-  const { isAuthenticated, hasCompletedSurvey } = useAuthAndSurvey();
-
-  const stripeBuyButtonRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      if (session?.user) {
-        fetchUsageInfo(session.user.id);
-      }
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      if (session?.user) {
-        fetchUsageInfo(session.user.id);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    if (stripeError) {
-      console.error("Stripe initialization error:", stripeError);
-      toast({
-        title: "Payment System Issue",
-        description:
-          "There was a problem initializing the payment system. Please try again later.",
-        variant: "destructive",
-      });
-    }
-  }, [stripeError, toast]);
-
-  useEffect(() => {
-    if (stripeBuyButtonRef.current) {
-      const script = document.createElement('script');
-      script.src = 'https://js.stripe.com/v3/buy-button.js';
-      script.async = true;
-      
-      if (!document.querySelector('script[src="https://js.stripe.com/v3/buy-button.js"]')) {
-        document.body.appendChild(script);
-      }
-    }
-  }, []);
-
-  const fetchUsageInfo = async (userId: string) => {
-    try {
-      const { data: profileData, error: profileError } = await supabase
-        .from("profiles")
-        .select(
-          "subscription_status, usage_count, monthly_usage_count, free_trial_limit, payment_period"
-        )
-        .eq("id", userId)
-        .single();
-
-      if (profileError) {
-        return;
-      }
-      
-      setUsageInfo(profileData);
-      
-      if (profileData.payment_period === 'annual') {
-        setIsAnnual(true);
-      }
-    } catch (err) {
-    }
-  };
-
-  const getRemainingUses = () => {
-    if (!usageInfo) return 0;
-
-    switch (usageInfo.subscription_status) {
-      case "grandmaster":
-        return "∞";
-      case "alchemist":
-        return Math.max(0, 30 - (usageInfo.monthly_usage_count || 0));
-      default:
-        return Math.max(
-          0,
-          usageInfo.free_trial_limit - (usageInfo.usage_count || 0)
-        );
-    }
-  };
-
-  const handlePlanSelection = async (planId: string) => {
-    if (!isAuthenticated || !session) {
+  const handleCheckout = async (priceId: string) => {
+    if (!session) {
       navigate("/login", { state: { from: "/pricing" } });
       return;
     }
 
-    if (hasCompletedSurvey === null) {
-      navigate("/survey-page", { state: { selectedPlan: planId, isAnnual } });
-      return;
-    }
-
-    if (isStripeInitializing) {
-      toast({
-        title: "Please Wait",
-        description:
-          "Payment system is initializing. Please try again in a moment.",
-      });
-      return;
-    }
-
-    if (!stripePromise) {
-      console.error("Stripe not initialized, current status:", {
-        isInitializing: isStripeInitializing,
-        error: stripeError,
-      });
-      toast({
-        title: "Payment System Error",
-        description:
-          "Unable to initialize payment system. Please try again later or contact support.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsLoading(true);
     try {
-      trackBeginCheckout(planId, isAnnual);
+      const { data, error } = await supabase.functions.invoke("create-checkout", {
+        body: { priceId, returnUrl: window.location.origin + "/payment-success" },
+      });
 
-      const {
-        data: { session: currentSession },
-      } = await supabase.auth.getSession();
+      if (error) throw error;
 
-      if (!currentSession?.access_token) {
-        throw new Error("No valid access token found. Please log in again.");
+      if (data?.url) {
+        window.location.href = data.url;
       }
-
-      const selectedPlan = pricingPlans.find((p) => p.planId === planId);
-      if (!selectedPlan) {
-        throw new Error("Invalid plan selected");
-      }
-
-      const priceId = getPriceId(selectedPlan, isAnnual);
-      
-      if (!priceId) {
-        throw new Error("No price ID available for the selected plan");
-      }
-
-      const environment = getEnvironment();
-      console.log(`Creating Stripe checkout session in ${environment} environment`);
-      
-      let retryCount = 0;
-      const maxRetries = 2;
-      let lastError = null;
-      
-      while (retryCount <= maxRetries) {
-        try {
-          const { data, error } = await supabase.functions.invoke(
-            "stripe-payment",
-            {
-              body: { planId, priceId, isAnnual },
-              headers: {
-                Authorization: `Bearer ${currentSession.access_token}`,
-                'x-environment': environment,
-              },
-            }
-          );
-
-          if (error) {
-            console.error(`Attempt ${retryCount + 1} failed:`, error);
-            lastError = error;
-            retryCount++;
-            
-            if (retryCount <= maxRetries) {
-              await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
-              continue;
-            }
-            throw error;
-          }
-
-          if (!data?.sessionUrl) {
-            throw new Error("No checkout URL received from payment function");
-          }
-
-          window.location.href = data.sessionUrl;
-          return;
-        } catch (err) {
-          console.error(`Attempt ${retryCount + 1} error:`, err);
-          lastError = err;
-          retryCount++;
-          
-          if (retryCount <= maxRetries) {
-            await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
-          } else {
-            break;
-          }
-        }
-      }
-      
-      throw lastError || new Error("Failed to create checkout session after multiple attempts");
-    } catch (error: any) {
-      const errorMessage = error.message || "Failed to initiate payment. Please try again.";
-      console.error("Payment error details:", error);
-      
+    } catch (error) {
+      console.error("Error creating checkout session:", error);
       toast({
-        title: "Payment Error",
-        description: errorMessage,
+        title: "Checkout Error",
+        description: "There was a problem starting the checkout process. Please try again.",
         variant: "destructive",
       });
-    } finally {
-      setIsLoading(false);
     }
   };
-
-  const isCurrentPlan = (planId: string, planIsAnnual: boolean) => {
-    if (!usageInfo) return false;
-    
-    const tierMatch = usageInfo.subscription_status === planId;
-    
-    if (!tierMatch) return false;
-    
-    if (planId === 'apprentice') return true;
-    
-    const periodMatch = planIsAnnual ? 
-      usageInfo.payment_period === 'annual' : 
-      usageInfo.payment_period === 'monthly';
-      
-    return tierMatch && periodMatch;
-  };
-
-  const plans = pricingPlans.map((plan) => ({
-    ...plan,
-    showButton:
-      plan.planId === "apprentice" ? !isAuthenticated : plan.showButton,
-    isCurrentPlan: isCurrentPlan(plan.planId, isAnnual),
-  }));
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100">
-      <div className="container mx-auto px-4 py-12">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold mb-4 bg-gradient-primary text-transparent bg-clip-text">
-              Choose Your Plan
-            </h1>
-            <p className="text-xl text-neutral-600 mb-4">
-              Select the perfect plan for your career growth
-            </p>
-            {isAuthenticated && usageInfo && (
-              <div className="flex items-center justify-center gap-2 mb-8">
-                <Badge
-                  variant="outline"
-                  className="text-primary border-primary"
-                >
-                  Current Plan:{" "}
-                  {usageInfo.subscription_status.charAt(0).toUpperCase() +
-                    usageInfo.subscription_status.slice(1)}
-                  {usageInfo.payment_period && usageInfo.subscription_status !== 'apprentice' && 
-                    ` (${usageInfo.payment_period === 'annual' ? 'Annual' : 'Monthly'})`}
-                </Badge>
-                <Badge
-                  variant="outline"
-                  className="text-primary border-primary"
-                >
-                  Remaining Uses: {getRemainingUses()}
-                </Badge>
-              </div>
-            )}
-
-            <PricingToggle isAnnual={isAnnual} setIsAnnual={setIsAnnual} />
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {plans.map((plan) => (
-              <PricingCard
-                key={plan.planId}
-                plan={plan}
-                isAnnual={isAnnual}
-                isLoading={isLoading || isStripeInitializing}
-                onSelect={handlePlanSelection}
-              />
-            ))}
-          </div>
+    <div className="container mx-auto px-4 py-16">
+      <div className="max-w-4xl mx-auto">
+        <div className="text-center mb-16 relative">
+          <h1 className="text-4xl font-bold bg-gradient-primary text-transparent bg-clip-text mb-4">
+            Simple, Transparent Pricing
+          </h1>
+          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            Elevate your job search with Resume Alchemist's affordable plans designed to help you land your dream job.
+          </p>
           
-          <div className="hidden" ref={stripeBuyButtonRef}></div>
+          <div className="absolute top-0 right-0">
+            <JellyfishAnimation width={120} height={120} className="opacity-80" />
+          </div>
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-8">
+          {/* Free Plan */}
+          <Card className="border-2 border-gray-200 hover:border-primary hover:shadow-lg transition-all duration-300">
+            <CardHeader>
+              <CardTitle className="text-2xl">Free Trial</CardTitle>
+              <div className="mt-4">
+                <span className="text-4xl font-bold">$0</span>
+                <span className="text-gray-500 ml-2">/ month</span>
+              </div>
+              <CardDescription className="mt-2">
+                Try our basic features
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-3">
+                <li className="flex items-start">
+                  <Check className="h-5 w-5 text-green-500 mr-2 shrink-0 mt-0.5" />
+                  <span>1 resume optimization</span>
+                </li>
+                <li className="flex items-start">
+                  <Check className="h-5 w-5 text-green-500 mr-2 shrink-0 mt-0.5" />
+                  <span>Basic resume analysis</span>
+                </li>
+                <li className="flex items-start">
+                  <Check className="h-5 w-5 text-green-500 mr-2 shrink-0 mt-0.5" />
+                  <span>PDF export</span>
+                </li>
+              </ul>
+            </CardContent>
+            <CardFooter>
+              <Button 
+                className="w-full" 
+                variant="outline"
+                onClick={() => navigate("/alchemist-workshop")}
+              >
+                Get Started
+              </Button>
+            </CardFooter>
+          </Card>
+
+          {/* Pro Plan */}
+          <Card className="border-2 border-primary relative hover:shadow-lg transition-all duration-300">
+            <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-primary text-white px-4 py-1 rounded-full text-sm font-medium">
+              Most Popular
+            </div>
+            <CardHeader>
+              <CardTitle className="text-2xl">Pro</CardTitle>
+              <div className="mt-4">
+                <span className="text-4xl font-bold">$9.99</span>
+                <span className="text-gray-500 ml-2">/ month</span>
+              </div>
+              <CardDescription className="mt-2">
+                Perfect for active job seekers
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-3">
+                <li className="flex items-start">
+                  <Check className="h-5 w-5 text-green-500 mr-2 shrink-0 mt-0.5" />
+                  <span>10 resume optimizations per month</span>
+                </li>
+                <li className="flex items-start">
+                  <Check className="h-5 w-5 text-green-500 mr-2 shrink-0 mt-0.5" />
+                  <span>Advanced AI analysis</span>
+                </li>
+                <li className="flex items-start">
+                  <Check className="h-5 w-5 text-green-500 mr-2 shrink-0 mt-0.5" />
+                  <span>Multiple resume formats</span>
+                </li>
+                <li className="flex items-start">
+                  <Check className="h-5 w-5 text-green-500 mr-2 shrink-0 mt-0.5" />
+                  <span>Cover letter assistance</span>
+                </li>
+                <li className="flex items-start">
+                  <Check className="h-5 w-5 text-green-500 mr-2 shrink-0 mt-0.5" />
+                  <span>Priority support</span>
+                </li>
+              </ul>
+            </CardContent>
+            <CardFooter>
+              <Button 
+                className="w-full bg-primary hover:bg-primary-dark" 
+                onClick={() => handleCheckout("price_1OGJZnCRcGLTDVIqXxLTXBXO")}
+              >
+                Subscribe Now
+              </Button>
+            </CardFooter>
+          </Card>
+
+          {/* Premium Plan */}
+          <Card className="border-2 border-gray-200 hover:border-primary hover:shadow-lg transition-all duration-300">
+            <CardHeader>
+              <CardTitle className="text-2xl">Premium</CardTitle>
+              <div className="mt-4">
+                <span className="text-4xl font-bold">$19.99</span>
+                <span className="text-gray-500 ml-2">/ month</span>
+              </div>
+              <CardDescription className="mt-2">
+                For serious career advancement
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-3">
+                <li className="flex items-start">
+                  <Check className="h-5 w-5 text-green-500 mr-2 shrink-0 mt-0.5" />
+                  <span>Unlimited resume optimizations</span>
+                </li>
+                <li className="flex items-start">
+                  <Check className="h-5 w-5 text-green-500 mr-2 shrink-0 mt-0.5" />
+                  <span>Premium AI analysis</span>
+                </li>
+                <li className="flex items-start">
+                  <Check className="h-5 w-5 text-green-500 mr-2 shrink-0 mt-0.5" />
+                  <span>All resume formats</span>
+                </li>
+                <li className="flex items-start">
+                  <Check className="h-5 w-5 text-green-500 mr-2 shrink-0 mt-0.5" />
+                  <span>Advanced cover letter generation</span>
+                </li>
+                <li className="flex items-start">
+                  <Check className="h-5 w-5 text-green-500 mr-2 shrink-0 mt-0.5" />
+                  <span>Interview preparation</span>
+                </li>
+                <li className="flex items-start">
+                  <Check className="h-5 w-5 text-green-500 mr-2 shrink-0 mt-0.5" />
+                  <span>1-on-1 career coaching session</span>
+                </li>
+              </ul>
+            </CardContent>
+            <CardFooter>
+              <Button 
+                className="w-full" 
+                onClick={() => handleCheckout("price_1OGJaVCRcGLTDVIqnHUXXuRl")}
+              >
+                Subscribe Now
+              </Button>
+            </CardFooter>
+          </Card>
+        </div>
+
+        <div className="mt-16 text-center">
+          <h2 className="text-2xl font-bold mb-4">Frequently Asked Questions</h2>
+          <div className="max-w-3xl mx-auto space-y-6 text-left">
+            <div>
+              <h3 className="font-bold text-lg">Can I cancel my subscription anytime?</h3>
+              <p className="text-gray-600">Yes, you can cancel your subscription at any time. Your access will continue until the end of your billing period.</p>
+            </div>
+            <div>
+              <h3 className="font-bold text-lg">How does the resume optimization work?</h3>
+              <p className="text-gray-600">Our AI analyzes your resume against the job description you provide, then suggests tailored improvements to increase your chances of getting an interview.</p>
+            </div>
+            <div>
+              <h3 className="font-bold text-lg">Is my data secure?</h3>
+              <p className="text-gray-600">Absolutely. We use industry-standard encryption and security practices to protect your personal information and resume data.</p>
+            </div>
+            <div>
+              <h3 className="font-bold text-lg">What payment methods do you accept?</h3>
+              <p className="text-gray-600">We accept all major credit cards, including Visa, Mastercard, American Express, and Discover.</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>

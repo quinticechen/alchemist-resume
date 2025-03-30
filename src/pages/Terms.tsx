@@ -1,12 +1,24 @@
+import React from "react";
+import JellyfishAnimation from "@/components/JellyfishAnimation";
+
 const Terms = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100">
-      <div className="container mx-auto px-4 py-12">
-        <div className="max-w-3xl mx-auto prose prose-slate">
-          <h1 className="text-4xl font-bold text-center mb-8 bg-gradient-primary text-transparent bg-clip-text">
+    <div className="container mx-auto px-4 py-16">
+      <div className="max-w-4xl mx-auto">
+        <div className="text-center mb-16 relative">
+          <h1 className="text-4xl font-bold bg-gradient-primary text-transparent bg-clip-text mb-4">
             Terms of Service
           </h1>
+          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            Please read these terms carefully before using Resume Alchemist.
+          </p>
           
+          <div className="absolute top-0 right-0">
+            <JellyfishAnimation width={120} height={120} className="opacity-80" />
+          </div>
+        </div>
+
+        <div className="max-w-3xl mx-auto prose prose-slate">
           <section className="mb-8">
             <h2 className="text-2xl font-semibold mb-4">1. Service Description</h2>
             <ul className="list-disc pl-6 space-y-2">

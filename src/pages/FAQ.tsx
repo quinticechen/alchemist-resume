@@ -1,3 +1,5 @@
+import React from "react";
+import JellyfishAnimation from "@/components/JellyfishAnimation";
 import {
   Accordion,
   AccordionContent,
@@ -35,29 +37,37 @@ const FAQ = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100">
-      <div className="container mx-auto px-4 py-12">
-        <div className="max-w-3xl mx-auto">
-          <h1 className="text-4xl font-bold text-center mb-8 bg-gradient-primary text-transparent bg-clip-text">
+    <div className="container mx-auto px-4 py-16">
+      <div className="max-w-4xl mx-auto">
+        <div className="text-center mb-16 relative">
+          <h1 className="text-4xl font-bold bg-gradient-primary text-transparent bg-clip-text mb-4">
             Frequently Asked Questions
           </h1>
-          <Accordion type="single" collapsible className="space-y-4">
-            {faqs.map((faq, index) => (
-              <AccordionItem
-                key={index}
-                value={`item-${index}`}
-                className="bg-white rounded-lg shadow-apple"
-              >
-                <AccordionTrigger className="px-6 py-4 text-lg font-semibold hover:text-primary">
-                  {faq.question}
-                </AccordionTrigger>
-                <AccordionContent className="px-6 pb-4 text-neutral-600">
-                  {faq.answer}
-                </AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
+          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            Find answers to common questions about Resume Alchemist.
+          </p>
+          
+          <div className="absolute top-0 right-0">
+            <JellyfishAnimation width={120} height={120} className="opacity-80" />
+          </div>
         </div>
+
+        <Accordion type="single" collapsible className="space-y-4">
+          {faqs.map((faq, index) => (
+            <AccordionItem
+              key={index}
+              value={`item-${index}`}
+              className="bg-white rounded-lg shadow-apple"
+            >
+              <AccordionTrigger className="px-6 py-4 text-lg font-semibold hover:text-primary">
+                {faq.question}
+              </AccordionTrigger>
+              <AccordionContent className="px-6 pb-4 text-neutral-600">
+                {faq.answer}
+              </AccordionContent>
+            </AccordionItem>
+          ))}
+        </Accordion>
       </div>
     </div>
   );

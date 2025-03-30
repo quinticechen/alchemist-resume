@@ -1,15 +1,17 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Pencil, FileText, Download, Edit } from "lucide-react";
+import { Pencil, FileText, Download, Edit, Share2, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { ResumeSection } from '@/utils/resumeUtils';
+import JellyfishAnimation from "@/components/JellyfishAnimation";
+import JellyfishDialog from "@/components/JellyfishDialog";
+import { Input } from "@/components/ui/input";
 
 const RESUME_STYLES = [
   { id: 'classic', name: 'Classic', color: 'bg-white' },
@@ -60,12 +62,17 @@ const ResumePreview = () => {
     return localStorage.getItem(LOCAL_STORAGE_STYLE_KEY) || 'classic';
   });
   const [styleDialogOpen, setStyleDialogOpen] = useState(false);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [shareableLink, setShareableLink] = useState<string>('');
+  const [showJellyfishDialog, setShowJellyfishDialog] = useState(false);
+  const [jellyfishMessage, setJellyfishMessage] = useState(
+    "Your resume looks impressive! Share it with recruiters or download it as a PDF. Don't forget to proofread it one more time. Hmph!"
+  );
   const resumeRef = useRef<HTMLDivElement>(null);
   const locationState = location.state || {};
   const paramAnalysisId = params.analysisId;
   const { analysisId: locationAnalysisId } = locationState;
   
-  // Use the ID from URL params if available, otherwise from location state
   const analysisId = paramAnalysisId || locationAnalysisId;
 
   useEffect(() => {
@@ -297,6 +304,39 @@ const ResumePreview = () => {
     }
   };
 
+  const generateShareableLink = () => {
+    const baseUrl = window.location.origin;
+    const shareUrl = `${baseUrl}/resume-preview/${analysisId}`;
+    setShareableLink(shareUrl);
+    setShareDialogOpen(true);
+  };
+
+  const copyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(shareableLink);
+      toast({
+        title: "Link copied",
+        description: "Shareable link copied to clipboard"
+      });
+    } catch (err) {
+      toast({
+        title: "Failed to copy",
+        description: "Could not copy link to clipboard",
+        variant: "destructive"
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (resumeData) {
+      const timer = setTimeout(() => {
+        setShowJellyfishDialog(true);
+      }, 1500);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [resumeData]);
+
   if (isLoading || loading) {
     return <div className="container mx-auto px-4 py-8">Loading...</div>;
   }
@@ -325,10 +365,15 @@ const ResumePreview = () => {
     <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100">
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
-          <div className="flex flex-col items-center mb-6 text-center">
+          <div className="flex flex-col items-center mb-6 text-center relative">
             <h1 className="text-3xl font-bold bg-gradient-primary text-transparent bg-clip-text mb-4">
               {resumeData.jobTitle}
             </h1>
+            
+            <div className="absolute top-0 right-0">
+              <JellyfishAnimation width={100} height={100} className="opacity-80" />
+            </div>
+            
             <div className="flex gap-4">
               <Button 
                 variant="outline" 
@@ -355,6 +400,15 @@ const ResumePreview = () => {
               >
                 <Download className="h-4 w-4" />
                 Export PDF
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                onClick={generateShareableLink}
+                className="flex items-center gap-2"
+              >
+                <Share2 className="h-4 w-4" />
+                Share Resume
               </Button>
             </div>
           </div>
@@ -679,6 +733,34 @@ const ResumePreview = () => {
           </div>
         </div>
       </div>
+
+      <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Share Your Resume</DialogTitle>
+          </DialogHeader>
+          <div className="flex items-center space-x-2 mt-4">
+            <Input
+              value={shareableLink}
+              readOnly
+              className="flex-1"
+            />
+            <Button onClick={copyToClipboard} size="sm" className="flex items-center gap-1">
+              <Copy className="h-4 w-4" />
+              Copy
+            </Button>
+          </div>
+          <p className="text-sm text-gray-500 mt-2">
+            Anyone with this link can view your resume without needing to log in.
+          </p>
+        </DialogContent>
+      </Dialog>
+
+      <JellyfishDialog 
+        open={showJellyfishDialog} 
+        onOpenChange={setShowJellyfishDialog}
+        message={jellyfishMessage}
+      />
 
       <Dialog open={styleDialogOpen} onOpenChange={setStyleDialogOpen}>
         <DialogContent className="max-w-3xl">
