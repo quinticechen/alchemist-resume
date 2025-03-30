@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import ResumeUploader from "@/components/ResumeUploader";
@@ -12,6 +11,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useSubscriptionCheck } from "@/hooks/useSubscriptionCheck";
 import { getEnvironment } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Trash } from "lucide-react";
 
 const AlchemistWorkshop = () => {
   const { session, isLoading } = useAuth();
@@ -30,6 +31,8 @@ const AlchemistWorkshop = () => {
   const [isGenerationComplete, setIsGenerationComplete] = useState(false);
   const hasCheckedSubscription = useRef(false);
   const [activeTab, setActiveTab] = useState<string>("upload");
+  const [useSelectedResume, setUseSelectedResume] = useState(false);
+  const [selectedResumeName, setSelectedResumeName] = useState<string>("");
 
   useEffect(() => {
     if (analysisId === "") {
@@ -68,6 +71,7 @@ const AlchemistWorkshop = () => {
     setIsProcessing(false);
     setIsTimeout(false);
     setIsGenerationComplete(false);
+    setUseSelectedResume(false);
     
     toast({
       title: "Upload successful",
@@ -100,6 +104,8 @@ const AlchemistWorkshop = () => {
       setIsProcessing(false);
       setIsTimeout(false);
       setIsGenerationComplete(false);
+      setUseSelectedResume(true);
+      setSelectedResumeName(fileName);
 
       toast({
         title: "Resume selected",
@@ -250,6 +256,16 @@ const AlchemistWorkshop = () => {
     }
   };
 
+  const handleResetResume = () => {
+    setSelectedFile(null);
+    setFilePath("");
+    setPublicUrl("");
+    setResumeId("");
+    setUseSelectedResume(false);
+    setSelectedResumeName("");
+    setActiveTab("upload");
+  };
+
   useEffect(() => {
     return () => {
       if (timeoutId.current) {
@@ -297,7 +313,28 @@ const AlchemistWorkshop = () => {
             </TabsContent>
           </Tabs>
         ) : (
-          <ResumeUploader onUploadSuccess={handleFileUploadSuccess} />
+          <div className="space-y-4">
+            {useSelectedResume ? (
+              <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-medium text-green-800 flex items-center gap-2">
+                    <span>Selected Resume: {selectedResumeName}</span>
+                  </p>
+                  <Button
+                    variant="outline"
+                    onClick={handleResetResume}
+                    className="text-red-500 border-red-200 hover:bg-red-50 flex items-center gap-2"
+                    size="sm"
+                  >
+                    <Trash className="h-4 w-4" />
+                    Remove
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <ResumeUploader onUploadSuccess={handleFileUploadSuccess} />
+            )}
+          </div>
         )}
 
         {selectedFile && (

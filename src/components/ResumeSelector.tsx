@@ -49,7 +49,8 @@ const ResumeSelector: React.FC<ResumeSelectorProps> = ({ onSelect, className = "
       toast({
         title: "No Resume Selected",
         description: "Please select a resume to continue.",
-        variant: "warning",
+        // Fix the TypeScript error by using only allowed variants
+        variant: "destructive",
       });
       return;
     }
