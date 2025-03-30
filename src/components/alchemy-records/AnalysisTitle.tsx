@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Pencil, Check, X } from "lucide-react";
@@ -14,20 +13,6 @@ interface AnalysisTitleProps {
 
 const AnalysisTitle = ({ title, isEditing, onEdit, onSave, onCancel }: AnalysisTitleProps) => {
   const [editingTitle, setEditingTitle] = useState(title);
-  
-  // Update editing title when the title prop changes
-  useEffect(() => {
-    setEditingTitle(title);
-  }, [title]);
-
-  const handleSave = () => {
-    if (editingTitle.trim()) {
-      onSave(editingTitle);
-    } else {
-      setEditingTitle(title);
-      onCancel();
-    }
-  };
 
   if (isEditing) {
     return (
@@ -36,30 +21,18 @@ const AnalysisTitle = ({ title, isEditing, onEdit, onSave, onCancel }: AnalysisT
           value={editingTitle}
           onChange={(e) => setEditingTitle(e.target.value)}
           className="max-w-sm"
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              handleSave();
-            } else if (e.key === 'Escape') {
-              setEditingTitle(title);
-              onCancel();
-            }
-          }}
-          autoFocus
         />
         <Button
           variant="ghost"
           size="sm"
-          onClick={handleSave}
+          onClick={() => onSave(editingTitle)}
         >
           <Check className="h-4 w-4" />
         </Button>
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => {
-            setEditingTitle(title);
-            onCancel();
-          }}
+          onClick={onCancel}
         >
           <X className="h-4 w-4" />
         </Button>

@@ -9,10 +9,9 @@ interface ResumePreviewProps {
   filePath?: string;
   publicUrl?: string;
   onCancel?: () => void;
-  onViewPDF?: () => void;
 }
 
-const ResumePreview = ({ file, filePath, publicUrl, onCancel, onViewPDF }: ResumePreviewProps) => {
+const ResumePreview = ({ file, filePath, publicUrl, onCancel }: ResumePreviewProps) => {
   if (!file) return null;
 
   return (
@@ -32,7 +31,7 @@ const ResumePreview = ({ file, filePath, publicUrl, onCancel, onViewPDF }: Resum
               <Button
                 variant="outline"
                 size="sm"
-                onClick={onViewPDF}
+                onClick={() => window.open(publicUrl, '_blank')}
                 className="flex items-center gap-2"
               >
                 <Eye className="h-4 w-4" />
