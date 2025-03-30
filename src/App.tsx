@@ -18,6 +18,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import PaymentSuccess from "@/pages/PaymentSuccess";
 import HomeV2 from "@/pages/HomeV2";
+import UserOnboard from "@/pages/UserOnboard";
 import ScrollToTop from './components/ScrollToTop';
 
 const App = () => {
@@ -60,6 +61,7 @@ const App = () => {
               />
               <Route path="/account" element={<Account />} />
               <Route path="/login" element={<Login />} />
+              <Route path="/user-onboard" element={<UserOnboard />} />
               <Route path="/terms" element={<Terms />} />
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/faq" element={<FAQ />} />

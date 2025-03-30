@@ -1,0 +1,111 @@
+
+import React, { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { FileText, Upload } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+
+interface ResumeSelectorProps {
+  onSelect: (resumeId: string, resumeName: string, resumePath: string) => void;
+  className?: string;
+}
+
+const ResumeSelector: React.FC<ResumeSelectorProps> = ({ onSelect, className = "" }) => {
+  const [resumes, setResumes] = useState<Array<{ id: string; file_name: string; file_path: string; created_at: string }>>([]);
+  const [selectedResumeId, setSelectedResumeId] = useState<string>("");
+  const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const fetchResumes = async () => {
+      try {
+        setIsLoading(true);
+        const { data, error } = await supabase
+          .from("resumes")
+          .select("id, file_name, file_path, created_at")
+          .order("created_at", { ascending: false });
+
+        if (error) throw error;
+        setResumes(data || []);
+      } catch (error) {
+        console.error("Error fetching resumes:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load your resumes. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchResumes();
+  }, [toast]);
+
+  const handleSelect = () => {
+    if (!selectedResumeId) {
+      toast({
+        title: "No Resume Selected",
+        description: "Please select a resume to continue.",
+        variant: "warning",
+      });
+      return;
+    }
+
+    const selectedResume = resumes.find(resume => resume.id === selectedResumeId);
+    if (selectedResume) {
+      onSelect(selectedResume.id, selectedResume.file_name, selectedResume.file_path);
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString();
+  };
+
+  return (
+    <Card className={`w-full shadow-apple hover:shadow-apple-lg transition-shadow duration-300 ${className}`}>
+      <CardHeader className="border-b border-neutral-200 bg-neutral-50">
+        <CardTitle className="text-xl font-semibold text-neutral-800">Select Previous Resume</CardTitle>
+      </CardHeader>
+      <CardContent className="p-6 space-y-4">
+        {isLoading ? (
+          <div className="text-center py-4">Loading your resumes...</div>
+        ) : resumes.length === 0 ? (
+          <div className="text-center py-4 text-neutral-600">
+            <FileText className="h-12 w-12 mx-auto text-neutral-400 mb-2" />
+            <p>You haven't uploaded any resumes yet.</p>
+          </div>
+        ) : (
+          <>
+            <Select value={selectedResumeId} onValueChange={setSelectedResumeId}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select a resume" />
+              </SelectTrigger>
+              <SelectContent>
+                {resumes.map((resume) => (
+                  <SelectItem key={resume.id} value={resume.id}>
+                    {resume.file_name} - {formatDate(resume.created_at)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Button 
+              onClick={handleSelect} 
+              className="w-full bg-primary hover:bg-primary-dark flex items-center justify-center gap-2"
+              disabled={!selectedResumeId}
+            >
+              <FileText className="h-4 w-4" />
+              Use Selected Resume
+            </Button>
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
+export default ResumeSelector;

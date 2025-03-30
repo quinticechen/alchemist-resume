@@ -1,13 +1,17 @@
+
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import ResumeUploader from "@/components/ResumeUploader";
+import ResumeSelector from "@/components/ResumeSelector";
 import JobUrlInput from "@/components/JobUrlInput";
 import ProcessingPreview from "@/components/ProcessingPreview";
+import JellyfishAnimation from "@/components/JellyfishAnimation";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscriptionCheck } from "@/hooks/useSubscriptionCheck";
 import { getEnvironment } from "@/integrations/supabase/client";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const AlchemistWorkshop = () => {
   const { session, isLoading } = useAuth();
@@ -25,6 +29,7 @@ const AlchemistWorkshop = () => {
   const [isTimeout, setIsTimeout] = useState(false);
   const [isGenerationComplete, setIsGenerationComplete] = useState(false);
   const hasCheckedSubscription = useRef(false);
+  const [activeTab, setActiveTab] = useState<string>("upload");
 
   useEffect(() => {
     if (analysisId === "") {
@@ -68,6 +73,46 @@ const AlchemistWorkshop = () => {
       title: "Upload successful",
       description: "Your resume has been uploaded successfully.",
     });
+  };
+
+  const handleSelectedResume = async (
+    id: string,
+    fileName: string,
+    filePath: string
+  ) => {
+    try {
+      // Get the public URL for the selected resume
+      const { data: urlData } = supabase.storage
+        .from("resumes")
+        .getPublicUrl(filePath);
+
+      // Create a fake File object
+      const fakeFile = new File([], fileName, {
+        type: "application/pdf",
+      });
+
+      setSelectedFile(fakeFile);
+      setFilePath(filePath);
+      setPublicUrl(urlData.publicUrl);
+      setResumeId(id);
+      setJobUrl("");
+      setAnalysisId("");
+      setIsProcessing(false);
+      setIsTimeout(false);
+      setIsGenerationComplete(false);
+
+      toast({
+        title: "Resume selected",
+        description: `Selected resume: ${fileName}`,
+      });
+    } catch (error) {
+      console.error("Error selecting resume:", error);
+      toast({
+        title: "Error",
+        description: "Failed to select the resume. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleUrlSubmit = async (url: string) => {
@@ -227,7 +272,33 @@ const AlchemistWorkshop = () => {
         <h1 className="text-3xl font-bold bg-gradient-primary text-transparent bg-clip-text text-center">
           Alchemist Workshop
         </h1>
-        <ResumeUploader onUploadSuccess={handleFileUploadSuccess} />
+
+        <div className="relative">
+          <JellyfishAnimation 
+            width={120} 
+            height={120} 
+            className="absolute -top-28 right-0 opacity-80 z-10"
+          />
+        </div>
+
+        {!selectedFile ? (
+          <Tabs defaultValue="upload" value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="upload">Upload New Resume</TabsTrigger>
+              <TabsTrigger value="select">Select Previous Resume</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="upload" className="mt-4">
+              <ResumeUploader onUploadSuccess={handleFileUploadSuccess} />
+            </TabsContent>
+            
+            <TabsContent value="select" className="mt-4">
+              <ResumeSelector onSelect={handleSelectedResume} />
+            </TabsContent>
+          </Tabs>
+        ) : (
+          <ResumeUploader onUploadSuccess={handleFileUploadSuccess} />
+        )}
 
         {selectedFile && (
           <JobUrlInput
