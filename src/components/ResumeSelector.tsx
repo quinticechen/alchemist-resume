@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { FileText, Upload } from "lucide-react";
+import { FileText, Upload, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface ResumeSelectorProps {
@@ -60,6 +60,26 @@ const ResumeSelector: React.FC<ResumeSelectorProps> = ({ onSelect, className = "
     }
   };
 
+  const previewSelectedResume = () => {
+    if (!selectedResumeId) {
+      toast({
+        title: "No Resume Selected",
+        description: "Please select a resume first to preview.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const selectedResume = resumes.find(resume => resume.id === selectedResumeId);
+    if (selectedResume) {
+      const { data } = supabase.storage
+        .from('resumes')
+        .getPublicUrl(selectedResume.file_path);
+      
+      window.open(data.publicUrl, '_blank');
+    }
+  };
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString();
@@ -93,14 +113,27 @@ const ResumeSelector: React.FC<ResumeSelectorProps> = ({ onSelect, className = "
               </SelectContent>
             </Select>
 
-            <Button 
-              onClick={handleSelect} 
-              className="w-full bg-primary hover:bg-primary-dark flex items-center justify-center gap-2"
-              disabled={!selectedResumeId}
-            >
-              <FileText className="h-4 w-4" />
-              Use Selected Resume
-            </Button>
+            <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+              {selectedResumeId && (
+                <Button 
+                  onClick={previewSelectedResume} 
+                  variant="outline"
+                  className="flex items-center justify-center gap-2"
+                >
+                  <Eye className="h-4 w-4" />
+                  Preview Resume
+                </Button>
+              )}
+              
+              <Button 
+                onClick={handleSelect} 
+                className="w-full bg-primary hover:bg-primary-dark flex items-center justify-center gap-2"
+                disabled={!selectedResumeId}
+              >
+                <FileText className="h-4 w-4" />
+                Use Selected Resume
+              </Button>
+            </div>
           </>
         )}
       </CardContent>

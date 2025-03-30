@@ -145,34 +145,46 @@ export const useAlchemyRecords = () => {
       const analysis = analyses.find(a => a.id === id);
       
       if (analysis?.job) {
-        // If we have a job associated with this analysis, update the job title
+        // Extract the job_id from the analysis
+        const { data, error: jobIdError } = await supabase
+          .from('resume_analyses')
+          .select('job_id')
+          .eq('id', id)
+          .single();
+        
+        if (jobIdError) throw jobIdError;
+        
+        const jobId = data.job_id;
+        
+        // Update the job title
         const { error } = await supabase
           .from('jobs')
           .update({ job_title: title })
-          .eq('id', analysis.job.job_title);
-          
+          .eq('id', jobId);
+        
         if (error) throw error;
+        
+        // Update the local state
+        setAnalyses(analyses.map(a => {
+          if (a.id === id && a.job) {
+            return {
+              ...a,
+              job: {
+                ...a.job,
+                job_title: title
+              }
+            };
+          }
+          return a;
+        }));
+
+        toast({
+          title: "Title updated",
+          description: "Position name has been updated successfully",
+        });
       }
-
-      // Update the local state
-      setAnalyses(analyses.map(analysis => {
-        if (analysis.id === id && analysis.job) {
-          return {
-            ...analysis,
-            job: {
-              ...analysis.job,
-              job_title: title
-            }
-          };
-        }
-        return analysis;
-      }));
-
-      toast({
-        title: "Title updated",
-        description: "Position name has been updated successfully",
-      });
     } catch (error) {
+      console.error('Error saving title:', error);
       toast({
         title: "Error",
         description: "Failed to update position name",
