@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from "@/contexts/AuthContext";
 import ResumeEditor from '@/components/alchemy-records/ResumeEditor';
@@ -152,6 +152,27 @@ const ResumeRefine = () => {
   const handleSectionChange = (section: ResumeSection) => {
     setActiveSection(section);
   };
+  
+  const handleSuggestionApply = useCallback((text: string, sectionId: string) => {
+    if (!resumeData || !text || !sectionId) return;
+    
+    toast({
+      title: "Suggestion Applied",
+      description: `The Jellyfish's suggestion has been applied to your resume.`
+    });
+
+    // The AIChatInterface component already handles applying the suggestion to the editor
+  }, [toast]);
+  
+  const handleGenerateSuggestion = useCallback((sectionId: string) => {
+    toast({
+      title: "Generating Suggestion",
+      description: "The assistant is generating a suggestion for you. Check the AI chat panel for the result."
+    });
+    
+    // This would trigger the AI to generate a suggestion
+    // The logic for this is in the AIChatInterface component
+  }, [toast]);
 
   if (isLoading) {
     return <div className="container mx-auto px-4 py-8">Loading...</div>;
@@ -167,7 +188,13 @@ const ResumeRefine = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100 relative">
-      <JellyfishDialog position="bottom" title="Resume Tips" />
+      <JellyfishDialog 
+        position="bottom" 
+        title="Resume Assistant" 
+        currentSectionId={activeSection}
+        onSuggestionApply={handleSuggestionApply}
+        onGenerateSuggestion={handleGenerateSuggestion}
+      />
       
       <div className="container mx-auto px-4 py-12">
         <div className="max-w-7xl mx-auto">

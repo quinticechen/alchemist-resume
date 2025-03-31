@@ -1,11 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { corsHeaders } from "../_shared/cors.ts";
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -46,80 +42,196 @@ serve(async (req) => {
 
     let sections = [];
     try {
-      sections = JSON.parse(resumeData.content);
+      sections = resumeData.content;
     } catch (error) {
       throw new Error(`Error parsing resume data: ${error.message}`);
     }
 
     // Get current section content
-    const currentSectionContent = sections.find(
-      (section: any) => section.id === currentSection
-    );
+    const currentSectionContent = sections.resume && sections.resume[currentSection] 
+      ? sections.resume[currentSection] 
+      : sections[currentSection] || 'No content available';
 
-    // Prepare the system prompt
-    const systemPrompt = `You are an expert resume assistant helping a user improve their resume.
+    const sectionTitle = currentSection === 'personalInfo' ? 'Personal Information' : 
+                         currentSection === 'professionalSummary' ? 'Professional Summary' : 
+                         currentSection === 'professionalExperience' ? 'Professional Experience' :
+                         currentSection === 'education' ? 'Education' :
+                         currentSection === 'skills' ? 'Skills' :
+                         currentSection === 'projects' ? 'Projects' :
+                         currentSection === 'volunteer' ? 'Volunteer Experience' :
+                         currentSection === 'certifications' ? 'Certifications' : 'Resume Section';
+
+    // Format current section content for the assistant
+    const formattedSectionContent = typeof currentSectionContent === 'object' 
+      ? JSON.stringify(currentSectionContent, null, 2) 
+      : currentSectionContent;
     
-Your goal is to provide actionable advice to make their resume more effective and professional.
-
-Here's the current content of the resume section they're working on:
-Section: ${currentSectionContent?.title || 'Unknown'}
-Content:
-${currentSectionContent?.content || 'No content available'}
-
-When asked to make specific improvements:
-1. Give clear, specific advice on how to improve the section
-2. If appropriate, provide a complete rewritten version that they can directly apply
-3. Focus on professional achievements, clear language, and impactful descriptions
-4. Always maintain the user's industry focus and experience level
-
-Respond in a helpful, supportive tone. When providing a suggestion that can be directly applied, clearly indicate it.`;
-
-    // Build message history for context
-    const messages = [
-      { role: "system", content: systemPrompt },
-      ...history.slice(-10), // Include only the last 10 messages for context
-      { role: "user", content: message }
-    ];
-
-    // Make request to OpenAI
-    const openAIResponse = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${openAIApiKey}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        messages,
-        temperature: 0.7,
-        max_tokens: 1000
-      })
-    });
-
-    const openAIData = await openAIResponse.json();
+    // Use OpenAI API to interact with your assistant
+    const assistantId = "asst_kSRCmsWHioSMYH5W0G04dLU0"; // Your provided assistant ID
     
-    if (!openAIResponse.ok) {
-      throw new Error(`OpenAI API error: ${JSON.stringify(openAIData)}`);
+    try {
+      console.log("Creating thread...");
+      // Create a thread
+      const threadResponse = await fetch("https://api.openai.com/v1/threads", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${openAIApiKey}`,
+          "Content-Type": "application/json",
+          "OpenAI-Beta": "assistants=v1"
+        },
+        body: JSON.stringify({})
+      });
+      
+      if (!threadResponse.ok) {
+        const errorData = await threadResponse.json();
+        throw new Error(`OpenAI thread creation failed: ${JSON.stringify(errorData)}`);
+      }
+      
+      const threadData = await threadResponse.json();
+      const threadId = threadData.id;
+      console.log("Thread created:", threadId);
+      
+      // Add message to thread
+      console.log("Adding message to thread...");
+      const contextMessage = `
+I'm working on the "${sectionTitle}" section of my resume. Here's the current content:
+
+${formattedSectionContent}
+
+My question/request is: ${message}
+      `;
+      
+      const messageResponse = await fetch(`https://api.openai.com/v1/threads/${threadId}/messages`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${openAIApiKey}`,
+          "Content-Type": "application/json",
+          "OpenAI-Beta": "assistants=v1"
+        },
+        body: JSON.stringify({
+          role: "user",
+          content: contextMessage
+        })
+      });
+      
+      if (!messageResponse.ok) {
+        const errorData = await messageResponse.json();
+        throw new Error(`OpenAI message creation failed: ${JSON.stringify(errorData)}`);
+      }
+      
+      console.log("Message added to thread");
+      
+      // Run the assistant
+      console.log("Running assistant...");
+      const runResponse = await fetch(`https://api.openai.com/v1/threads/${threadId}/runs`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${openAIApiKey}`,
+          "Content-Type": "application/json",
+          "OpenAI-Beta": "assistants=v1"
+        },
+        body: JSON.stringify({
+          assistant_id: assistantId
+        })
+      });
+      
+      if (!runResponse.ok) {
+        const errorData = await runResponse.json();
+        throw new Error(`OpenAI run creation failed: ${JSON.stringify(errorData)}`);
+      }
+      
+      const runData = await runResponse.json();
+      const runId = runData.id;
+      console.log("Run created:", runId);
+      
+      // Poll for completion
+      console.log("Polling for completion...");
+      let runStatus = null;
+      let attempts = 0;
+      const maxAttempts = 60; // 30 seconds max wait time with 500ms intervals
+      
+      while (attempts < maxAttempts) {
+        const statusResponse = await fetch(`https://api.openai.com/v1/threads/${threadId}/runs/${runId}`, {
+          headers: {
+            "Authorization": `Bearer ${openAIApiKey}`,
+            "Content-Type": "application/json",
+            "OpenAI-Beta": "assistants=v1"
+          }
+        });
+        
+        if (!statusResponse.ok) {
+          const errorData = await statusResponse.json();
+          throw new Error(`OpenAI status check failed: ${JSON.stringify(errorData)}`);
+        }
+        
+        const statusData = await statusResponse.json();
+        runStatus = statusData.status;
+        console.log("Run status:", runStatus);
+        
+        if (runStatus === "completed") {
+          break;
+        } else if (runStatus === "failed" || runStatus === "cancelled" || runStatus === "expired") {
+          throw new Error(`Run ended with status: ${runStatus}`);
+        }
+        
+        // Wait for 500ms before checking again
+        await new Promise(resolve => setTimeout(resolve, 500));
+        attempts++;
+      }
+      
+      if (runStatus !== "completed") {
+        throw new Error("Assistant run timed out");
+      }
+      
+      // Retrieve messages
+      console.log("Retrieving messages...");
+      const messagesResponse = await fetch(`https://api.openai.com/v1/threads/${threadId}/messages`, {
+        headers: {
+          "Authorization": `Bearer ${openAIApiKey}`,
+          "Content-Type": "application/json",
+          "OpenAI-Beta": "assistants=v1"
+        }
+      });
+      
+      if (!messagesResponse.ok) {
+        const errorData = await messagesResponse.json();
+        throw new Error(`OpenAI messages retrieval failed: ${JSON.stringify(errorData)}`);
+      }
+      
+      const messagesData = await messagesResponse.json();
+      
+      // Get the most recent assistant message
+      const assistantMessages = messagesData.data.filter(msg => msg.role === "assistant");
+      if (assistantMessages.length === 0) {
+        throw new Error("No assistant messages found");
+      }
+      
+      const latestMessage = assistantMessages[0];
+      const messageContent = latestMessage.content[0].text.value;
+      
+      // Process message to extract any suggestion
+      // Look for content between ```
+      const suggestionMatch = messageContent.match(/```([\s\S]*?)```/);
+      const suggestion = suggestionMatch ? suggestionMatch[1].trim() : null;
+      
+      // Clean the message content if it contains a suggestion
+      let cleanMessage = messageContent;
+      if (suggestion) {
+        cleanMessage = messageContent.replace(/```[\s\S]*?```/g, '').trim();
+      }
+      
+      return new Response(JSON.stringify({ 
+        message: cleanMessage,
+        suggestion
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+      
+    } catch (openAIError) {
+      console.error('OpenAI API error:', openAIError);
+      throw new Error(`OpenAI API error: ${openAIError.message}`);
     }
 
-    const aiMessage = openAIData.choices[0].message.content;
-    
-    // Check if the response contains a suggestion (text between triple backticks)
-    const suggestionMatch = aiMessage.match(/```([\s\S]*?)```/);
-    const suggestion = suggestionMatch ? suggestionMatch[1].trim() : null;
-    
-    // Clean the message if it contains a suggestion
-    let cleanMessage = aiMessage;
-    if (suggestion) {
-      cleanMessage = aiMessage.replace(/```[\s\S]*?```/g, '').trim();
-    }
-
-    return new Response(JSON.stringify({ 
-      message: cleanMessage,
-      suggestion
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
   } catch (error) {
     console.error('Error in resume-ai-assistant function:', error);
     return new Response(JSON.stringify({ error: error.message }), {
