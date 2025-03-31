@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Check, Github, Linkedin, Mail } from "lucide-react";
+import JellyfishDialog from "@/components/JellyfishDialog";
 
 interface Profile {
   email: string;
@@ -138,7 +139,6 @@ const Account = () => {
     }
   };
 
-
   const getRemainingUses = () => {
     if (!profile) return 0;
     const limit = getUsageLimit();
@@ -172,119 +172,122 @@ const Account = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-3xl mx-auto space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Account Information</CardTitle>
-            <CardDescription>Manage your account details and subscription</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="space-y-2">
-              <h3 className="text-sm font-medium text-neutral-500">Email</h3>
-              <p className="text-lg flex items-center gap-2">
-                {profile?.email}
-                {getProviderIcon(profile?.provider)}
-              </p>
-            </div>
-            
-            <div className="space-y-2">
-              <h3 className="text-sm font-medium text-neutral-500">Name</h3>
-              {isEditing ? (
-                <div className="flex gap-2">
-                  <Input
-                    value={newFullName}
-                    onChange={(e) => setNewFullName(e.target.value)}
-                    placeholder="Enter your name"
-                  />
-                  <Button onClick={handleUpdateProfile}>
-                    <Check className="h-4 w-4" />
-                  </Button>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <p className="text-lg">{profile?.full_name || 'Not provided'}</p>
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={() => setIsEditing(true)}
-                  >
-                    Edit
-                  </Button>
-                </div>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <h3 className="text-sm font-medium text-neutral-500">Usage</h3>
-              <p className="text-lg">
-                {profile?.subscription_status === 'alchemist' ? (
-                  <>
-                    {profile.monthly_usage_count || 0} resumes this month
-                    <span className="text-sm text-neutral-500 ml-2">
-                      ({getRemainingUses()} uses remaining this month)
-                    </span>
-                  </>
-                ) : profile?.subscription_status === 'grandmaster' ? (
-                  <>
-                    {profile.usage_count || 0} resumes customized
-                    <span className="text-sm text-neutral-500 ml-2">
-                      (Unlimited uses)
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    {profile?.usage_count || 0} resumes customized
-                    <span className="text-sm text-neutral-500 ml-2">
-                      ({getRemainingUses()} free uses remaining)
-                    </span>
-                  </>
-                )}
-              </p>
-              {profile?.subscription_status === 'apprentice' && profile?.usage_count && profile.usage_count >= 3 && (
-                <p className="text-sm text-red-500">
-                  You've reached the free trial limit. Subscribe to continue using the service.
+    <div className="relative">
+      <JellyfishDialog position="middle" />
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-3xl mx-auto space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Account Information</CardTitle>
+              <CardDescription>Manage your account details and subscription</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-2">
+                <h3 className="text-sm font-medium text-neutral-500">Email</h3>
+                <p className="text-lg flex items-center gap-2">
+                  {profile?.email}
+                  {getProviderIcon(profile?.provider)}
                 </p>
-              )}
-            </div>
+              </div>
+              
+              <div className="space-y-2">
+                <h3 className="text-sm font-medium text-neutral-500">Name</h3>
+                {isEditing ? (
+                  <div className="flex gap-2">
+                    <Input
+                      value={newFullName}
+                      onChange={(e) => setNewFullName(e.target.value)}
+                      placeholder="Enter your name"
+                    />
+                    <Button onClick={handleUpdateProfile}>
+                      <Check className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <p className="text-lg">{profile?.full_name || 'Not provided'}</p>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => setIsEditing(true)}
+                    >
+                      Edit
+                    </Button>
+                  </div>
+                )}
+              </div>
 
-            <div className="pt-4 border-t">
-              <h3 className="text-sm font-medium text-neutral-500 mb-4">Subscription Status</h3>
-              {subscription && subscription.status === 'active' ? (
-                <div className="space-y-3">
-                  <div className="bg-green-50 text-green-700 px-4 py-2 rounded-md">
-                    {subscription.tier.charAt(0).toUpperCase() + subscription.tier.slice(1)} Plan
-                    {subscription.current_period_end && (
-                      <span className="block text-sm">
-                        Current period ends: {new Date(subscription.current_period_end).toLocaleDateString()}
-                        {subscription.cancel_at_period_end && " (Cancels at period end)"}
+              <div className="space-y-2">
+                <h3 className="text-sm font-medium text-neutral-500">Usage</h3>
+                <p className="text-lg">
+                  {profile?.subscription_status === 'alchemist' ? (
+                    <>
+                      {profile.monthly_usage_count || 0} resumes this month
+                      <span className="text-sm text-neutral-500 ml-2">
+                        ({getRemainingUses()} uses remaining this month)
                       </span>
-                    )}
+                    </>
+                  ) : profile?.subscription_status === 'grandmaster' ? (
+                    <>
+                      {profile.usage_count || 0} resumes customized
+                      <span className="text-sm text-neutral-500 ml-2">
+                        (Unlimited uses)
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      {profile?.usage_count || 0} resumes customized
+                      <span className="text-sm text-neutral-500 ml-2">
+                        ({getRemainingUses()} free uses remaining)
+                      </span>
+                    </>
+                  )}
+                </p>
+                {profile?.subscription_status === 'apprentice' && profile?.usage_count && profile.usage_count >= 3 && (
+                  <p className="text-sm text-red-500">
+                    You've reached the free trial limit. Subscribe to continue using the service.
+                  </p>
+                )}
+              </div>
+
+              <div className="pt-4 border-t">
+                <h3 className="text-sm font-medium text-neutral-500 mb-4">Subscription Status</h3>
+                {subscription && subscription.status === 'active' ? (
+                  <div className="space-y-3">
+                    <div className="bg-green-50 text-green-700 px-4 py-2 rounded-md">
+                      {subscription.tier.charAt(0).toUpperCase() + subscription.tier.slice(1)} Plan
+                      {subscription.current_period_end && (
+                        <span className="block text-sm">
+                          Current period ends: {new Date(subscription.current_period_end).toLocaleDateString()}
+                          {subscription.cancel_at_period_end && " (Cancels at period end)"}
+                        </span>
+                      )}
+                    </div>
+                    <Button 
+                      onClick={handleSubscribe}
+                      className="w-full sm:w-auto"
+                      variant="outline"
+                    >
+                      Manage Subscription
+                    </Button>
                   </div>
-                  <Button 
-                    onClick={handleSubscribe}
-                    className="w-full sm:w-auto"
-                    variant="outline"
-                  >
-                    Manage Subscription
-                  </Button>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  <div className="bg-yellow-50 text-yellow-700 px-4 py-2 rounded-md">
-                    Free Trial
+                ) : (
+                  <div className="space-y-3">
+                    <div className="bg-yellow-50 text-yellow-700 px-4 py-2 rounded-md">
+                      Free Trial
+                    </div>
+                    <Button 
+                      onClick={handleSubscribe}
+                      className="w-full sm:w-auto bg-gradient-primary hover:opacity-90 transition-opacity"
+                    >
+                      Upgrade to Pro
+                    </Button>
                   </div>
-                  <Button 
-                    onClick={handleSubscribe}
-                    className="w-full sm:w-auto bg-gradient-primary hover:opacity-90 transition-opacity"
-                  >
-                    Upgrade to Pro
-                  </Button>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

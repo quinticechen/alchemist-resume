@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { useAuth } from "@/contexts/AuthContext";
@@ -65,11 +64,10 @@ const ResumePreview = () => {
   const paramAnalysisId = params.analysisId;
   const { analysisId: locationAnalysisId } = locationState;
   
-  // Use the ID from URL params if available, otherwise from location state
   const analysisId = paramAnalysisId || locationAnalysisId;
 
   useEffect(() => {
-    if (!isLoading && !session) {
+    if (!isLoading && !session && !analysisId) {
       navigate('/login', { state: { from: '/resume-preview' } });
       return;
     }
@@ -106,7 +104,7 @@ const ResumePreview = () => {
           navigate('/alchemy-records');
           return;
         }
-
+        
         console.log("Found editor content:", editorData.content);
         
         const { data: analysisData, error: analysisError } = await supabase
@@ -209,6 +207,20 @@ const ResumePreview = () => {
   };
 
   const handleEditClick = () => {
+    if (!session) {
+      toast({
+        title: "Login Required",
+        description: "You need to log in to edit this resume",
+        variant: "destructive"
+      });
+      navigate('/login', { 
+        state: { 
+          from: `/resume-refine/${analysisId}` 
+        } 
+      });
+      return;
+    }
+    
     navigate(`/resume-refine/${analysisId}`, { 
       state: { analysisId } 
     });

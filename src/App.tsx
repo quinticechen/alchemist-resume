@@ -20,6 +20,7 @@ import PaymentSuccess from "@/pages/PaymentSuccess";
 import HomeV2 from "@/pages/HomeV2";
 import UserOnboard from "@/pages/UserOnboard";
 import ScrollToTop from './components/ScrollToTop';
+import ProtectedRoute from './components/ProtectedRoute';
 
 const App = () => {
   return (
@@ -33,41 +34,76 @@ const App = () => {
               <Route path="/" element={<Home />} />
               <Route 
                 path="/alchemist-workshop" 
-                element={<AlchemistWorkshop />}
+                element={
+                  <ProtectedRoute>
+                    <AlchemistWorkshop />
+                  </ProtectedRoute>
+                }
               />
               <Route 
                 path="/alchemy-records" 
-                element={<AlchemyRecords />}
+                element={
+                  <ProtectedRoute>
+                    <AlchemyRecords />
+                  </ProtectedRoute>
+                }
               />
               <Route 
                 path="/alchemy-records/:analysisId" 
-                element={<AlchemyRecords />}
+                element={
+                  <ProtectedRoute>
+                    <AlchemyRecords />
+                  </ProtectedRoute>
+                }
               />
               <Route 
                 path="/resume-refine" 
-                element={<ResumeRefine />}
+                element={
+                  <ProtectedRoute>
+                    <ResumeRefine />
+                  </ProtectedRoute>
+                }
               />
               <Route 
                 path="/resume-refine/:analysisId" 
-                element={<ResumeRefine />}
+                element={
+                  <ProtectedRoute>
+                    <ResumeRefine />
+                  </ProtectedRoute>
+                }
               />
+              <Route path="/resume-preview" element={<ResumePreview />} />
+              <Route path="/resume-preview/:analysisId" element={<ResumePreview />} />
               <Route 
-                path="/resume-preview" 
-                element={<ResumePreview />}
+                path="/account" 
+                element={
+                  <ProtectedRoute>
+                    <Account />
+                  </ProtectedRoute>
+                }
               />
-              <Route 
-                path="/resume-preview/:analysisId" 
-                element={<ResumePreview />}
-              />
-              <Route path="/account" element={<Account />} />
               <Route path="/login" element={<Login />} />
-              <Route path="/user-onboard" element={<UserOnboard />} />
+              <Route 
+                path="/user-onboard" 
+                element={
+                  <ProtectedRoute>
+                    <UserOnboard />
+                  </ProtectedRoute>
+                }
+              />
               <Route path="/terms" element={<Terms />} />
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/faq" element={<FAQ />} />
               <Route path="/pricing" element={<Pricing />} />
               <Route path="/survey-page" element={<SurveyPage />} />
-              <Route path="/payment-success" element={<PaymentSuccess />} />
+              <Route 
+                path="/payment-success" 
+                element={
+                  <ProtectedRoute>
+                    <PaymentSuccess />
+                  </ProtectedRoute>
+                }
+              />
               <Route path="/homev2" element={<HomeV2 />} />
             </Routes>
           </main>

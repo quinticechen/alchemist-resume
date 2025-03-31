@@ -1,4 +1,3 @@
-
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase, getEnvironment } from "@/integrations/supabase/client";
@@ -11,6 +10,7 @@ import { pricingPlans, getPriceId } from "@/data/pricingPlans";
 import { Session } from "@supabase/supabase-js";
 import { Badge } from "@/components/ui/badge";
 import { trackBeginCheckout } from "@/utils/gtm";
+import JellyfishDialog from "@/components/JellyfishDialog";
 
 interface SubscriptionInfo {
   subscription_status: "apprentice" | "alchemist" | "grandmaster";
@@ -267,53 +267,56 @@ const Pricing = () => {
   }));
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100">
-      <div className="container mx-auto px-4 py-12">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold mb-4 bg-gradient-primary text-transparent bg-clip-text">
-              Choose Your Plan
-            </h1>
-            <p className="text-xl text-neutral-600 mb-4">
-              Select the perfect plan for your career growth
-            </p>
-            {isAuthenticated && usageInfo && (
-              <div className="flex items-center justify-center gap-2 mb-8">
-                <Badge
-                  variant="outline"
-                  className="text-primary border-primary"
-                >
-                  Current Plan:{" "}
-                  {usageInfo.subscription_status.charAt(0).toUpperCase() +
-                    usageInfo.subscription_status.slice(1)}
-                  {usageInfo.payment_period && usageInfo.subscription_status !== 'apprentice' && 
-                    ` (${usageInfo.payment_period === 'annual' ? 'Annual' : 'Monthly'})`}
-                </Badge>
-                <Badge
-                  variant="outline"
-                  className="text-primary border-primary"
-                >
-                  Remaining Uses: {getRemainingUses()}
-                </Badge>
-              </div>
-            )}
+    <div className="relative">
+      <JellyfishDialog position="middle" />
+      <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100">
+        <div className="container mx-auto px-4 py-12">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center mb-12">
+              <h1 className="text-4xl font-bold mb-4 bg-gradient-primary text-transparent bg-clip-text">
+                Choose Your Plan
+              </h1>
+              <p className="text-xl text-neutral-600 mb-4">
+                Select the perfect plan for your career growth
+              </p>
+              {isAuthenticated && usageInfo && (
+                <div className="flex items-center justify-center gap-2 mb-8">
+                  <Badge
+                    variant="outline"
+                    className="text-primary border-primary"
+                  >
+                    Current Plan:{" "}
+                    {usageInfo.subscription_status.charAt(0).toUpperCase() +
+                      usageInfo.subscription_status.slice(1)}
+                    {usageInfo.payment_period && usageInfo.subscription_status !== 'apprentice' && 
+                      ` (${usageInfo.payment_period === 'annual' ? 'Annual' : 'Monthly'})`}
+                  </Badge>
+                  <Badge
+                    variant="outline"
+                    className="text-primary border-primary"
+                  >
+                    Remaining Uses: {getRemainingUses()}
+                  </Badge>
+                </div>
+              )}
 
-            <PricingToggle isAnnual={isAnnual} setIsAnnual={setIsAnnual} />
-          </div>
+              <PricingToggle isAnnual={isAnnual} setIsAnnual={setIsAnnual} />
+            </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {plans.map((plan) => (
-              <PricingCard
-                key={plan.planId}
-                plan={plan}
-                isAnnual={isAnnual}
-                isLoading={isLoading || isStripeInitializing}
-                onSelect={handlePlanSelection}
-              />
-            ))}
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {plans.map((plan) => (
+                <PricingCard
+                  key={plan.planId}
+                  plan={plan}
+                  isAnnual={isAnnual}
+                  isLoading={isLoading || isStripeInitializing}
+                  onSelect={handlePlanSelection}
+                />
+              ))}
+            </div>
+            
+            <div className="hidden" ref={stripeBuyButtonRef}></div>
           </div>
-          
-          <div className="hidden" ref={stripeBuyButtonRef}></div>
         </div>
       </div>
     </div>
