@@ -7,6 +7,7 @@ import { CheckCircle, Save, AlertTriangle, Eye, FileJson } from 'lucide-react';
 import SectionSelector from './SectionSelector';
 import SectionEditor from './sections/SectionEditor';
 import JobDescriptionViewer from './JobDescriptionViewer';
+import AIChatInterface from './AIChatInterface';
 import { ResumeSection, getFormattedResume, getAllSections } from '@/utils/resumeUtils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNavigate } from 'react-router-dom';
@@ -39,6 +40,7 @@ const ResumeEditor = ({
   const [activeSection, setActiveSection] = useState<ResumeSection>(initialActiveSection || 'personalInfo');
   const [viewMode, setViewMode] = useState<'visual' | 'json'>('visual');
   const [sectionOrder, setSectionOrder] = useState<ResumeSection[]>(getAllSections());
+  const [currentSectionContent, setCurrentSectionContent] = useState<string>('');
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -145,6 +147,59 @@ const ResumeEditor = ({
     setHasUnsavedChanges(contentChanged);
   }, [resumeData, savedData, setHasUnsavedChanges]);
 
+  // Extract current section content for AI suggestions
+  useEffect(() => {
+    if (resumeData && activeSection) {
+      let sectionContent = '';
+      
+      // Extract content based on section type
+      if (resumeData.resume) {
+        switch (activeSection) {
+          case 'professionalSummary':
+            sectionContent = resumeData.resume.summary || '';
+            break;
+          case 'personalInfo':
+            sectionContent = JSON.stringify(resumeData.resume.personalInfo || {});
+            break;
+          case 'professionalExperience':
+            sectionContent = JSON.stringify(resumeData.resume.experience || []);
+            break;
+          case 'education':
+            sectionContent = JSON.stringify(resumeData.resume.education || []);
+            break;
+          case 'skills':
+            sectionContent = JSON.stringify(resumeData.resume.skills || []);
+            break;
+          default:
+            sectionContent = JSON.stringify(resumeData.resume[activeSection] || {});
+        }
+      } else {
+        // Direct structure
+        switch (activeSection) {
+          case 'professionalSummary':
+            sectionContent = resumeData.summary || '';
+            break;
+          case 'personalInfo':
+            sectionContent = JSON.stringify(resumeData.personalInfo || {});
+            break;
+          case 'professionalExperience':
+            sectionContent = JSON.stringify(resumeData.experience || []);
+            break;
+          case 'education':
+            sectionContent = JSON.stringify(resumeData.education || []);
+            break;
+          case 'skills':
+            sectionContent = JSON.stringify(resumeData.skills || []);
+            break;
+          default:
+            sectionContent = JSON.stringify(resumeData[activeSection] || {});
+        }
+      }
+      
+      setCurrentSectionContent(sectionContent);
+    }
+  }, [resumeData, activeSection]);
+
   const handleSectionChange = (section: ResumeSection) => {
     setActiveSection(section);
     if (parentSectionChangeHandler) {
@@ -165,6 +220,122 @@ const ResumeEditor = ({
   const handleResumeDataChange = (updatedData: any) => {
     console.log('Resume data being updated:', updatedData);
     setResumeData(updatedData);
+  };
+
+  const handleSuggestionApply = (text: string, sectionId: string) => {
+    if (!resumeData) return;
+    
+    try {
+      // Different logic based on the section type
+      if (sectionId === 'professionalSummary') {
+        // For summary, we just replace the text
+        if (resumeData.resume) {
+          handleResumeDataChange({
+            ...resumeData,
+            resume: {
+              ...resumeData.resume,
+              summary: text
+            }
+          });
+        } else {
+          handleResumeDataChange({
+            ...resumeData,
+            summary: text
+          });
+        }
+      } else if (sectionId === 'personalInfo' || 
+                sectionId === 'professionalExperience' || 
+                sectionId === 'education' || 
+                sectionId === 'skills' ||
+                sectionId === 'projects' ||
+                sectionId === 'volunteer' ||
+                sectionId === 'certifications') {
+        // For other sections that might be JSON, try to parse the text
+        try {
+          const parsedContent = JSON.parse(text);
+          
+          if (resumeData.resume) {
+            const updatedResume = { ...resumeData.resume };
+            
+            switch (sectionId) {
+              case 'personalInfo':
+                updatedResume.personalInfo = parsedContent;
+                break;
+              case 'professionalExperience':
+                updatedResume.experience = parsedContent;
+                break;
+              case 'education':
+                updatedResume.education = parsedContent;
+                break;
+              case 'skills':
+                updatedResume.skills = parsedContent;
+                break;
+              case 'projects':
+                updatedResume.projects = parsedContent;
+                break;
+              case 'volunteer':
+                updatedResume.volunteer = parsedContent;
+                break;
+              case 'certifications':
+                updatedResume.certifications = parsedContent;
+                break;
+              default:
+                updatedResume[sectionId] = parsedContent;
+            }
+            
+            handleResumeDataChange({
+              ...resumeData,
+              resume: updatedResume
+            });
+          } else {
+            // Direct structure
+            const updatedData = { ...resumeData };
+            
+            switch (sectionId) {
+              case 'personalInfo':
+                updatedData.personalInfo = parsedContent;
+                break;
+              case 'professionalExperience':
+                updatedData.experience = parsedContent;
+                break;
+              case 'education':
+                updatedData.education = parsedContent;
+                break;
+              case 'skills':
+                updatedData.skills = parsedContent;
+                break;
+              case 'projects':
+                updatedData.projects = parsedContent;
+                break;
+              case 'volunteer':
+                updatedData.volunteer = parsedContent;
+                break;
+              case 'certifications':
+                updatedData.certifications = parsedContent;
+                break;
+              default:
+                updatedData[sectionId] = parsedContent;
+            }
+            
+            handleResumeDataChange(updatedData);
+          }
+        } catch (e) {
+          console.error("Failed to parse AI suggestion as JSON:", e);
+          toast({
+            title: "Error Applying Suggestion",
+            description: "Could not apply the AI suggestion. The format was not compatible.",
+            variant: "destructive"
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error applying AI suggestion:", error);
+      toast({
+        title: "Error",
+        description: "Failed to apply the suggestion. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   const validateResumeData = (data: any): boolean => {
@@ -264,7 +435,7 @@ const ResumeEditor = ({
         <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as 'visual' | 'json')} className="h-full">
           <TabsContent value="visual" className="mt-0 h-full">
             <ResizablePanelGroup direction="horizontal" className="h-[600px]">
-              <ResizablePanel defaultSize={25} minSize={20}>
+              <ResizablePanel defaultSize={20} minSize={15}>
                 <div className="h-full p-2">
                   <SectionSelector 
                     currentSection={activeSection} 
@@ -277,7 +448,7 @@ const ResumeEditor = ({
 
               <ResizableHandle withHandle />
 
-              <ResizablePanel defaultSize={50} minSize={30}>
+              <ResizablePanel defaultSize={40} minSize={30}>
                 <div className="border rounded-md p-6 h-full overflow-auto">
                   <h2 className="text-xl font-semibold mb-4">
                     {activeSection === 'personalInfo' ? 'Personal Information' : 
@@ -299,9 +470,23 @@ const ResumeEditor = ({
 
               <ResizableHandle withHandle />
 
-              <ResizablePanel defaultSize={25} minSize={20}>
+              <ResizablePanel defaultSize={20} minSize={15}>
                 <div className="h-full p-2">
                   <JobDescriptionViewer jobData={jobData} />
+                </div>
+              </ResizablePanel>
+
+              <ResizableHandle withHandle />
+
+              <ResizablePanel defaultSize={20} minSize={15}>
+                <div className="h-full">
+                  <AIChatInterface 
+                    resumeId={resumeId}
+                    analysisId={analysisId}
+                    onSuggestionApply={handleSuggestionApply}
+                    currentSectionId={activeSection}
+                    currentSectionContent={currentSectionContent}
+                  />
                 </div>
               </ResizablePanel>
             </ResizablePanelGroup>
