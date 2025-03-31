@@ -40,7 +40,7 @@ serve(async (req) => {
       throw new Error(`Error fetching resume data: ${resumeError.message}`);
     }
 
-    let sections = [];
+    let sections = {};
     try {
       sections = resumeData.content;
     } catch (error) {
@@ -48,18 +48,26 @@ serve(async (req) => {
     }
 
     // Get current section content
-    const currentSectionContent = sections.resume && sections.resume[currentSection] 
-      ? sections.resume[currentSection] 
-      : sections[currentSection] || 'No content available';
+    let currentSectionContent = 'No content available';
+    
+    if (sections) {
+      if (typeof sections === 'object') {
+        if (sections.resume && sections.resume[currentSection]) {
+          currentSectionContent = sections.resume[currentSection];
+        } else if (sections[currentSection]) {
+          currentSectionContent = sections[currentSection];
+        }
+      }
+    }
 
     const sectionTitle = currentSection === 'personalInfo' ? 'Personal Information' : 
-                         currentSection === 'professionalSummary' ? 'Professional Summary' : 
-                         currentSection === 'professionalExperience' ? 'Professional Experience' :
-                         currentSection === 'education' ? 'Education' :
-                         currentSection === 'skills' ? 'Skills' :
-                         currentSection === 'projects' ? 'Projects' :
-                         currentSection === 'volunteer' ? 'Volunteer Experience' :
-                         currentSection === 'certifications' ? 'Certifications' : 'Resume Section';
+                       currentSection === 'professionalSummary' ? 'Professional Summary' : 
+                       currentSection === 'professionalExperience' ? 'Professional Experience' :
+                       currentSection === 'education' ? 'Education' :
+                       currentSection === 'skills' ? 'Skills' :
+                       currentSection === 'projects' ? 'Projects' :
+                       currentSection === 'volunteer' ? 'Volunteer Experience' :
+                       currentSection === 'certifications' ? 'Certifications' : 'Resume Section';
 
     // Format current section content for the assistant
     const formattedSectionContent = typeof currentSectionContent === 'object' 

@@ -1,3 +1,4 @@
+
 import {
   Accordion,
   AccordionContent,
@@ -37,7 +38,7 @@ const FAQ = () => {
 
   return (
     <div className="relative">
-      <JellyfishDialog position="middle" />
+      <JellyfishDialog position="middle" simpleTipMode={true} />
       <div className="container mx-auto px-4 py-12">
         <div className="max-w-3xl mx-auto">
           <h1 className="text-4xl font-bold text-center mb-8 bg-gradient-primary text-transparent bg-clip-text">

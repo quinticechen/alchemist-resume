@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { ResumeSection } from '@/utils/resumeUtils';
 import JellyfishDialog from "@/components/JellyfishDialog";
+import AIChatInterface from '@/components/alchemy-records/AIChatInterface';
 
 // Define a more precise type for job data
 interface JobData {
@@ -158,7 +159,7 @@ const ResumeRefine = () => {
     
     toast({
       title: "Suggestion Applied",
-      description: `The Jellyfish's suggestion has been applied to your resume.`
+      description: `The suggestion has been applied to your resume.`
     });
 
     // The AIChatInterface component already handles applying the suggestion to the editor
@@ -186,6 +187,19 @@ const ResumeRefine = () => {
     return <div className="container mx-auto px-4 py-8">Loading resume data...</div>;
   }
 
+  // Extract current section content for the AI assistant
+  let currentSectionContent = "";
+  if (activeSection && resumeData?.goldenResume) {
+    try {
+      const content = JSON.parse(resumeData.goldenResume);
+      if (content.resume && content.resume[activeSection]) {
+        currentSectionContent = JSON.stringify(content.resume[activeSection], null, 2);
+      }
+    } catch (error) {
+      console.error("Error parsing section content:", error);
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100 relative">
       <JellyfishDialog 
@@ -202,7 +216,7 @@ const ResumeRefine = () => {
             {resumeData?.jobTitle || 'Resume Editor'}
           </h1>
           
-          <div className="bg-white rounded-xl p-6 shadow-apple">
+          <div className="bg-white rounded-xl p-6 shadow-apple mb-6">
             {resumeData && (
               <ResumeEditor 
                 resumeId={resumeData.resumeId} 
@@ -214,6 +228,18 @@ const ResumeRefine = () => {
               />
             )}
           </div>
+          
+          {resumeData && (
+            <div className="bg-white rounded-xl p-6 shadow-apple">
+              <AIChatInterface 
+                resumeId={resumeData.resumeId}
+                analysisId={analysisId}
+                onSuggestionApply={handleSuggestionApply}
+                currentSectionId={activeSection || ''}
+                currentSectionContent={currentSectionContent}
+              />
+            </div>
+          )}
         </div>
       </div>
 
