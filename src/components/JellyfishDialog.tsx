@@ -18,6 +18,7 @@ interface JellyfishDialogProps {
   onSuggestionApply?: (text: string, sectionId: string) => void;
   onGenerateSuggestion?: (sectionId: string) => void;
   simpleTipMode?: boolean;
+  jobData?: any;
 }
 
 const welcomeMessages = [
@@ -52,7 +53,8 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
   currentSectionId = "",
   onSuggestionApply,
   onGenerateSuggestion,
-  simpleTipMode = false
+  simpleTipMode = false,
+  jobData = null
 }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -61,6 +63,7 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
   const [chats, setChats] = useState<{role: 'assistant' | 'user', content: string, suggestion?: string}[]>([]);
   const [autoSuggestionTimerId, setAutoSuggestionTimerId] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [hasInitialJobContext, setHasInitialJobContext] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -88,6 +91,13 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
       };
     }
   }, [simpleTipMode]);
+
+  // Reset hasInitialJobContext when the sheet is closed
+  useEffect(() => {
+    if (!isSheetOpen) {
+      setHasInitialJobContext(false);
+    }
+  }, [isSheetOpen]);
 
   const getRandomTip = () => {
     const randomIndex = Math.floor(Math.random() * resumeTips.length);
@@ -121,6 +131,9 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
       
       // Call the AI assistant to get a suggestion
       await sendToAIAssistant(`Please generate a suggestion for the ${currentSectionId} section of my resume that would make it more impactful and professional.`);
+      
+      // Mark that we've sent the job context with this initial message
+      setHasInitialJobContext(true);
     }
   };
 
@@ -138,20 +151,29 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
       
       // Send to AI assistant
       await sendToAIAssistant(message);
+      
+      // If this is the first message and we haven't sent job context yet, mark it as sent
+      if (!hasInitialJobContext) {
+        setHasInitialJobContext(true);
+      }
     }
   };
 
   const sendToAIAssistant = async (message: string) => {
     setIsLoading(true);
     try {
+      const analysisId = currentSectionId ? window.location.pathname.split('/').pop() : undefined;
+      
       // Call the resume-ai-assistant function
       const { data, error } = await supabase.functions.invoke('resume-ai-assistant', {
         body: { 
           message,
-          analysisId: currentSectionId ? window.location.pathname.split('/').pop() : undefined,
+          analysisId,
           resumeId: undefined,
           currentSection: currentSectionId,
-          history: chats
+          history: chats,
+          // Include job data only on the first message of a new conversation
+          includeJobData: !hasInitialJobContext
         }
       });
       

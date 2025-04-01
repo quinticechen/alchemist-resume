@@ -30,6 +30,7 @@ const ResumeRefine = () => {
     analysisId: string;
     jobTitle?: string;
   } | null>(null);
+  const [jobDescription, setJobDescription] = useState<any>(null);
   const { toast } = useToast();
 
   const analysisId = paramAnalysisId || locationAnalysisId;
@@ -48,6 +49,21 @@ const ResumeRefine = () => {
           if (analysisError) throw analysisError;
           
           if (analysisData) {
+            // Get job description data
+            if (analysisData.job_id) {
+              const { data: jobData, error: jobError } = await supabase
+                .from('jobs')
+                .select('job_description')
+                .eq('id', analysisData.job_id)
+                .single();
+                
+              if (jobError) throw jobError;
+              
+              if (jobData) {
+                setJobDescription(jobData.job_description);
+              }
+            }
+            
             // Now get the editor content which has the formatted resume
             const { data: editorData, error: editorError } = await supabase
               .from('resume_editors')
@@ -189,6 +205,7 @@ const ResumeRefine = () => {
         currentSectionId={activeSection}
         onSuggestionApply={handleSuggestionApply}
         onGenerateSuggestion={handleGenerateSuggestion}
+        jobData={jobDescription}
       />
       
       <div className="container mx-auto px-4 py-12">

@@ -11,7 +11,7 @@ serve(async (req) => {
 
   try {
     // Get the request body
-    const { message, analysisId, resumeId, currentSection, history } = await req.json();
+    const { message, analysisId, resumeId, currentSection, history, includeJobData = false } = await req.json();
     
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
     if (!openAIApiKey) {
@@ -60,6 +60,38 @@ serve(async (req) => {
       }
     }
 
+    // Get job data if it's the first message in the conversation
+    let jobData = null;
+    if (includeJobData && analysisId) {
+      try {
+        // First, get the job_id from the analysis
+        const { data: analysisData, error: analysisError } = await supabase
+          .from('resume_analyses')
+          .select('job_id')
+          .eq('id', analysisId)
+          .single();
+          
+        if (analysisError) {
+          console.error('Error fetching analysis data:', analysisError);
+        } else if (analysisData && analysisData.job_id) {
+          // Then get the job data
+          const { data: jobInfo, error: jobError } = await supabase
+            .from('jobs')
+            .select('job_description')
+            .eq('id', analysisData.job_id)
+            .single();
+            
+          if (jobError) {
+            console.error('Error fetching job data:', jobError);
+          } else {
+            jobData = jobInfo.job_description;
+          }
+        }
+      } catch (error) {
+        console.error('Error in job data retrieval:', error);
+      }
+    }
+
     const sectionTitle = currentSection === 'personalInfo' ? 'Personal Information' : 
                        currentSection === 'professionalSummary' ? 'Professional Summary' : 
                        currentSection === 'professionalExperience' ? 'Professional Experience' :
@@ -101,13 +133,26 @@ serve(async (req) => {
       
       // Add message to thread
       console.log("Adding message to thread...");
-      const contextMessage = `
+      
+      // Build context message based on whether this is the first message that should include job data
+      let contextMessage = `
 I'm working on the "${sectionTitle}" section of my resume. Here's the current content:
 
 ${formattedSectionContent}
+`;
 
-My question/request is: ${message}
-      `;
+      // Add job data context if available and this is the first message
+      if (includeJobData && jobData) {
+        contextMessage += `\nHere's the job description I'm targeting:
+        
+${JSON.stringify(jobData, null, 2)}
+
+Please tailor your suggestions to help me align my resume with this job description.
+`;
+      }
+
+      // Add the user's actual message
+      contextMessage += `\nMy question/request is: ${message}`;
       
       const messageResponse = await fetch(`https://api.openai.com/v1/threads/${threadId}/messages`, {
         method: "POST",
@@ -228,6 +273,32 @@ My question/request is: ${message}
         cleanMessage = messageContent.replace(/```[\s\S]*?```/g, '').trim();
       }
       
+      // Store the conversation in the database for context retention
+      if (analysisId) {
+        try {
+          await supabase
+            .from('ai_chat_messages')
+            .insert([
+              {
+                analysis_id: analysisId,
+                role: 'user',
+                content: message,
+                section: currentSection
+              },
+              {
+                analysis_id: analysisId,
+                role: 'assistant',
+                content: cleanMessage,
+                suggestion: suggestion,
+                section: currentSection
+              }
+            ]);
+        } catch (error) {
+          console.error('Error storing chat messages:', error);
+          // Continue even if storage fails
+        }
+      }
+      
       return new Response(JSON.stringify({ 
         message: cleanMessage,
         suggestion
@@ -262,7 +333,23 @@ const createClient = (supabaseUrl: string, supabaseKey: string) => {
             }
           }).then(res => res.json().then(data => ({ data: data[0], error: null })))
         })
-      })
+      }),
+      insert: (rows: any[]) => 
+        fetch(`${supabaseUrl}/rest/v1/${table}`, {
+          method: 'POST',
+          headers: {
+            "apikey": supabaseKey,
+            "Authorization": `Bearer ${supabaseKey}`,
+            "Content-Type": "application/json",
+            "Prefer": "return=minimal"
+          },
+          body: JSON.stringify(rows)
+        }).then(res => {
+          if (!res.ok) {
+            return res.json().then(data => ({ data: null, error: data }));
+          }
+          return { data: true, error: null };
+        })
     })
   };
 };
