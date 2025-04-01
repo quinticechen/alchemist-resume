@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useCallback } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from "@/contexts/AuthContext";
@@ -42,7 +41,7 @@ const ResumeRefine = () => {
           // First get the analysis record to get the resume_id
           const { data: analysisData, error: analysisError } = await supabase
             .from('resume_analyses')
-            .select('id, resume_id, job:job_id(job_title)')
+            .select('id, resume_id, job_id, job:job_id(job_title)')
             .eq('id', analysisId)
             .single();
           
@@ -50,12 +49,12 @@ const ResumeRefine = () => {
           
           if (analysisData) {
             // If we have a job relationship, fetch job description data
-            // We need to check if job_id exists directly on the analysisData
-            if (analysisData.job_id) {
+            const jobId = analysisData.job_id;
+            if (jobId) {
               const { data: jobData, error: jobError } = await supabase
                 .from('jobs')
                 .select('job_description')
-                .eq('id', analysisData.job_id)
+                .eq('id', jobId)
                 .single();
                 
               if (jobError) throw jobError;
