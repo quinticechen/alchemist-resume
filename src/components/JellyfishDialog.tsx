@@ -7,6 +7,8 @@ import { MessageCircle, Lightbulb, Send } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface JellyfishDialogProps {
   className?: string;
@@ -58,6 +60,8 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
   const [inputValue, setInputValue] = useState("");
   const [chats, setChats] = useState<{role: 'assistant' | 'user', content: string, suggestion?: string}[]>([]);
   const [autoSuggestionTimerId, setAutoSuggestionTimerId] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     // Add welcome message on first load
@@ -109,13 +113,22 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
     }
   };
 
-  const handleGenerateSuggestion = () => {
+  const handleGenerateSuggestion = async () => {
     if (onGenerateSuggestion && currentSectionId) {
       onGenerateSuggestion(currentSectionId);
+      
+      // Add a message to indicate we're generating a suggestion
+      setChats(prev => [...prev, {
+        role: 'user',
+        content: `Please help me improve the ${currentSectionId} section of my resume.`
+      }]);
+      
+      // Call the AI assistant to get a suggestion
+      await sendToAIAssistant(`Please generate a suggestion for the ${currentSectionId} section of my resume that would make it more impactful and professional.`);
     }
   };
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (inputValue.trim()) {
       // Add user message to chat
       setChats(prev => [...prev, {
@@ -124,16 +137,56 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
       }]);
       
       // Clear input
+      const message = inputValue;
       setInputValue("");
       
-      // TODO: This would be where we'd send the message to the AI
-      // For now, just add a placeholder response
-      setTimeout(() => {
-        setChats(prev => [...prev, {
-          role: 'assistant',
-          content: "I'm processing your question. I'll have a response for you shortly!"
-        }]);
-      }, 500);
+      // Send to AI assistant
+      await sendToAIAssistant(message);
+    }
+  };
+
+  const sendToAIAssistant = async (message: string) => {
+    setIsLoading(true);
+    try {
+      // Call the resume-ai-assistant function
+      const { data, error } = await supabase.functions.invoke('resume-ai-assistant', {
+        body: { 
+          message,
+          currentSection: currentSectionId
+        }
+      });
+      
+      if (error) throw error;
+      
+      let suggestion = null;
+      let content = data.message;
+      
+      // Check if the response contains a suggestion
+      if (data.suggestion) {
+        suggestion = data.suggestion;
+      }
+      
+      // Add AI response to chat
+      setChats(prev => [...prev, {
+        role: 'assistant',
+        content: content,
+        suggestion: suggestion
+      }]);
+      
+    } catch (error) {
+      console.error('Error getting AI response:', error);
+      setChats(prev => [...prev, {
+        role: 'assistant',
+        content: "I'm sorry, I encountered an error. Please try again later."
+      }]);
+      
+      toast({
+        title: "Error",
+        description: "Failed to get AI response. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -254,6 +307,7 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
                 variant="outline" 
                 className="w-full flex items-center gap-2"
                 onClick={handleGenerateSuggestion}
+                disabled={isLoading}
               >
                 <Lightbulb className="h-4 w-4" />
                 Generate Suggestion for Current Section
@@ -266,11 +320,13 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
                   onKeyDown={handleKeyDown}
                   placeholder="Ask for resume advice..."
                   className="resize-none"
+                  disabled={isLoading}
                 />
-                <Button size="icon" onClick={handleSendMessage}>
+                <Button size="icon" onClick={handleSendMessage} disabled={isLoading || inputValue.trim() === ''}>
                   <Send className="h-4 w-4" />
                 </Button>
               </div>
+              {isLoading && <p className="text-sm text-muted-foreground">AI is thinking...</p>}
             </div>
           </SheetContent>
         </Sheet>

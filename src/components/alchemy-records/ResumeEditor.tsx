@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -7,7 +6,6 @@ import { CheckCircle, Save, AlertTriangle, Eye, FileJson } from 'lucide-react';
 import SectionSelector from './SectionSelector';
 import SectionEditor from './sections/SectionEditor';
 import JobDescriptionViewer from './JobDescriptionViewer';
-import AIChatInterface from './AIChatInterface';
 import { ResumeSection, getFormattedResume, getAllSections } from '@/utils/resumeUtils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNavigate } from 'react-router-dom';
@@ -87,7 +85,6 @@ const ResumeEditor = ({
           const content = editorData.content;
           console.log('Editor content loaded:', content);
           
-          // Extract section order if it exists
           if (content.sectionOrder && Array.isArray(content.sectionOrder)) {
             setSectionOrder(content.sectionOrder);
           }
@@ -147,12 +144,10 @@ const ResumeEditor = ({
     setHasUnsavedChanges(contentChanged);
   }, [resumeData, savedData, setHasUnsavedChanges]);
 
-  // Extract current section content for AI suggestions
   useEffect(() => {
     if (resumeData && activeSection) {
       let sectionContent = '';
       
-      // Extract content based on section type
       if (resumeData.resume) {
         switch (activeSection) {
           case 'professionalSummary':
@@ -174,7 +169,6 @@ const ResumeEditor = ({
             sectionContent = JSON.stringify(resumeData.resume[activeSection] || {});
         }
       } else {
-        // Direct structure
         switch (activeSection) {
           case 'professionalSummary':
             sectionContent = resumeData.summary || '';
@@ -210,7 +204,6 @@ const ResumeEditor = ({
   const handleSectionsReorder = (sections: ResumeSection[]) => {
     setSectionOrder(sections);
     
-    // Update the resume data with the new section order
     setResumeData((prevData: any) => ({
       ...prevData,
       sectionOrder: sections
@@ -226,9 +219,7 @@ const ResumeEditor = ({
     if (!resumeData) return;
     
     try {
-      // Different logic based on the section type
       if (sectionId === 'professionalSummary') {
-        // For summary, we just replace the text
         if (resumeData.resume) {
           handleResumeDataChange({
             ...resumeData,
@@ -250,7 +241,6 @@ const ResumeEditor = ({
                 sectionId === 'projects' ||
                 sectionId === 'volunteer' ||
                 sectionId === 'certifications') {
-        // For other sections that might be JSON, try to parse the text
         try {
           const parsedContent = JSON.parse(text);
           
@@ -288,7 +278,6 @@ const ResumeEditor = ({
               resume: updatedResume
             });
           } else {
-            // Direct structure
             const updatedData = { ...resumeData };
             
             switch (sectionId) {
@@ -369,7 +358,6 @@ const ResumeEditor = ({
 
     setIsSaving(true);
     try {
-      // Ensure the section order is included in the saved data
       const dataToSave = {
         ...resumeData,
         sectionOrder: sectionOrder
@@ -435,7 +423,7 @@ const ResumeEditor = ({
         <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as 'visual' | 'json')} className="h-full">
           <TabsContent value="visual" className="mt-0 h-full">
             <ResizablePanelGroup direction="horizontal" className="h-[600px]">
-              <ResizablePanel defaultSize={20} minSize={15}>
+              <ResizablePanel defaultSize={25} minSize={15}>
                 <div className="h-full p-2">
                   <SectionSelector 
                     currentSection={activeSection} 
@@ -448,7 +436,7 @@ const ResumeEditor = ({
 
               <ResizableHandle withHandle />
 
-              <ResizablePanel defaultSize={40} minSize={30}>
+              <ResizablePanel defaultSize={50} minSize={30}>
                 <div className="border rounded-md p-6 h-full overflow-auto">
                   <h2 className="text-xl font-semibold mb-4">
                     {activeSection === 'personalInfo' ? 'Personal Information' : 
@@ -470,23 +458,9 @@ const ResumeEditor = ({
 
               <ResizableHandle withHandle />
 
-              <ResizablePanel defaultSize={20} minSize={15}>
+              <ResizablePanel defaultSize={25} minSize={15}>
                 <div className="h-full p-2">
                   <JobDescriptionViewer jobData={jobData} />
-                </div>
-              </ResizablePanel>
-
-              <ResizableHandle withHandle />
-
-              <ResizablePanel defaultSize={20} minSize={15}>
-                <div className="h-full">
-                  <AIChatInterface 
-                    resumeId={resumeId}
-                    analysisId={analysisId}
-                    onSuggestionApply={handleSuggestionApply}
-                    currentSectionId={activeSection}
-                    currentSectionContent={currentSectionContent}
-                  />
                 </div>
               </ResizablePanel>
             </ResizablePanelGroup>
