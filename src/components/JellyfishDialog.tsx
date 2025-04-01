@@ -105,11 +105,7 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
       showRandomTip();
     } else {
       // In chat mode, toggle the sheet
-      if (isSheetOpen) {
-        setIsSheetOpen(false);
-      } else {
-        setIsSheetOpen(true);
-      }
+      setIsSheetOpen(!isSheetOpen);
     }
   };
 
@@ -152,7 +148,10 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
       const { data, error } = await supabase.functions.invoke('resume-ai-assistant', {
         body: { 
           message,
-          currentSection: currentSectionId
+          analysisId: currentSectionId ? window.location.pathname.split('/').pop() : undefined,
+          resumeId: undefined,
+          currentSection: currentSectionId,
+          history: chats
         }
       });
       
