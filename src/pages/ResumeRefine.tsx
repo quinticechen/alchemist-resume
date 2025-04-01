@@ -49,7 +49,8 @@ const ResumeRefine = () => {
           if (analysisError) throw analysisError;
           
           if (analysisData) {
-            // Get job description data
+            // If we have a job relationship, fetch job description data
+            // We need to check if job_id exists directly on the analysisData
             if (analysisData.job_id) {
               const { data: jobData, error: jobError } = await supabase
                 .from('jobs')
