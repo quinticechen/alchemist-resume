@@ -111,13 +111,13 @@ serve(async (req) => {
     
     try {
       console.log("Creating thread...");
-      // Create a thread
+      // Create a thread - using v2 API now
       const threadResponse = await fetch("https://api.openai.com/v1/threads", {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${openAIApiKey}`,
           "Content-Type": "application/json",
-          "OpenAI-Beta": "assistants=v1"
+          "OpenAI-Beta": "assistants=v2" // Updated to v2
         },
         body: JSON.stringify({})
       });
@@ -159,7 +159,7 @@ Please tailor your suggestions to help me align my resume with this job descript
         headers: {
           "Authorization": `Bearer ${openAIApiKey}`,
           "Content-Type": "application/json",
-          "OpenAI-Beta": "assistants=v1"
+          "OpenAI-Beta": "assistants=v2" // Updated to v2
         },
         body: JSON.stringify({
           role: "user",
@@ -181,7 +181,7 @@ Please tailor your suggestions to help me align my resume with this job descript
         headers: {
           "Authorization": `Bearer ${openAIApiKey}`,
           "Content-Type": "application/json",
-          "OpenAI-Beta": "assistants=v1"
+          "OpenAI-Beta": "assistants=v2" // Updated to v2
         },
         body: JSON.stringify({
           assistant_id: assistantId
@@ -208,7 +208,7 @@ Please tailor your suggestions to help me align my resume with this job descript
           headers: {
             "Authorization": `Bearer ${openAIApiKey}`,
             "Content-Type": "application/json",
-            "OpenAI-Beta": "assistants=v1"
+            "OpenAI-Beta": "assistants=v2" // Updated to v2
           }
         });
         
@@ -242,7 +242,7 @@ Please tailor your suggestions to help me align my resume with this job descript
         headers: {
           "Authorization": `Bearer ${openAIApiKey}`,
           "Content-Type": "application/json",
-          "OpenAI-Beta": "assistants=v1"
+          "OpenAI-Beta": "assistants=v2" // Updated to v2
         }
       });
       
@@ -260,6 +260,8 @@ Please tailor your suggestions to help me align my resume with this job descript
       }
       
       const latestMessage = assistantMessages[0];
+      
+      // Access message content - structure changed in v2 API
       const messageContent = latestMessage.content[0].text.value;
       
       // Process message to extract any suggestion
