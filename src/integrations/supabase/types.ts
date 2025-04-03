@@ -18,6 +18,7 @@ export type Database = {
           role: string
           section: string | null
           suggestion: string | null
+          thread_id: string | null
           timestamp: string
           updated_at: string
         }
@@ -29,6 +30,7 @@ export type Database = {
           role: string
           section?: string | null
           suggestion?: string | null
+          thread_id?: string | null
           timestamp?: string
           updated_at?: string
         }
@@ -40,12 +42,54 @@ export type Database = {
           role?: string
           section?: string | null
           suggestion?: string | null
+          thread_id?: string | null
           timestamp?: string
           updated_at?: string
         }
         Relationships: [
           {
             foreignKeyName: "ai_chat_messages_analysis_id_fkey"
+            columns: ["analysis_id"]
+            isOneToOne: false
+            referencedRelation: "resume_analyses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_chat_metadata: {
+        Row: {
+          analysis_id: string
+          assistant_id: string
+          created_at: string
+          id: string
+          run_id: string
+          section: string | null
+          thread_id: string
+          updated_at: string
+        }
+        Insert: {
+          analysis_id: string
+          assistant_id: string
+          created_at?: string
+          id?: string
+          run_id: string
+          section?: string | null
+          thread_id: string
+          updated_at?: string
+        }
+        Update: {
+          analysis_id?: string
+          assistant_id?: string
+          created_at?: string
+          id?: string
+          run_id?: string
+          section?: string | null
+          thread_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_chat_metadata_analysis_id_fkey"
             columns: ["analysis_id"]
             isOneToOne: false
             referencedRelation: "resume_analyses"

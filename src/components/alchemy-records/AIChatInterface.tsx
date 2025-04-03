@@ -26,6 +26,12 @@ interface ChatMessage {
   thread_id?: string;
 }
 
+interface ThreadMetadata {
+  thread_id: string;
+  assistant_id: string;
+  run_id: string;
+}
+
 const AIChatInterface: React.FC<AIChatInterfaceProps> = ({ 
   resumeId, 
   analysisId,
@@ -41,11 +47,13 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
   const [showChat, setShowChat] = useState(true);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const [currentThreadId, setCurrentThreadId] = useState<string | null>(null);
+  const [threadMetadata, setThreadMetadata] = useState<ThreadMetadata | null>(null);
 
-  // Load existing chat messages on component mount or when analysisId changes
+  // Load existing chat messages and thread metadata on component mount or when analysisId changes
   useEffect(() => {
     const loadChatHistory = async () => {
       try {
+        // Load messages
         const { data, error } = await supabase
           .from('ai_chat_messages')
           .select('*')
@@ -62,7 +70,23 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
             
           if (recentThreadId) {
             setCurrentThreadId(recentThreadId);
-            console.log(`Current chat thread: ${recentThreadId}`);
+            
+            // Load thread metadata if we have a thread ID
+            const { data: metadataData, error: metadataError } = await supabase
+              .from('ai_chat_metadata')
+              .select('*')
+              .eq('thread_id', recentThreadId)
+              .eq('analysis_id', analysisId)
+              .single();
+              
+            if (!metadataError && metadataData) {
+              setThreadMetadata({
+                thread_id: metadataData.thread_id,
+                assistant_id: metadataData.assistant_id,
+                run_id: metadataData.run_id
+              });
+              console.log(`Loaded thread metadata: ${JSON.stringify(metadataData)}`);
+            }
           }
           
           setMessages(data.map(msg => ({
@@ -130,7 +154,8 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
       role: 'user',
       content: input,
       timestamp: new Date(),
-      section: currentSectionId
+      section: currentSectionId,
+      thread_id: currentThreadId || undefined
     };
 
     // Update UI immediately
@@ -149,7 +174,8 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
           analysisId, 
           resumeId,
           currentSection: currentSectionId,
-          history: messages.map(msg => ({ role: msg.role, content: msg.content }))
+          history: messages.map(msg => ({ role: msg.role, content: msg.content })),
+          threadId: currentThreadId // Pass current thread ID if it exists
         }
       });
 
@@ -159,11 +185,40 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
       let suggestion = null;
       let content = data.message;
       let threadId = data.threadId;
+      let assistantId = data.assistantId;
+      let runId = data.runId;
       
-      // Update current thread ID if available
+      // Update metadata if we have thread information
       if (threadId) {
         setCurrentThreadId(threadId);
-        console.log(`Chat using OpenAI thread: ${threadId}`);
+        
+        if (assistantId && runId) {
+          setThreadMetadata({
+            thread_id: threadId,
+            assistant_id: assistantId,
+            run_id: runId
+          });
+          
+          // Save thread metadata to database if it's new
+          if (threadId !== currentThreadId) {
+            try {
+              const { error: metadataError } = await supabase
+                .from('ai_chat_metadata')
+                .insert({
+                  analysis_id: analysisId,
+                  thread_id: threadId,
+                  assistant_id: assistantId,
+                  run_id: runId,
+                  section: currentSectionId
+                });
+                
+              if (metadataError) throw metadataError;
+              
+            } catch (metadataErr) {
+              console.error('Error saving thread metadata:', metadataErr);
+            }
+          }
+        }
       }
 
       // Check if the response contains a suggestion
@@ -327,7 +382,7 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
                         )}
                         {message.thread_id && (
                           <div className="mt-1 text-xs text-muted-foreground">
-                            Thread: {message.thread_id.substring(0, 12)}...
+                            Thread: {message.thread_id.substring(0, 8)}...
                           </div>
                         )}
                       </div>
@@ -360,10 +415,23 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
               </Button>
             </div>
             {isLoading && <p className="text-sm text-muted-foreground mt-2">AI is thinking...</p>}
-            {currentThreadId && (
-              <p className="text-xs text-muted-foreground mt-1">
-                Thread: {currentThreadId.substring(0, 12)}...
-              </p>
+            {threadMetadata && (
+              <div className="flex flex-col text-xs text-muted-foreground mt-2">
+                <div className="flex items-center gap-1">
+                  <span>Thread ID:</span>
+                  <a 
+                    href={`https://platform.openai.com/playground/threads/${threadMetadata.thread_id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-500 hover:underline"
+                    title="View in OpenAI"
+                  >
+                    {threadMetadata.thread_id.substring(0, 12)}...
+                  </a>
+                </div>
+                <div>Assistant ID: {threadMetadata.assistant_id.substring(0, 8)}...</div>
+                <div>Run ID: {threadMetadata.run_id.substring(0, 8)}...</div>
+              </div>
             )}
           </div>
         </>

@@ -1,390 +1,269 @@
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
+// Resume AI Assistant Edge Function
+import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { corsHeaders } from "../_shared/cors.ts";
+import OpenAI from "https://esm.sh/openai@4.24.1";
+
+// Initialize OpenAI client
+const openai = new OpenAI({
+  apiKey: Deno.env.get("OPENAI_API_KEY"),
+});
+
+// Define assistant ID(s)
+const RESUME_ASSISTANT_ID = "asst_ahHD2JpnG0XCsHVBbCSUmRVr";
 
 serve(async (req) => {
+  console.log("Resume AI Assistant function called");
+  
   // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
+  if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Get the request body
-    const { message, analysisId, resumeId, currentSection, history, includeJobData = false } = await req.json();
-    
-    const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
-    if (!openAIApiKey) {
-      throw new Error('OPENAI_API_KEY is not set in environment variables');
+    const { message, analysisId, resumeId, currentSection, history, threadId } = await req.json();
+    console.log(`Request received: analysisId=${analysisId}, resumeId=${resumeId}, section=${currentSection}`);
+    console.log(`Previous threadId: ${threadId || "none"}`);
+
+    // Validate required parameters
+    if (!message || !analysisId || !resumeId) {
+      throw new Error("Missing required parameters");
     }
 
-    // Connect to Supabase to get resume data
-    const supabaseUrl = Deno.env.get('SUPABASE_URL');
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-    
-    if (!supabaseUrl || !supabaseKey) {
-      throw new Error('Supabase environment variables not set');
-    }
-
-    // Create Supabase client
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
-    // Get resume data and section content
-    const { data: resumeData, error: resumeError } = await supabase
-      .from('resume_editors')
-      .select('content')
-      .eq('analysis_id', analysisId)
+    // Get resume data from the database
+    const { data: analysisData, error: analysisError } = await supabaseAdmin
+      .from("resume_analyses")
+      .select(`
+        id,
+        job:job_id (
+          job_title,
+          company_name,
+          job_description
+        ),
+        resume:resume_id (
+          formatted_resume
+        )
+      `)
+      .eq("id", analysisId)
       .single();
 
-    if (resumeError) {
-      throw new Error(`Error fetching resume data: ${resumeError.message}`);
+    if (analysisError) {
+      throw new Error(`Error fetching analysis data: ${analysisError.message}`);
     }
 
-    let sections = {};
-    try {
-      sections = resumeData.content;
-    } catch (error) {
-      throw new Error(`Error parsing resume data: ${error.message}`);
+    if (!analysisData?.resume?.formatted_resume) {
+      throw new Error("Resume data not found");
     }
 
-    // Get current section content
-    let currentSectionContent = 'No content available';
-    
-    if (sections) {
-      if (typeof sections === 'object') {
-        if (sections.resume && sections.resume[currentSection]) {
-          currentSectionContent = sections.resume[currentSection];
-        } else if (sections[currentSection]) {
-          currentSectionContent = sections[currentSection];
-        }
-      }
-    }
-
-    // Get job data if it's the first message in the conversation
-    let jobData = null;
-    if (includeJobData && analysisId) {
+    // Get or create a thread
+    let thread;
+    if (threadId) {
+      console.log(`Using existing thread: ${threadId}`);
       try {
-        // First, get the job_id from the analysis
-        const { data: analysisData, error: analysisError } = await supabase
-          .from('resume_analyses')
-          .select('job_id')
-          .eq('id', analysisId)
-          .single();
-          
-        if (analysisError) {
-          console.error('Error fetching analysis data:', analysisError);
-        } else if (analysisData && analysisData.job_id) {
-          // Then get the job data
-          const { data: jobInfo, error: jobError } = await supabase
-            .from('jobs')
-            .select('job_description')
-            .eq('id', analysisData.job_id)
-            .single();
-            
-          if (jobError) {
-            console.error('Error fetching job data:', jobError);
-          } else {
-            jobData = jobInfo.job_description;
-          }
-        }
-      } catch (error) {
-        console.error('Error in job data retrieval:', error);
+        thread = await openai.beta.threads.retrieve(threadId);
+      } catch (threadError) {
+        console.error(`Error retrieving thread: ${threadError}`);
+        console.log("Creating new thread instead");
+        thread = await openai.beta.threads.create();
+      }
+    } else {
+      console.log("Creating new thread");
+      thread = await openai.beta.threads.create();
+    }
+    
+    console.log(`Thread ID: ${thread.id}`);
+
+    // Extract resume content for the specified section
+    const resumeData = analysisData.resume.formatted_resume;
+    let sectionContent = "";
+
+    // Only include section content if a specific section is requested
+    if (currentSection && resumeData) {
+      if (currentSection === "skills" && resumeData.skills) {
+        sectionContent = JSON.stringify(resumeData.skills);
+      } else if (currentSection === "experience" && resumeData.experience) {
+        sectionContent = JSON.stringify(resumeData.experience);
+      } else if (currentSection === "education" && resumeData.education) {
+        sectionContent = JSON.stringify(resumeData.education);
+      } else if (currentSection === "projects" && resumeData.projects) {
+        sectionContent = JSON.stringify(resumeData.projects);
+      } else if (currentSection === "personalInfo" && resumeData.personalInfo) {
+        sectionContent = JSON.stringify(resumeData.personalInfo);
+      } else if (currentSection === "professionalSummary" && resumeData.professionalSummary) {
+        sectionContent = JSON.stringify(resumeData.professionalSummary);
+      } else if (currentSection === "certifications" && resumeData.certifications) {
+        sectionContent = JSON.stringify(resumeData.certifications);
+      } else if (currentSection === "volunteer" && resumeData.volunteer) {
+        sectionContent = JSON.stringify(resumeData.volunteer);
       }
     }
 
-    const sectionTitle = currentSection === 'personalInfo' ? 'Personal Information' : 
-                       currentSection === 'professionalSummary' ? 'Professional Summary' : 
-                       currentSection === 'professionalExperience' ? 'Professional Experience' :
-                       currentSection === 'education' ? 'Education' :
-                       currentSection === 'skills' ? 'Skills' :
-                       currentSection === 'projects' ? 'Projects' :
-                       currentSection === 'volunteer' ? 'Volunteer Experience' :
-                       currentSection === 'certifications' ? 'Certifications' : 'Resume Section';
-
-    // Format current section content for the assistant
-    const formattedSectionContent = typeof currentSectionContent === 'object' 
-      ? JSON.stringify(currentSectionContent, null, 2) 
-      : currentSectionContent;
-    
-    // Use OpenAI API to interact with your assistant
-    const assistantId = "asst_kSRCmsWHioSMYH5W0G04dLU0"; // Your provided assistant ID
-    
-    try {
-      console.log("Creating thread...");
-      // Create a thread - using v2 API now
-      const threadResponse = await fetch("https://api.openai.com/v1/threads", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${openAIApiKey}`,
-          "Content-Type": "application/json",
-          "OpenAI-Beta": "assistants=v2" // Updated to v2
-        },
-        body: JSON.stringify({})
-      });
-      
-      if (!threadResponse.ok) {
-        const errorData = await threadResponse.json();
-        throw new Error(`OpenAI thread creation failed: ${JSON.stringify(errorData)}`);
-      }
-      
-      const threadData = await threadResponse.json();
-      const threadId = threadData.id;
-      console.log("Thread created:", threadId);
-      
-      // Build context message based on whether this is the first message that should include job data
-      let contextMessage = `
-I'm working on the "${sectionTitle}" section of my resume. Here's the current content:
-
-${formattedSectionContent}
-`;
-
-      // Add job data context if available and this is the first message
-      if (includeJobData && jobData) {
-        contextMessage += `\nHere's the job description I'm targeting:
-        
-${JSON.stringify(jobData, null, 2)}
-
-Please tailor your suggestions to help me align my resume with this job description.
-`;
-      }
-
-      // Add the user's actual message
-      contextMessage += `\nMy question/request is: ${message}`;
-      
-      // Log the complete context message for debugging/monitoring purposes
-      console.log("Full context being sent to OpenAI:");
-      console.log("-------------------------");
-      console.log(contextMessage);
-      console.log("-------------------------");
-      
-      // Add message to thread
-      console.log("Adding message to thread...");
-      const messageResponse = await fetch(`https://api.openai.com/v1/threads/${threadId}/messages`, {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${openAIApiKey}`,
-          "Content-Type": "application/json",
-          "OpenAI-Beta": "assistants=v2" // Updated to v2
-        },
-        body: JSON.stringify({
-          role: "user",
-          content: contextMessage
-        })
-      });
-      
-      if (!messageResponse.ok) {
-        const errorData = await messageResponse.json();
-        throw new Error(`OpenAI message creation failed: ${JSON.stringify(errorData)}`);
-      }
-      
-      console.log("Message added to thread");
-      
-      // Run the assistant
-      console.log("Running assistant...");
-      const runResponse = await fetch(`https://api.openai.com/v1/threads/${threadId}/runs`, {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${openAIApiKey}`,
-          "Content-Type": "application/json",
-          "OpenAI-Beta": "assistants=v2" // Updated to v2
-        },
-        body: JSON.stringify({
-          assistant_id: assistantId
-        })
-      });
-      
-      if (!runResponse.ok) {
-        const errorData = await runResponse.json();
-        throw new Error(`OpenAI run creation failed: ${JSON.stringify(errorData)}`);
-      }
-      
-      const runData = await runResponse.json();
-      const runId = runData.id;
-      console.log("Run created:", runId);
-      
-      // Poll for completion
-      console.log("Polling for completion...");
-      let runStatus = null;
-      let attempts = 0;
-      const maxAttempts = 60; // 30 seconds max wait time with 500ms intervals
-      
-      while (attempts < maxAttempts) {
-        const statusResponse = await fetch(`https://api.openai.com/v1/threads/${threadId}/runs/${runId}`, {
-          headers: {
-            "Authorization": `Bearer ${openAIApiKey}`,
-            "Content-Type": "application/json",
-            "OpenAI-Beta": "assistants=v2" // Updated to v2
-          }
-        });
-        
-        if (!statusResponse.ok) {
-          const errorData = await statusResponse.json();
-          throw new Error(`OpenAI status check failed: ${JSON.stringify(errorData)}`);
-        }
-        
-        const statusData = await statusResponse.json();
-        runStatus = statusData.status;
-        console.log("Run status:", runStatus);
-        
-        if (runStatus === "completed") {
-          break;
-        } else if (runStatus === "failed" || runStatus === "cancelled" || runStatus === "expired") {
-          throw new Error(`Run ended with status: ${runStatus}`);
-        }
-        
-        // Wait for 500ms before checking again
-        await new Promise(resolve => setTimeout(resolve, 500));
-        attempts++;
-      }
-      
-      if (runStatus !== "completed") {
-        throw new Error("Assistant run timed out");
-      }
-      
-      // Retrieve messages
-      console.log("Retrieving messages...");
-      const messagesResponse = await fetch(`https://api.openai.com/v1/threads/${threadId}/messages`, {
-        headers: {
-          "Authorization": `Bearer ${openAIApiKey}`,
-          "Content-Type": "application/json",
-          "OpenAI-Beta": "assistants=v2" // Updated to v2
-        }
-      });
-      
-      if (!messagesResponse.ok) {
-        const errorData = await messagesResponse.json();
-        throw new Error(`OpenAI messages retrieval failed: ${JSON.stringify(errorData)}`);
-      }
-      
-      const messagesData = await messagesResponse.json();
-      
-      // Get the most recent assistant message
-      const assistantMessages = messagesData.data.filter(msg => msg.role === "assistant");
-      if (assistantMessages.length === 0) {
-        throw new Error("No assistant messages found");
-      }
-      
-      const latestMessage = assistantMessages[0];
-      
-      // Access message content - structure changed in v2 API
-      const messageContent = latestMessage.content[0].text.value;
-      
-      // Process message to extract any suggestion
-      // Look for content between ```
-      const suggestionMatch = messageContent.match(/```([\s\S]*?)```/);
-      const suggestion = suggestionMatch ? suggestionMatch[1].trim() : null;
-      
-      // Clean the message content if it contains a suggestion
-      let cleanMessage = messageContent;
-      if (suggestion) {
-        cleanMessage = messageContent.replace(/```[\s\S]*?```/g, '').trim();
-      }
-      
-      // Log the final response for debugging purposes
-      console.log("Final response from OpenAI:");
-      console.log("-------------------------");
-      console.log(cleanMessage);
-      if (suggestion) {
-        console.log("Extracted suggestion:");
-        console.log(suggestion);
-      }
-      console.log("-------------------------");
-      
-      // Store the conversation in the database for context retention
-      if (analysisId) {
-        try {
-          // Store thread ID and conversation metadata for better tracking
-          await supabase
-            .from('ai_chat_metadata')
-            .insert([{
-              analysis_id: analysisId,
-              thread_id: threadId,
-              run_id: runId,
-              assistant_id: assistantId,
-              section: currentSection,
-              created_at: new Date().toISOString()
-            }])
-            .single();
-            
-          // Store the actual messages
-          await supabase
-            .from('ai_chat_messages')
-            .insert([
-              {
-                analysis_id: analysisId,
-                role: 'user',
-                content: message,
-                section: currentSection,
-                thread_id: threadId
-              },
-              {
-                analysis_id: analysisId,
-                role: 'assistant',
-                content: cleanMessage,
-                suggestion: suggestion,
-                section: currentSection,
-                thread_id: threadId
-              }
-            ]);
-        } catch (error) {
-          console.error('Error storing chat messages:', error);
-          // Continue even if storage fails
-        }
-      }
-      
-      return new Response(JSON.stringify({ 
-        message: cleanMessage,
-        suggestion,
-        threadId, // Include threadId in response for client-side reference
-        runId     // Include runId for tracking
-      }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-      
-    } catch (openAIError) {
-      console.error('OpenAI API error:', openAIError);
-      throw new Error(`OpenAI API error: ${openAIError.message}`);
+    // Prepare job description context if available
+    let jobContext = "";
+    if (analysisData.job && analysisData.job.job_description) {
+      const jobTitle = analysisData.job.job_title || "Unknown position";
+      const companyName = analysisData.job.company_name || "Unknown company";
+      jobContext = `The user is applying for "${jobTitle}" at "${companyName}". The job description is: ${JSON.stringify(analysisData.job.job_description)}`;
     }
 
-  } catch (error) {
-    console.error('Error in resume-ai-assistant function:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    // Create a system message with context
+    let systemPrompt = `You are a professional resume writing assistant. Help the user improve their resume.
+Your primary goal is to help them make their resume more impactful, professional, and tailored to their target job.
+
+${jobContext ? `\nJob Context:\n${jobContext}` : ""}
+${sectionContent ? `\nCurrent section content:\n${sectionContent}` : ""}
+
+If asked to optimize or improve a section, provide specific, actionable suggestions.
+When appropriate, provide a revised version of the text that the user can directly apply to their resume.
+Always be respectful, professional, and encouraging.`;
+
+    // Log the system prompt for debugging
+    console.log("System prompt:", systemPrompt);
+
+    // Add user message to thread
+    await openai.beta.threads.messages.create(thread.id, {
+      role: "user",
+      content: message,
     });
+
+    // Run the assistant
+    const run = await openai.beta.threads.runs.create(thread.id, {
+      assistant_id: RESUME_ASSISTANT_ID,
+      instructions: systemPrompt,
+    });
+
+    // Poll for completion
+    let runStatus;
+    let timeoutCounter = 0;
+    const maxTimeout = 60; // Maximum 60 seconds wait
+
+    while (timeoutCounter < maxTimeout) {
+      const runStatusResponse = await openai.beta.threads.runs.retrieve(
+        thread.id,
+        run.id
+      );
+      runStatus = runStatusResponse.status;
+
+      console.log(`Run status: ${runStatus}`);
+
+      if (runStatus === "completed") {
+        break;
+      } else if (runStatus === "failed" || runStatus === "cancelled" || runStatus === "expired") {
+        throw new Error(`Run failed with status: ${runStatus}`);
+      }
+
+      // Wait before checking again
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      timeoutCounter++;
+    }
+
+    if (runStatus !== "completed") {
+      throw new Error("Assistant run timed out or failed");
+    }
+
+    // Retrieve messages
+    const messages = await openai.beta.threads.messages.list(thread.id);
+    
+    // Get the latest assistant message
+    const lastAssistantMessage = messages.data
+      .filter((message) => message.role === "assistant")
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
+
+    if (!lastAssistantMessage) {
+      throw new Error("No assistant response found");
+    }
+
+    // Extract message content
+    let responseText = "";
+    let suggestion = null;
+
+    if (lastAssistantMessage.content[0].type === "text") {
+      responseText = lastAssistantMessage.content[0].text.value;
+
+      // Check if the response contains a suggested revision (marked with triple backticks)
+      const suggestionMatch = responseText.match(/```([\s\S]*?)```/);
+      if (suggestionMatch && suggestionMatch[1]) {
+        suggestion = suggestionMatch[1].trim();
+      }
+    }
+
+    console.log("Assistant response generated successfully");
+    
+    // Return the response with thread information
+    return new Response(
+      JSON.stringify({
+        message: responseText,
+        suggestion,
+        threadId: thread.id,
+        assistantId: RESUME_ASSISTANT_ID,
+        runId: run.id
+      }),
+      {
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+  } catch (error) {
+    console.error("Error in resume-ai-assistant function:", error.message);
+    
+    return new Response(
+      JSON.stringify({
+        error: `Resume AI Assistant Error: ${error.message}`,
+      }),
+      {
+        status: 500,
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "application/json",
+        },
+      }
+    );
   }
 });
 
-// Simple implementation of Supabase client
-const createClient = (supabaseUrl: string, supabaseKey: string) => {
+// Supabase client with admin privileges for database operations
+const supabaseAdmin = createClient(
+  Deno.env.get("SUPABASE_URL") ?? "",
+  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+);
+
+// Function to create a Supabase client
+function createClient(supabaseUrl, supabaseKey) {
   return {
-    from: (table: string) => ({
-      select: (columns: string) => ({
-        eq: (column: string, value: any) => ({
-          single: () => fetch(`${supabaseUrl}/rest/v1/${table}?select=${columns}&${column}=eq.${value}`, {
-            headers: {
-              "apikey": supabaseKey,
-              "Authorization": `Bearer ${supabaseKey}`
-            }
-          }).then(res => res.json().then(data => ({ data: data[0], error: null })))
-        })
-      }),
-      insert: (rows: any[]) => 
-        fetch(`${supabaseUrl}/rest/v1/${table}`, {
-          method: 'POST',
-          headers: {
-            "apikey": supabaseKey,
-            "Authorization": `Bearer ${supabaseKey}`,
-            "Content-Type": "application/json",
-            "Prefer": "return=minimal"
+    from: (table) => ({
+      select: (query) => ({
+        eq: (column, value) => ({
+          single: () => {
+            // Make a fetch request to the Supabase API
+            return fetch(
+              `${supabaseUrl}/rest/v1/${table}?select=${query}&${column}=eq.${value}&limit=1`,
+              {
+                headers: {
+                  ApiKey: supabaseKey,
+                  Authorization: `Bearer ${supabaseKey}`,
+                  "Content-Type": "application/json",
+                },
+              }
+            )
+              .then((response) => response.json())
+              .then((data) => {
+                if (Array.isArray(data) && data.length > 0) {
+                  return { data: data[0], error: null };
+                } else if (Array.isArray(data) && data.length === 0) {
+                  return { data: null, error: { message: "No rows found" } };
+                } else if (data.error) {
+                  return { data: null, error: data.error };
+                }
+                return { data: null, error: { message: "Unknown error" } };
+              })
+              .catch((error) => {
+                return { data: null, error: { message: error.message } };
+              });
           },
-          body: JSON.stringify(rows)
-        }).then(res => {
-          if (!res.ok) {
-            return res.json().then(data => ({ data: null, error: data }));
-          }
-          return { data: true, error: null };
-        })
-    })
+        }),
+      }),
+    }),
   };
-};
+}
