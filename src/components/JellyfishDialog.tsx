@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import JellyfishAnimation from "@/components/JellyfishAnimation";
-import { MessageCircle, Lightbulb, Send } from "lucide-react";
+import { MessageCircle, Lightbulb, Send, ExternalLink } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
@@ -19,6 +19,13 @@ interface JellyfishDialogProps {
   onGenerateSuggestion?: (sectionId: string) => void;
   simpleTipMode?: boolean;
   jobData?: any;
+}
+
+interface ChatMessage {
+  role: 'assistant' | 'user';
+  content: string;
+  suggestion?: string;
+  threadId?: string;
 }
 
 const welcomeMessages = [
@@ -60,10 +67,11 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [message, setMessage] = useState("");
   const [inputValue, setInputValue] = useState("");
-  const [chats, setChats] = useState<{role: 'assistant' | 'user', content: string, suggestion?: string}[]>([]);
+  const [chats, setChats] = useState<ChatMessage[]>([]);
   const [autoSuggestionTimerId, setAutoSuggestionTimerId] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [hasInitialJobContext, setHasInitialJobContext] = useState(false);
+  const [currentThreadId, setCurrentThreadId] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -181,6 +189,16 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
       
       let suggestion = null;
       let content = data.message;
+      let threadId = data.threadId;
+      
+      // Store the thread ID for later reference
+      if (threadId) {
+        setCurrentThreadId(threadId);
+        
+        // Log for debugging
+        console.log(`Chat using OpenAI thread: ${threadId}`);
+        console.log(`Run ID: ${data.runId}`);
+      }
       
       // Check if the response contains a suggestion
       if (data.suggestion) {
@@ -191,7 +209,8 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
       setChats(prev => [...prev, {
         role: 'assistant',
         content: content,
-        suggestion: suggestion
+        suggestion: suggestion,
+        threadId: threadId
       }]);
       
     } catch (error) {
@@ -227,6 +246,18 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
   const handleApplySuggestion = (suggestion: string) => {
     if (onSuggestionApply && currentSectionId) {
       onSuggestionApply(suggestion, currentSectionId);
+    }
+  };
+
+  const openThreadInGPT = () => {
+    if (currentThreadId) {
+      window.open(`https://platform.openai.com/playground/threads/${currentThreadId}`, '_blank');
+    } else {
+      toast({
+        title: "No active thread",
+        description: "There is no active conversation thread to view.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -286,9 +317,23 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
         <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
           <SheetContent className="w-[400px] sm:w-[540px] overflow-hidden flex flex-col">
             <SheetHeader>
-              <div className="flex items-center gap-2">
-                <JellyfishAnimation width={50} height={50} />
-                <SheetTitle>{sheetTitle}</SheetTitle>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <JellyfishAnimation width={50} height={50} />
+                  <SheetTitle>{sheetTitle}</SheetTitle>
+                </div>
+                {currentThreadId && (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={openThreadInGPT}
+                    title="View in OpenAI"
+                    className="flex items-center gap-1"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                    <span className="hidden sm:inline">View in OpenAI</span>
+                  </Button>
+                )}
               </div>
             </SheetHeader>
             
@@ -316,6 +361,11 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
                         >
                           Apply Suggestion
                         </Button>
+                      )}
+                      {chat.threadId && (
+                        <div className="mt-1 text-xs text-muted-foreground">
+                          Thread ID: {chat.threadId.substring(0, 12)}...
+                        </div>
                       )}
                     </div>
                   </div>
@@ -348,6 +398,11 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
                 </Button>
               </div>
               {isLoading && <p className="text-sm text-muted-foreground">AI is thinking...</p>}
+              {currentThreadId && (
+                <p className="text-xs text-muted-foreground">
+                  Current conversation: thread_{currentThreadId.substring(0, 12)}...
+                </p>
+              )}
             </div>
           </SheetContent>
         </Sheet>

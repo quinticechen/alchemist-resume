@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card } from "@/components/ui/card";
-import { Send, ChevronDown, User, Bot, Zap } from "lucide-react";
+import { Send, ChevronDown, User, Bot, Zap, ExternalLink } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -23,6 +23,7 @@ interface ChatMessage {
   timestamp: Date;
   section?: string;
   suggestion?: string;
+  thread_id?: string;
 }
 
 const AIChatInterface: React.FC<AIChatInterfaceProps> = ({ 
@@ -39,6 +40,7 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [showChat, setShowChat] = useState(true);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const [currentThreadId, setCurrentThreadId] = useState<string | null>(null);
 
   // Load existing chat messages on component mount or when analysisId changes
   useEffect(() => {
@@ -53,6 +55,16 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
         if (error) throw error;
         
         if (data && data.length > 0) {
+          // Find the most recent thread ID
+          const recentThreadId = data
+            .filter(msg => msg.thread_id)
+            .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0]?.thread_id;
+            
+          if (recentThreadId) {
+            setCurrentThreadId(recentThreadId);
+            console.log(`Current chat thread: ${recentThreadId}`);
+          }
+          
           setMessages(data.map(msg => ({
             ...msg,
             timestamp: new Date(msg.timestamp)
@@ -100,7 +112,8 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
           timestamp: message.timestamp.toISOString(),
           analysis_id: analysisId,
           section: message.section,
-          suggestion: message.suggestion
+          suggestion: message.suggestion,
+          thread_id: message.thread_id
         });
 
       if (error) throw error;
@@ -145,6 +158,13 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
       // Process the AI response
       let suggestion = null;
       let content = data.message;
+      let threadId = data.threadId;
+      
+      // Update current thread ID if available
+      if (threadId) {
+        setCurrentThreadId(threadId);
+        console.log(`Chat using OpenAI thread: ${threadId}`);
+      }
 
       // Check if the response contains a suggestion
       if (data.suggestion) {
@@ -159,7 +179,8 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
         content: content,
         timestamp: new Date(),
         section: currentSectionId,
-        suggestion: suggestion
+        suggestion: suggestion,
+        thread_id: threadId
       };
 
       // Update UI with AI response
@@ -224,12 +245,36 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
       inputRef.current.focus();
     }
   };
+  
+  const openThreadInGPT = () => {
+    if (currentThreadId) {
+      window.open(`https://platform.openai.com/playground/threads/${currentThreadId}`, '_blank');
+    } else {
+      toast({
+        title: "No active thread",
+        description: "There is no active conversation thread to view.",
+        variant: "destructive"
+      });
+    }
+  };
 
   return (
     <div className="relative rounded-xl bg-white shadow-apple h-full">
       <div className="flex items-center justify-between p-4 border-b">
         <h3 className="text-lg font-semibold">AI Resume Assistant</h3>
         <div className="flex items-center gap-2">
+          {currentThreadId && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={openThreadInGPT}
+              title="View in OpenAI"
+              className="flex items-center gap-1"
+            >
+              <ExternalLink className="h-4 w-4" />
+              <span className="hidden sm:inline">OpenAI</span>
+            </Button>
+          )}
           <Button
             variant="outline"
             size="sm"
@@ -280,6 +325,11 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
                             Apply Suggestion
                           </Button>
                         )}
+                        {message.thread_id && (
+                          <div className="mt-1 text-xs text-muted-foreground">
+                            Thread: {message.thread_id.substring(0, 12)}...
+                          </div>
+                        )}
                       </div>
                       {message.role === 'user' && <User className="h-5 w-5 mt-1 flex-shrink-0" />}
                     </div>
@@ -310,6 +360,11 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
               </Button>
             </div>
             {isLoading && <p className="text-sm text-muted-foreground mt-2">AI is thinking...</p>}
+            {currentThreadId && (
+              <p className="text-xs text-muted-foreground mt-1">
+                Thread: {currentThreadId.substring(0, 12)}...
+              </p>
+            )}
           </div>
         </>
       )}

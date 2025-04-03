@@ -131,9 +131,6 @@ serve(async (req) => {
       const threadId = threadData.id;
       console.log("Thread created:", threadId);
       
-      // Add message to thread
-      console.log("Adding message to thread...");
-      
       // Build context message based on whether this is the first message that should include job data
       let contextMessage = `
 I'm working on the "${sectionTitle}" section of my resume. Here's the current content:
@@ -154,6 +151,14 @@ Please tailor your suggestions to help me align my resume with this job descript
       // Add the user's actual message
       contextMessage += `\nMy question/request is: ${message}`;
       
+      // Log the complete context message for debugging/monitoring purposes
+      console.log("Full context being sent to OpenAI:");
+      console.log("-------------------------");
+      console.log(contextMessage);
+      console.log("-------------------------");
+      
+      // Add message to thread
+      console.log("Adding message to thread...");
       const messageResponse = await fetch(`https://api.openai.com/v1/threads/${threadId}/messages`, {
         method: "POST",
         headers: {
@@ -275,9 +280,33 @@ Please tailor your suggestions to help me align my resume with this job descript
         cleanMessage = messageContent.replace(/```[\s\S]*?```/g, '').trim();
       }
       
+      // Log the final response for debugging purposes
+      console.log("Final response from OpenAI:");
+      console.log("-------------------------");
+      console.log(cleanMessage);
+      if (suggestion) {
+        console.log("Extracted suggestion:");
+        console.log(suggestion);
+      }
+      console.log("-------------------------");
+      
       // Store the conversation in the database for context retention
       if (analysisId) {
         try {
+          // Store thread ID and conversation metadata for better tracking
+          await supabase
+            .from('ai_chat_metadata')
+            .insert([{
+              analysis_id: analysisId,
+              thread_id: threadId,
+              run_id: runId,
+              assistant_id: assistantId,
+              section: currentSection,
+              created_at: new Date().toISOString()
+            }])
+            .single();
+            
+          // Store the actual messages
           await supabase
             .from('ai_chat_messages')
             .insert([
@@ -285,14 +314,16 @@ Please tailor your suggestions to help me align my resume with this job descript
                 analysis_id: analysisId,
                 role: 'user',
                 content: message,
-                section: currentSection
+                section: currentSection,
+                thread_id: threadId
               },
               {
                 analysis_id: analysisId,
                 role: 'assistant',
                 content: cleanMessage,
                 suggestion: suggestion,
-                section: currentSection
+                section: currentSection,
+                thread_id: threadId
               }
             ]);
         } catch (error) {
@@ -303,7 +334,9 @@ Please tailor your suggestions to help me align my resume with this job descript
       
       return new Response(JSON.stringify({ 
         message: cleanMessage,
-        suggestion
+        suggestion,
+        threadId, // Include threadId in response for client-side reference
+        runId     // Include runId for tracking
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
