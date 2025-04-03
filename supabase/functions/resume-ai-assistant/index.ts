@@ -26,7 +26,7 @@ serve(async (req) => {
     console.log(`Previous threadId: ${threadId || "none"}`);
 
     // Validate required parameters
-    if (!message || !analysisId || !resumeId) {
+    if (!message || !analysisId) {
       throw new Error("Missing required parameters");
     }
 
@@ -55,9 +55,11 @@ serve(async (req) => {
       throw new Error("Resume data not found");
     }
 
-    // Get or create a thread
+    // Get or create a thread based on the analysisId
     let thread;
+    
     if (threadId) {
+      // Use provided thread ID if available
       console.log(`Using existing thread: ${threadId}`);
       try {
         thread = await openai.beta.threads.retrieve(threadId);
@@ -67,8 +69,35 @@ serve(async (req) => {
         thread = await openai.beta.threads.create();
       }
     } else {
-      console.log("Creating new thread");
-      thread = await openai.beta.threads.create();
+      // If no thread ID provided, check if one exists for this analysis
+      try {
+        const { data: metadataData, error: metadataError } = await supabaseAdmin
+          .from("ai_chat_metadata")
+          .select("thread_id")
+          .eq("analysis_id", analysisId)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .single();
+
+        if (!metadataError && metadataData && metadataData.thread_id) {
+          // Use existing thread for this analysis
+          const existingThreadId = metadataData.thread_id;
+          console.log(`Found existing thread for analysis: ${existingThreadId}`);
+          try {
+            thread = await openai.beta.threads.retrieve(existingThreadId);
+          } catch (threadRetrieveError) {
+            console.error(`Error retrieving existing thread: ${threadRetrieveError}`);
+            thread = await openai.beta.threads.create();
+          }
+        } else {
+          // Create new thread if none exists
+          console.log("No existing thread found, creating new thread");
+          thread = await openai.beta.threads.create();
+        }
+      } catch (dbError) {
+        console.error(`Error checking for existing thread: ${dbError}`);
+        thread = await openai.beta.threads.create();
+      }
     }
     
     console.log(`Thread ID: ${thread.id}`);
@@ -189,6 +218,41 @@ Always be respectful, professional, and encouraging.`;
 
     console.log("Assistant response generated successfully");
     
+    // Store system prompt in database
+    try {
+      await supabaseAdmin
+        .from("ai_chat_messages")
+        .insert({
+          id: crypto.randomUUID(),
+          role: "system",
+          content: systemPrompt,
+          timestamp: new Date().toISOString(),
+          analysis_id: analysisId,
+          section: currentSection,
+          thread_id: thread.id
+        });
+    } catch (systemPromptError) {
+      console.error("Error storing system prompt:", systemPromptError);
+    }
+    
+    // Update or create thread metadata
+    try {
+      await supabaseAdmin
+        .from("ai_chat_metadata")
+        .upsert({
+          analysis_id: analysisId,
+          thread_id: thread.id,
+          assistant_id: RESUME_ASSISTANT_ID,
+          run_id: run.id,
+          section: currentSection,
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'analysis_id,thread_id'
+        });
+    } catch (metadataError) {
+      console.error("Error storing thread metadata:", metadataError);
+    }
+    
     // Return the response with thread information
     return new Response(
       JSON.stringify({
@@ -196,7 +260,8 @@ Always be respectful, professional, and encouraging.`;
         suggestion,
         threadId: thread.id,
         assistantId: RESUME_ASSISTANT_ID,
-        runId: run.id
+        runId: run.id,
+        systemPrompt: systemPrompt
       }),
       {
         headers: {
@@ -262,8 +327,121 @@ function createClient(supabaseUrl, supabaseKey) {
                 return { data: null, error: { message: error.message } };
               });
           },
+          // Add additional functions for handling other queries
+          limit: (limit) => ({
+            single: () => {
+              // Make a fetch request to the Supabase API with limit
+              return fetch(
+                `${supabaseUrl}/rest/v1/${table}?select=${query}&${column}=eq.${value}&limit=${limit}`,
+                {
+                  headers: {
+                    ApiKey: supabaseKey,
+                    Authorization: `Bearer ${supabaseKey}`,
+                    "Content-Type": "application/json",
+                  },
+                }
+              )
+                .then((response) => response.json())
+                .then((data) => {
+                  if (Array.isArray(data) && data.length > 0) {
+                    return { data: data[0], error: null };
+                  } else if (Array.isArray(data) && data.length === 0) {
+                    return { data: null, error: { message: "No rows found" } };
+                  } else if (data.error) {
+                    return { data: null, error: data.error };
+                  }
+                  return { data: null, error: { message: "Unknown error" } };
+                })
+                .catch((error) => {
+                  return { data: null, error: { message: error.message } };
+                });
+            },
+          }),
+          order: (column, { ascending }) => ({
+            limit: (limit) => ({
+              single: () => {
+                // Make a fetch request to the Supabase API with order and limit
+                const order = ascending ? 'asc' : 'desc';
+                return fetch(
+                  `${supabaseUrl}/rest/v1/${table}?select=${query}&${column}=eq.${value}&order=${column}.${order}&limit=${limit}`,
+                  {
+                    headers: {
+                      ApiKey: supabaseKey,
+                      Authorization: `Bearer ${supabaseKey}`,
+                      "Content-Type": "application/json",
+                    },
+                  }
+                )
+                  .then((response) => response.json())
+                  .then((data) => {
+                    if (Array.isArray(data) && data.length > 0) {
+                      return { data: data[0], error: null };
+                    } else if (Array.isArray(data) && data.length === 0) {
+                      return { data: null, error: { message: "No rows found" } };
+                    } else if (data.error) {
+                      return { data: null, error: data.error };
+                    }
+                    return { data: null, error: { message: "Unknown error" } };
+                  })
+                  .catch((error) => {
+                    return { data: null, error: { message: error.message } };
+                  });
+              },
+            }),
+          }),
         }),
       }),
+      insert: (data) => {
+        return fetch(
+          `${supabaseUrl}/rest/v1/${table}`,
+          {
+            method: 'POST',
+            headers: {
+              ApiKey: supabaseKey,
+              Authorization: `Bearer ${supabaseKey}`,
+              "Content-Type": "application/json",
+              "Prefer": "return=representation",
+            },
+            body: JSON.stringify(data),
+          }
+        )
+          .then((response) => response.json())
+          .then((responseData) => {
+            if (responseData.error) {
+              return { data: null, error: responseData.error };
+            }
+            return { data: responseData, error: null };
+          })
+          .catch((error) => {
+            return { data: null, error: { message: error.message } };
+          });
+      },
+      upsert: (data, { onConflict }) => {
+        return fetch(
+          `${supabaseUrl}/rest/v1/${table}`,
+          {
+            method: 'POST',
+            headers: {
+              ApiKey: supabaseKey,
+              Authorization: `Bearer ${supabaseKey}`,
+              "Content-Type": "application/json",
+              "Prefer": "resolution=merge-duplicates",
+              "onConflict": onConflict
+            },
+            body: JSON.stringify(data),
+          }
+        )
+          .then((response) => response.json())
+          .then((responseData) => {
+            if (responseData.error) {
+              return { data: null, error: responseData.error };
+            }
+            return { data: responseData, error: null };
+          })
+          .catch((error) => {
+            return { data: null, error: { message: error.message } };
+          });
+      }
     }),
   };
 }

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card } from "@/components/ui/card";
-import { Send, ChevronDown, User, Bot, Zap, ExternalLink } from "lucide-react";
+import { Send, ChevronDown, User, Bot, Zap } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -18,7 +18,7 @@ interface AIChatInterfaceProps {
 
 interface ChatMessage {
   id: string;
-  role: 'user' | 'assistant';
+  role: 'user' | 'assistant' | 'system';
   content: string;
   timestamp: Date;
   section?: string;
@@ -89,10 +89,15 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
             }
           }
           
-          setMessages(data.map(msg => ({
-            ...msg,
-            timestamp: new Date(msg.timestamp)
-          })));
+          // Filter out system messages for display
+          const displayMessages = data
+            .filter(msg => msg.role !== 'system')
+            .map(msg => ({
+              ...msg,
+              timestamp: new Date(msg.timestamp)
+            }));
+          
+          setMessages(displayMessages);
         } else {
           // Add a welcome message if no chat history exists
           const welcomeMessage: ChatMessage = {
@@ -187,6 +192,21 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
       let threadId = data.threadId;
       let assistantId = data.assistantId;
       let runId = data.runId;
+      let systemPrompt = data.systemPrompt;
+      
+      // If we got a system prompt, save it to the database
+      if (systemPrompt) {
+        const systemMessage: ChatMessage = {
+          id: crypto.randomUUID(),
+          role: 'system',
+          content: systemPrompt,
+          timestamp: new Date(),
+          section: currentSectionId,
+          thread_id: threadId
+        };
+        
+        await saveChatMessage(systemMessage);
+      }
       
       // Update metadata if we have thread information
       if (threadId) {
@@ -300,36 +320,12 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
       inputRef.current.focus();
     }
   };
-  
-  const openThreadInGPT = () => {
-    if (currentThreadId) {
-      window.open(`https://platform.openai.com/playground/threads/${currentThreadId}`, '_blank');
-    } else {
-      toast({
-        title: "No active thread",
-        description: "There is no active conversation thread to view.",
-        variant: "destructive"
-      });
-    }
-  };
 
   return (
     <div className="relative rounded-xl bg-white shadow-apple h-full">
       <div className="flex items-center justify-between p-4 border-b">
         <h3 className="text-lg font-semibold">AI Resume Assistant</h3>
         <div className="flex items-center gap-2">
-          {currentThreadId && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={openThreadInGPT}
-              title="View in OpenAI"
-              className="flex items-center gap-1"
-            >
-              <ExternalLink className="h-4 w-4" />
-              <span className="hidden sm:inline">OpenAI</span>
-            </Button>
-          )}
           <Button
             variant="outline"
             size="sm"
@@ -380,11 +376,6 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
                             Apply Suggestion
                           </Button>
                         )}
-                        {message.thread_id && (
-                          <div className="mt-1 text-xs text-muted-foreground">
-                            Thread: {message.thread_id.substring(0, 8)}...
-                          </div>
-                        )}
                       </div>
                       {message.role === 'user' && <User className="h-5 w-5 mt-1 flex-shrink-0" />}
                     </div>
@@ -416,21 +407,8 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
             </div>
             {isLoading && <p className="text-sm text-muted-foreground mt-2">AI is thinking...</p>}
             {threadMetadata && (
-              <div className="flex flex-col text-xs text-muted-foreground mt-2">
-                <div className="flex items-center gap-1">
-                  <span>Thread ID:</span>
-                  <a 
-                    href={`https://platform.openai.com/playground/threads/${threadMetadata.thread_id}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-500 hover:underline"
-                    title="View in OpenAI"
-                  >
-                    {threadMetadata.thread_id.substring(0, 12)}...
-                  </a>
-                </div>
-                <div>Assistant ID: {threadMetadata.assistant_id.substring(0, 8)}...</div>
-                <div>Run ID: {threadMetadata.run_id.substring(0, 8)}...</div>
+              <div className="text-xs text-muted-foreground mt-2">
+                <div>Thread ID: {threadMetadata.thread_id.substring(0, 12)}...</div>
               </div>
             )}
           </div>

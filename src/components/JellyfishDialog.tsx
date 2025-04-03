@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import JellyfishAnimation from "@/components/JellyfishAnimation";
-import { MessageCircle, Lightbulb, Send, ExternalLink } from "lucide-react";
+import { MessageCircle, Lightbulb, Send } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
@@ -22,7 +22,7 @@ interface JellyfishDialogProps {
 }
 
 interface ChatMessage {
-  role: 'assistant' | 'user';
+  role: 'assistant' | 'user' | 'system';
   content: string;
   suggestion?: string;
   threadId?: string;
@@ -180,7 +180,7 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
           resumeId: undefined,
           currentSection: currentSectionId,
           history: chats,
-          // Include job data only on the first message of a new conversation
+          threadId: currentThreadId, // Pass current thread ID for continuity
           includeJobData: !hasInitialJobContext
         }
       });
@@ -190,6 +190,7 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
       let suggestion = null;
       let content = data.message;
       let threadId = data.threadId;
+      let systemPrompt = data.systemPrompt;
       
       // Store the thread ID for later reference
       if (threadId) {
@@ -197,12 +198,26 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
         
         // Log for debugging
         console.log(`Chat using OpenAI thread: ${threadId}`);
-        console.log(`Run ID: ${data.runId}`);
       }
       
       // Check if the response contains a suggestion
       if (data.suggestion) {
         suggestion = data.suggestion;
+      }
+      
+      // If we received a system prompt and it's not yet in our chat history, add it
+      if (systemPrompt) {
+        const hasSystemPrompt = chats.some(chat => 
+          chat.role === 'system' && chat.threadId === threadId
+        );
+        
+        if (!hasSystemPrompt) {
+          setChats(prev => [...prev, {
+            role: 'system',
+            content: systemPrompt,
+            threadId: threadId
+          }]);
+        }
       }
       
       // Add AI response to chat
@@ -249,20 +264,11 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
     }
   };
 
-  const openThreadInGPT = () => {
-    if (currentThreadId) {
-      window.open(`https://platform.openai.com/playground/threads/${currentThreadId}`, '_blank');
-    } else {
-      toast({
-        title: "No active thread",
-        description: "There is no active conversation thread to view.",
-        variant: "destructive"
-      });
-    }
-  };
-
   const dialogTitle = simpleTipMode ? "Alchemy Ooze" : "Resume Assistant";
   const sheetTitle = "Chat with Alchemy Ooze";
+
+  // Grouping chat messages by role for a more organized display
+  const groupedChats = chats.filter(chat => chat.role !== 'system');
 
   return (
     <>
@@ -322,24 +328,12 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
                   <JellyfishAnimation width={50} height={50} />
                   <SheetTitle>{sheetTitle}</SheetTitle>
                 </div>
-                {currentThreadId && (
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={openThreadInGPT}
-                    title="View in OpenAI"
-                    className="flex items-center gap-1"
-                  >
-                    <ExternalLink className="h-4 w-4" />
-                    <span className="hidden sm:inline">View in OpenAI</span>
-                  </Button>
-                )}
               </div>
             </SheetHeader>
             
             <ScrollArea className="flex-1 p-4 mt-2 mb-4">
               <div className="flex flex-col gap-4">
-                {chats.map((chat, index) => (
+                {groupedChats.map((chat, index) => (
                   <div 
                     key={index} 
                     className={`flex ${chat.role === 'user' ? 'justify-end' : 'justify-start'}`}
@@ -361,11 +355,6 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
                         >
                           Apply Suggestion
                         </Button>
-                      )}
-                      {chat.threadId && (
-                        <div className="mt-1 text-xs text-muted-foreground">
-                          Thread ID: {chat.threadId.substring(0, 12)}...
-                        </div>
                       )}
                     </div>
                   </div>
@@ -400,7 +389,7 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
               {isLoading && <p className="text-sm text-muted-foreground">AI is thinking...</p>}
               {currentThreadId && (
                 <p className="text-xs text-muted-foreground">
-                  Current conversation: thread_{currentThreadId.substring(0, 12)}...
+                  Thread ID: {currentThreadId.substring(0, 12)}...
                 </p>
               )}
             </div>
