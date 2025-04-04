@@ -76,12 +76,11 @@ serve(async (req) => {
           .select("thread_id")
           .eq("analysis_id", analysisId)
           .order("created_at", { ascending: false })
-          .limit(1)
-          .single();
+          .limit(1);
 
-        if (!metadataError && metadataData && metadataData.thread_id) {
+        if (!metadataError && metadataData && metadataData.length > 0) {
           // Use existing thread for this analysis
-          const existingThreadId = metadataData.thread_id;
+          const existingThreadId = metadataData[0].thread_id;
           console.log(`Found existing thread for analysis: ${existingThreadId}`);
           try {
             thread = await openai.beta.threads.retrieve(existingThreadId);

@@ -53,6 +53,28 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
   useEffect(() => {
     const loadChatHistory = async () => {
       try {
+        // Check if a thread already exists for this analysis
+        const { data: metadataData, error: metadataError } = await supabase
+          .from('ai_chat_metadata')
+          .select('*')
+          .eq('analysis_id', analysisId)
+          .order('created_at', { ascending: false })
+          .limit(1);
+          
+        let threadId = null;
+        
+        if (!metadataError && metadataData && metadataData.length > 0) {
+          // Use the existing thread
+          threadId = metadataData[0].thread_id;
+          setCurrentThreadId(threadId);
+          setThreadMetadata({
+            thread_id: metadataData[0].thread_id,
+            assistant_id: metadataData[0].assistant_id,
+            run_id: metadataData[0].run_id
+          });
+          console.log(`Using existing thread: ${threadId}`);
+        }
+        
         // Load messages
         const { data, error } = await supabase
           .from('ai_chat_messages')
@@ -63,32 +85,6 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
         if (error) throw error;
         
         if (data && data.length > 0) {
-          // Find the most recent thread ID
-          const recentThreadId = data
-            .filter(msg => msg.thread_id)
-            .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0]?.thread_id;
-            
-          if (recentThreadId) {
-            setCurrentThreadId(recentThreadId);
-            
-            // Load thread metadata if we have a thread ID
-            const { data: metadataData, error: metadataError } = await supabase
-              .from('ai_chat_metadata')
-              .select('*')
-              .eq('thread_id', recentThreadId)
-              .eq('analysis_id', analysisId)
-              .single();
-              
-            if (!metadataError && metadataData) {
-              setThreadMetadata({
-                thread_id: metadataData.thread_id,
-                assistant_id: metadataData.assistant_id,
-                run_id: metadataData.run_id
-              });
-              console.log(`Loaded thread metadata: ${JSON.stringify(metadataData)}`);
-            }
-          }
-          
           // Filter out system messages for display
           const displayMessages = data
             .filter(msg => msg.role !== 'system')

@@ -107,6 +107,34 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
     }
   }, [isSheetOpen]);
 
+  // Find existing thread for current analysis if available
+  useEffect(() => {
+    const findExistingThread = async () => {
+      if (!currentSectionId || simpleTipMode) return;
+      
+      try {
+        const analysisId = window.location.pathname.split('/').pop();
+        if (!analysisId) return;
+        
+        const { data: metadataData, error: metadataError } = await supabase
+          .from('ai_chat_metadata')
+          .select('*')
+          .eq('analysis_id', analysisId)
+          .order('created_at', { ascending: false })
+          .limit(1);
+          
+        if (!metadataError && metadataData && metadataData.length > 0) {
+          setCurrentThreadId(metadataData[0].thread_id);
+          console.log(`Found existing thread: ${metadataData[0].thread_id}`);
+        }
+      } catch (error) {
+        console.error('Error finding existing thread:', error);
+      }
+    };
+    
+    findExistingThread();
+  }, [currentSectionId, simpleTipMode]);
+
   const getRandomTip = () => {
     const randomIndex = Math.floor(Math.random() * resumeTips.length);
     return resumeTips[randomIndex];
