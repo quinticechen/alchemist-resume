@@ -11,6 +11,9 @@ interface ResumePreviewProps {
   onCancel?: () => void;
 }
 
+/**
+ * Resume preview component showing the uploaded resume file with actions
+ */
 const ResumePreview = ({ file, filePath, publicUrl, onCancel }: ResumePreviewProps) => {
   if (!file) return null;
 

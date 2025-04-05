@@ -42,23 +42,45 @@ const SectionEditor = ({ section, resumeData, onChange }: SectionEditorProps) =>
     }
   };
 
+  const getSectionProps = () => {
+    const props = {
+      data,
+      onChange: handleDataChange
+    };
+    
+    // Add specific showAddForm prop for each section that needs it
+    if (section === 'professionalExperience' || 
+        section === 'education' ||
+        section === 'projects' ||
+        section === 'skills' ||
+        section === 'volunteer' ||
+        section === 'certifications') {
+      return {
+        ...props,
+        showAddForm: true
+      };
+    }
+    
+    return props;
+  };
+
   switch (section) {
     case 'personalInfo':
       return <PersonalInfoSection data={data} onChange={handleDataChange} />;
     case 'professionalSummary':
       return <ProfessionalSummarySection data={data} onChange={handleDataChange} />;
     case 'professionalExperience':
-      return <ExperienceSection data={data} onChange={handleDataChange} />;
+      return <ExperienceSection {...getSectionProps()} />;
     case 'education':
-      return <EducationSection data={data} onChange={handleDataChange} />;
+      return <EducationSection {...getSectionProps()} />;
     case 'skills':
-      return <SkillsSection data={data} onChange={handleDataChange} />;
+      return <SkillsSection {...getSectionProps()} />;
     case 'projects':
-      return <ProjectsSection data={data} onChange={handleDataChange} />;
+      return <ProjectsSection {...getSectionProps()} />;
     case 'volunteer':
-      return <VolunteerSection data={data} onChange={handleDataChange} />;
+      return <VolunteerSection {...getSectionProps()} />;
     case 'certifications':
-      return <CertificationsSection data={data} onChange={handleDataChange} />;
+      return <CertificationsSection {...getSectionProps()} />;
     default:
       return <div>Section editor not available</div>;
   }

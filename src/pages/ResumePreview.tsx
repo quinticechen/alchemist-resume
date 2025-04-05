@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { useAuth } from "@/contexts/AuthContext";
@@ -34,7 +35,7 @@ interface JobData {
 interface EditorContent {
   resume?: {
     personalInfo?: any;
-    professionalSummary?: string;
+    summary?: string;
     professionalExperience?: any[];
     education?: any;
     skills?: any;
@@ -46,6 +47,27 @@ interface EditorContent {
 }
 
 const LOCAL_STORAGE_STYLE_KEY = 'resumePreviewStyle';
+
+// Helper function to determine if a section is empty
+const isSectionEmpty = (data: any, section: string): boolean => {
+  if (!data || !data.resume) return true;
+  
+  const sectionData = data.resume[section];
+  
+  if (section === 'personalInfo') {
+    return !sectionData || Object.keys(sectionData).length === 0;
+  }
+  
+  if (section === 'summary' || section === 'professionalSummary') {
+    return !sectionData || sectionData.trim() === '';
+  }
+  
+  if (Array.isArray(sectionData)) {
+    return !sectionData || sectionData.length === 0;
+  }
+  
+  return !sectionData;
+};
 
 const ResumePreview = () => {
   const { session, isLoading } = useAuth();
@@ -333,6 +355,18 @@ const ResumePreview = () => {
     endDate: 'Present'
   };
 
+  // Get ordered sections based on sectionOrder if available
+  const orderedSections = resumeData.sectionOrder || [
+    'personalInfo',
+    'professionalSummary',
+    'professionalExperience',
+    'education',
+    'skills',
+    'projects',
+    'volunteer',
+    'certifications'
+  ];
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100">
       <div className="container mx-auto px-4 py-8">
@@ -380,6 +414,7 @@ const ResumePreview = () => {
               style === 'creative' ? 'bg-purple-50' : 'bg-white'
             }`}
           >
+            {/* Personal Info Section - Always show this section */}
             <div className={`mb-6 pb-4 relative group ${style === 'modern' ? 'border-b-2 border-blue-300' : 
               style === 'minimal' ? 'border-b border-gray-200' : 
               style === 'professional' ? 'border-b-2 border-amber-300' : 
@@ -417,277 +452,313 @@ const ResumePreview = () => {
               </div>
             </div>
 
-            {resumeData.resume?.professionalSummary && (
-              <div className="mb-6 relative group">
-                <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="rounded-full h-8 w-8 p-0"
-                    onClick={() => handleEditSection('professionalSummary')}
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                </div>
-                <h2 className={`text-xl font-bold mb-2 ${
-                  style === 'modern' ? 'text-blue-600' : 
-                  style === 'professional' ? 'text-amber-600' : 
-                  style === 'creative' ? 'text-purple-600' : 'text-gray-800'
-                }`}>
-                  Professional Summary
-                </h2>
-                <p className="text-gray-700">{resumeData.resume.professionalSummary}</p>
-              </div>
-            )}
-
-            {resumeData.resume?.professionalExperience?.length > 0 && (
-              <div className="mb-6 relative group">
-                <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="rounded-full h-8 w-8 p-0"
-                    onClick={() => handleEditSection('professionalExperience')}
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                </div>
-                <h2 className={`text-xl font-bold mb-2 ${
-                  style === 'modern' ? 'text-blue-600' : 
-                  style === 'professional' ? 'text-amber-600' : 
-                  style === 'creative' ? 'text-purple-600' : 'text-gray-800'
-                }`}>
-                  Professional Experience
-                </h2>
-                {resumeData.resume.professionalExperience.map((exp: any, index: number) => (
-                  <div key={index} className="mb-4">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h3 className="font-bold text-gray-800">{exp.jobTitle}</h3>
-                        <p className="text-gray-600">{exp.companyName}{exp.location ? `, ${exp.location}` : ''}</p>
+            {/* Ordered Resume Sections based on sectionOrder - Only show non-empty sections */}
+            {orderedSections.map((sectionKey) => {
+              // Skip personalInfo as it's always shown at the top
+              if (sectionKey === 'personalInfo') return null;
+              
+              // Map section keys to the actual data fields in the resume structure
+              const dataKey = sectionKey === 'professionalSummary' ? 'summary' : 
+                             sectionKey === 'professionalExperience' ? 'professionalExperience' : sectionKey;
+              
+              // Skip empty sections
+              if (isSectionEmpty(resumeData, dataKey)) return null;
+              
+              // Professional Summary Section
+              if (sectionKey === 'professionalSummary' && resumeData.resume?.summary) {
+                return (
+                  <div key={sectionKey} className="mb-6 relative group">
+                    <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="rounded-full h-8 w-8 p-0"
+                        onClick={() => handleEditSection('professionalSummary')}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <h2 className={`text-xl font-bold mb-2 ${
+                      style === 'modern' ? 'text-blue-600' : 
+                      style === 'professional' ? 'text-amber-600' : 
+                      style === 'creative' ? 'text-purple-600' : 'text-gray-800'
+                    }`}>
+                      Professional Summary
+                    </h2>
+                    <p className="text-gray-700">{resumeData.resume.summary}</p>
+                  </div>
+                );
+              }
+              
+              // Professional Experience Section
+              if (sectionKey === 'professionalExperience' && resumeData.resume?.professionalExperience?.length > 0) {
+                return (
+                  <div key={sectionKey} className="mb-6 relative group">
+                    <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="rounded-full h-8 w-8 p-0"
+                        onClick={() => handleEditSection('professionalExperience')}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <h2 className={`text-xl font-bold mb-2 ${
+                      style === 'modern' ? 'text-blue-600' : 
+                      style === 'professional' ? 'text-amber-600' : 
+                      style === 'creative' ? 'text-purple-600' : 'text-gray-800'
+                    }`}>
+                      Professional Experience
+                    </h2>
+                    {resumeData.resume.professionalExperience.map((exp: any, index: number) => (
+                      <div key={index} className="mb-4">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h3 className="font-bold text-gray-800">{exp.jobTitle}</h3>
+                            <p className="text-gray-600">{exp.companyName}{exp.location ? `, ${exp.location}` : ''}</p>
+                          </div>
+                          <p className="text-gray-500 text-sm">
+                            {exp.startDate} - {exp.endDate || 'Present'}
+                          </p>
+                        </div>
+                        {exp.achievements && (
+                          <ul className="list-disc ml-5 mt-2 text-gray-700">
+                            {exp.achievements.map((achievement: string, i: number) => (
+                              <li key={i}>{achievement}</li>
+                            ))}
+                          </ul>
+                        )}
                       </div>
-                      <p className="text-gray-500 text-sm">
-                        {exp.startDate} - {exp.endDate || 'Present'}
-                      </p>
-                    </div>
-                    {exp.achievements && (
-                      <ul className="list-disc ml-5 mt-2 text-gray-700">
-                        {exp.achievements.map((achievement: string, i: number) => (
-                          <li key={i}>{achievement}</li>
-                        ))}
-                      </ul>
-                    )}
+                    ))}
                   </div>
-                ))}
-              </div>
-            )}
-
-            {resumeData.resume?.education && (
-              <div className="mb-6 relative group">
-                <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="rounded-full h-8 w-8 p-0"
-                    onClick={() => handleEditSection('education')}
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                </div>
-                <h2 className={`text-xl font-bold mb-2 ${
-                  style === 'modern' ? 'text-blue-600' : 
-                  style === 'professional' ? 'text-amber-600' : 
-                  style === 'creative' ? 'text-purple-600' : 'text-gray-800'
-                }`}>
-                  Education
-                </h2>
-                
-                {Array.isArray(resumeData.resume.education) ? (
-                  resumeData.resume.education.map((edu: any, index: number) => (
-                    <div key={index} className="mb-3">
-                      <h3 className="font-bold text-gray-800">{edu.degreeName}</h3>
-                      <p className="text-gray-600">{edu.institution}</p>
-                      {edu.enrollmentDate && edu.graduationDate ? (
-                        <p className="text-gray-500">{edu.enrollmentDate} - {edu.graduationDate}</p>
-                      ) : (
-                        <p className="text-gray-500">Graduated: {edu.graduationDate}</p>
-                      )}
-                      {edu.gpa && <p className="text-gray-500">GPA: {edu.gpa}</p>}
+                );
+              }
+              
+              // Education Section
+              if (sectionKey === 'education' && resumeData.resume?.education) {
+                return (
+                  <div key={sectionKey} className="mb-6 relative group">
+                    <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="rounded-full h-8 w-8 p-0"
+                        onClick={() => handleEditSection('education')}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
                     </div>
-                  ))
-                ) : (
-                  <div>
-                    <h3 className="font-bold text-gray-800">{resumeData.resume.education.degreeName}</h3>
-                    <p className="text-gray-600">{resumeData.resume.education.institution}</p>
-                    {resumeData.resume.education.enrollmentDate && resumeData.resume.education.graduationDate ? (
-                      <p className="text-gray-500">{resumeData.resume.education.enrollmentDate} - {resumeData.resume.education.graduationDate}</p>
+                    <h2 className={`text-xl font-bold mb-2 ${
+                      style === 'modern' ? 'text-blue-600' : 
+                      style === 'professional' ? 'text-amber-600' : 
+                      style === 'creative' ? 'text-purple-600' : 'text-gray-800'
+                    }`}>
+                      Education
+                    </h2>
+                    
+                    {Array.isArray(resumeData.resume.education) ? (
+                      resumeData.resume.education.map((edu: any, index: number) => (
+                        <div key={index} className="mb-3">
+                          <h3 className="font-bold text-gray-800">{edu.degreeName}</h3>
+                          <p className="text-gray-600">{edu.institution}</p>
+                          {edu.enrollmentDate && edu.graduationDate ? (
+                            <p className="text-gray-500">{edu.enrollmentDate} - {edu.graduationDate}</p>
+                          ) : (
+                            <p className="text-gray-500">Graduated: {edu.graduationDate}</p>
+                          )}
+                          {edu.gpa && <p className="text-gray-500">GPA: {edu.gpa}</p>}
+                        </div>
+                      ))
                     ) : (
-                      <p className="text-gray-500">Graduated: {resumeData.resume.education.graduationDate}</p>
+                      <div>
+                        <h3 className="font-bold text-gray-800">{resumeData.resume.education.degreeName}</h3>
+                        <p className="text-gray-600">{resumeData.resume.education.institution}</p>
+                        {resumeData.resume.education.enrollmentDate && resumeData.resume.education.graduationDate ? (
+                          <p className="text-gray-500">{resumeData.resume.education.enrollmentDate} - {resumeData.resume.education.graduationDate}</p>
+                        ) : (
+                          <p className="text-gray-500">Graduated: {resumeData.resume.education.graduationDate}</p>
+                        )}
+                        {resumeData.resume.education.gpa && <p className="text-gray-500">GPA: {resumeData.resume.education.gpa}</p>}
+                      </div>
                     )}
-                    {resumeData.resume.education.gpa && <p className="text-gray-500">GPA: {resumeData.resume.education.gpa}</p>}
                   </div>
-                )}
-              </div>
-            )}
-
-            {resumeData.resume?.skills && (
-              <div className="mb-6 relative group">
-                <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="rounded-full h-8 w-8 p-0"
-                    onClick={() => handleEditSection('skills')}
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                </div>
-                <h2 className={`text-xl font-bold mb-2 ${
-                  style === 'modern' ? 'text-blue-600' : 
-                  style === 'professional' ? 'text-amber-600' : 
-                  style === 'creative' ? 'text-purple-600' : 'text-gray-800'
-                }`}>
-                  Skills
-                </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {resumeData.resume.skills.technical && (
-                    <div>
-                      <h3 className="font-bold text-gray-700 mb-1">Technical Skills</h3>
-                      <ul className="list-disc ml-5 text-gray-700">
-                        {resumeData.resume.skills.technical.map((skill: string, i: number) => (
-                          <li key={i}>{skill}</li>
-                        ))}
-                      </ul>
+                );
+              }
+              
+              // Skills Section
+              if (sectionKey === 'skills' && resumeData.resume?.skills) {
+                return (
+                  <div key={sectionKey} className="mb-6 relative group">
+                    <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="rounded-full h-8 w-8 p-0"
+                        onClick={() => handleEditSection('skills')}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
                     </div>
-                  )}
-                  
-                  {resumeData.resume.skills.soft && (
-                    <div>
-                      <h3 className="font-bold text-gray-700 mb-1">Soft Skills</h3>
-                      <ul className="list-disc ml-5 text-gray-700">
-                        {resumeData.resume.skills.soft.map((skill: string, i: number) => (
-                          <li key={i}>{skill}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {resumeData.resume?.projects?.length > 0 && (
-              <div className="mb-6 relative group">
-                <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="rounded-full h-8 w-8 p-0"
-                    onClick={() => handleEditSection('projects')}
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                </div>
-                <h2 className={`text-xl font-bold mb-2 ${
-                  style === 'modern' ? 'text-blue-600' : 
-                  style === 'professional' ? 'text-amber-600' : 
-                  style === 'creative' ? 'text-purple-600' : 'text-gray-800'
-                }`}>
-                  Projects
-                </h2>
-                {resumeData.resume.projects.map((project: any, index: number) => (
-                  <div key={index} className="mb-4">
-                    <div className="flex justify-between items-start">
-                      <h3 className="font-bold text-gray-800">{project.name}</h3>
-                      {project.startDate && (
-                        <p className="text-gray-500 text-sm">
-                          {project.startDate} - {project.endDate || 'Present'}
-                        </p>
+                    <h2 className={`text-xl font-bold mb-2 ${
+                      style === 'modern' ? 'text-blue-600' : 
+                      style === 'professional' ? 'text-amber-600' : 
+                      style === 'creative' ? 'text-purple-600' : 'text-gray-800'
+                    }`}>
+                      Skills
+                    </h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {resumeData.resume.skills.technical && resumeData.resume.skills.technical.length > 0 && (
+                        <div>
+                          <h3 className="font-bold text-gray-700 mb-1">Technical Skills</h3>
+                          <ul className="list-disc ml-5 text-gray-700">
+                            {resumeData.resume.skills.technical.map((skill: string, i: number) => (
+                              <li key={i}>{skill}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      
+                      {resumeData.resume.skills.soft && resumeData.resume.skills.soft.length > 0 && (
+                        <div>
+                          <h3 className="font-bold text-gray-700 mb-1">Soft Skills</h3>
+                          <ul className="list-disc ml-5 text-gray-700">
+                            {resumeData.resume.skills.soft.map((skill: string, i: number) => (
+                              <li key={i}>{skill}</li>
+                            ))}
+                          </ul>
+                        </div>
                       )}
                     </div>
-                    {project.achievements && (
-                      <ul className="list-disc ml-5 mt-2 text-gray-700">
-                        {project.achievements.map((achievement: string, i: number) => (
-                          <li key={i}>{achievement}</li>
-                        ))}
-                      </ul>
-                    )}
                   </div>
-                ))}
-              </div>
-            )}
-
-            {resumeData.resume?.certifications?.length > 0 && (
-              <div className="mb-6 relative group">
-                <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="rounded-full h-8 w-8 p-0"
-                    onClick={() => handleEditSection('certifications')}
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                </div>
-                <h2 className={`text-xl font-bold mb-2 ${
-                  style === 'modern' ? 'text-blue-600' : 
-                  style === 'professional' ? 'text-amber-600' : 
-                  style === 'creative' ? 'text-purple-600' : 'text-gray-800'
-                }`}>
-                  Certifications
-                </h2>
-                <ul className="list-disc ml-5 text-gray-700">
-                  {resumeData.resume.certifications.map((cert: any, i: number) => (
-                    <li key={i}>
-                      {cert.name} 
-                      {cert.dateAchieved && <span className="text-gray-500"> (Achieved: {cert.dateAchieved}</span>}
-                      {cert.expiredDate && <span className="text-gray-500">, Expires: {cert.expiredDate}</span>}
-                      {cert.dateAchieved && <span className="text-gray-500">)</span>}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {resumeData.resume?.volunteer?.length > 0 && (
-              <div className="mb-6 relative group">
-                <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="rounded-full h-8 w-8 p-0"
-                    onClick={() => handleEditSection('volunteer')}
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                </div>
-                <h2 className={`text-xl font-bold mb-2 ${
-                  style === 'modern' ? 'text-blue-600' : 
-                  style === 'professional' ? 'text-amber-600' : 
-                  style === 'creative' ? 'text-purple-600' : 'text-gray-800'
-                }`}>
-                  Volunteer Experience
-                </h2>
-                {resumeData.resume.volunteer.map((vol: any, index: number) => (
-                  <div key={index} className="mb-4">
-                    <div className="flex justify-between items-start">
-                      <h3 className="font-bold text-gray-800">{vol.name}</h3>
-                      {vol.startDate && (
-                        <p className="text-gray-500 text-sm">
-                          {vol.startDate} - {vol.endDate || 'Present'}
-                        </p>
-                      )}
+                );
+              }
+              
+              // Projects Section
+              if (sectionKey === 'projects' && resumeData.resume?.projects?.length > 0) {
+                return (
+                  <div key={sectionKey} className="mb-6 relative group">
+                    <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="rounded-full h-8 w-8 p-0"
+                        onClick={() => handleEditSection('projects')}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
                     </div>
-                    {vol.achievements && (
-                      <ul className="list-disc ml-5 mt-2 text-gray-700">
-                        {vol.achievements.map((achievement: string, i: number) => (
-                          <li key={i}>{achievement}</li>
-                        ))}
-                      </ul>
-                    )}
+                    <h2 className={`text-xl font-bold mb-2 ${
+                      style === 'modern' ? 'text-blue-600' : 
+                      style === 'professional' ? 'text-amber-600' : 
+                      style === 'creative' ? 'text-purple-600' : 'text-gray-800'
+                    }`}>
+                      Projects
+                    </h2>
+                    {resumeData.resume.projects.map((project: any, index: number) => (
+                      <div key={index} className="mb-4">
+                        <div className="flex justify-between items-start">
+                          <h3 className="font-bold text-gray-800">{project.name}</h3>
+                          {project.startDate && (
+                            <p className="text-gray-500 text-sm">
+                              {project.startDate} - {project.endDate || 'Present'}
+                            </p>
+                          )}
+                        </div>
+                        {project.achievements && (
+                          <ul className="list-disc ml-5 mt-2 text-gray-700">
+                            {project.achievements.map((achievement: string, i: number) => (
+                              <li key={i}>{achievement}</li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            )}
+                );
+              }
+              
+              // Certifications Section
+              if (sectionKey === 'certifications' && resumeData.resume?.certifications?.length > 0) {
+                return (
+                  <div key={sectionKey} className="mb-6 relative group">
+                    <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="rounded-full h-8 w-8 p-0"
+                        onClick={() => handleEditSection('certifications')}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <h2 className={`text-xl font-bold mb-2 ${
+                      style === 'modern' ? 'text-blue-600' : 
+                      style === 'professional' ? 'text-amber-600' : 
+                      style === 'creative' ? 'text-purple-600' : 'text-gray-800'
+                    }`}>
+                      Certifications
+                    </h2>
+                    <ul className="list-disc ml-5 text-gray-700">
+                      {resumeData.resume.certifications.map((cert: any, i: number) => (
+                        <li key={i}>
+                          {cert.name} 
+                          {cert.dateAchieved && <span className="text-gray-500"> (Achieved: {cert.dateAchieved}</span>}
+                          {cert.expiredDate && <span className="text-gray-500">, Expires: {cert.expiredDate}</span>}
+                          {cert.dateAchieved && <span className="text-gray-500">)</span>}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                );
+              }
+              
+              // Volunteer Section
+              if (sectionKey === 'volunteer' && resumeData.resume?.volunteer?.length > 0) {
+                return (
+                  <div key={sectionKey} className="mb-6 relative group">
+                    <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="rounded-full h-8 w-8 p-0"
+                        onClick={() => handleEditSection('volunteer')}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <h2 className={`text-xl font-bold mb-2 ${
+                      style === 'modern' ? 'text-blue-600' : 
+                      style === 'professional' ? 'text-amber-600' : 
+                      style === 'creative' ? 'text-purple-600' : 'text-gray-800'
+                    }`}>
+                      Volunteer Experience
+                    </h2>
+                    {resumeData.resume.volunteer.map((vol: any, index: number) => (
+                      <div key={index} className="mb-4">
+                        <div className="flex justify-between items-start">
+                          <h3 className="font-bold text-gray-800">{vol.name}</h3>
+                          {vol.startDate && (
+                            <p className="text-gray-500 text-sm">
+                              {vol.startDate} - {vol.endDate || 'Present'}
+                            </p>
+                          )}
+                        </div>
+                        {vol.achievements && (
+                          <ul className="list-disc ml-5 mt-2 text-gray-700">
+                            {vol.achievements.map((achievement: string, i: number) => (
+                              <li key={i}>{achievement}</li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                );
+              }
+              
+              return null;
+            })}
           </div>
         </div>
       </div>
