@@ -52,7 +52,14 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
   // Load existing chat messages and thread metadata on component mount or when analysisId changes
   useEffect(() => {
     const loadChatHistory = async () => {
+      if (!analysisId) {
+        console.error("Missing analysisId for chat history load");
+        return;
+      }
+
       try {
+        console.log(`Loading chat history for analysis: ${analysisId}`);
+        
         // Check if a thread already exists for this analysis
         const { data: metadataData, error: metadataError } = await supabase
           .from('ai_chat_metadata')
@@ -118,6 +125,8 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
 
     if (analysisId) {
       loadChatHistory();
+    } else {
+      console.warn("No analysisId provided for AIChatInterface");
     }
   }, [analysisId]);
 
@@ -128,6 +137,11 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
 
   const saveChatMessage = async (message: ChatMessage) => {
     try {
+      if (!analysisId) {
+        console.error("Cannot save chat message: Missing analysisId");
+        return;
+      }
+
       const { error } = await supabase
         .from('ai_chat_messages')
         .insert({
@@ -150,6 +164,15 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
   const handleSendMessage = async () => {
     if (input.trim() === '') return;
     
+    if (!analysisId) {
+      toast({
+        title: "Error",
+        description: "Cannot send message: Missing analysis ID",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     const userMessage: ChatMessage = {
       id: crypto.randomUUID(),
       role: 'user',
@@ -168,6 +191,8 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
     await saveChatMessage(userMessage);
 
     try {
+      console.log(`Sending message to resume-ai-assistant for analysis: ${analysisId}`);
+      
       // Make API call to generate response
       const { data, error } = await supabase.functions.invoke('resume-ai-assistant', {
         body: { 

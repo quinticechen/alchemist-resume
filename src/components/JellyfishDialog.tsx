@@ -198,7 +198,13 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
   const sendToAIAssistant = async (message: string) => {
     setIsLoading(true);
     try {
-      const analysisId = currentSectionId ? window.location.pathname.split('/').pop() : undefined;
+      const analysisId = window.location.pathname.split('/').pop();
+      
+      if (!analysisId) {
+        throw new Error("Could not determine analysis ID from URL");
+      }
+      
+      console.log(`Sending message to AI assistant for analysis: ${analysisId}`);
       
       // Call the resume-ai-assistant function
       const { data, error } = await supabase.functions.invoke('resume-ai-assistant', {
@@ -318,11 +324,11 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md" aria-describedby="dialog-description">
           <DialogHeader>
             <DialogTitle className="text-center">{dialogTitle}</DialogTitle>
           </DialogHeader>
-          <div className="flex flex-col items-center gap-4 py-4">
+          <div className="flex flex-col items-center gap-4 py-4" id="dialog-description">
             <JellyfishAnimation width={150} height={150} />
             <p className="text-center text-lg font-medium text-primary">{message}</p>
             <div className="flex gap-2 mt-2">

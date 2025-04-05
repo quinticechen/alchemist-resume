@@ -21,13 +21,19 @@ serve(async (req) => {
   }
 
   try {
-    const { message, analysisId, resumeId, currentSection, history, threadId } = await req.json();
-    console.log(`Request received: analysisId=${analysisId}, resumeId=${resumeId}, section=${currentSection}`);
+    const requestBody = await req.json();
+    const { message, analysisId, resumeId, currentSection, history, threadId, includeJobData } = requestBody;
+    
+    console.log(`Request received: analysisId=${analysisId}, resumeId=${resumeId}, section=${currentSection || "none"}`);
     console.log(`Previous threadId: ${threadId || "none"}`);
 
     // Validate required parameters
-    if (!message || !analysisId) {
-      throw new Error("Missing required parameters");
+    if (!message) {
+      throw new Error("Missing required parameter: message");
+    }
+    
+    if (!analysisId) {
+      throw new Error("Missing required parameter: analysisId");
     }
 
     // Get resume data from the database
@@ -126,9 +132,9 @@ serve(async (req) => {
       }
     }
 
-    // Prepare job description context if available
+    // Prepare job description context if available and requested
     let jobContext = "";
-    if (analysisData.job && analysisData.job.job_description) {
+    if (includeJobData !== false && analysisData.job && analysisData.job.job_description) {
       const jobTitle = analysisData.job.job_title || "Unknown position";
       const companyName = analysisData.job.company_name || "Unknown company";
       jobContext = `The user is applying for "${jobTitle}" at "${companyName}". The job description is: ${JSON.stringify(analysisData.job.job_description)}`;
@@ -328,65 +334,56 @@ function createClient(supabaseUrl, supabaseKey) {
           },
           // Add additional functions for handling other queries
           limit: (limit) => ({
-            single: () => {
-              // Make a fetch request to the Supabase API with limit
-              return fetch(
-                `${supabaseUrl}/rest/v1/${table}?select=${query}&${column}=eq.${value}&limit=${limit}`,
-                {
-                  headers: {
-                    ApiKey: supabaseKey,
-                    Authorization: `Bearer ${supabaseKey}`,
-                    "Content-Type": "application/json",
-                  },
-                }
-              )
-                .then((response) => response.json())
-                .then((data) => {
-                  if (Array.isArray(data) && data.length > 0) {
-                    return { data: data[0], error: null };
-                  } else if (Array.isArray(data) && data.length === 0) {
-                    return { data: null, error: { message: "No rows found" } };
-                  } else if (data.error) {
-                    return { data: null, error: data.error };
+            order: (column, { ascending }) => {
+              const order = ascending ? 'asc' : 'desc';
+              return {
+                // Function to get data with limit and order
+                async then(callback) {
+                  try {
+                    const response = await fetch(
+                      `${supabaseUrl}/rest/v1/${table}?select=${query}&${column}=eq.${value}&order=${column}.${order}&limit=${limit}`,
+                      {
+                        headers: {
+                          ApiKey: supabaseKey,
+                          Authorization: `Bearer ${supabaseKey}`,
+                          "Content-Type": "application/json",
+                        },
+                      }
+                    );
+                    const data = await response.json();
+                    return callback({ data, error: null });
+                  } catch (error) {
+                    return callback({ data: null, error: { message: error.message } });
                   }
-                  return { data: null, error: { message: "Unknown error" } };
-                })
-                .catch((error) => {
-                  return { data: null, error: { message: error.message } };
-                });
+                },
+              };
             },
           }),
           order: (column, { ascending }) => ({
-            limit: (limit) => ({
-              single: () => {
-                // Make a fetch request to the Supabase API with order and limit
-                const order = ascending ? 'asc' : 'desc';
-                return fetch(
-                  `${supabaseUrl}/rest/v1/${table}?select=${query}&${column}=eq.${value}&order=${column}.${order}&limit=${limit}`,
-                  {
-                    headers: {
-                      ApiKey: supabaseKey,
-                      Authorization: `Bearer ${supabaseKey}`,
-                      "Content-Type": "application/json",
-                    },
+            limit: (limit) => {
+              const order = ascending ? 'asc' : 'desc';
+              return {
+                // Function to get data with order and limit
+                then: async (callback) => {
+                  try {
+                    const response = await fetch(
+                      `${supabaseUrl}/rest/v1/${table}?select=${query}&${column}=eq.${value}&order=${column}.${order}&limit=${limit}`,
+                      {
+                        headers: {
+                          ApiKey: supabaseKey,
+                          Authorization: `Bearer ${supabaseKey}`,
+                          "Content-Type": "application/json",
+                        },
+                      }
+                    );
+                    const data = await response.json();
+                    return callback({ data, error: null });
+                  } catch (error) {
+                    return callback({ data: null, error: { message: error.message } });
                   }
-                )
-                  .then((response) => response.json())
-                  .then((data) => {
-                    if (Array.isArray(data) && data.length > 0) {
-                      return { data: data[0], error: null };
-                    } else if (Array.isArray(data) && data.length === 0) {
-                      return { data: null, error: { message: "No rows found" } };
-                    } else if (data.error) {
-                      return { data: null, error: data.error };
-                    }
-                    return { data: null, error: { message: "Unknown error" } };
-                  })
-                  .catch((error) => {
-                    return { data: null, error: { message: error.message } };
-                  });
-              },
-            }),
+                },
+              };
+            },
           }),
         }),
       }),
