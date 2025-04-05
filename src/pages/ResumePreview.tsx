@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { useAuth } from "@/contexts/AuthContext";
@@ -36,6 +35,7 @@ interface EditorContent {
   resume?: {
     personalInfo?: any;
     summary?: string;
+    professionalSummary?: string;
     professionalExperience?: any[];
     education?: any;
     skills?: any;
@@ -52,22 +52,47 @@ const LOCAL_STORAGE_STYLE_KEY = 'resumePreviewStyle';
 const isSectionEmpty = (data: any, section: string): boolean => {
   if (!data || !data.resume) return true;
   
-  const sectionData = data.resume[section];
+  const sectionMapping: Record<string, string[]> = {
+    'personalInfo': ['personalInfo'],
+    'professionalSummary': ['summary', 'professionalSummary'],
+    'professionalExperience': ['professionalExperience', 'experience'],
+    'education': ['education'],
+    'skills': ['skills'],
+    'projects': ['projects'],
+    'volunteer': ['volunteer'],
+    'certifications': ['certifications']
+  };
   
-  if (section === 'personalInfo') {
-    return !sectionData || Object.keys(sectionData).length === 0;
+  const possibleKeys = sectionMapping[section] || [section];
+  
+  for (const key of possibleKeys) {
+    const sectionData = data.resume[key];
+    
+    if (key === 'personalInfo') {
+      if (sectionData && Object.keys(sectionData).length > 0) return false;
+    } else if (key === 'summary' || key === 'professionalSummary') {
+      if (sectionData && sectionData.trim() !== '') return false;
+    } else if (Array.isArray(sectionData)) {
+      if (sectionData && sectionData.length > 0) return false;
+    } else if (sectionData) {
+      return false;
+    }
   }
   
-  if (section === 'summary' || section === 'professionalSummary') {
-    return !sectionData || sectionData.trim() === '';
-  }
-  
-  if (Array.isArray(sectionData)) {
-    return !sectionData || sectionData.length === 0;
-  }
-  
-  return !sectionData;
+  return true;
 };
+
+// Default section order to use when none is provided
+const DEFAULT_SECTION_ORDER: ResumeSection[] = [
+  'personalInfo',
+  'professionalSummary',
+  'professionalExperience',
+  'education',
+  'skills',
+  'projects',
+  'volunteer',
+  'certifications'
+];
 
 const ResumePreview = () => {
   const { session, isLoading } = useAuth();
@@ -192,10 +217,15 @@ const ResumePreview = () => {
         const content = editorData.content as EditorContent;
         console.log("Preparing resume data with content:", content);
 
+        // Use the provided sectionOrder or fall back to the default one if not present
+        const sectionOrder = content.sectionOrder && Array.isArray(content.sectionOrder) && content.sectionOrder.length > 0 
+          ? content.sectionOrder 
+          : DEFAULT_SECTION_ORDER;
+
         setResumeData({
           ...analysisData,
           resume: content.resume || {},
-          sectionOrder: content.sectionOrder || [],
+          sectionOrder: sectionOrder,
           jobTitle,
           fileName,
           googleDocUrl: analysisData.google_doc_url
@@ -356,16 +386,7 @@ const ResumePreview = () => {
   };
 
   // Get ordered sections based on sectionOrder if available
-  const orderedSections = resumeData.sectionOrder || [
-    'personalInfo',
-    'professionalSummary',
-    'professionalExperience',
-    'education',
-    'skills',
-    'projects',
-    'volunteer',
-    'certifications'
-  ];
+  const orderedSections = resumeData.sectionOrder || DEFAULT_SECTION_ORDER;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100">
@@ -457,37 +478,36 @@ const ResumePreview = () => {
               // Skip personalInfo as it's always shown at the top
               if (sectionKey === 'personalInfo') return null;
               
-              // Map section keys to the actual data fields in the resume structure
-              const dataKey = sectionKey === 'professionalSummary' ? 'summary' : 
-                             sectionKey === 'professionalExperience' ? 'professionalExperience' : sectionKey;
-              
-              // Skip empty sections
-              if (isSectionEmpty(resumeData, dataKey)) return null;
-              
-              // Professional Summary Section
-              if (sectionKey === 'professionalSummary' && resumeData.resume?.summary) {
-                return (
-                  <div key={sectionKey} className="mb-6 relative group">
-                    <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="rounded-full h-8 w-8 p-0"
-                        onClick={() => handleEditSection('professionalSummary')}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
+              // Professional Summary Section - Check both summary and professionalSummary fields
+              if (sectionKey === 'professionalSummary') {
+                // Try both summary and professionalSummary fields
+                const summaryText = resumeData.resume?.summary || resumeData.resume?.professionalSummary || '';
+                
+                if (summaryText && summaryText.trim() !== '') {
+                  return (
+                    <div key={sectionKey} className="mb-6 relative group">
+                      <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="rounded-full h-8 w-8 p-0"
+                          onClick={() => handleEditSection('professionalSummary')}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <h2 className={`text-xl font-bold mb-2 ${
+                        style === 'modern' ? 'text-blue-600' : 
+                        style === 'professional' ? 'text-amber-600' : 
+                        style === 'creative' ? 'text-purple-600' : 'text-gray-800'
+                      }`}>
+                        Professional Summary
+                      </h2>
+                      <p className="text-gray-700">{summaryText}</p>
                     </div>
-                    <h2 className={`text-xl font-bold mb-2 ${
-                      style === 'modern' ? 'text-blue-600' : 
-                      style === 'professional' ? 'text-amber-600' : 
-                      style === 'creative' ? 'text-purple-600' : 'text-gray-800'
-                    }`}>
-                      Professional Summary
-                    </h2>
-                    <p className="text-gray-700">{resumeData.resume.summary}</p>
-                  </div>
-                );
+                  );
+                }
+                return null;
               }
               
               // Professional Experience Section

@@ -12,12 +12,15 @@ const ProfessionalSummarySection = ({ data, onChange }: ProfessionalSummarySecti
   // Log the data structure to help with debugging
   console.log('ProfessionalSummarySection data:', data);
   
-  const professionalSummary = data?.professionalSummary || '';
+  // Check for both field names - some data models use 'summary' and others use 'professionalSummary'
+  const professionalSummary = data?.professionalSummary || data?.summary || '';
 
   const handleChange = (value: string) => {
+    // Update both fields for compatibility
     onChange({
       ...data,
-      professionalSummary: value
+      professionalSummary: value,
+      summary: value
     });
   };
 
