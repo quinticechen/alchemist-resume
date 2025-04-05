@@ -48,6 +48,7 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const [currentThreadId, setCurrentThreadId] = useState<string | null>(null);
   const [threadMetadata, setThreadMetadata] = useState<ThreadMetadata | null>(null);
+  const dialogDescriptionId = "aiChatInterfaceDescription";
 
   // Load existing chat messages and thread metadata on component mount or when analysisId changes
   useEffect(() => {
@@ -371,7 +372,7 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
       {showChat && (
         <>
           <ScrollArea className="p-4 h-[400px]">
-            <div className="space-y-4">
+            <div className="space-y-4" id={dialogDescriptionId}>
               {messages.map((message) => (
                 <div 
                   key={message.id} 
@@ -417,6 +418,7 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
                 placeholder="Ask for advice on your resume..."
                 className="resize-none"
                 disabled={isLoading}
+                aria-describedby={dialogDescriptionId}
               />
               <Button 
                 onClick={handleSendMessage} 

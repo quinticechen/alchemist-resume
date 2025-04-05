@@ -73,6 +73,8 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
   const [hasInitialJobContext, setHasInitialJobContext] = useState(false);
   const [currentThreadId, setCurrentThreadId] = useState<string | null>(null);
   const { toast } = useToast();
+  const dialogDescriptionId = "jellyfishDialogDescription";
+  const sheetDescriptionId = "jellyfishSheetDescription";
 
   useEffect(() => {
     // Add welcome message on first load
@@ -324,11 +326,11 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-md" aria-describedby="dialog-description">
+        <DialogContent className="sm:max-w-md" aria-describedby={dialogDescriptionId}>
           <DialogHeader>
             <DialogTitle className="text-center">{dialogTitle}</DialogTitle>
           </DialogHeader>
-          <div className="flex flex-col items-center gap-4 py-4" id="dialog-description">
+          <div className="flex flex-col items-center gap-4 py-4" id={dialogDescriptionId}>
             <JellyfishAnimation width={150} height={150} />
             <p className="text-center text-lg font-medium text-primary">{message}</p>
             <div className="flex gap-2 mt-2">
@@ -355,7 +357,7 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
 
       {!simpleTipMode && (
         <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-          <SheetContent className="w-[400px] sm:w-[540px] overflow-hidden flex flex-col">
+          <SheetContent className="w-[400px] sm:w-[540px] overflow-hidden flex flex-col" aria-describedby={sheetDescriptionId}>
             <SheetHeader>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -365,7 +367,7 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
               </div>
             </SheetHeader>
             
-            <ScrollArea className="flex-1 p-4 mt-2 mb-4">
+            <ScrollArea className="flex-1 p-4 mt-2 mb-4" id={sheetDescriptionId}>
               <div className="flex flex-col gap-4">
                 {groupedChats.map((chat, index) => (
                   <div 

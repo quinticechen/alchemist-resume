@@ -6,7 +6,7 @@ import OpenAI from "https://esm.sh/openai@4.24.1";
 
 // Initialize OpenAI client
 const openai = new OpenAI({
-  apiKey: Deno.env.get("OPENAI_API_KEY"),
+  apiKey: Deno.env.get("OPENAI_API_KEY") || "",
 });
 
 // Define assistant ID(s)
@@ -24,8 +24,9 @@ serve(async (req) => {
     const requestBody = await req.json();
     const { message, analysisId, resumeId, currentSection, history, threadId, includeJobData } = requestBody;
     
-    console.log(`Request received: analysisId=${analysisId}, resumeId=${resumeId}, section=${currentSection || "none"}`);
+    console.log(`Request received: analysisId=${analysisId || "none"}, resumeId=${resumeId || "none"}, section=${currentSection || "none"}`);
     console.log(`Previous threadId: ${threadId || "none"}`);
+    console.log(`Message: ${message || "none"}`);
 
     // Validate required parameters
     if (!message) {
@@ -51,14 +52,21 @@ serve(async (req) => {
         )
       `)
       .eq("id", analysisId)
-      .single();
+      .maybeSingle();
 
     if (analysisError) {
+      console.error(`Error fetching analysis data: ${analysisError.message}`);
       throw new Error(`Error fetching analysis data: ${analysisError.message}`);
     }
 
-    if (!analysisData?.resume?.formatted_resume) {
-      throw new Error("Resume data not found");
+    if (!analysisData) {
+      console.error(`No analysis data found for ID: ${analysisId}`);
+      throw new Error(`No analysis data found for ID: ${analysisId}`);
+    }
+
+    if (!analysisData.resume || !analysisData.resume.formatted_resume) {
+      console.error(`No resume data found for analysis ID: ${analysisId}`);
+      throw new Error(`No resume data found for analysis ID: ${analysisId}`);
     }
 
     // Get or create a thread based on the analysisId
@@ -69,10 +77,12 @@ serve(async (req) => {
       console.log(`Using existing thread: ${threadId}`);
       try {
         thread = await openai.beta.threads.retrieve(threadId);
+        console.log(`Successfully retrieved thread: ${threadId}`);
       } catch (threadError) {
         console.error(`Error retrieving thread: ${threadError}`);
         console.log("Creating new thread instead");
         thread = await openai.beta.threads.create();
+        console.log(`Created new thread: ${thread.id}`);
       }
     } else {
       // If no thread ID provided, check if one exists for this analysis
@@ -90,22 +100,26 @@ serve(async (req) => {
           console.log(`Found existing thread for analysis: ${existingThreadId}`);
           try {
             thread = await openai.beta.threads.retrieve(existingThreadId);
+            console.log(`Successfully retrieved existing thread: ${existingThreadId}`);
           } catch (threadRetrieveError) {
             console.error(`Error retrieving existing thread: ${threadRetrieveError}`);
             thread = await openai.beta.threads.create();
+            console.log(`Created new thread after failed retrieval: ${thread.id}`);
           }
         } else {
           // Create new thread if none exists
           console.log("No existing thread found, creating new thread");
           thread = await openai.beta.threads.create();
+          console.log(`Created new thread: ${thread.id}`);
         }
       } catch (dbError) {
         console.error(`Error checking for existing thread: ${dbError}`);
         thread = await openai.beta.threads.create();
+        console.log(`Created new thread after error: ${thread.id}`);
       }
     }
     
-    console.log(`Thread ID: ${thread.id}`);
+    console.log(`Using Thread ID: ${thread.id}`);
 
     // Extract resume content for the specified section
     const resumeData = analysisData.resume.formatted_resume;
@@ -115,7 +129,7 @@ serve(async (req) => {
     if (currentSection && resumeData) {
       if (currentSection === "skills" && resumeData.skills) {
         sectionContent = JSON.stringify(resumeData.skills);
-      } else if (currentSection === "experience" && resumeData.experience) {
+      } else if (currentSection === "professionalExperience" && resumeData.experience) {
         sectionContent = JSON.stringify(resumeData.experience);
       } else if (currentSection === "education" && resumeData.education) {
         sectionContent = JSON.stringify(resumeData.education);
@@ -152,19 +166,21 @@ When appropriate, provide a revised version of the text that the user can direct
 Always be respectful, professional, and encouraging.`;
 
     // Log the system prompt for debugging
-    console.log("System prompt:", systemPrompt);
+    console.log("System prompt prepared");
 
     // Add user message to thread
     await openai.beta.threads.messages.create(thread.id, {
       role: "user",
       content: message,
     });
+    console.log("Added user message to thread");
 
     // Run the assistant
     const run = await openai.beta.threads.runs.create(thread.id, {
       assistant_id: RESUME_ASSISTANT_ID,
       instructions: systemPrompt,
     });
+    console.log(`Started assistant run: ${run.id}`);
 
     // Poll for completion
     let runStatus;
@@ -178,7 +194,7 @@ Always be respectful, professional, and encouraging.`;
       );
       runStatus = runStatusResponse.status;
 
-      console.log(`Run status: ${runStatus}`);
+      console.log(`Run status: ${runStatus} (attempt ${timeoutCounter + 1})`);
 
       if (runStatus === "completed") {
         break;
@@ -192,11 +208,12 @@ Always be respectful, professional, and encouraging.`;
     }
 
     if (runStatus !== "completed") {
-      throw new Error("Assistant run timed out or failed");
+      throw new Error(`Assistant run timed out or failed with status: ${runStatus}`);
     }
 
     // Retrieve messages
     const messages = await openai.beta.threads.messages.list(thread.id);
+    console.log(`Retrieved ${messages.data.length} messages from thread`);
     
     // Get the latest assistant message
     const lastAssistantMessage = messages.data
@@ -236,6 +253,7 @@ Always be respectful, professional, and encouraging.`;
           section: currentSection,
           thread_id: thread.id
         });
+      console.log("Stored system prompt in database");
     } catch (systemPromptError) {
       console.error("Error storing system prompt:", systemPromptError);
     }
@@ -254,6 +272,7 @@ Always be respectful, professional, and encouraging.`;
         }, {
           onConflict: 'analysis_id,thread_id'
         });
+      console.log("Stored thread metadata in database");
     } catch (metadataError) {
       console.error("Error storing thread metadata:", metadataError);
     }
@@ -327,6 +346,33 @@ function createClient(supabaseUrl, supabaseKey) {
                   return { data: null, error: data.error };
                 }
                 return { data: null, error: { message: "Unknown error" } };
+              })
+              .catch((error) => {
+                return { data: null, error: { message: error.message } };
+              });
+          },
+          maybeSingle: () => {
+            // Make a fetch request to the Supabase API
+            return fetch(
+              `${supabaseUrl}/rest/v1/${table}?select=${query}&${column}=eq.${value}&limit=1`,
+              {
+                headers: {
+                  ApiKey: supabaseKey,
+                  Authorization: `Bearer ${supabaseKey}`,
+                  "Content-Type": "application/json",
+                },
+              }
+            )
+              .then((response) => response.json())
+              .then((data) => {
+                if (Array.isArray(data) && data.length > 0) {
+                  return { data: data[0], error: null };
+                } else if (Array.isArray(data) && data.length === 0) {
+                  return { data: null, error: null };
+                } else if (data.error) {
+                  return { data: null, error: data.error };
+                }
+                return { data: null, error: null };
               })
               .catch((error) => {
                 return { data: null, error: { message: error.message } };
