@@ -3,12 +3,7 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import OpenAI from "https://esm.sh/openai@4.24.1";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-// CORS headers for all responses
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { corsHeaders } from "../_shared/cors.ts";
 
 // Initialize OpenAI client
 const openai = new OpenAI({
