@@ -5,7 +5,7 @@ import OpenAI from "https://esm.sh/openai@4.24.1";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders } from "../_shared/cors.ts";
 
-// Initialize OpenAI client with v2 header
+// Initialize OpenAI client with v2 header explicitly
 const openai = new OpenAI({
   apiKey: Deno.env.get("OPENAI_API_KEY") || "",
   defaultHeaders: { "OpenAI-Beta": "assistants=v2" }
@@ -316,10 +316,14 @@ async function saveThreadMetadata(analysisId: string, threadId: string, assistan
  */
 async function handleRequest(req: Request) {
   try {
+    console.log("Request received to resume-ai-assistant");
+    
     // Parse request body
     const { message, analysisId, currentSection, threadId } = await req.json();
     
     console.log(`Request received for analysis ID: ${analysisId}, section: ${currentSection || 'none'}, threadId: ${threadId || 'none'}`);
+    console.log(`OpenAI API Key exists: ${!!Deno.env.get("OPENAI_API_KEY")}`);
+    console.log(`Using Assistant API v2 with assistantId: ${RESUME_ASSISTANT_ID}`);
     
     // Validate required parameters
     validateRequestParams(message, analysisId);
@@ -401,6 +405,8 @@ async function handleRequest(req: Request) {
       systemPrompt
     );
 
+    console.log("Successfully completed request, returning response");
+    
     // Return response
     return new Response(
       JSON.stringify({
@@ -420,6 +426,7 @@ async function handleRequest(req: Request) {
     );
   } catch (error) {
     console.error(`Error in resume-ai-assistant: ${error.message}`);
+    console.error(error.stack || "No stack trace available");
     
     return new Response(
       JSON.stringify({
