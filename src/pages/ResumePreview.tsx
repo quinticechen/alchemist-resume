@@ -303,7 +303,7 @@ const ResumePreview = () => {
       const pageHeight = pdf.internal.pageSize.getHeight();
       
       const canvas = await html2canvas(resumeElement, {
-        scale: 2,
+        scale: 3,
         useCORS: true,
         backgroundColor: bgColor,
         logging: false,
@@ -314,6 +314,7 @@ const ResumePreview = () => {
       const canvasWidth = canvas.width;
       const canvasHeight = canvas.height;
       const ratio = canvasWidth / pageWidth;
+      
       const totalPages = Math.ceil(canvasHeight / (pageHeight * ratio));
       
       for (let page = 0; page < totalPages; page++) {
