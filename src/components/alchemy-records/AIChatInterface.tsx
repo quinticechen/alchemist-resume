@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -49,32 +50,46 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
   const [currentThreadId, setCurrentThreadId] = useState<string | null>(null);
   const [threadMetadata, setThreadMetadata] = useState<ThreadMetadata | null>(null);
   const location = useLocation();
+  const [effectiveAnalysisId, setEffectiveAnalysisId] = useState<string | null>(null);
   const dialogDescriptionId = "aiChatInterfaceDescription";
 
-  const getAnalysisIdFromUrl = () => {
-    const pathSegments = location.pathname.split('/');
-    const urlAnalysisId = pathSegments[pathSegments.length - 1];
-    if (urlAnalysisId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(urlAnalysisId)) {
-      console.log(`Extracted backup analysisId from URL: ${urlAnalysisId}`);
-      return urlAnalysisId;
-    }
-    return null;
-  };
-
-  const getEffectiveAnalysisId = () => {
-    if (analysisId) return analysisId;
-    const urlAnalysisId = getAnalysisIdFromUrl();
-    if (urlAnalysisId) {
-      console.log(`Using URL-extracted analysisId: ${urlAnalysisId} because props.analysisId is not available`);
-      return urlAnalysisId;
-    }
-    return null;
-  };
+  // Extract analysis ID with improved robustness
+  useEffect(() => {
+    const extractAnalysisId = () => {
+      // First priority: use prop if available
+      if (analysisId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(analysisId)) {
+        console.log(`Using provided analysisId prop: ${analysisId}`);
+        return analysisId;
+      }
+      
+      // Second priority: check URL path segments
+      const pathSegments = location.pathname.split('/');
+      const potentialIds = pathSegments.filter(segment => 
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(segment)
+      );
+      
+      if (potentialIds.length > 0) {
+        console.log(`Extracted analysisId from URL path: ${potentialIds[0]}`);
+        return potentialIds[0];
+      }
+      
+      // Third priority: check location state
+      if (location.state && location.state.analysisId) {
+        console.log(`Found analysisId in location state: ${location.state.analysisId}`);
+        return location.state.analysisId;
+      }
+      
+      console.warn("Could not determine analysis ID from props, URL, or state");
+      return null;
+    };
+    
+    const id = extractAnalysisId();
+    setEffectiveAnalysisId(id);
+    console.log(`AIChatInterface initialized with effective analysis ID: ${id || "none"}`);
+  }, [analysisId, location]);
 
   useEffect(() => {
     const loadChatHistory = async () => {
-      const effectiveAnalysisId = getEffectiveAnalysisId();
-      
       if (!effectiveAnalysisId) {
         console.error("Missing analysisId for chat history load");
         return;
@@ -141,12 +156,12 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
       }
     };
 
-    if (getEffectiveAnalysisId()) {
+    if (effectiveAnalysisId) {
       loadChatHistory();
     } else {
-      console.warn("No analysisId provided or found in URL for AIChatInterface");
+      console.warn("No analysisId available for AIChatInterface");
     }
-  }, [analysisId]);
+  }, [effectiveAnalysisId]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -154,8 +169,6 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
 
   const saveChatMessage = async (message: ChatMessage) => {
     try {
-      const effectiveAnalysisId = getEffectiveAnalysisId();
-      
       if (!effectiveAnalysisId) {
         console.error("Cannot save chat message: Missing analysisId");
         return;
@@ -182,8 +195,6 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
 
   const handleSendMessage = async () => {
     if (input.trim() === '') return;
-    
-    const effectiveAnalysisId = getEffectiveAnalysisId();
     
     if (!effectiveAnalysisId) {
       toast({
@@ -223,7 +234,14 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error invoking resume-ai-assistant:', error);
+        throw error;
+      }
+
+      if (!data) {
+        throw new Error("No data returned from resume-ai-assistant");
+      }
 
       let suggestion = null;
       let content = data.message;
@@ -273,6 +291,8 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
             }
           }
         }
+      } else {
+        console.warn("No thread ID returned from resume-ai-assistant");
       }
 
       if (data.suggestion) {
@@ -359,6 +379,7 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
             onClick={handleOptimizeCurrentSection}
             title="Optimize current section"
             className="flex items-center gap-1"
+            disabled={!effectiveAnalysisId}
           >
             <Zap className="h-4 w-4" />
             <span className="hidden sm:inline">Optimize</span>
@@ -409,6 +430,12 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
                   </Card>
                 </div>
               ))}
+              {!effectiveAnalysisId && (
+                <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-800">
+                  <p className="font-medium">Unable to find resume analysis ID</p>
+                  <p className="text-sm mt-1">Please ensure you're accessing this page correctly from your resume list.</p>
+                </div>
+              )}
               <div ref={messagesEndRef} />
             </div>
           </ScrollArea>
@@ -422,21 +449,22 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
                 onKeyDown={handleKeyDown}
                 placeholder="Ask for advice on your resume..."
                 className="resize-none"
-                disabled={isLoading}
+                disabled={isLoading || !effectiveAnalysisId}
                 aria-describedby={dialogDescriptionId}
               />
               <Button 
                 onClick={handleSendMessage} 
-                disabled={isLoading || input.trim() === ''}
+                disabled={isLoading || input.trim() === '' || !effectiveAnalysisId}
                 size="icon"
               >
                 <Send className="h-4 w-4" />
               </Button>
             </div>
             {isLoading && <p className="text-sm text-muted-foreground mt-2">AI is thinking...</p>}
-            {threadMetadata && (
+            {effectiveAnalysisId && (
               <div className="text-xs text-muted-foreground mt-2">
-                <div>Thread ID: {threadMetadata.thread_id.substring(0, 12)}...</div>
+                <div>Analysis ID: {effectiveAnalysisId.substring(0, 8)}...</div>
+                {threadMetadata && <div>Thread ID: {threadMetadata.thread_id.substring(0, 12)}...</div>}
               </div>
             )}
           </div>

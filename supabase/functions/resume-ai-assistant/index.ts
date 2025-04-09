@@ -37,7 +37,11 @@ serve(async (req) => {
       throw new Error("Missing required parameter: analysisId");
     }
 
-    // Updated query to debug what's happening with the analysis ID
+    // Check if analysis ID appears valid before querying
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(analysisId)) {
+      throw new Error(`Invalid analysis ID format: ${analysisId}`);
+    }
+
     console.log(`Attempting to fetch analysis data for ID: ${analysisId}`);
     
     // Get resume data from the database using a simpler query first
@@ -65,6 +69,18 @@ serve(async (req) => {
         console.log(`Available analysis IDs: ${JSON.stringify(anyAnalysis.map(a => a.id))}`);
       }
       
+      // Try a direct approach with minimal fields
+      const { data: minimalData, error: minimalError } = await supabaseAdmin
+        .from("resume_analyses") 
+        .select("id, resume_id, job_id")
+        .eq("id", analysisId)
+        .maybeSingle();
+        
+      if (!minimalError && minimalData) {
+        console.log(`Found minimal data for analysis ID: ${JSON.stringify(minimalData)}`);
+        return await handleWithMinimalData(message, analysisId, minimalData.resume_id, minimalData.job_id, currentSection, history, threadId);
+      }
+      
       throw new Error(`No analysis data found for ID: ${analysisId}`);
     }
     
@@ -89,12 +105,12 @@ serve(async (req) => {
 
     if (analysisError) {
       console.error(`Error fetching analysis data: ${analysisError.message}`);
-      throw new Error(`Error fetching analysis data: ${analysisError.message}`);
+      return await handleWithMinimalData(message, analysisId, rawData.resume_id, rawData.job_id, currentSection, history, threadId);
     }
 
     if (!analysisData) {
       console.error(`No analysis data found for ID: ${analysisId}`);
-      throw new Error(`No analysis data found for ID: ${analysisId}`);
+      return await handleWithMinimalData(message, analysisId, rawData.resume_id, rawData.job_id, currentSection, history, threadId);
     }
 
     console.log(`Analysis data found: ${JSON.stringify(analysisData).substring(0, 200)}...`);
@@ -118,15 +134,17 @@ serve(async (req) => {
           analysisData.resume = { formatted_resume: resumeData.formatted_resume };
         } else {
           console.error(`Error fetching resume directly: ${resumeError?.message || "No data found"}`);
+          return await handleWithMinimalData(message, analysisId, rawData.resume_id, rawData.job_id, currentSection, history, threadId);
         }
       } else {
         console.error("No resume_id found in raw data");
+        return await handleWithMinimalData(message, analysisId, rawData.resume_id, rawData.job_id, currentSection, history, threadId);
       }
     }
 
     if (!analysisData.resume || !analysisData.resume.formatted_resume) {
       console.error(`No resume data found for analysis ID: ${analysisId}`);
-      throw new Error(`No resume data found for analysis ID: ${analysisId}`);
+      return await handleWithMinimalData(message, analysisId, rawData.resume_id, rawData.job_id, currentSection, history, threadId);
     }
 
     // Get or create a thread based on the analysisId
@@ -371,6 +389,140 @@ Always be respectful, professional, and encouraging.`;
     );
   }
 });
+
+// Handler for case when we don't have full data but can still provide chat functionality
+async function handleWithMinimalData(message, analysisId, resumeId, jobId, currentSection, history, threadId) {
+  try {
+    console.log(`Handling with minimal data for analysis: ${analysisId}, resumeId: ${resumeId}, jobId: ${jobId}`);
+    
+    // Get or create a thread
+    let thread;
+    
+    if (threadId) {
+      try {
+        thread = await openai.beta.threads.retrieve(threadId);
+        console.log(`Successfully retrieved thread: ${threadId}`);
+      } catch (threadError) {
+        thread = await openai.beta.threads.create();
+        console.log(`Created new thread: ${thread.id}`);
+      }
+    } else {
+      thread = await openai.beta.threads.create();
+      console.log(`Created new thread: ${thread.id}`);
+    }
+
+    // Create a simplified system prompt
+    const systemPrompt = `You are a professional resume writing assistant. Help the user improve their resume.
+Your primary goal is to help them make their resume more impactful and professional.
+
+You'll need to ask the user for specific details about their resume, as I don't have access to their full resume data right now.
+
+If asked to optimize or improve a section, provide general advice and ask for more details about their current content.
+Always be respectful, professional, and encouraging.`;
+
+    // Add user message to thread  
+    await openai.beta.threads.messages.create(thread.id, {
+      role: "user",
+      content: message,
+    });
+    
+    // Run the assistant
+    const run = await openai.beta.threads.runs.create(thread.id, {
+      assistant_id: RESUME_ASSISTANT_ID,
+      instructions: systemPrompt,
+    });
+    
+    // Poll for completion
+    let runStatus;
+    let timeoutCounter = 0;
+    const maxTimeout = 60;
+    
+    while (timeoutCounter < maxTimeout) {
+      const runStatusResponse = await openai.beta.threads.runs.retrieve(
+        thread.id,
+        run.id
+      );
+      runStatus = runStatusResponse.status;
+      
+      if (runStatus === "completed") break;
+      if (runStatus === "failed" || runStatus === "cancelled" || runStatus === "expired") {
+        throw new Error(`Run failed with status: ${runStatus}`);
+      }
+      
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      timeoutCounter++;
+    }
+    
+    if (runStatus !== "completed") {
+      throw new Error(`Assistant run timed out with status: ${runStatus}`);
+    }
+    
+    // Get the assistant response
+    const messages = await openai.beta.threads.messages.list(thread.id);
+    const lastAssistantMessage = messages.data
+      .filter((msg) => msg.role === "assistant")
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
+      
+    if (!lastAssistantMessage) {
+      throw new Error("No assistant response found");
+    }
+    
+    let responseText = "";
+    if (lastAssistantMessage.content[0].type === "text") {
+      responseText = lastAssistantMessage.content[0].text.value;
+    }
+    
+    // Try to store metadata
+    try {
+      await supabaseAdmin
+        .from("ai_chat_metadata")
+        .upsert({
+          analysis_id: analysisId,
+          thread_id: thread.id,
+          assistant_id: RESUME_ASSISTANT_ID,
+          run_id: run.id,
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'analysis_id,thread_id'
+        });
+    } catch (metadataError) {
+      console.error("Error storing thread metadata in minimal mode:", metadataError);
+    }
+    
+    return new Response(
+      JSON.stringify({
+        message: responseText,
+        threadId: thread.id,
+        assistantId: RESUME_ASSISTANT_ID,
+        runId: run.id,
+        systemPrompt: systemPrompt
+      }),
+      {
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+  } catch (error) {
+    console.error("Error in minimal data handler:", error.message);
+    
+    return new Response(
+      JSON.stringify({
+        error: `Minimal Data Handler Error: ${error.message}`,
+        message: "I'm having trouble accessing your resume data right now. How can I help you in general with resume advice?",
+        threadId: null
+      }),
+      {
+        status: 200, // Return 200 even with error to prevent UI errors
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+  }
+}
 
 // Supabase client with admin privileges for database operations
 const supabaseAdmin = createClient(

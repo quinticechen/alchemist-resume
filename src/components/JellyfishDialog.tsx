@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -72,20 +73,40 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [hasInitialJobContext, setHasInitialJobContext] = useState(false);
   const [currentThreadId, setCurrentThreadId] = useState<string | null>(null);
+  const [analysisId, setAnalysisId] = useState<string | null>(null);
   const { toast } = useToast();
   const location = useLocation();
   const dialogDescriptionId = "jellyfishDialogDescription";
   const sheetDescriptionId = "jellyfishSheetDescription";
 
-  const getAnalysisIdFromUrl = () => {
-    const pathSegments = location.pathname.split('/');
-    const analysisId = pathSegments[pathSegments.length - 1];
-    if (analysisId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(analysisId)) {
-      console.log(`Extracted analysisId from URL: ${analysisId}`);
-      return analysisId;
-    }
-    return null;
-  };
+  // Extract analysis ID from URL with more robust handling
+  useEffect(() => {
+    const extractAnalysisId = () => {
+      // First attempt: Extract from path parameters
+      const pathSegments = location.pathname.split('/');
+      const potentialIds = pathSegments.filter(segment => 
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(segment)
+      );
+      
+      if (potentialIds.length > 0) {
+        console.log(`Found analysis ID in URL path: ${potentialIds[0]}`);
+        return potentialIds[0];
+      }
+      
+      // Second attempt: Check location state
+      if (location.state && location.state.analysisId) {
+        console.log(`Found analysis ID in location state: ${location.state.analysisId}`);
+        return location.state.analysisId;
+      }
+      
+      console.warn("Could not determine analysis ID from URL or state");
+      return null;
+    };
+    
+    const id = extractAnalysisId();
+    setAnalysisId(id);
+    console.log(`JellyfishDialog initialized with analysis ID: ${id || "none"}`);
+  }, [location]);
 
   useEffect(() => {
     const randomIndex = Math.floor(Math.random() * welcomeMessages.length);
@@ -119,15 +140,9 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
 
   useEffect(() => {
     const findExistingThread = async () => {
-      if (!currentSectionId || simpleTipMode) return;
+      if (!analysisId || !currentSectionId || simpleTipMode) return;
       
       try {
-        const analysisId = getAnalysisIdFromUrl();
-        if (!analysisId) {
-          console.warn("Could not determine analysis ID from URL");
-          return;
-        }
-        
         console.log(`Looking for existing thread for analysis: ${analysisId}`);
         
         const { data: metadataData, error: metadataError } = await supabase
@@ -137,7 +152,12 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
           .order('created_at', { ascending: false })
           .limit(1);
           
-        if (!metadataError && metadataData && metadataData.length > 0) {
+        if (metadataError) {
+          console.error('Error fetching thread metadata:', metadataError);
+          return;
+        }
+        
+        if (metadataData && metadataData.length > 0) {
           setCurrentThreadId(metadataData[0].thread_id);
           console.log(`Found existing thread: ${metadataData[0].thread_id}`);
         } else {
@@ -149,7 +169,7 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
     };
     
     findExistingThread();
-  }, [currentSectionId, simpleTipMode]);
+  }, [analysisId, currentSectionId, simpleTipMode]);
 
   const getRandomTip = () => {
     const randomIndex = Math.floor(Math.random() * resumeTips.length);
@@ -170,6 +190,15 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
   };
 
   const handleGenerateSuggestion = async () => {
+    if (!analysisId) {
+      toast({
+        title: "Error",
+        description: "Unable to identify the current resume analysis. Try refreshing the page.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     if (onGenerateSuggestion && currentSectionId) {
       onGenerateSuggestion(currentSectionId);
       
@@ -185,6 +214,15 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
   };
 
   const handleSendMessage = async () => {
+    if (!analysisId) {
+      toast({
+        title: "Error",
+        description: "Unable to identify the current resume analysis. Try refreshing the page.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     if (inputValue.trim()) {
       setChats(prev => [...prev, {
         role: 'user',
@@ -203,14 +241,17 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
   };
 
   const sendToAIAssistant = async (message: string) => {
+    if (!analysisId) {
+      toast({
+        title: "Error",
+        description: "Unable to identify the current resume analysis. Try refreshing the page.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setIsLoading(true);
     try {
-      const analysisId = getAnalysisIdFromUrl();
-      
-      if (!analysisId) {
-        throw new Error("Could not determine analysis ID from URL");
-      }
-      
       console.log(`Sending message to AI assistant for analysis: ${analysisId}`);
       
       const { data, error } = await supabase.functions.invoke('resume-ai-assistant', {
@@ -225,7 +266,14 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
         }
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error invoking resume-ai-assistant:', error);
+        throw error;
+      }
+      
+      if (!data) {
+        throw new Error("No data returned from resume-ai-assistant");
+      }
       
       let suggestion = null;
       let content = data.message;
@@ -234,8 +282,9 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
       
       if (threadId) {
         setCurrentThreadId(threadId);
-        
         console.log(`Chat using OpenAI thread: ${threadId}`);
+      } else {
+        console.warn("No thread ID returned from resume-ai-assistant");
       }
       
       if (data.suggestion) {
@@ -393,6 +442,13 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
                     </div>
                   </div>
                 ))}
+                
+                {!analysisId && (
+                  <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-800">
+                    <p className="font-medium">Unable to find resume analysis ID</p>
+                    <p className="text-sm mt-1">Try refreshing the page or navigating back to the resume list.</p>
+                  </div>
+                )}
               </div>
             </ScrollArea>
             
@@ -401,7 +457,7 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
                 variant="outline" 
                 className="w-full flex items-center gap-2"
                 onClick={handleGenerateSuggestion}
-                disabled={isLoading}
+                disabled={isLoading || !analysisId}
               >
                 <Lightbulb className="h-4 w-4" />
                 Generate Suggestion for Current Section
@@ -414,9 +470,13 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
                   onKeyDown={handleKeyDown}
                   placeholder="Ask for resume advice..."
                   className="resize-none"
-                  disabled={isLoading}
+                  disabled={isLoading || !analysisId}
                 />
-                <Button size="icon" onClick={handleSendMessage} disabled={isLoading || inputValue.trim() === ''}>
+                <Button 
+                  size="icon" 
+                  onClick={handleSendMessage} 
+                  disabled={isLoading || inputValue.trim() === '' || !analysisId}
+                >
                   <Send className="h-4 w-4" />
                 </Button>
               </div>
@@ -424,6 +484,11 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
               {currentThreadId && (
                 <p className="text-xs text-muted-foreground">
                   Thread ID: {currentThreadId.substring(0, 12)}...
+                </p>
+              )}
+              {analysisId && (
+                <p className="text-xs text-muted-foreground">
+                  Analysis ID: {analysisId.substring(0, 8)}...
                 </p>
               )}
             </div>

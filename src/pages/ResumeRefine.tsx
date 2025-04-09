@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useCallback } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from "@/contexts/AuthContext";
@@ -23,6 +24,7 @@ const ResumeRefine = () => {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
   const [activeSection, setActiveSection] = useState<ResumeSection | undefined>(section as ResumeSection);
+  const [activeSectionContent, setActiveSectionContent] = useState<string>("");
   const [resumeData, setResumeData] = useState<{
     resumeId: string;
     goldenResume: string | null;
@@ -38,6 +40,8 @@ const ResumeRefine = () => {
     const fetchResumeData = async () => {
       if (analysisId && !resumeId && session?.user?.id) {
         try {
+          console.log(`Fetching resume data for analysis ID: ${analysisId}`);
+          
           // First get the analysis record to get the resume_id
           const { data: analysisData, error: analysisError } = await supabase
             .from('resume_analyses')
@@ -48,6 +52,8 @@ const ResumeRefine = () => {
           if (analysisError) throw analysisError;
           
           if (analysisData) {
+            console.log(`Found analysis data: resume_id=${analysisData.resume_id}, job_id=${analysisData.job_id}`);
+            
             // If we have a job relationship, fetch job description data
             const jobId = analysisData.job_id;
             if (jobId) {
@@ -165,9 +171,12 @@ const ResumeRefine = () => {
     };
   }, [session, isLoading, navigate, analysisId, hasUnsavedChanges]);
 
-  const handleSectionChange = (section: ResumeSection) => {
+  const handleSectionChange = useCallback((section: ResumeSection, content?: string) => {
     setActiveSection(section);
-  };
+    if (content) {
+      setActiveSectionContent(content);
+    }
+  }, []);
   
   const handleSuggestionApply = useCallback((text: string, sectionId: string) => {
     if (!resumeData || !text || !sectionId) return;
