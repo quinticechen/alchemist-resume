@@ -199,14 +199,14 @@ const ResumeRefine = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100 relative">
-      {/* <JellyfishDialog 
+      <JellyfishDialog 
         position="bottom" 
         title="Resume Assistant" 
         currentSectionId={activeSection}
         onSuggestionApply={handleSuggestionApply}
         onGenerateSuggestion={handleGenerateSuggestion}
         jobData={jobDescription}
-      /> */}
+      />
       
       <div className="container mx-auto px-4 py-12">
         <div className="max-w-7xl mx-auto">
@@ -229,7 +229,7 @@ const ResumeRefine = () => {
         </div>
       </div>
 
-      {/* <AlertDialog open={showUnsavedDialog} onOpenChange={setShowUnsavedDialog}>
+      <AlertDialog open={showUnsavedDialog} onOpenChange={setShowUnsavedDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Unsaved Changes</AlertDialogTitle>
@@ -244,7 +244,7 @@ const ResumeRefine = () => {
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
-      </AlertDialog> */}
+      </AlertDialog>
     </div>
   );
 };
