@@ -101,12 +101,12 @@ const ResumeSelector: React.FC<ResumeSelectorProps> = ({ onSelect, className = "
         ) : (
           <>
             <Select value={selectedResumeId} onValueChange={setSelectedResumeId}>
-              <SelectTrigger className="w-full">
+              <SelectTrigger className="w-full bg-white">
                 <SelectValue placeholder="Select a resume" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-white">
                 {resumes.map((resume) => (
-                  <SelectItem key={resume.id} value={resume.id}>
+                  <SelectItem key={resume.id} value={resume.id} className="cursor-pointer">
                     {resume.file_name} - {formatDate(resume.created_at)}
                   </SelectItem>
                 ))}

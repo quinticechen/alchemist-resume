@@ -61,6 +61,10 @@ export default {
           800: "#343a40",
           900: "#212529",
         },
+        popover: {
+          DEFAULT: "#ffffff",
+          foreground: "#212529",
+        },
       },
       fontFamily: {
         sans: ["SF Pro Display", "Inter", "sans-serif"],
