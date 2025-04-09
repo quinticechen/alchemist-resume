@@ -5,9 +5,10 @@ import OpenAI from "https://esm.sh/openai@4.24.1";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders } from "../_shared/cors.ts";
 
-// Initialize OpenAI client
+// Initialize OpenAI client with v2 header
 const openai = new OpenAI({
   apiKey: Deno.env.get("OPENAI_API_KEY") || "",
+  defaultHeaders: { "OpenAI-Beta": "assistants=v2" }
 });
 
 // Define assistant ID
