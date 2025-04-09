@@ -3,6 +3,7 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 import OpenAI from "https://esm.sh/openai@4.24.1";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 // Initialize OpenAI client
 const openai = new OpenAI({
@@ -11,6 +12,11 @@ const openai = new OpenAI({
 
 // Define assistant ID
 const RESUME_ASSISTANT_ID = "asst_ahHD2JpnG0XCsHVBbCSUmRVr";
+
+// Initialize Supabase client with proper typing
+const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
+const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -32,7 +38,7 @@ serve(async (req) => {
     }
 
     // Get resume and job data
-    const { data: analysisData } = await supabaseAdmin
+    const { data: analysisData, error: analysisError } = await supabaseAdmin
       .from("resume_analyses")
       .select(`
         id,
@@ -46,7 +52,11 @@ serve(async (req) => {
         )
       `)
       .eq("id", analysisId)
-      .maybeSingle();
+      .single();
+
+    if (analysisError) {
+      console.error("Error fetching analysis data:", analysisError);
+    }
 
     let resumeContent = "";
     let jobContext = "";
@@ -66,14 +76,19 @@ serve(async (req) => {
       }
     } else {
       // Check if a thread exists for this analysis
-      const { data: metadataData } = await supabaseAdmin
+      const { data: metadataData, error: metadataError } = await supabaseAdmin
         .from("ai_chat_metadata")
         .select("thread_id")
         .eq("analysis_id", analysisId)
         .order("created_at", { ascending: false })
         .limit(1);
 
-      if (metadataData && metadataData.length > 0) {
+      if (metadataError) {
+        console.error("Error fetching chat metadata:", metadataError);
+        // Create a new thread if we couldn't fetch existing ones
+        thread = await openai.beta.threads.create();
+        console.log(`Created new thread (after metadata error): ${thread.id}`);
+      } else if (metadataData && metadataData.length > 0) {
         try {
           const existingThreadId = metadataData[0].thread_id;
           thread = await openai.beta.threads.retrieve(existingThreadId);
@@ -129,13 +144,15 @@ serve(async (req) => {
       // If analysis data not found, try to get editor content
       console.log(`Analysis data not found, checking editor content`);
       
-      const { data: editorData } = await supabaseAdmin
+      const { data: editorData, error: editorError } = await supabaseAdmin
         .from('resume_editors')
         .select('content')
         .eq('analysis_id', analysisId)
-        .maybeSingle();
+        .single();
         
-      if (editorData?.content?.resume) {
+      if (editorError) {
+        console.error("Error fetching editor data:", editorError);
+      } else if (editorData?.content?.resume) {
         console.log(`Found editor content for analysis: ${analysisId}`);
         
         const resumeData = editorData.content.resume;
@@ -241,10 +258,11 @@ Always be respectful, professional, and encouraging.`;
     console.log(`Retrieved assistant response for run: ${run.id}`);
 
     // Store system prompt
-    await supabaseAdmin
+    const systemMessageId = crypto.randomUUID();
+    const { error: systemMessageError } = await supabaseAdmin
       .from("ai_chat_messages")
       .insert({
-        id: crypto.randomUUID(),
+        id: systemMessageId,
         role: "system",
         content: systemPrompt,
         timestamp: new Date().toISOString(),
@@ -252,11 +270,15 @@ Always be respectful, professional, and encouraging.`;
         section: currentSection,
         thread_id: thread.id
       });
-    
-    console.log(`Stored system prompt in database`);
+      
+    if (systemMessageError) {
+      console.error("Error storing system message:", systemMessageError);
+    } else {
+      console.log(`Stored system prompt in database with ID: ${systemMessageId}`);
+    }
 
     // Save thread metadata
-    await supabaseAdmin
+    const { error: metadataError } = await supabaseAdmin
       .from("ai_chat_metadata")
       .upsert({
         analysis_id: analysisId,
@@ -268,8 +290,12 @@ Always be respectful, professional, and encouraging.`;
       }, {
         onConflict: 'analysis_id,thread_id'
       });
-    
-    console.log(`Stored thread metadata in database`);
+      
+    if (metadataError) {
+      console.error("Error storing thread metadata:", metadataError);
+    } else {
+      console.log(`Stored thread metadata in database`);
+    }
 
     // Return response
     return new Response(
@@ -306,137 +332,3 @@ Always be respectful, professional, and encouraging.`;
     );
   }
 });
-
-// Supabase client with admin privileges
-const supabaseAdmin = createClient(
-  Deno.env.get("SUPABASE_URL") ?? "",
-  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-);
-
-// Helper function to create Supabase client
-function createClient(supabaseUrl, supabaseKey) {
-  return {
-    from: (table) => ({
-      select: (query) => ({
-        eq: (column, value) => ({
-          single: () => {
-            return fetch(
-              `${supabaseUrl}/rest/v1/${table}?select=${query}&${column}=eq.${value}&limit=1`,
-              {
-                headers: {
-                  ApiKey: supabaseKey,
-                  Authorization: `Bearer ${supabaseKey}`,
-                  "Content-Type": "application/json",
-                },
-              }
-            )
-              .then((response) => response.json())
-              .then((data) => {
-                if (Array.isArray(data) && data.length > 0) {
-                  return { data: data[0], error: null };
-                } else {
-                  return { data: null, error: null };
-                }
-              })
-              .catch((error) => {
-                return { data: null, error: { message: error.message } };
-              });
-          },
-          maybeSingle: () => {
-            return fetch(
-              `${supabaseUrl}/rest/v1/${table}?select=${query}&${column}=eq.${value}&limit=1`,
-              {
-                headers: {
-                  ApiKey: supabaseKey,
-                  Authorization: `Bearer ${supabaseKey}`,
-                  "Content-Type": "application/json",
-                },
-              }
-            )
-              .then((response) => response.json())
-              .then((data) => {
-                if (Array.isArray(data) && data.length > 0) {
-                  return { data: data[0], error: null };
-                } else {
-                  return { data: null, error: null };
-                }
-              })
-              .catch((error) => {
-                return { data: null, error: { message: error.message } };
-              });
-          },
-          limit: (limit) => ({
-            order: (column, { ascending }) => {
-              const order = ascending ? 'asc' : 'desc';
-              return {
-                then: async (callback) => {
-                  try {
-                    const response = await fetch(
-                      `${supabaseUrl}/rest/v1/${table}?select=${query}&${column}=eq.${value}&order=${column}.${order}&limit=${limit}`,
-                      {
-                        headers: {
-                          ApiKey: supabaseKey,
-                          Authorization: `Bearer ${supabaseKey}`,
-                          "Content-Type": "application/json",
-                        },
-                      }
-                    );
-                    const data = await response.json();
-                    return callback({ data, error: null });
-                  } catch (error) {
-                    return callback({ data: null, error: { message: error.message } });
-                  }
-                },
-              };
-            },
-          }),
-        }),
-      }),
-      insert: (data) => {
-        return fetch(
-          `${supabaseUrl}/rest/v1/${table}`,
-          {
-            method: 'POST',
-            headers: {
-              ApiKey: supabaseKey,
-              Authorization: `Bearer ${supabaseKey}`,
-              "Content-Type": "application/json",
-              "Prefer": "return=representation",
-            },
-            body: JSON.stringify(data),
-          }
-        )
-          .then((response) => response.json())
-          .then((responseData) => {
-            return { data: responseData, error: null };
-          })
-          .catch((error) => {
-            return { data: null, error: { message: error.message } };
-          });
-      },
-      upsert: (data, { onConflict }) => {
-        return fetch(
-          `${supabaseUrl}/rest/v1/${table}`,
-          {
-            method: 'POST',
-            headers: {
-              ApiKey: supabaseKey,
-              Authorization: `Bearer ${supabaseKey}`,
-              "Content-Type": "application/json",
-              "Prefer": "resolution=merge-duplicates",
-              ...(onConflict ? { "onConflict": onConflict } : {})
-            },
-            body: JSON.stringify(data),
-          }
-        )
-          .then((response) => response.json())
-          .then((responseData) => {
-            return { data: responseData, error: null };
-          })
-          .catch((error) => {
-            return { data: null, error: { message: error.message } };
-          });
-      }
-    }),
-  };
-}
