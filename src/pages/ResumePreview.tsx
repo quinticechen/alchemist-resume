@@ -48,7 +48,6 @@ interface EditorContent {
 
 const LOCAL_STORAGE_STYLE_KEY = 'resumePreviewStyle';
 
-// Helper function to determine if a section is empty
 const isSectionEmpty = (data: any, section: string): boolean => {
   if (!data || !data.resume) return true;
   
@@ -82,7 +81,6 @@ const isSectionEmpty = (data: any, section: string): boolean => {
   return true;
 };
 
-// Default section order to use when none is provided
 const DEFAULT_SECTION_ORDER: ResumeSection[] = [
   'personalInfo',
   'professionalSummary',
@@ -217,7 +215,6 @@ const ResumePreview = () => {
         const content = editorData.content as EditorContent;
         console.log("Preparing resume data with content:", content);
 
-        // Use the provided sectionOrder or fall back to the default one if not present
         const sectionOrder = content.sectionOrder && Array.isArray(content.sectionOrder) && content.sectionOrder.length > 0 
           ? content.sectionOrder 
           : DEFAULT_SECTION_ORDER;
@@ -295,53 +292,59 @@ const ResumePreview = () => {
         style === 'professional' ? '#FFFBEB' : 
         style === 'creative' ? '#F5F3FF' : '#ffffff';
       
-      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+        compress: true
+      });
+      
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
       
       const canvas = await html2canvas(resumeElement, {
         scale: 2,
         useCORS: true,
-        logging: false,
         backgroundColor: bgColor,
+        logging: false,
+        allowTaint: true,
+        foreignObjectRendering: false,
       });
       
-      const imgWidth = pageWidth;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      const canvasWidth = canvas.width;
+      const canvasHeight = canvas.height;
+      const ratio = canvasWidth / pageWidth;
+      const totalPages = Math.ceil(canvasHeight / (pageHeight * ratio));
       
-      let remainingHeight = canvas.height;
-      let position = 0;
-      
-      while (remainingHeight > 0) {
-        const pageCanvas = document.createElement('canvas');
-        const ctx = pageCanvas.getContext('2d');
-        
-        pageCanvas.width = canvas.width;
-        pageCanvas.height = Math.min(canvas.width * (pageHeight / pageWidth), remainingHeight);
-        
-        if (ctx) {
-          ctx.fillStyle = bgColor;
-          ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
-          ctx.drawImage(
-            canvas, 
-            0, position, canvas.width, pageCanvas.height, 
-            0, 0, pageCanvas.width, pageCanvas.height
-          );
-        }
-        
-        position += pageCanvas.height;
-        remainingHeight -= pageCanvas.height;
-        
-        if (position > 0 && remainingHeight > 0) {
+      for (let page = 0; page < totalPages; page++) {
+        if (page > 0) {
           pdf.addPage();
         }
         
-        const imgData = pageCanvas.toDataURL('image/jpeg', 1.0);
-        pdf.addImage(imgData, 'JPEG', 0, 0, pageWidth, pageHeight);
+        const srcY = page * pageHeight * ratio;
+        const srcHeight = Math.min(pageHeight * ratio, canvasHeight - srcY);
+        
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = canvasWidth;
+        tempCanvas.height = srcHeight;
+        
+        const ctx = tempCanvas.getContext('2d');
+        if (ctx) {
+          ctx.fillStyle = bgColor;
+          ctx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+          ctx.drawImage(
+            canvas,
+            0, srcY, canvasWidth, srcHeight,
+            0, 0, canvasWidth, srcHeight
+          );
+          
+          const imgData = tempCanvas.toDataURL('image/jpeg', 1.0);
+          pdf.addImage(imgData, 'JPEG', 0, 0, pageWidth, (srcHeight / ratio));
+        }
       }
       
       const fileName = resumeData?.jobTitle 
-        ? `Resume_${resumeData.jobTitle.replace(/\s+/g, '_')}.pdf` 
+        ? `Resume_${resumeData.jobTitle.replace(/[^a-zA-Z0-9]/g, '_')}.pdf` 
         : 'Resume.pdf';
       
       pdf.save(fileName);
@@ -385,7 +388,6 @@ const ResumePreview = () => {
     endDate: 'Present'
   };
 
-  // Get ordered sections based on sectionOrder if available
   const orderedSections = resumeData.sectionOrder || DEFAULT_SECTION_ORDER;
 
   return (
@@ -435,7 +437,6 @@ const ResumePreview = () => {
               style === 'creative' ? 'bg-purple-50' : 'bg-white'
             }`}
           >
-            {/* Personal Info Section - Always show this section */}
             <div className={`mb-6 pb-4 relative group ${style === 'modern' ? 'border-b-2 border-blue-300' : 
               style === 'minimal' ? 'border-b border-gray-200' : 
               style === 'professional' ? 'border-b-2 border-amber-300' : 
@@ -473,14 +474,10 @@ const ResumePreview = () => {
               </div>
             </div>
 
-            {/* Ordered Resume Sections based on sectionOrder - Only show non-empty sections */}
             {orderedSections.map((sectionKey) => {
-              // Skip personalInfo as it's always shown at the top
               if (sectionKey === 'personalInfo') return null;
               
-              // Professional Summary Section - Check both summary and professionalSummary fields
               if (sectionKey === 'professionalSummary') {
-                // Try both summary and professionalSummary fields
                 const summaryText = resumeData.resume?.summary || resumeData.resume?.professionalSummary || '';
                 
                 if (summaryText && summaryText.trim() !== '') {
@@ -510,7 +507,6 @@ const ResumePreview = () => {
                 return null;
               }
               
-              // Professional Experience Section
               if (sectionKey === 'professionalExperience' && resumeData.resume?.professionalExperience?.length > 0) {
                 return (
                   <div key={sectionKey} className="mb-6 relative group">
@@ -555,7 +551,6 @@ const ResumePreview = () => {
                 );
               }
               
-              // Education Section
               if (sectionKey === 'education' && resumeData.resume?.education) {
                 return (
                   <div key={sectionKey} className="mb-6 relative group">
@@ -606,7 +601,6 @@ const ResumePreview = () => {
                 );
               }
               
-              // Skills Section
               if (sectionKey === 'skills' && resumeData.resume?.skills) {
                 return (
                   <div key={sectionKey} className="mb-6 relative group">
@@ -654,7 +648,6 @@ const ResumePreview = () => {
                 );
               }
               
-              // Projects Section
               if (sectionKey === 'projects' && resumeData.resume?.projects?.length > 0) {
                 return (
                   <div key={sectionKey} className="mb-6 relative group">
@@ -698,7 +691,6 @@ const ResumePreview = () => {
                 );
               }
               
-              // Certifications Section
               if (sectionKey === 'certifications' && resumeData.resume?.certifications?.length > 0) {
                 return (
                   <div key={sectionKey} className="mb-6 relative group">
@@ -733,7 +725,6 @@ const ResumePreview = () => {
                 );
               }
               
-              // Volunteer Section
               if (sectionKey === 'volunteer' && resumeData.resume?.volunteer?.length > 0) {
                 return (
                   <div key={sectionKey} className="mb-6 relative group">
