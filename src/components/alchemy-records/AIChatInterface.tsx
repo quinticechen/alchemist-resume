@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -7,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Send, ChevronDown, User, Bot, Zap } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useLocation } from "react-router-dom";
 
 interface AIChatInterfaceProps {
   resumeId: string;
@@ -48,31 +48,51 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const [currentThreadId, setCurrentThreadId] = useState<string | null>(null);
   const [threadMetadata, setThreadMetadata] = useState<ThreadMetadata | null>(null);
+  const location = useLocation();
   const dialogDescriptionId = "aiChatInterfaceDescription";
 
-  // Load existing chat messages and thread metadata on component mount or when analysisId changes
+  const getAnalysisIdFromUrl = () => {
+    const pathSegments = location.pathname.split('/');
+    const urlAnalysisId = pathSegments[pathSegments.length - 1];
+    if (urlAnalysisId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(urlAnalysisId)) {
+      console.log(`Extracted backup analysisId from URL: ${urlAnalysisId}`);
+      return urlAnalysisId;
+    }
+    return null;
+  };
+
+  const getEffectiveAnalysisId = () => {
+    if (analysisId) return analysisId;
+    const urlAnalysisId = getAnalysisIdFromUrl();
+    if (urlAnalysisId) {
+      console.log(`Using URL-extracted analysisId: ${urlAnalysisId} because props.analysisId is not available`);
+      return urlAnalysisId;
+    }
+    return null;
+  };
+
   useEffect(() => {
     const loadChatHistory = async () => {
-      if (!analysisId) {
+      const effectiveAnalysisId = getEffectiveAnalysisId();
+      
+      if (!effectiveAnalysisId) {
         console.error("Missing analysisId for chat history load");
         return;
       }
 
       try {
-        console.log(`Loading chat history for analysis: ${analysisId}`);
+        console.log(`Loading chat history for analysis: ${effectiveAnalysisId}`);
         
-        // Check if a thread already exists for this analysis
         const { data: metadataData, error: metadataError } = await supabase
           .from('ai_chat_metadata')
           .select('*')
-          .eq('analysis_id', analysisId)
+          .eq('analysis_id', effectiveAnalysisId)
           .order('created_at', { ascending: false })
           .limit(1);
           
         let threadId = null;
         
         if (!metadataError && metadataData && metadataData.length > 0) {
-          // Use the existing thread
           threadId = metadataData[0].thread_id;
           setCurrentThreadId(threadId);
           setThreadMetadata({
@@ -83,17 +103,15 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
           console.log(`Using existing thread: ${threadId}`);
         }
         
-        // Load messages
         const { data, error } = await supabase
           .from('ai_chat_messages')
           .select('*')
-          .eq('analysis_id', analysisId)
+          .eq('analysis_id', effectiveAnalysisId)
           .order('timestamp', { ascending: true });
 
         if (error) throw error;
         
         if (data && data.length > 0) {
-          // Filter out system messages for display
           const displayMessages = data
             .filter(msg => msg.role !== 'system')
             .map(msg => ({
@@ -103,7 +121,6 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
           
           setMessages(displayMessages);
         } else {
-          // Add a welcome message if no chat history exists
           const welcomeMessage: ChatMessage = {
             id: crypto.randomUUID(),
             role: 'assistant',
@@ -124,21 +141,22 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
       }
     };
 
-    if (analysisId) {
+    if (getEffectiveAnalysisId()) {
       loadChatHistory();
     } else {
-      console.warn("No analysisId provided for AIChatInterface");
+      console.warn("No analysisId provided or found in URL for AIChatInterface");
     }
   }, [analysisId]);
 
-  // Scroll to bottom of chat when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
   const saveChatMessage = async (message: ChatMessage) => {
     try {
-      if (!analysisId) {
+      const effectiveAnalysisId = getEffectiveAnalysisId();
+      
+      if (!effectiveAnalysisId) {
         console.error("Cannot save chat message: Missing analysisId");
         return;
       }
@@ -150,7 +168,7 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
           role: message.role,
           content: message.content,
           timestamp: message.timestamp.toISOString(),
-          analysis_id: analysisId,
+          analysis_id: effectiveAnalysisId,
           section: message.section,
           suggestion: message.suggestion,
           thread_id: message.thread_id
@@ -165,7 +183,9 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
   const handleSendMessage = async () => {
     if (input.trim() === '') return;
     
-    if (!analysisId) {
+    const effectiveAnalysisId = getEffectiveAnalysisId();
+    
+    if (!effectiveAnalysisId) {
       toast({
         title: "Error",
         description: "Cannot send message: Missing analysis ID",
@@ -183,32 +203,28 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
       thread_id: currentThreadId || undefined
     };
 
-    // Update UI immediately
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setIsLoading(true);
 
-    // Save user message to database
     await saveChatMessage(userMessage);
 
     try {
-      console.log(`Sending message to resume-ai-assistant for analysis: ${analysisId}`);
+      console.log(`Sending message to resume-ai-assistant for analysis: ${effectiveAnalysisId}`);
       
-      // Make API call to generate response
       const { data, error } = await supabase.functions.invoke('resume-ai-assistant', {
         body: { 
           message: input, 
-          analysisId, 
+          analysisId: effectiveAnalysisId, 
           resumeId,
           currentSection: currentSectionId,
           history: messages.map(msg => ({ role: msg.role, content: msg.content })),
-          threadId: currentThreadId // Pass current thread ID if it exists
+          threadId: currentThreadId
         }
       });
 
       if (error) throw error;
 
-      // Process the AI response
       let suggestion = null;
       let content = data.message;
       let threadId = data.threadId;
@@ -216,7 +232,6 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
       let runId = data.runId;
       let systemPrompt = data.systemPrompt;
       
-      // If we got a system prompt, save it to the database
       if (systemPrompt) {
         const systemMessage: ChatMessage = {
           id: crypto.randomUUID(),
@@ -230,7 +245,6 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
         await saveChatMessage(systemMessage);
       }
       
-      // Update metadata if we have thread information
       if (threadId) {
         setCurrentThreadId(threadId);
         
@@ -241,13 +255,12 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
             run_id: runId
           });
           
-          // Save thread metadata to database if it's new
           if (threadId !== currentThreadId) {
             try {
               const { error: metadataError } = await supabase
                 .from('ai_chat_metadata')
                 .insert({
-                  analysis_id: analysisId,
+                  analysis_id: effectiveAnalysisId,
                   thread_id: threadId,
                   assistant_id: assistantId,
                   run_id: runId,
@@ -255,7 +268,6 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
                 });
                 
               if (metadataError) throw metadataError;
-              
             } catch (metadataErr) {
               console.error('Error saving thread metadata:', metadataErr);
             }
@@ -263,13 +275,11 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
         }
       }
 
-      // Check if the response contains a suggestion
       if (data.suggestion) {
         suggestion = data.suggestion;
         content += "\n\nI've created a suggestion for your resume. You can apply it by clicking the 'Apply' button.";
       }
 
-      // Create AI message
       const aiMessage: ChatMessage = {
         id: crypto.randomUUID(),
         role: 'assistant',
@@ -280,14 +290,11 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
         thread_id: threadId
       };
 
-      // Update UI with AI response
       setMessages(prev => [...prev, aiMessage]);
       
-      // Save AI message to database
       await saveChatMessage(aiMessage);
     } catch (error) {
       console.error('Error getting AI response:', error);
-      // Add error message
       const errorMessage: ChatMessage = {
         id: crypto.randomUUID(),
         role: 'assistant',
@@ -333,11 +340,9 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
       return;
     }
     
-    // Set a prompt to optimize the current section
     const optimizePrompt = `Please optimize this resume section to make it more professional and impactful: "${currentSectionContent}"`;
     setInput(optimizePrompt);
     
-    // Focus the textarea
     if (inputRef.current) {
       inputRef.current.focus();
     }

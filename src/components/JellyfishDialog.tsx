@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -9,6 +8,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useLocation } from "react-router-dom";
 
 interface JellyfishDialogProps {
   className?: string;
@@ -73,24 +73,33 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
   const [hasInitialJobContext, setHasInitialJobContext] = useState(false);
   const [currentThreadId, setCurrentThreadId] = useState<string | null>(null);
   const { toast } = useToast();
+  const location = useLocation();
   const dialogDescriptionId = "jellyfishDialogDescription";
   const sheetDescriptionId = "jellyfishSheetDescription";
 
+  const getAnalysisIdFromUrl = () => {
+    const pathSegments = location.pathname.split('/');
+    const analysisId = pathSegments[pathSegments.length - 1];
+    if (analysisId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(analysisId)) {
+      console.log(`Extracted analysisId from URL: ${analysisId}`);
+      return analysisId;
+    }
+    return null;
+  };
+
   useEffect(() => {
-    // Add welcome message on first load
     const randomIndex = Math.floor(Math.random() * welcomeMessages.length);
     setChats([{
       role: 'assistant',
       content: welcomeMessages[randomIndex]
     }]);
 
-    // Set up auto suggestion timer (every 2-3 minutes), but only if not in simple tip mode
     if (!simpleTipMode) {
       const timerId = window.setInterval(() => {
         if (!isDialogOpen && !isSheetOpen) {
           showRandomTip();
         }
-      }, Math.random() * 60000 + 120000); // Random time between 2-3 minutes
+      }, Math.random() * 60000 + 120000);
 
       setAutoSuggestionTimerId(timerId);
 
@@ -102,21 +111,24 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
     }
   }, [simpleTipMode]);
 
-  // Reset hasInitialJobContext when the sheet is closed
   useEffect(() => {
     if (!isSheetOpen) {
       setHasInitialJobContext(false);
     }
   }, [isSheetOpen]);
 
-  // Find existing thread for current analysis if available
   useEffect(() => {
     const findExistingThread = async () => {
       if (!currentSectionId || simpleTipMode) return;
       
       try {
-        const analysisId = window.location.pathname.split('/').pop();
-        if (!analysisId) return;
+        const analysisId = getAnalysisIdFromUrl();
+        if (!analysisId) {
+          console.warn("Could not determine analysis ID from URL");
+          return;
+        }
+        
+        console.log(`Looking for existing thread for analysis: ${analysisId}`);
         
         const { data: metadataData, error: metadataError } = await supabase
           .from('ai_chat_metadata')
@@ -128,6 +140,8 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
         if (!metadataError && metadataData && metadataData.length > 0) {
           setCurrentThreadId(metadataData[0].thread_id);
           console.log(`Found existing thread: ${metadataData[0].thread_id}`);
+        } else {
+          console.log(`No existing thread found for analysis: ${analysisId}`);
         }
       } catch (error) {
         console.error('Error finding existing thread:', error);
@@ -149,10 +163,8 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
 
   const handleOpenDialog = () => {
     if (simpleTipMode) {
-      // In simple tip mode, just show the dialog with a random tip
       showRandomTip();
     } else {
-      // In chat mode, toggle the sheet
       setIsSheetOpen(!isSheetOpen);
     }
   };
@@ -161,36 +173,29 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
     if (onGenerateSuggestion && currentSectionId) {
       onGenerateSuggestion(currentSectionId);
       
-      // Add a message to indicate we're generating a suggestion
       setChats(prev => [...prev, {
         role: 'user',
         content: `Please help me improve the ${currentSectionId} section of my resume.`
       }]);
       
-      // Call the AI assistant to get a suggestion
       await sendToAIAssistant(`Please generate a suggestion for the ${currentSectionId} section of my resume that would make it more impactful and professional.`);
       
-      // Mark that we've sent the job context with this initial message
       setHasInitialJobContext(true);
     }
   };
 
   const handleSendMessage = async () => {
     if (inputValue.trim()) {
-      // Add user message to chat
       setChats(prev => [...prev, {
         role: 'user',
         content: inputValue
       }]);
       
-      // Clear input
       const message = inputValue;
       setInputValue("");
       
-      // Send to AI assistant
       await sendToAIAssistant(message);
       
-      // If this is the first message and we haven't sent job context yet, mark it as sent
       if (!hasInitialJobContext) {
         setHasInitialJobContext(true);
       }
@@ -200,7 +205,7 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
   const sendToAIAssistant = async (message: string) => {
     setIsLoading(true);
     try {
-      const analysisId = window.location.pathname.split('/').pop();
+      const analysisId = getAnalysisIdFromUrl();
       
       if (!analysisId) {
         throw new Error("Could not determine analysis ID from URL");
@@ -208,7 +213,6 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
       
       console.log(`Sending message to AI assistant for analysis: ${analysisId}`);
       
-      // Call the resume-ai-assistant function
       const { data, error } = await supabase.functions.invoke('resume-ai-assistant', {
         body: { 
           message,
@@ -216,7 +220,7 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
           resumeId: undefined,
           currentSection: currentSectionId,
           history: chats,
-          threadId: currentThreadId, // Pass current thread ID for continuity
+          threadId: currentThreadId,
           includeJobData: !hasInitialJobContext
         }
       });
@@ -228,20 +232,16 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
       let threadId = data.threadId;
       let systemPrompt = data.systemPrompt;
       
-      // Store the thread ID for later reference
       if (threadId) {
         setCurrentThreadId(threadId);
         
-        // Log for debugging
         console.log(`Chat using OpenAI thread: ${threadId}`);
       }
       
-      // Check if the response contains a suggestion
       if (data.suggestion) {
         suggestion = data.suggestion;
       }
       
-      // If we received a system prompt and it's not yet in our chat history, add it
       if (systemPrompt) {
         const hasSystemPrompt = chats.some(chat => 
           chat.role === 'system' && chat.threadId === threadId
@@ -256,7 +256,6 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
         }
       }
       
-      // Add AI response to chat
       setChats(prev => [...prev, {
         role: 'assistant',
         content: content,
@@ -303,7 +302,6 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
   const dialogTitle = simpleTipMode ? "Alchemy Ooze" : "Resume Assistant";
   const sheetTitle = "Chat with Alchemy Ooze";
 
-  // Grouping chat messages by role for a more organized display
   const groupedChats = chats.filter(chat => chat.role !== 'system');
 
   return (

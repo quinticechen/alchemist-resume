@@ -37,7 +37,40 @@ serve(async (req) => {
       throw new Error("Missing required parameter: analysisId");
     }
 
-    // Get resume data from the database
+    // Updated query to debug what's happening with the analysis ID
+    console.log(`Attempting to fetch analysis data for ID: ${analysisId}`);
+    
+    // Get resume data from the database using a simpler query first
+    const { data: rawData, error: rawDataError } = await supabaseAdmin
+      .from("resume_analyses")
+      .select("*")
+      .eq("id", analysisId)
+      .maybeSingle();
+      
+    if (rawDataError) {
+      console.error(`Error in raw query: ${rawDataError.message}`);
+      throw new Error(`Database error in raw query: ${rawDataError.message}`);
+    }
+    
+    if (!rawData) {
+      console.error(`No raw data found for analysis ID: ${analysisId}`);
+      
+      // Try to get any analysis data to debug
+      const { data: anyAnalysis, error: anyError } = await supabaseAdmin
+        .from("resume_analyses")
+        .select("id")
+        .limit(5);
+        
+      if (!anyError && anyAnalysis) {
+        console.log(`Available analysis IDs: ${JSON.stringify(anyAnalysis.map(a => a.id))}`);
+      }
+      
+      throw new Error(`No analysis data found for ID: ${analysisId}`);
+    }
+    
+    console.log(`Raw data found: ${JSON.stringify(rawData, null, 2).substring(0, 200)}...`);
+    
+    // Now get the detailed data we need
     const { data: analysisData, error: analysisError } = await supabaseAdmin
       .from("resume_analyses")
       .select(`
@@ -62,6 +95,33 @@ serve(async (req) => {
     if (!analysisData) {
       console.error(`No analysis data found for ID: ${analysisId}`);
       throw new Error(`No analysis data found for ID: ${analysisId}`);
+    }
+
+    console.log(`Analysis data found: ${JSON.stringify(analysisData).substring(0, 200)}...`);
+
+    if (!analysisData.resume) {
+      console.error(`Resume relationship not found for analysis ID: ${analysisId}`);
+      
+      // If we found the analysis but not the resume, try fetching the resume_id
+      if (rawData && rawData.resume_id) {
+        console.log(`Found resume_id: ${rawData.resume_id}, attempting direct fetch`);
+        
+        const { data: resumeData, error: resumeError } = await supabaseAdmin
+          .from("resumes")
+          .select("formatted_resume")
+          .eq("id", rawData.resume_id)
+          .maybeSingle();
+          
+        if (!resumeError && resumeData) {
+          console.log("Successfully fetched resume data directly");
+          // Create a compatible structure
+          analysisData.resume = { formatted_resume: resumeData.formatted_resume };
+        } else {
+          console.error(`Error fetching resume directly: ${resumeError?.message || "No data found"}`);
+        }
+      } else {
+        console.error("No resume_id found in raw data");
+      }
     }
 
     if (!analysisData.resume || !analysisData.resume.formatted_resume) {
