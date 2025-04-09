@@ -5,9 +5,15 @@ import OpenAI from "https://esm.sh/openai@4.24.1";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders } from "../_shared/cors.ts";
 
+// Validate OpenAI API key exists
+const openaiApiKey = Deno.env.get("OPENAI_API_KEY");
+if (!openaiApiKey) {
+  console.error("OPENAI_API_KEY environment variable is not set");
+}
+
 // Initialize OpenAI client with v2 header explicitly
 const openai = new OpenAI({
-  apiKey: Deno.env.get("OPENAI_API_KEY") || "",
+  apiKey: openaiApiKey || "",
   defaultHeaders: { "OpenAI-Beta": "assistants=v2" }
 });
 
@@ -200,55 +206,66 @@ Always be respectful, professional, and encouraging.`;
  * Run the assistant and wait for completion
  */
 async function runAssistantAndWaitForCompletion(threadId: string, systemPrompt: string) {
-  const run = await openai.beta.threads.runs.create(threadId, {
-    assistant_id: RESUME_ASSISTANT_ID,
-    instructions: systemPrompt,
-  });
-  
-  console.log(`Started assistant run: ${run.id}`);
+  console.log(`Starting assistant run with thread ${threadId} using v2 API`);
+  try {
+    const run = await openai.beta.threads.runs.create(threadId, {
+      assistant_id: RESUME_ASSISTANT_ID,
+      instructions: systemPrompt,
+    });
+    
+    console.log(`Started assistant run: ${run.id}`);
 
-  // Wait for completion
-  let runStatus = null;
-  let attempts = 0;
-  const maxAttempts = 60;
-  
-  while (attempts < maxAttempts) {
-    const runStatusResponse = await openai.beta.threads.runs.retrieve(threadId, run.id);
-    runStatus = runStatusResponse.status;
+    // Wait for completion
+    let runStatus = null;
+    let attempts = 0;
+    const maxAttempts = 60;
     
-    console.log(`Run status check ${attempts + 1}/${maxAttempts}: ${runStatus}`);
-    
-    if (runStatus === "completed") break;
-    if (runStatus === "failed" || runStatus === "cancelled" || runStatus === "expired") {
-      throw new Error(`Run failed with status: ${runStatus}`);
+    while (attempts < maxAttempts) {
+      const runStatusResponse = await openai.beta.threads.runs.retrieve(threadId, run.id);
+      runStatus = runStatusResponse.status;
+      
+      console.log(`Run status check ${attempts + 1}/${maxAttempts}: ${runStatus}`);
+      
+      if (runStatus === "completed") break;
+      if (runStatus === "failed" || runStatus === "cancelled" || runStatus === "expired") {
+        throw new Error(`Run failed with status: ${runStatus}`);
+      }
+      
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      attempts++;
     }
     
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    attempts++;
+    if (runStatus !== "completed") {
+      throw new Error(`Assistant run did not complete within the time limit`);
+    }
+    
+    return run.id;
+  } catch (error) {
+    console.error("Error running assistant:", error);
+    throw error;
   }
-  
-  if (runStatus !== "completed") {
-    throw new Error(`Assistant run did not complete within the time limit`);
-  }
-  
-  return run.id;
 }
 
 /**
  * Get the latest assistant message
  */
 async function getLatestAssistantMessage(threadId: string) {
-  const messages = await openai.beta.threads.messages.list(threadId);
-  
-  const lastAssistantMessage = messages.data
-    .filter((message) => message.role === "assistant")
-    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
+  try {
+    const messages = await openai.beta.threads.messages.list(threadId);
+    
+    const lastAssistantMessage = messages.data
+      .filter((message) => message.role === "assistant")
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
 
-  if (!lastAssistantMessage) {
-    throw new Error("No assistant response found");
+    if (!lastAssistantMessage) {
+      throw new Error("No assistant response found");
+    }
+    
+    return lastAssistantMessage;
+  } catch (error) {
+    console.error("Error getting latest assistant message:", error);
+    throw error;
   }
-  
-  return lastAssistantMessage;
 }
 
 /**
