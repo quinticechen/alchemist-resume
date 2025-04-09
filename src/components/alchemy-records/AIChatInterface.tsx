@@ -4,10 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card } from "@/components/ui/card";
-import { Send, ChevronDown, User, Bot, Zap } from "lucide-react";
+import { Send, ChevronDown, User, Bot, Zap, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useLocation } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 
 interface AIChatInterfaceProps {
   resumeId: string;
@@ -50,19 +50,27 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
   const [currentThreadId, setCurrentThreadId] = useState<string | null>(null);
   const [threadMetadata, setThreadMetadata] = useState<ThreadMetadata | null>(null);
   const location = useLocation();
+  const params = useParams();
   const [effectiveAnalysisId, setEffectiveAnalysisId] = useState<string | null>(null);
+  const [apiError, setApiError] = useState<string | null>(null);
   const dialogDescriptionId = "aiChatInterfaceDescription";
 
   // Extract analysis ID with improved robustness
   useEffect(() => {
     const extractAnalysisId = () => {
-      // First priority: use prop if available
+      // First priority: Check URL parameters
+      if (params.analysisId) {
+        console.log(`Found analysis ID in URL params: ${params.analysisId}`);
+        return params.analysisId;
+      }
+      
+      // Second priority: use prop if available and valid
       if (analysisId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(analysisId)) {
         console.log(`Using provided analysisId prop: ${analysisId}`);
         return analysisId;
       }
       
-      // Second priority: check URL path segments
+      // Third: check URL path segments
       const pathSegments = location.pathname.split('/');
       const potentialIds = pathSegments.filter(segment => 
         /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(segment)
@@ -73,7 +81,7 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
         return potentialIds[0];
       }
       
-      // Third priority: check location state
+      // Fourth: check location state
       if (location.state && location.state.analysisId) {
         console.log(`Found analysisId in location state: ${location.state.analysisId}`);
         return location.state.analysisId;
@@ -86,7 +94,10 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
     const id = extractAnalysisId();
     setEffectiveAnalysisId(id);
     console.log(`AIChatInterface initialized with effective analysis ID: ${id || "none"}`);
-  }, [analysisId, location]);
+    
+    // Reset API error when analysis ID changes
+    setApiError(null);
+  }, [analysisId, location, params]);
 
   useEffect(() => {
     const loadChatHistory = async () => {
@@ -135,6 +146,7 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
             }));
           
           setMessages(displayMessages);
+          console.log(`Loaded ${displayMessages.length} messages for analysis: ${effectiveAnalysisId}`);
         } else {
           const welcomeMessage: ChatMessage = {
             id: crypto.randomUUID(),
@@ -145,6 +157,7 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
           
           await saveChatMessage(welcomeMessage);
           setMessages([welcomeMessage]);
+          console.log("No existing messages, created welcome message");
         }
       } catch (error) {
         console.error('Error loading chat history:', error);
@@ -188,6 +201,7 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
         });
 
       if (error) throw error;
+      console.log(`Saved message with ID: ${message.id}`);
     } catch (error) {
       console.error('Error saving chat message:', error);
     }
@@ -204,6 +218,9 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
       });
       return;
     }
+    
+    // Clear any previous API errors
+    setApiError(null);
     
     const userMessage: ChatMessage = {
       id: crypto.randomUUID(),
@@ -222,6 +239,7 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
 
     try {
       console.log(`Sending message to resume-ai-assistant for analysis: ${effectiveAnalysisId}`);
+      console.log(`Using thread ID: ${currentThreadId || "new thread"}`);
       
       const { data, error } = await supabase.functions.invoke('resume-ai-assistant', {
         body: { 
@@ -261,10 +279,12 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
         };
         
         await saveChatMessage(systemMessage);
+        console.log("Stored system message in database");
       }
       
       if (threadId) {
         setCurrentThreadId(threadId);
+        console.log(`Using OpenAI thread ID: ${threadId}`);
         
         if (assistantId && runId) {
           setThreadMetadata({
@@ -286,6 +306,7 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
                 });
                 
               if (metadataError) throw metadataError;
+              console.log(`Stored new thread metadata: ${threadId}`);
             } catch (metadataErr) {
               console.error('Error saving thread metadata:', metadataErr);
             }
@@ -311,10 +332,18 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
       };
 
       setMessages(prev => [...prev, aiMessage]);
+      console.log("Added AI response to chat");
       
       await saveChatMessage(aiMessage);
+      
+      // Clear any previous errors
+      setApiError(null);
     } catch (error) {
       console.error('Error getting AI response:', error);
+      
+      // Set API error state
+      setApiError("Failed to connect to AI service. Please try again.");
+      
       const errorMessage: ChatMessage = {
         id: crypto.randomUUID(),
         role: 'assistant',
@@ -430,6 +459,14 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
                   </Card>
                 </div>
               ))}
+              
+              {apiError && (
+                <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-800 flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4" />
+                  <p>{apiError}</p>
+                </div>
+              )}
+              
               {!effectiveAnalysisId && (
                 <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-800">
                   <p className="font-medium">Unable to find resume analysis ID</p>

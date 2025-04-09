@@ -1,15 +1,14 @@
-
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import JellyfishAnimation from "@/components/JellyfishAnimation";
-import { MessageCircle, Lightbulb, Send } from "lucide-react";
+import { MessageCircle, Lightbulb, Send, AlertTriangle } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useLocation } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 
 interface JellyfishDialogProps {
   className?: string;
@@ -74,15 +73,20 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
   const [hasInitialJobContext, setHasInitialJobContext] = useState(false);
   const [currentThreadId, setCurrentThreadId] = useState<string | null>(null);
   const [analysisId, setAnalysisId] = useState<string | null>(null);
+  const [apiError, setApiError] = useState<string | null>(null);
   const { toast } = useToast();
   const location = useLocation();
+  const params = useParams();
   const dialogDescriptionId = "jellyfishDialogDescription";
   const sheetDescriptionId = "jellyfishSheetDescription";
 
-  // Extract analysis ID from URL with more robust handling
   useEffect(() => {
     const extractAnalysisId = () => {
-      // First attempt: Extract from path parameters
+      if (params.analysisId) {
+        console.log(`Found analysis ID in URL params: ${params.analysisId}`);
+        return params.analysisId;
+      }
+      
       const pathSegments = location.pathname.split('/');
       const potentialIds = pathSegments.filter(segment => 
         /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(segment)
@@ -93,7 +97,6 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
         return potentialIds[0];
       }
       
-      // Second attempt: Check location state
       if (location.state && location.state.analysisId) {
         console.log(`Found analysis ID in location state: ${location.state.analysisId}`);
         return location.state.analysisId;
@@ -106,7 +109,9 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
     const id = extractAnalysisId();
     setAnalysisId(id);
     console.log(`JellyfishDialog initialized with analysis ID: ${id || "none"}`);
-  }, [location]);
+    
+    setApiError(null);
+  }, [location, params]);
 
   useEffect(() => {
     const randomIndex = Math.floor(Math.random() * welcomeMessages.length);
@@ -224,6 +229,8 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
     }
     
     if (inputValue.trim()) {
+      setApiError(null);
+      
       setChats(prev => [...prev, {
         role: 'user',
         content: inputValue
@@ -253,6 +260,7 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
     setIsLoading(true);
     try {
       console.log(`Sending message to AI assistant for analysis: ${analysisId}`);
+      console.log(`Using thread ID: ${currentThreadId || "new thread"}`);
       
       const { data, error } = await supabase.functions.invoke('resume-ai-assistant', {
         body: { 
@@ -312,8 +320,13 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
         threadId: threadId
       }]);
       
+      setApiError(null);
+      
     } catch (error) {
       console.error('Error getting AI response:', error);
+      
+      setApiError(`Failed to connect to AI service. Please try again.`);
+      
       setChats(prev => [...prev, {
         role: 'assistant',
         content: "I'm sorry, I encountered an error. Please try again later."
@@ -442,6 +455,13 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
                     </div>
                   </div>
                 ))}
+                
+                {apiError && (
+                  <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-800 flex items-center gap-2">
+                    <AlertTriangle className="h-4 w-4" />
+                    <p>{apiError}</p>
+                  </div>
+                )}
                 
                 {!analysisId && (
                   <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-800">
