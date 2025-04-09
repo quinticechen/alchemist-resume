@@ -1,9 +1,14 @@
 
 // Resume AI Assistant Edge Function
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
-import { corsHeaders } from "../_shared/cors.ts";
 import OpenAI from "https://esm.sh/openai@4.24.1";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+// CORS headers for all responses
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
 
 // Initialize OpenAI client
 const openai = new OpenAI({
@@ -13,7 +18,7 @@ const openai = new OpenAI({
 // Define assistant ID
 const RESUME_ASSISTANT_ID = "asst_ahHD2JpnG0XCsHVBbCSUmRVr";
 
-// Initialize Supabase client with proper typing
+// Initialize Supabase admin client
 const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
 const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
@@ -25,10 +30,12 @@ serve(async (req) => {
   }
 
   try {
+    // Parse request body
     const { message, analysisId, currentSection, threadId } = await req.json();
     
     console.log(`Request received for analysis ID: ${analysisId}, section: ${currentSection || 'none'}, threadId: ${threadId || 'none'}`);
     
+    // Validate required parameters
     if (!message) {
       throw new Error("Missing required parameter: message");
     }
@@ -38,7 +45,7 @@ serve(async (req) => {
     }
 
     // Get resume and job data
-    const { data: analysisData, error: analysisError } = await supabaseAdmin
+    const { data: analysisData } = await supabaseAdmin
       .from("resume_analyses")
       .select(`
         id,
@@ -54,10 +61,7 @@ serve(async (req) => {
       .eq("id", analysisId)
       .single();
 
-    if (analysisError) {
-      console.error("Error fetching analysis data:", analysisError);
-    }
-
+    // Variables for content
     let resumeContent = "";
     let jobContext = "";
     
@@ -65,6 +69,7 @@ serve(async (req) => {
     let thread;
     let existingThread = false;
     
+    // Try to use existing thread ID if provided
     if (threadId) {
       try {
         thread = await openai.beta.threads.retrieve(threadId);
@@ -75,32 +80,32 @@ serve(async (req) => {
         thread = await openai.beta.threads.create();
       }
     } else {
-      // Check if a thread exists for this analysis
-      const { data: metadataData, error: metadataError } = await supabaseAdmin
-        .from("ai_chat_metadata")
-        .select("thread_id")
-        .eq("analysis_id", analysisId)
-        .order("created_at", { ascending: false })
-        .limit(1);
+      // Check for existing thread in metadata
+      try {
+        const { data: metadataData } = await supabaseAdmin
+          .from("ai_chat_metadata")
+          .select("thread_id")
+          .eq("analysis_id", analysisId)
+          .order("created_at", { ascending: false })
+          .limit(1);
 
-      if (metadataError) {
-        console.error("Error fetching chat metadata:", metadataError);
-        // Create a new thread if we couldn't fetch existing ones
-        thread = await openai.beta.threads.create();
-        console.log(`Created new thread (after metadata error): ${thread.id}`);
-      } else if (metadataData && metadataData.length > 0) {
-        try {
-          const existingThreadId = metadataData[0].thread_id;
-          thread = await openai.beta.threads.retrieve(existingThreadId);
-          existingThread = true;
-          console.log(`Retrieved existing thread: ${existingThreadId}`);
-        } catch (error) {
-          console.log(`Could not retrieve stored thread, creating new one`);
+        if (metadataData && metadataData.length > 0) {
+          try {
+            const existingThreadId = metadataData[0].thread_id;
+            thread = await openai.beta.threads.retrieve(existingThreadId);
+            existingThread = true;
+            console.log(`Retrieved existing thread: ${existingThreadId}`);
+          } catch (error) {
+            console.log(`Could not retrieve stored thread, creating new one`);
+            thread = await openai.beta.threads.create();
+          }
+        } else {
           thread = await openai.beta.threads.create();
+          console.log(`Created new thread: ${thread.id}`);
         }
-      } else {
+      } catch (error) {
+        console.log("Error fetching metadata, creating new thread");
         thread = await openai.beta.threads.create();
-        console.log(`Created new thread: ${thread.id}`);
       }
     }
     
@@ -144,36 +149,38 @@ serve(async (req) => {
       // If analysis data not found, try to get editor content
       console.log(`Analysis data not found, checking editor content`);
       
-      const { data: editorData, error: editorError } = await supabaseAdmin
-        .from('resume_editors')
-        .select('content')
-        .eq('analysis_id', analysisId)
-        .single();
-        
-      if (editorError) {
-        console.error("Error fetching editor data:", editorError);
-      } else if (editorData?.content?.resume) {
-        console.log(`Found editor content for analysis: ${analysisId}`);
-        
-        const resumeData = editorData.content.resume;
-        
-        if (currentSection === "skills" && resumeData.skills) {
-          resumeContent = JSON.stringify(resumeData.skills);
-        } else if (currentSection === "professionalExperience" && resumeData.professionalExperience) {
-          resumeContent = JSON.stringify(resumeData.professionalExperience);
-        } else if (currentSection === "education" && resumeData.education) {
-          resumeContent = JSON.stringify(resumeData.education);
-        } else if (currentSection === "projects" && resumeData.projects) {
-          resumeContent = JSON.stringify(resumeData.projects);
-        } else if (currentSection === "personalInfo" && resumeData.personalInfo) {
-          resumeContent = JSON.stringify(resumeData.personalInfo);
-        } else if (currentSection === "professionalSummary" && resumeData.professionalSummary) {
-          resumeContent = JSON.stringify(resumeData.professionalSummary);
-        } else if (currentSection === "certifications" && resumeData.certifications) {
-          resumeContent = JSON.stringify(resumeData.certifications);
-        } else if (currentSection === "volunteer" && resumeData.volunteer) {
-          resumeContent = JSON.stringify(resumeData.volunteer);
+      try {
+        const { data: editorData } = await supabaseAdmin
+          .from('resume_editors')
+          .select('content')
+          .eq('analysis_id', analysisId)
+          .single();
+          
+        if (editorData?.content?.resume) {
+          console.log(`Found editor content for analysis: ${analysisId}`);
+          
+          const resumeData = editorData.content.resume;
+          
+          if (currentSection === "skills" && resumeData.skills) {
+            resumeContent = JSON.stringify(resumeData.skills);
+          } else if (currentSection === "professionalExperience" && resumeData.professionalExperience) {
+            resumeContent = JSON.stringify(resumeData.professionalExperience);
+          } else if (currentSection === "education" && resumeData.education) {
+            resumeContent = JSON.stringify(resumeData.education);
+          } else if (currentSection === "projects" && resumeData.projects) {
+            resumeContent = JSON.stringify(resumeData.projects);
+          } else if (currentSection === "personalInfo" && resumeData.personalInfo) {
+            resumeContent = JSON.stringify(resumeData.personalInfo);
+          } else if (currentSection === "professionalSummary" && resumeData.professionalSummary) {
+            resumeContent = JSON.stringify(resumeData.professionalSummary);
+          } else if (currentSection === "certifications" && resumeData.certifications) {
+            resumeContent = JSON.stringify(resumeData.certifications);
+          } else if (currentSection === "volunteer" && resumeData.volunteer) {
+            resumeContent = JSON.stringify(resumeData.volunteer);
+          }
         }
+      } catch (error) {
+        console.log("Error fetching editor data, continuing with empty resumeContent");
       }
     }
 
@@ -257,44 +264,40 @@ Always be respectful, professional, and encouraging.`;
     
     console.log(`Retrieved assistant response for run: ${run.id}`);
 
-    // Store system prompt
-    const systemMessageId = crypto.randomUUID();
-    const { error: systemMessageError } = await supabaseAdmin
-      .from("ai_chat_messages")
-      .insert({
-        id: systemMessageId,
-        role: "system",
-        content: systemPrompt,
-        timestamp: new Date().toISOString(),
-        analysis_id: analysisId,
-        section: currentSection,
-        thread_id: thread.id
-      });
-      
-    if (systemMessageError) {
-      console.error("Error storing system message:", systemMessageError);
-    } else {
-      console.log(`Stored system prompt in database with ID: ${systemMessageId}`);
-    }
-
     // Save thread metadata
-    const { error: metadataError } = await supabaseAdmin
-      .from("ai_chat_metadata")
-      .upsert({
-        analysis_id: analysisId,
-        thread_id: thread.id,
-        assistant_id: RESUME_ASSISTANT_ID,
-        run_id: run.id,
-        section: currentSection,
-        updated_at: new Date().toISOString()
-      }, {
-        onConflict: 'analysis_id,thread_id'
-      });
-      
-    if (metadataError) {
-      console.error("Error storing thread metadata:", metadataError);
-    } else {
+    try {
+      await supabaseAdmin
+        .from("ai_chat_metadata")
+        .upsert({
+          analysis_id: analysisId,
+          thread_id: thread.id,
+          assistant_id: RESUME_ASSISTANT_ID,
+          run_id: run.id,
+          section: currentSection,
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'analysis_id,thread_id'
+        });
+        
       console.log(`Stored thread metadata in database`);
+      
+      // Store system message
+      const systemMessageId = crypto.randomUUID();
+      await supabaseAdmin
+        .from("ai_chat_messages")
+        .insert({
+          id: systemMessageId,
+          role: "system",
+          content: systemPrompt,
+          timestamp: new Date().toISOString(),
+          analysis_id: analysisId,
+          section: currentSection,
+          thread_id: thread.id
+        });
+        
+      console.log(`Stored system prompt in database with ID: ${systemMessageId}`);
+    } catch (error) {
+      console.log("Error storing metadata, continuing");
     }
 
     // Return response

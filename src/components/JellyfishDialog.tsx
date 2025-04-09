@@ -1,8 +1,9 @@
+
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import JellyfishAnimation from "@/components/JellyfishAnimation";
-import { MessageCircle, Lightbulb, Send, AlertTriangle } from "lucide-react";
+import { MessageCircle, Lightbulb, Send, AlertTriangle, Loader2 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
@@ -70,6 +71,7 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
   const [chats, setChats] = useState<ChatMessage[]>([]);
   const [autoSuggestionTimerId, setAutoSuggestionTimerId] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isRetrying, setIsRetrying] = useState(false);
   const [hasInitialJobContext, setHasInitialJobContext] = useState(false);
   const [currentThreadId, setCurrentThreadId] = useState<string | null>(null);
   const [analysisId, setAnalysisId] = useState<string | null>(null);
@@ -79,14 +81,22 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
   const params = useParams();
   const dialogDescriptionId = "jellyfishDialogDescription";
   const sheetDescriptionId = "jellyfishSheetDescription";
+  const messagesEndRef = React.useRef<HTMLDivElement>(null);
+  
+  // Auto-scroll to bottom when chat changes
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [chats]);
 
   useEffect(() => {
     const extractAnalysisId = () => {
+      // First check URL parameters
       if (params.analysisId) {
         console.log(`Found analysis ID in URL params: ${params.analysisId}`);
         return params.analysisId;
       }
       
+      // Then check URL path segments for UUID format
       const pathSegments = location.pathname.split('/');
       const potentialIds = pathSegments.filter(segment => 
         /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(segment)
@@ -97,6 +107,7 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
         return potentialIds[0];
       }
       
+      // Finally check location state
       if (location.state && location.state.analysisId) {
         console.log(`Found analysis ID in location state: ${location.state.analysisId}`);
         return location.state.analysisId;
@@ -110,22 +121,25 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
     setAnalysisId(id);
     console.log(`JellyfishDialog initialized with analysis ID: ${id || "none"}`);
     
+    // Reset error state when analysis ID changes
     setApiError(null);
   }, [location, params]);
 
   useEffect(() => {
+    // Initialize chat with a random welcome message
     const randomIndex = Math.floor(Math.random() * welcomeMessages.length);
     setChats([{
       role: 'assistant',
       content: welcomeMessages[randomIndex]
     }]);
 
+    // Set up auto-suggestion timer (if not in simpleTipMode)
     if (!simpleTipMode) {
       const timerId = window.setInterval(() => {
         if (!isDialogOpen && !isSheetOpen) {
           showRandomTip();
         }
-      }, Math.random() * 60000 + 120000);
+      }, Math.random() * 60000 + 120000); // Random time between 2-3 minutes
 
       setAutoSuggestionTimerId(timerId);
 
@@ -246,6 +260,29 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
       }
     }
   };
+  
+  const handleRetry = async () => {
+    if (!analysisId || chats.length === 0) return;
+    
+    setIsRetrying(true);
+    setApiError(null);
+    
+    // Get the last user message
+    const lastUserMessage = [...chats]
+      .filter(msg => msg.role === 'user')
+      .pop();
+      
+    if (!lastUserMessage) {
+      setIsRetrying(false);
+      return;
+    }
+    
+    try {
+      await sendToAIAssistant(lastUserMessage.content);
+    } finally {
+      setIsRetrying(false);
+    }
+  };
 
   const sendToAIAssistant = async (message: string) => {
     if (!analysisId) {
@@ -266,11 +303,8 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
         body: { 
           message,
           analysisId,
-          resumeId: undefined,
           currentSection: currentSectionId,
-          history: chats,
-          threadId: currentThreadId,
-          includeJobData: !hasInitialJobContext
+          threadId: currentThreadId
         }
       });
       
@@ -313,6 +347,7 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
         }
       }
       
+      // Add AI response to chat
       setChats(prev => [...prev, {
         role: 'assistant',
         content: content,
@@ -358,12 +393,18 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
   const handleApplySuggestion = (suggestion: string) => {
     if (onSuggestionApply && currentSectionId) {
       onSuggestionApply(suggestion, currentSectionId);
+      
+      toast({
+        title: "Suggestion Applied",
+        description: "The suggestion has been applied to your resume."
+      });
     }
   };
 
   const dialogTitle = simpleTipMode ? "Alchemy Ooze" : "Resume Assistant";
   const sheetTitle = "Chat with Alchemy Ooze";
 
+  // Filter out system messages for display
   const groupedChats = chats.filter(chat => chat.role !== 'system');
 
   return (
@@ -457,9 +498,27 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
                 ))}
                 
                 {apiError && (
-                  <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-800 flex items-center gap-2">
-                    <AlertTriangle className="h-4 w-4" />
-                    <p>{apiError}</p>
+                  <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-800 flex flex-col gap-2">
+                    <div className="flex items-center gap-2">
+                      <AlertTriangle className="h-4 w-4" />
+                      <p>{apiError}</p>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="self-end" 
+                      onClick={handleRetry}
+                      disabled={isRetrying}
+                    >
+                      {isRetrying ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Retrying...
+                        </>
+                      ) : (
+                        'Retry'
+                      )}
+                    </Button>
                   </div>
                 )}
                 
@@ -469,6 +528,8 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
                     <p className="text-sm mt-1">Try refreshing the page or navigating back to the resume list.</p>
                   </div>
                 )}
+                
+                <div ref={messagesEndRef} />
               </div>
             </ScrollArea>
             
@@ -497,10 +558,16 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
                   onClick={handleSendMessage} 
                   disabled={isLoading || inputValue.trim() === '' || !analysisId}
                 >
-                  <Send className="h-4 w-4" />
+                  {isLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4" />
+                  )}
                 </Button>
               </div>
+              
               {isLoading && <p className="text-sm text-muted-foreground">AI is thinking...</p>}
+              
               {currentThreadId && (
                 <p className="text-xs text-muted-foreground">
                   Thread ID: {currentThreadId.substring(0, 12)}...
