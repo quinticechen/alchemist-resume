@@ -14,6 +14,7 @@ interface JellyfishAnimationProps {
   isStopped?: boolean;
   mobileWidth?: number;
   mobileHeight?: number;
+  showShadow?: boolean;
 }
 
 const JellyfishAnimation: React.FC<JellyfishAnimationProps> = ({ 
@@ -25,7 +26,8 @@ const JellyfishAnimation: React.FC<JellyfishAnimationProps> = ({
   loop = true,
   autoplay = true,
   isPaused = false,
-  isStopped = false
+  isStopped = false,
+  showShadow = false
 }) => {
   const isMobile = useIsMobile();
   
@@ -42,7 +44,15 @@ const JellyfishAnimation: React.FC<JellyfishAnimationProps> = ({
   const finalHeight = isMobile ? mobileHeight : height;
 
   return (
-    <div className={className}>
+    <div className={`relative ${className}`}>
+      {showShadow && (
+        <div 
+          className="absolute bottom-0 left-1/2 -translate-x-1/2 bg-black/10 h-3 w-3/4 rounded-full blur-md"
+          style={{
+            width: `${finalWidth * 0.6}px`,
+          }}
+        />
+      )}
       <Lottie
         options={defaultOptions}
         height={finalHeight}

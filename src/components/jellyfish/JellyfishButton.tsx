@@ -55,6 +55,7 @@ const JellyfishButton: React.FC<JellyfishButtonProps> = ({
           height={100} 
           mobileWidth={80}
           mobileHeight={80}
+          showShadow={true}
         />
         {!simpleTipMode && (
           <MessageCircle className="absolute bottom-6 right-6 bg-primary text-primary-foreground rounded-full p-1 h-6 w-6 animate-pulse" />

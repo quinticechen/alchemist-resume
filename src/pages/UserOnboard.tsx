@@ -17,30 +17,37 @@ const UserOnboard = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100 flex flex-col items-center justify-center p-4">
       <div className="max-w-4xl w-full flex flex-col items-center">
-        {/* OOze with speech bubble */}
-        <div className="relative mb-8 w-full flex justify-center">
-          <div className="relative">
-            <JellyfishAnimation 
-              width={140} 
-              height={140} 
-              mobileWidth={100}
-              mobileHeight={100}
-            />
-            
-            {/* Speech bubble - styled to be lighter */}
-            <div className={`absolute ${isMobile ? '-top-40' : '-top-4 -right-64'} bg-white border border-neutral-200 rounded-3xl p-4 shadow-sm w-64 md:w-60 z-10`}>
-              <div className={`absolute ${isMobile ? 'left-1/2 -bottom-2 -translate-x-1/2 rotate-45' : '-left-3 top-1/2 -translate-y-1/2 rotate-45'} w-4 h-4 bg-white border-b border-r border-neutral-200`}></div>
-              <p className="text-sm font-medium text-neutral-800 relative z-10">
+        {/* OOze with speech bubble - centered on page */}
+        <div className="relative mb-12 flex justify-center">
+          {/* Speech bubble */}
+          <div className="relative mb-4 z-10">
+            <div className={`bg-white border border-neutral-100 rounded-3xl p-5 shadow-sm ${isMobile ? 'max-w-xs' : 'max-w-md'}`}>
+              <div className="absolute left-1/2 bottom-0 transform translate-y-1/2 -translate-x-1/2 rotate-45 w-4 h-4 bg-white border-r border-b border-neutral-100"></div>
+              <p className="text-center text-sm md:text-base font-medium text-neutral-800">
                 Hmph! I'm OOze, the Resume Alchemist here. Want to make your resume stand out? Click below to begin!
               </p>
             </div>
           </div>
+          
+          {/* Jellyfish animation */}
+          <div className="absolute top-full -mt-2">
+            <JellyfishAnimation 
+              width={100} 
+              height={100} 
+              mobileWidth={80}
+              mobileHeight={80}
+              showShadow={true}
+            />
+          </div>
         </div>
+        
+        {/* Add spacing to account for the jellyfish */}
+        <div className="mt-16"></div>
 
-        <Card className="p-6 md:p-8 shadow-sm border border-neutral-200 bg-white w-full">
+        <Card className="p-6 md:p-8 shadow-sm border border-neutral-200 bg-white w-full max-w-2xl mx-auto mt-12">
           <h1 className="text-3xl md:text-4xl font-bold text-primary text-center">Welcome to Resume Alchemist!</h1>
           
-          <p className="text-base md:text-lg text-neutral-500 text-center mt-4">
+          <p className="text-base md:text-lg text-neutral-500 text-center mt-4 mx-auto max-w-xl">
             Upload your resume and job description to get a tailored, optimized resume that gets you noticed.
           </p>
           
