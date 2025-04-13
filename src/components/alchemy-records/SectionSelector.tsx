@@ -1,9 +1,8 @@
 
-import React, { useState, useEffect } from 'react';
-import { ResumeSection, getSectionDisplayName, getAllSections } from '@/utils/resumeUtils';
-import { Button } from "@/components/ui/button";
+import React from 'react';
+import { ResumeSection, getSectionDisplayName } from '@/utils/resumeUtils';
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
-import { GripVertical } from "lucide-react";
+import { GripVertical, ChevronDown, ChevronUp } from "lucide-react";
 
 interface SectionSelectorProps {
   sections: ResumeSection[];
@@ -48,24 +47,26 @@ const SectionSelector = ({
                     <div
                       ref={provided.innerRef}
                       {...provided.draggableProps}
-                      className="flex items-center"
+                      className="flex items-center bg-white hover:bg-gray-50 rounded-md border p-2"
                     >
                       <div 
                         {...provided.dragHandleProps}
-                        className="p-2 cursor-grab"
+                        className="p-1 cursor-grab"
                       >
                         <GripVertical className="h-4 w-4 text-gray-400" />
                       </div>
                       
-                      <Button
-                        variant="ghost"
-                        className="justify-start text-left flex-1"
+                      <span className="flex-1 ml-2">{getSectionDisplayName(section)}</span>
+                      
+                      <button
                         onClick={() => onSectionToggle(section)}
+                        className="p-1 hover:bg-gray-200 rounded-full"
                       >
-                        <span className="flex items-center gap-2">
-                          {collapsedSections[section] ? '▶' : '▼'} {getSectionDisplayName(section)}
-                        </span>
-                      </Button>
+                        {collapsedSections[section] ? 
+                          <ChevronDown className="h-4 w-4" /> : 
+                          <ChevronUp className="h-4 w-4" />
+                        }
+                      </button>
                     </div>
                   )}
                 </Draggable>

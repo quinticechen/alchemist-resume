@@ -11,7 +11,7 @@ import VolunteerSection from './VolunteerSection';
 import CertificationsSection from './CertificationsSection';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp, GripVertical } from "lucide-react";
 
 interface SectionEditorProps {
   section: ResumeSection;
@@ -19,9 +19,17 @@ interface SectionEditorProps {
   onChange: (updatedData: any) => void;
   isCollapsed?: boolean;
   onToggleCollapse?: (section: ResumeSection, collapsed: boolean) => void;
+  isDraggable?: boolean;
 }
 
-const SectionEditor = ({ section, resumeData, onChange, isCollapsed = false, onToggleCollapse }: SectionEditorProps) => {
+const SectionEditor = ({ 
+  section, 
+  resumeData, 
+  onChange, 
+  isCollapsed = false, 
+  onToggleCollapse,
+  isDraggable = false
+}: SectionEditorProps) => {
   // Extract resume from the data structure if it exists, otherwise use the data as is
   const data = resumeData?.resume || resumeData || {};
 
@@ -95,11 +103,18 @@ const SectionEditor = ({ section, resumeData, onChange, isCollapsed = false, onT
   };
 
   return (
-    <Collapsible open={!isCollapsed} onOpenChange={(open) => onToggleCollapse && onToggleCollapse(section, !open)} className="mb-6 border rounded-md">
+    <Collapsible 
+      open={!isCollapsed} 
+      onOpenChange={(open) => onToggleCollapse && onToggleCollapse(section, !open)} 
+      className="mb-6 border rounded-md shadow-sm"
+    >
       <div className="bg-gray-50 p-4 flex justify-between items-center border-b">
-        <h3 className="text-lg font-medium">{getSectionTitle()}</h3>
+        <div className="flex items-center gap-2">
+          {isDraggable && <GripVertical className="h-4 w-4 text-gray-400 cursor-grab" />}
+          <h3 className="text-lg font-medium">{getSectionTitle()}</h3>
+        </div>
         <CollapsibleTrigger asChild>
-          <Button variant="ghost" size="sm" onClick={handleToggleCollapse}>
+          <Button variant="ghost" size="sm" onClick={handleToggleCollapse} className="p-1 h-8 w-8">
             {isCollapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
           </Button>
         </CollapsibleTrigger>

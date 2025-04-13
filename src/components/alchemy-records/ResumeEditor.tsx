@@ -265,36 +265,31 @@ const ResumeEditor = ({
 
               {/* Resume Editor (Middle) */}
               <ResizablePanel defaultSize={50} minSize={30}>
-                <div className="h-full overflow-auto">
-                  <div className="mb-4 flex justify-between items-center">
+                <div className="h-full overflow-auto p-2">
+                  <div className="mb-4 flex items-center">
                     <h3 className="text-xl font-semibold">Resume Sections</h3>
-                    <Button variant="outline" onClick={() => handleSectionsReorder(getAllSections())}>
-                      Reset Order
-                    </Button>
                   </div>
-                  <div className="space-y-2">
-                    {/* Section Selector - Only shown on mobile */}
-                    <div className="lg:hidden mb-4">
-                      <SectionSelector 
-                        sections={sectionOrder}
-                        onSectionToggle={handleSectionToggle}
-                        onSectionsReorder={handleSectionsReorder}
-                        collapsedSections={collapsedSections}
-                      />
-                    </div>
-                    
-                    {/* Show all sections with collapse/expand */}
-                    {sectionOrder.map((section) => (
-                      <SectionEditor 
-                        key={section}
-                        section={section} 
-                        resumeData={resumeData} 
-                        onChange={handleResumeDataChange}
-                        isCollapsed={collapsedSections[section]}
-                        onToggleCollapse={handleSectionToggle}
-                      />
-                    ))}
+                  
+                  <div className="lg:hidden mb-4">
+                    <SectionSelector 
+                      sections={sectionOrder}
+                      onSectionToggle={handleSectionToggle}
+                      onSectionsReorder={handleSectionsReorder}
+                      collapsedSections={collapsedSections}
+                    />
                   </div>
+                  
+                  {sectionOrder.map((section) => (
+                    <SectionEditor 
+                      key={section}
+                      section={section} 
+                      resumeData={resumeData} 
+                      onChange={handleResumeDataChange}
+                      isCollapsed={collapsedSections[section]}
+                      onToggleCollapse={handleSectionToggle}
+                      isDraggable={true}
+                    />
+                  ))}
                 </div>
               </ResizablePanel>
 
