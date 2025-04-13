@@ -7,16 +7,24 @@ interface JellyfishAnimationProps {
   width?: number;
   height?: number;
   className?: string;
+  loop?: boolean;
+  autoplay?: boolean;
+  isPaused?: boolean;
+  isStopped?: boolean;
 }
 
 const JellyfishAnimation: React.FC<JellyfishAnimationProps> = ({ 
   width = 200, 
   height = 200,
-  className = "" 
+  className = "",
+  loop = true,
+  autoplay = true,
+  isPaused = false,
+  isStopped = false
 }) => {
   const defaultOptions = {
-    loop: true,
-    autoplay: true,
+    loop,
+    autoplay,
     animationData: jellyfishAnimation,
     rendererSettings: {
       preserveAspectRatio: "xMidYMid slice"
@@ -29,6 +37,8 @@ const JellyfishAnimation: React.FC<JellyfishAnimationProps> = ({
         options={defaultOptions}
         height={height}
         width={width}
+        isPaused={isPaused}
+        isStopped={isStopped}
       />
     </div>
   );

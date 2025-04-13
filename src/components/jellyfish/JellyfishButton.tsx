@@ -9,13 +9,17 @@ interface JellyfishButtonProps {
   position: "top" | "middle" | "bottom";
   className?: string;
   simpleTipMode: boolean;
+  showChatBubble?: boolean;
+  chatMessage?: string;
 }
 
 const JellyfishButton: React.FC<JellyfishButtonProps> = ({ 
   onClick, 
   position, 
   className = "", 
-  simpleTipMode 
+  simpleTipMode,
+  showChatBubble = false,
+  chatMessage = ""
 }) => {
   const positionClasses = {
     top: "top-24",
@@ -25,6 +29,15 @@ const JellyfishButton: React.FC<JellyfishButtonProps> = ({
 
   return (
     <div className={`fixed right-6 ${positionClasses[position]} z-50 ${className}`}>
+      {showChatBubble && (
+        <div className="absolute -left-64 top-1/2 transform -translate-y-1/2 bg-white rounded-2xl p-4 shadow-lg w-60">
+          <div className="absolute -right-3 top-1/2 transform -translate-y-1/2 rotate-45 w-6 h-6 bg-white"></div>
+          <p className="text-sm font-medium text-neutral-800 relative z-10">
+            {chatMessage}
+          </p>
+        </div>
+      )}
+
       <Button
         variant="ghost"
         size="icon"
