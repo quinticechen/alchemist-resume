@@ -1,4 +1,3 @@
-
 // Resume AI Assistant Edge Function
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import OpenAI from "https://esm.sh/openai@4.24.1";
@@ -18,7 +17,7 @@ const openai = new OpenAI({
 });
 
 // Define assistant ID
-const RESUME_ASSISTANT_ID = "asst_ahHD2JpnG0XCsHVBbCSUmRVr";
+const RESUME_ASSISTANT_ID = "asst_kSRCmsWHioSMYH5W0G04dLU0";
 
 // Initialize Supabase admin client
 const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
