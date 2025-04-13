@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,6 +7,7 @@ import { CheckCircle, Save, AlertTriangle, Eye, FileJson } from 'lucide-react';
 import SectionSelector from './SectionSelector';
 import SectionEditor from './sections/SectionEditor';
 import JobDescriptionViewer from './JobDescriptionViewer';
+import SeekerOptimizationSection from './SeekerOptimizationSection';
 import { ResumeSection, getFormattedResume, getAllSections } from '@/utils/resumeUtils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNavigate } from 'react-router-dom';
@@ -35,18 +37,11 @@ const ResumeEditor = ({
   const [savedData, setSavedData] = useState<any>(null);
   const [hasUnsavedChanges, setLocalHasUnsavedChanges] = useState<boolean>(false);
   const [editorId, setEditorId] = useState<string | null>(null);
-  const [activeSection, setActiveSection] = useState<ResumeSection>(initialActiveSection || 'personalInfo');
   const [viewMode, setViewMode] = useState<'visual' | 'json'>('visual');
   const [sectionOrder, setSectionOrder] = useState<ResumeSection[]>(getAllSections());
-  const [currentSectionContent, setCurrentSectionContent] = useState<string>('');
+  const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
   const { toast } = useToast();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    if (initialActiveSection) {
-      setActiveSection(initialActiveSection);
-    }
-  }, [initialActiveSection]);
 
   useEffect(() => {
     const fetchResumeAndJobData = async () => {
@@ -83,7 +78,6 @@ const ResumeEditor = ({
 
         if (editorData) {
           const content = editorData.content;
-          console.log('Editor content loaded:', content);
           
           if (content.sectionOrder && Array.isArray(content.sectionOrder)) {
             setSectionOrder(content.sectionOrder);
@@ -144,188 +138,25 @@ const ResumeEditor = ({
     setHasUnsavedChanges(contentChanged);
   }, [resumeData, savedData, setHasUnsavedChanges]);
 
-  useEffect(() => {
-    if (resumeData && activeSection) {
-      let sectionContent = '';
-      
-      if (resumeData.resume) {
-        switch (activeSection) {
-          case 'professionalSummary':
-            sectionContent = resumeData.resume.summary || '';
-            break;
-          case 'personalInfo':
-            sectionContent = JSON.stringify(resumeData.resume.personalInfo || {});
-            break;
-          case 'professionalExperience':
-            sectionContent = JSON.stringify(resumeData.resume.experience || []);
-            break;
-          case 'education':
-            sectionContent = JSON.stringify(resumeData.resume.education || []);
-            break;
-          case 'skills':
-            sectionContent = JSON.stringify(resumeData.resume.skills || []);
-            break;
-          default:
-            sectionContent = JSON.stringify(resumeData.resume[activeSection] || {});
-        }
-      } else {
-        switch (activeSection) {
-          case 'professionalSummary':
-            sectionContent = resumeData.summary || '';
-            break;
-          case 'personalInfo':
-            sectionContent = JSON.stringify(resumeData.personalInfo || {});
-            break;
-          case 'professionalExperience':
-            sectionContent = JSON.stringify(resumeData.experience || []);
-            break;
-          case 'education':
-            sectionContent = JSON.stringify(resumeData.education || []);
-            break;
-          case 'skills':
-            sectionContent = JSON.stringify(resumeData.skills || []);
-            break;
-          default:
-            sectionContent = JSON.stringify(resumeData[activeSection] || {});
-        }
-      }
-      
-      setCurrentSectionContent(sectionContent);
-    }
-  }, [resumeData, activeSection]);
+  const handleSectionToggle = useCallback((section: ResumeSection) => {
+    setCollapsedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  }, []);
 
-  const handleSectionChange = (section: ResumeSection) => {
-    setActiveSection(section);
-    if (parentSectionChangeHandler) {
-      parentSectionChangeHandler(section);
-    }
-  };
-
-  const handleSectionsReorder = (sections: ResumeSection[]) => {
+  const handleSectionsReorder = useCallback((sections: ResumeSection[]) => {
     setSectionOrder(sections);
     
     setResumeData((prevData: any) => ({
       ...prevData,
       sectionOrder: sections
     }));
-  };
+  }, []);
 
-  const handleResumeDataChange = (updatedData: any) => {
-    console.log('Resume data being updated:', updatedData);
+  const handleResumeDataChange = useCallback((updatedData: any) => {
     setResumeData(updatedData);
-  };
-
-  const handleSuggestionApply = (text: string, sectionId: string) => {
-    if (!resumeData) return;
-    
-    try {
-      if (sectionId === 'professionalSummary') {
-        if (resumeData.resume) {
-          handleResumeDataChange({
-            ...resumeData,
-            resume: {
-              ...resumeData.resume,
-              summary: text
-            }
-          });
-        } else {
-          handleResumeDataChange({
-            ...resumeData,
-            summary: text
-          });
-        }
-      } else if (sectionId === 'personalInfo' || 
-                sectionId === 'professionalExperience' || 
-                sectionId === 'education' || 
-                sectionId === 'skills' ||
-                sectionId === 'projects' ||
-                sectionId === 'volunteer' ||
-                sectionId === 'certifications') {
-        try {
-          const parsedContent = JSON.parse(text);
-          
-          if (resumeData.resume) {
-            const updatedResume = { ...resumeData.resume };
-            
-            switch (sectionId) {
-              case 'personalInfo':
-                updatedResume.personalInfo = parsedContent;
-                break;
-              case 'professionalExperience':
-                updatedResume.experience = parsedContent;
-                break;
-              case 'education':
-                updatedResume.education = parsedContent;
-                break;
-              case 'skills':
-                updatedResume.skills = parsedContent;
-                break;
-              case 'projects':
-                updatedResume.projects = parsedContent;
-                break;
-              case 'volunteer':
-                updatedResume.volunteer = parsedContent;
-                break;
-              case 'certifications':
-                updatedResume.certifications = parsedContent;
-                break;
-              default:
-                updatedResume[sectionId] = parsedContent;
-            }
-            
-            handleResumeDataChange({
-              ...resumeData,
-              resume: updatedResume
-            });
-          } else {
-            const updatedData = { ...resumeData };
-            
-            switch (sectionId) {
-              case 'personalInfo':
-                updatedData.personalInfo = parsedContent;
-                break;
-              case 'professionalExperience':
-                updatedData.experience = parsedContent;
-                break;
-              case 'education':
-                updatedData.education = parsedContent;
-                break;
-              case 'skills':
-                updatedData.skills = parsedContent;
-                break;
-              case 'projects':
-                updatedData.projects = parsedContent;
-                break;
-              case 'volunteer':
-                updatedData.volunteer = parsedContent;
-                break;
-              case 'certifications':
-                updatedData.certifications = parsedContent;
-                break;
-              default:
-                updatedData[sectionId] = parsedContent;
-            }
-            
-            handleResumeDataChange(updatedData);
-          }
-        } catch (e) {
-          console.error("Failed to parse AI suggestion as JSON:", e);
-          toast({
-            title: "Error Applying Suggestion",
-            description: "Could not apply the AI suggestion. The format was not compatible.",
-            variant: "destructive"
-          });
-        }
-      }
-    } catch (error) {
-      console.error("Error applying AI suggestion:", error);
-      toast({
-        title: "Error",
-        description: "Failed to apply the suggestion. Please try again.",
-        variant: "destructive"
-      });
-    }
-  };
+  }, []);
 
   const validateResumeData = (data: any): boolean => {
     try {
@@ -422,52 +253,64 @@ const ResumeEditor = ({
       <div className="flex-1 min-h-0">
         <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as 'visual' | 'json')} className="h-full">
           <TabsContent value="visual" className="mt-0 h-full">
-            <ResizablePanelGroup direction="horizontal" className="h-[600px]">
+            <ResizablePanelGroup direction="horizontal" className="h-[700px]">
+              {/* Job Description (Left) */}
               <ResizablePanel defaultSize={25} minSize={15}>
-                <div className="h-full p-2">
-                  <SectionSelector 
-                    currentSection={activeSection} 
-                    onSectionChange={handleSectionChange} 
-                    onSectionsReorder={handleSectionsReorder}
-                    initialSections={resumeData?.sectionOrder || sectionOrder}
-                  />
-                </div>
-              </ResizablePanel>
-
-              <ResizableHandle withHandle />
-
-              <ResizablePanel defaultSize={50} minSize={30}>
-                <div className="border rounded-md p-6 h-full overflow-auto">
-                  <h2 className="text-xl font-semibold mb-4">
-                    {activeSection === 'personalInfo' ? 'Personal Information' : 
-                     activeSection === 'professionalSummary' ? 'Professional Summary' : 
-                     activeSection === 'professionalExperience' ? 'Professional Experience' :
-                     activeSection === 'education' ? 'Education' :
-                     activeSection === 'skills' ? 'Skills' :
-                     activeSection === 'projects' ? 'Projects' :
-                     activeSection === 'volunteer' ? 'Volunteer Experience' :
-                     activeSection === 'certifications' ? 'Certifications' : 'Resume Section'}
-                  </h2>
-                  <SectionEditor 
-                    section={activeSection} 
-                    resumeData={resumeData} 
-                    onChange={handleResumeDataChange} 
-                  />
-                </div>
-              </ResizablePanel>
-
-              <ResizableHandle withHandle />
-
-              <ResizablePanel defaultSize={25} minSize={15}>
-                <div className="h-full p-2">
+                <div className="h-full p-2 overflow-y-auto">
                   <JobDescriptionViewer jobData={jobData} />
+                </div>
+              </ResizablePanel>
+
+              <ResizableHandle withHandle />
+
+              {/* Resume Editor (Middle) */}
+              <ResizablePanel defaultSize={50} minSize={30}>
+                <div className="h-full overflow-auto">
+                  <div className="mb-4 flex justify-between items-center">
+                    <h3 className="text-xl font-semibold">Resume Sections</h3>
+                    <Button variant="outline" onClick={() => handleSectionsReorder(getAllSections())}>
+                      Reset Order
+                    </Button>
+                  </div>
+                  <div className="space-y-2">
+                    {/* Section Selector - Only shown on mobile */}
+                    <div className="lg:hidden mb-4">
+                      <SectionSelector 
+                        sections={sectionOrder}
+                        onSectionToggle={handleSectionToggle}
+                        onSectionsReorder={handleSectionsReorder}
+                        collapsedSections={collapsedSections}
+                      />
+                    </div>
+                    
+                    {/* Show all sections with collapse/expand */}
+                    {sectionOrder.map((section) => (
+                      <SectionEditor 
+                        key={section}
+                        section={section} 
+                        resumeData={resumeData} 
+                        onChange={handleResumeDataChange}
+                        isCollapsed={collapsedSections[section]}
+                        onToggleCollapse={handleSectionToggle}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </ResizablePanel>
+
+              <ResizableHandle withHandle />
+
+              {/* Seeker Optimization (Right) */}
+              <ResizablePanel defaultSize={25} minSize={15}>
+                <div className="h-full p-2 overflow-y-auto">
+                  <SeekerOptimizationSection optimizationData={resumeData} />
                 </div>
               </ResizablePanel>
             </ResizablePanelGroup>
           </TabsContent>
           
           <TabsContent value="json" className="mt-0 h-full">
-            <div className="border rounded-md h-[600px]">
+            <div className="border rounded-md h-[700px]">
               <textarea
                 value={JSON.stringify(resumeData, null, 2)}
                 onChange={handleRawJsonChange}

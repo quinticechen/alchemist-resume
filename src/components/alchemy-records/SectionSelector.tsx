@@ -6,27 +6,18 @@ import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautif
 import { GripVertical } from "lucide-react";
 
 interface SectionSelectorProps {
-  currentSection: ResumeSection;
-  onSectionChange: (section: ResumeSection) => void;
+  sections: ResumeSection[];
+  onSectionToggle: (section: ResumeSection) => void;
   onSectionsReorder: (sections: ResumeSection[]) => void;
-  initialSections?: ResumeSection[];
+  collapsedSections: Record<string, boolean>;
 }
 
 const SectionSelector = ({ 
-  currentSection, 
-  onSectionChange, 
+  sections,
+  onSectionToggle,
   onSectionsReorder,
-  initialSections 
+  collapsedSections
 }: SectionSelectorProps) => {
-  const [sections, setSections] = useState<ResumeSection[]>(
-    initialSections || getAllSections()
-  );
-  
-  useEffect(() => {
-    if (initialSections) {
-      setSections(initialSections);
-    }
-  }, [initialSections]);
   
   const handleDragEnd = (result: DropResult) => {
     if (!result.destination) return;
@@ -35,7 +26,6 @@ const SectionSelector = ({
     const [reorderedItem] = items.splice(result.source.index, 1);
     items.splice(result.destination.index, 0, reorderedItem);
     
-    setSections(items);
     onSectionsReorder(items);
   };
   
@@ -68,11 +58,13 @@ const SectionSelector = ({
                       </div>
                       
                       <Button
-                        variant={currentSection === section ? "default" : "ghost"}
-                        className={`justify-start text-left flex-1 ${currentSection === section ? "bg-blue-100 text-blue-800" : ""}`}
-                        onClick={() => onSectionChange(section)}
+                        variant="ghost"
+                        className="justify-start text-left flex-1"
+                        onClick={() => onSectionToggle(section)}
                       >
-                        {getSectionDisplayName(section)}
+                        <span className="flex items-center gap-2">
+                          {collapsedSections[section] ? '▶' : '▼'} {getSectionDisplayName(section)}
+                        </span>
                       </Button>
                     </div>
                   )}

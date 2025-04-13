@@ -23,7 +23,6 @@ const ResumeRefine = () => {
   const { resumeId, goldenResume, analysisId: locationAnalysisId, jobTitle, section } = location.state || {};
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
-  const [activeSection, setActiveSection] = useState<ResumeSection | undefined>(section as ResumeSection);
   const [activeSectionContent, setActiveSectionContent] = useState<string>("");
   const [resumeData, setResumeData] = useState<{
     resumeId: string;
@@ -170,13 +169,6 @@ const ResumeRefine = () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
   }, [session, isLoading, navigate, analysisId, hasUnsavedChanges]);
-
-  const handleSectionChange = useCallback((section: ResumeSection, content?: string) => {
-    setActiveSection(section);
-    if (content) {
-      setActiveSectionContent(content);
-    }
-  }, []);
   
   const handleSuggestionApply = useCallback((text: string, sectionId: string) => {
     if (!resumeData || !text || !sectionId) return;
@@ -211,7 +203,6 @@ const ResumeRefine = () => {
       <JellyfishDialog 
         position="bottom" 
         title="Resume Assistant" 
-        currentSectionId={activeSection}
         onSuggestionApply={handleSuggestionApply}
         onGenerateSuggestion={handleGenerateSuggestion}
         jobData={jobDescription}
@@ -230,8 +221,6 @@ const ResumeRefine = () => {
                 goldenResume={resumeData.goldenResume}
                 analysisId={analysisId}
                 setHasUnsavedChanges={setHasUnsavedChanges}
-                activeSection={activeSection}
-                onSectionChange={handleSectionChange}
               />
             )}
           </div>
