@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -139,7 +138,7 @@ const AnalysisCard = ({
         <Button
           variant="outline"
           size="sm"
-          onClick={() => navigate('/resume-preview', {
+          onClick={() => navigate(`/resume-preview/${id}`, {
             state: {
               analysisId: id
             }
