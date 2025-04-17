@@ -4,7 +4,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Lightbulb, Loader2, Send } from "lucide-react";
-import SeekerAnimation from "@/components/SeekerAnimation";
+import SeekerAnimation from "@/components/OozeAnimation";
 import SeekerChatMessage from "./SeekerChatMessage";
 import ErrorMessage from "./ErrorMessage";
 import type { ChatMessage } from "@/hooks/use-seeker-dialog";

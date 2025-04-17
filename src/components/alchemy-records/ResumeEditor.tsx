@@ -6,7 +6,7 @@ import { CheckCircle, Save, AlertTriangle, Eye, FileJson } from 'lucide-react';
 import SectionSelector from './SectionSelector';
 import SectionEditor from './sections/SectionEditor';
 import JobDescriptionViewer from './JobDescriptionViewer';
-import SeekerOptimizationSection from './SeekerOptimizationSection';
+import OozeOptimizationSection from './OozeOptimizationSection';
 import { ResumeSection, getFormattedResume, getAllSections } from '@/utils/resumeUtils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNavigate } from 'react-router-dom';
@@ -397,7 +397,7 @@ const ResumeEditor = ({
               <ResizablePanel defaultSize={25} minSize={15}>
                 <ScrollArea className="h-full">
                   <div className="p-2">
-                    <SeekerOptimizationSection 
+                    <OozeOptimizationSection 
                       optimizationData={resumeData} 
                       analysisId={analysisId}
                     />

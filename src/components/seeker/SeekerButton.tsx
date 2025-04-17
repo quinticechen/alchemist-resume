@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { MessageCircle } from "lucide-react";
-import SeekerAnimation from "@/components/SeekerAnimation";
+import SeekerAnimation from "@/components/OozeAnimation";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface SeekerButtonProps {

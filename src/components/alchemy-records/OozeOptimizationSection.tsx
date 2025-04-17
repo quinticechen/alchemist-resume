@@ -16,12 +16,12 @@ interface ChatMessage {
   timestamp: Date;
 }
 
-interface SeekerOptimizationSectionProps {
+interface OozeOptimizationSectionProps {
   optimizationData: any;
   analysisId?: string;
 }
 
-const SeekerOptimizationSection = ({ optimizationData, analysisId }: SeekerOptimizationSectionProps) => {
+const OozeOptimizationSection = ({ optimizationData, analysisId }: OozeOptimizationSectionProps) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -342,4 +342,4 @@ const SeekerOptimizationSection = ({ optimizationData, analysisId }: SeekerOptim
   );
 };
 
-export default SeekerOptimizationSection;
+export default OozeOptimizationSection;

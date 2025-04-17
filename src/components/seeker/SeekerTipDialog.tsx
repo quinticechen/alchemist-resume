@@ -2,7 +2,7 @@
 import React from 'react';
 import { DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import SeekerAnimation from "@/components/SeekerAnimation";
+import SeekerAnimation from "@/components/OozeAnimation";
 
 interface SeekerTipDialogProps {
   title: string;

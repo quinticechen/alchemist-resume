@@ -4,7 +4,7 @@ import ResumeUploader from "@/components/ResumeUploader";
 import ResumeSelector from "@/components/ResumeSelector";
 import JobUrlInput from "@/components/JobUrlInput";
 import ProcessingPreview from "@/components/ProcessingPreview";
-import SeekerAnimation from "@/components/SeekerAnimation";
+import SeekerAnimation from "@/components/OozeAnimation";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
