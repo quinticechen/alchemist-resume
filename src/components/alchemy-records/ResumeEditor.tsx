@@ -1,147 +1,428 @@
-
-import React, { useState, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import PersonalInfoSection from "./sections/PersonalInfoSection";
-import ProfessionalSummarySection from "./sections/ProfessionalSummarySection";
-import ExperienceSection from "./sections/ExperienceSection";
-import EducationSection from "./sections/EducationSection";
-import SkillsSection from "./sections/SkillsSection";
-import ProjectsSection from "./sections/ProjectsSection";
-import CertificationsSection from "./sections/CertificationsSection";
-import VolunteerSection from "./sections/VolunteerSection";
-import SectionSelector from "./SectionSelector";
-import SeekerOptimizationSection from "./SeekerOptimizationSection";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { CheckCircle, Save, AlertTriangle, Eye, FileJson } from 'lucide-react';
+import SectionSelector from './SectionSelector';
+import SectionEditor from './sections/SectionEditor';
+import JobDescriptionViewer from './JobDescriptionViewer';
+import SeekerOptimizationSection from './SeekerOptimizationSection';
+import { ResumeSection, getFormattedResume, getAllSections } from '@/utils/resumeUtils';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useNavigate } from 'react-router-dom';
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
+import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 
-interface ResumeEditorProps {
+export interface ResumeEditorProps {
   resumeId: string;
-  goldenResume?: string | null;
+  goldenResume: string | null;
   analysisId: string;
-  setHasUnsavedChanges?: (hasChanges: boolean) => void;
+  setHasUnsavedChanges: React.Dispatch<React.SetStateAction<boolean>>;
+  activeSection?: ResumeSection;
+  onSectionChange?: (section: ResumeSection) => void;
 }
 
-const ResumeEditor: React.FC<ResumeEditorProps> = ({ 
+const ResumeEditor = ({ 
   resumeId, 
   goldenResume, 
-  analysisId,
-  setHasUnsavedChanges 
-}) => {
-  const [activeTab, setActiveTab] = useState("personalInfo");
-  const [resumeContent, setResumeContent] = useState(
-    goldenResume ? JSON.parse(goldenResume) : { resume: {} }
-  );
+  analysisId, 
+  setHasUnsavedChanges,
+  activeSection: initialActiveSection,
+  onSectionChange: parentSectionChangeHandler
+}: ResumeEditorProps) => {
+  const [resumeData, setResumeData] = useState<any>(null);
+  const [jobData, setJobData] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isSaving, setIsSaving] = useState<boolean>(false);
+  const [savedData, setSavedData] = useState<any>(null);
+  const [hasUnsavedChanges, setLocalHasUnsavedChanges] = useState<boolean>(false);
+  const [editorId, setEditorId] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'visual' | 'json'>('visual');
+  const [sectionOrder, setSectionOrder] = useState<ResumeSection[]>(getAllSections());
+  const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
   const { toast } = useToast();
+  const navigate = useNavigate();
 
-  // Function to update specific section of resume
-  const updateResumeSection = useCallback((section: string, data: any) => {
-    setResumeContent(prev => ({
-      ...prev,
-      resume: {
-        ...prev.resume,
-        [section]: data
+  // Initialize all sections as collapsed except the first one and professionalExperience
+  useEffect(() => {
+    if (sectionOrder.length > 0) {
+      // Move professionalExperience to the first position if it exists
+      const newSectionOrder = [...sectionOrder];
+      const expIndex = newSectionOrder.indexOf('professionalExperience');
+      
+      if (expIndex > 0) {
+        // If professionalExperience exists and is not already first, move it to first position
+        newSectionOrder.splice(expIndex, 1);
+        newSectionOrder.unshift('professionalExperience');
+        setSectionOrder(newSectionOrder);
       }
-    }));
-    
-    if (setHasUnsavedChanges) {
-      setHasUnsavedChanges(true);
+      
+      const initialCollapsedState: Record<string, boolean> = {};
+      newSectionOrder.forEach((section, index) => {
+        // Only the first section is expanded initially
+        initialCollapsedState[section] = index !== 0;
+      });
+      setCollapsedSections(initialCollapsedState);
     }
-  }, [setHasUnsavedChanges]);
+  }, []);
 
-  // Get the initial resume content for the current section as a string
-  const getInitialSectionContent = (section: string) => {
-    const sectionContent = resumeContent.resume[section];
-    return sectionContent ? JSON.stringify(sectionContent) : '';
+  useEffect(() => {
+    const fetchResumeAndJobData = async () => {
+      setIsLoading(true);
+      try {
+        const { data: analysisData, error: analysisError } = await supabase
+          .from('resume_analyses')
+          .select('job_id')
+          .eq('id', analysisId)
+          .single();
+
+        if (analysisError) throw analysisError;
+
+        if (analysisData.job_id) {
+          const { data: jobData, error: jobError } = await supabase
+            .from('jobs')
+            .select('job_description')
+            .eq('id', analysisData.job_id)
+            .single();
+
+          if (jobError) throw jobError;
+          setJobData(jobData.job_description);
+        }
+
+        const { data: editorData, error: editorError } = await supabase
+          .from('resume_editors')
+          .select('id, content')
+          .eq('analysis_id', analysisId)
+          .maybeSingle();
+
+        if (editorError && editorError.code !== 'PGRST116') {
+          throw editorError;
+        }
+
+        if (editorData) {
+          const content = editorData.content;
+          
+          if (content.sectionOrder && Array.isArray(content.sectionOrder)) {
+            setSectionOrder(content.sectionOrder);
+            
+            // Set initial collapsed sections state
+            const initialCollapsedState: Record<string, boolean> = {};
+            content.sectionOrder.forEach((section: string, index: number) => {
+              // Set professionalExperience and the first section to be expanded initially
+              initialCollapsedState[section] = (index !== 0 && section !== 'professionalExperience');
+            });
+            setCollapsedSections(initialCollapsedState);
+          }
+          
+          setResumeData(content);
+          setSavedData(JSON.stringify(content));
+          setEditorId(editorData.id);
+        } else {
+          let initialContent = {};
+          
+          if (goldenResume) {
+            try {
+              initialContent = typeof goldenResume === 'string' 
+                ? JSON.parse(goldenResume) 
+                : goldenResume;
+            } catch (e) {
+              console.error("Failed to parse golden resume:", e);
+              initialContent = {};
+            }
+          }
+          
+          const { data: newEditor, error: createError } = await supabase
+            .from('resume_editors')
+            .insert({
+              analysis_id: analysisId,
+              content: initialContent
+            })
+            .select('id')
+            .single();
+          
+          if (createError) throw createError;
+          
+          setResumeData(initialContent);
+          setSavedData(JSON.stringify(initialContent));
+          setEditorId(newEditor.id);
+        }
+      } catch (error: any) {
+        console.error('Error fetching or creating editor content:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load or initialize resume content.",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (analysisId) {
+      fetchResumeAndJobData();
+    }
+  }, [analysisId, goldenResume, toast]);
+
+  useEffect(() => {
+    const contentChanged = JSON.stringify(resumeData) !== savedData && savedData !== null;
+    setLocalHasUnsavedChanges(contentChanged);
+    setHasUnsavedChanges(contentChanged);
+  }, [resumeData, savedData, setHasUnsavedChanges]);
+
+  const handleSectionToggle = useCallback((section: ResumeSection) => {
+    console.log("Toggle section:", section);
+    setCollapsedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  }, []);
+
+  const handleSectionsReorder = useCallback((sections: ResumeSection[]) => {
+    console.log("Reordering sections:", sections);
+    setSectionOrder(sections);
+    
+    setResumeData((prevData: any) => ({
+      ...prevData,
+      sectionOrder: sections
+    }));
+  }, []);
+
+  const handleResumeDataChange = useCallback((updatedData: any) => {
+    setResumeData(updatedData);
+  }, []);
+
+  const validateResumeData = (data: any): boolean => {
+    try {
+      if (typeof data !== 'object' || data === null) {
+        return false;
+      }
+      return true;
+    } catch (e) {
+      return false;
+    }
   };
 
+  const handleSaveContent = async () => {
+    if (!resumeData || JSON.stringify(resumeData) === savedData || !editorId) {
+      toast({
+        title: "No changes to save",
+        description: "You haven't made any changes to your resume.",
+      });
+      return;
+    }
+
+    if (!validateResumeData(resumeData)) {
+      toast({
+        title: "Invalid resume format",
+        description: "Please ensure your resume is properly formatted before saving.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const dataToSave = {
+        ...resumeData,
+        sectionOrder: sectionOrder
+      };
+      
+      const { error } = await supabase
+        .from('resume_editors')
+        .update({ 
+          content: dataToSave,
+          last_saved: new Date().toISOString()
+        })
+        .eq('id', editorId);
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Success",
+        description: "Resume saved successfully!",
+        duration: 3000,
+      });
+      setSavedData(JSON.stringify(dataToSave));
+      setLocalHasUnsavedChanges(false);
+      setHasUnsavedChanges(false);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to save resume. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handlePreview = () => {
+    navigate(`/resume-preview/${analysisId}`, { 
+      state: { 
+        resumeId, 
+        goldenResume: JSON.stringify(resumeData), 
+        analysisId 
+      } 
+    });
+  };
+
+  const handleRawJsonChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    try {
+      const parsed = JSON.parse(e.target.value);
+      setResumeData(parsed);
+    } catch (error) {
+      console.error("Invalid JSON:", error);
+    }
+  };
+
+  const handleDragEnd = (result: DropResult) => {
+    if (!result.destination) return;
+    
+    const items = Array.from(sectionOrder);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
+    
+    handleSectionsReorder(items);
+  };
+
+  if (isLoading) {
+    return <div className="text-center py-4">Loading editor...</div>;
+  }
+
   return (
-    <div>
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3 mb-4">
-          <TabsTrigger value="personalInfo">Personal Info</TabsTrigger>
-          <TabsTrigger value="resume">Resume Details</TabsTrigger>
-          <TabsTrigger value="optimize">Optimize</TabsTrigger>
-        </TabsList>
+    <div className="flex flex-col h-full">
+      <div className="flex-1 min-h-0">
+        <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as 'visual' | 'json')} className="h-full">
+          <TabsContent value="visual" className="mt-0 h-full">
+            <ResizablePanelGroup direction="horizontal" className="h-[700px]">
+              {/* Job Description (Left) */}
+              <ResizablePanel defaultSize={25} minSize={15}>
+                <div className="h-full p-2 overflow-y-auto">
+                  <JobDescriptionViewer jobData={jobData} />
+                </div>
+              </ResizablePanel>
 
-        <TabsContent value="personalInfo">
-          <PersonalInfoSection 
-            data={resumeContent.resume.personalInfo} 
-            onChange={(data) => updateResumeSection('personalInfo', data)} 
-          />
-        </TabsContent>
+              <ResizableHandle withHandle />
 
-        <TabsContent value="resume">
-          <Tabs orientation="vertical" value={activeTab}>
-            <TabsList className="grid w-full grid-cols-2 mb-4">
-              <TabsTrigger value="professionalSummary">Professional Summary</TabsTrigger>
-              <TabsTrigger value="experience">Experience</TabsTrigger>
-              <TabsTrigger value="education">Education</TabsTrigger>
-              <TabsTrigger value="skills">Skills</TabsTrigger>
-              <TabsTrigger value="projects">Projects</TabsTrigger>
-              <TabsTrigger value="certifications">Certifications</TabsTrigger>
-              <TabsTrigger value="volunteer">Volunteer</TabsTrigger>
-            </TabsList>
+              {/* Resume Editor (Middle) */}
+              <ResizablePanel defaultSize={50} minSize={30}>
+                <div className="h-full overflow-auto p-2">
+                  <div className="mb-4 flex items-center">
+                    <h3 className="text-xl font-semibold">Resume Sections</h3>
+                  </div>
+                  
+                  <div className="lg:hidden mb-4">
+                    <SectionSelector 
+                      sections={sectionOrder}
+                      onSectionToggle={handleSectionToggle}
+                      onSectionsReorder={handleSectionsReorder}
+                      collapsedSections={collapsedSections}
+                    />
+                  </div>
+                  
+                  <DragDropContext onDragEnd={handleDragEnd}>
+                    <Droppable droppableId="droppable-sections">
+                      {(provided) => (
+                        <div
+                          {...provided.droppableProps}
+                          ref={provided.innerRef}
+                          className="space-y-4"
+                        >
+                          {sectionOrder.map((section, index) => (
+                            <Draggable key={section} draggableId={section} index={index}>
+                              {(provided) => (
+                                <div
+                                  ref={provided.innerRef}
+                                  {...provided.draggableProps}
+                                  {...provided.dragHandleProps}
+                                >
+                                  <SectionEditor 
+                                    key={section}
+                                    section={section} 
+                                    resumeData={resumeData} 
+                                    onChange={handleResumeDataChange}
+                                    isCollapsed={collapsedSections[section]}
+                                    onToggleCollapse={handleSectionToggle}
+                                    isDraggable={true}
+                                  />
+                                </div>
+                              )}
+                            </Draggable>
+                          ))}
+                          {provided.placeholder}
+                        </div>
+                      )}
+                    </Droppable>
+                  </DragDropContext>
+                </div>
+              </ResizablePanel>
 
-            <TabsContent value="professionalSummary">
-              <ProfessionalSummarySection 
-                data={resumeContent.resume.professionalSummary} 
-                onChange={(data) => updateResumeSection('professionalSummary', data)} 
+              <ResizableHandle withHandle />
+
+              {/* Seeker Optimization (Right) */}
+              <ResizablePanel defaultSize={25} minSize={15}>
+                <div className="h-full p-2 overflow-y-auto">
+                  <SeekerOptimizationSection optimizationData={resumeData} />
+                </div>
+              </ResizablePanel>
+            </ResizablePanelGroup>
+          </TabsContent>
+          
+          <TabsContent value="json" className="mt-0 h-full">
+            <div className="border rounded-md h-[700px]">
+              <textarea
+                value={JSON.stringify(resumeData, null, 2)}
+                onChange={handleRawJsonChange}
+                className="w-full h-full p-4 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-md resize-none font-mono text-base"
+                placeholder="Edit your resume here in JSON format..."
               />
-            </TabsContent>
+            </div>
+          </TabsContent>
 
-            <TabsContent value="experience">
-              <ExperienceSection 
-                data={resumeContent.resume.professionalExperience} 
-                onChange={(data) => updateResumeSection('professionalExperience', data)} 
-              />
-            </TabsContent>
-
-            <TabsContent value="education">
-              <EducationSection 
-                data={resumeContent.resume.education} 
-                onChange={(data) => updateResumeSection('education', data)} 
-              />
-            </TabsContent>
-
-            <TabsContent value="skills">
-              <SkillsSection 
-                data={resumeContent.resume.skills} 
-                onChange={(data) => updateResumeSection('skills', data)} 
-              />
-            </TabsContent>
-
-            <TabsContent value="projects">
-              <ProjectsSection 
-                data={resumeContent.resume.projects} 
-                onChange={(data) => updateResumeSection('projects', data)} 
-              />
-            </TabsContent>
-
-            <TabsContent value="certifications">
-              <CertificationsSection 
-                data={resumeContent.resume.certifications} 
-                onChange={(data) => updateResumeSection('certifications', data)} 
-              />
-            </TabsContent>
-
-            <TabsContent value="volunteer">
-              <VolunteerSection 
-                data={resumeContent.resume.volunteer} 
-                onChange={(data) => updateResumeSection('volunteer', data)} 
-              />
-            </TabsContent>
-          </Tabs>
-        </TabsContent>
-
-        <TabsContent value="optimize">
-          <SeekerOptimizationSection 
-            optimizationData={null} 
-            analysisId={analysisId}
-            initialResumeContent={JSON.stringify(resumeContent.resume)}
-          />
-        </TabsContent>
-      </Tabs>
+          <div className="flex justify-between mt-4">
+            <Button 
+              variant="outline" 
+              onClick={() => setViewMode(viewMode === 'visual' ? 'json' : 'visual')}
+            >
+              <FileJson className="h-4 w-4 mr-2" />
+              {viewMode === 'visual' ? 'JSON Editor' : 'Visual Editor'}
+            </Button>
+            
+            <div className="flex gap-2 items-center">
+              {hasUnsavedChanges && (
+                <span className="text-amber-500 flex items-center gap-1">
+                  <AlertTriangle className="h-4 w-4" />
+                  Unsaved changes
+                </span>
+              )}
+              <Button
+                onClick={handlePreview}
+                variant="outline"
+                className="ml-2"
+              >
+                <Eye className="h-4 w-4 mr-2" />
+                Preview
+              </Button>
+              <Button
+                onClick={handleSaveContent}
+                disabled={isSaving || !hasUnsavedChanges}
+                className={isSaving ? "cursor-not-allowed" : ""}
+              >
+                {isSaving ? (
+                  "Saving..."
+                ) : (
+                  <>
+                    <Save className="h-4 w-4 mr-2" />
+                    Save
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </Tabs>
+      </div>
     </div>
   );
 };
