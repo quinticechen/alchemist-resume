@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -8,7 +7,7 @@ import { Lightbulb, Loader2, Send } from "lucide-react";
 import SeekerAnimation from "@/components/SeekerAnimation";
 import SeekerChatMessage from "./SeekerChatMessage";
 import ErrorMessage from "./ErrorMessage";
-import type { ChatMessage } from "@/hooks/use-Seeker-dialog";
+import type { ChatMessage } from "@/hooks/use-seeker-dialog";
 
 interface SeekerChatSheetProps {
   chats: ChatMessage[];

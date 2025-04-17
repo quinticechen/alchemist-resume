@@ -1,7 +1,6 @@
-
 import React from "react";
 import Lottie from "react-lottie";
-import SeekerAnimation from "@/animations/OOze.chat.json";
+import SeekerAnimationData from "@/animations/OOze.chat.json";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface SeekerAnimationProps {
@@ -34,7 +33,7 @@ const SeekerAnimation: React.FC<SeekerAnimationProps> = ({
   const defaultOptions = {
     loop,
     autoplay,
-    animationData: SeekerAnimation,
+    animationData: SeekerAnimationData,
     rendererSettings: {
       preserveAspectRatio: "xMidYMid slice"
     }

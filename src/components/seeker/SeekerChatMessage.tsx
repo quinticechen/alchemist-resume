@@ -1,7 +1,8 @@
-
-import React from 'react';
+import React from "react";
+import { Bot, User } from "lucide-react";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import type { ChatMessage } from "@/hooks/use-Seeker-dialog";
+import type { ChatMessage } from "@/hooks/use-seeker-dialog";
 
 interface SeekerChatMessageProps {
   chat: ChatMessage;

@@ -1,8 +1,7 @@
-
 import React from "react";
 import { Dialog } from "@/components/ui/dialog";
 import { Sheet } from "@/components/ui/sheet";
-import { useSeekerDialog } from "@/hooks/use-Seeker-dialog";
+import { useSeekerDialog } from "@/hooks/use-seeker-dialog";
 import SeekerButton from "./seeker/SeekerButton";
 import SeekerTipDialog from "./seeker/SeekerTipDialog";
 import SeekerChatSheet from "./seeker/SeekerChatSheet";
