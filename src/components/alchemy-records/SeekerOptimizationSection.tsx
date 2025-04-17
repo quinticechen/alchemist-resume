@@ -54,7 +54,6 @@ const SeekerOptimizationSection = ({ optimizationData, analysisId }: SeekerOptim
       
       try {
         setInitializationStatus('loading');
-        console.log(`Loading chat history for analysis ID: ${analysisId}`);
         
         // Try to get thread ID first
         const { data: metadataData } = await supabase
@@ -66,7 +65,6 @@ const SeekerOptimizationSection = ({ optimizationData, analysisId }: SeekerOptim
           
         if (metadataData && metadataData.length > 0) {
           setThreadId(metadataData[0].thread_id);
-          console.log(`Retrieved thread ID: ${metadataData[0].thread_id}`);
         }
         
         // Get message history
@@ -90,7 +88,6 @@ const SeekerOptimizationSection = ({ optimizationData, analysisId }: SeekerOptim
             }));
           
           setMessages(displayMessages);
-          console.log(`Loaded ${displayMessages.length} messages for analysis: ${analysisId}`);
         }
         
         setInitializationStatus('success');
@@ -150,8 +147,6 @@ const SeekerOptimizationSection = ({ optimizationData, analysisId }: SeekerOptim
     setDebugInfo(null);
     
     try {
-      console.log(`Sending message to edge function with analysisId: ${analysisId}, threadId: ${threadId || 'new'}`);
-      
       // Enhanced edge function call with more detailed request logging
       const startTime = new Date().getTime();
       const requestPayload = { 
@@ -160,29 +155,23 @@ const SeekerOptimizationSection = ({ optimizationData, analysisId }: SeekerOptim
         threadId: threadId
       };
       
-      console.log('Request payload:', JSON.stringify(requestPayload));
-      
       const { data, error } = await supabase.functions.invoke('resume-ai-assistant', {
         body: requestPayload
       });
 
       const endTime = new Date().getTime();
-      console.log(`Edge function response time: ${endTime - startTime}ms`);
 
       if (error) {
         console.error('Edge function error:', error);
         throw error;
       }
 
-      console.log('Edge function response:', data);
-      
       if (!data) {
         throw new Error("Empty response from edge function");
       }
 
       if (data?.threadId) {
         setThreadId(data.threadId);
-        console.log(`Setting thread ID from response: ${data.threadId}`);
       }
 
       const aiMessage: ChatMessage = {

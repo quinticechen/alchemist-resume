@@ -83,7 +83,6 @@ export function useSeekerDialog({
     const extractAnalysisId = () => {
       // First check URL parameters
       if (params.analysisId) {
-        console.log(`Found analysis ID in URL params: ${params.analysisId}`);
         return params.analysisId;
       }
       
@@ -94,23 +93,19 @@ export function useSeekerDialog({
       );
       
       if (potentialIds.length > 0) {
-        console.log(`Found analysis ID in URL path: ${potentialIds[0]}`);
         return potentialIds[0];
       }
       
       // Finally check location state
       if (location.state && location.state.analysisId) {
-        console.log(`Found analysis ID in location state: ${location.state.analysisId}`);
         return location.state.analysisId;
       }
       
-      console.warn("Could not determine analysis ID from URL or state");
       return null;
     };
     
     const id = extractAnalysisId();
     setAnalysisId(id);
-    console.log(`SeekerDialog initialized with analysis ID: ${id || "none"}`);
     
     // Reset error state when analysis ID changes
     setApiError(null);
@@ -156,8 +151,6 @@ export function useSeekerDialog({
       if (!analysisId || !currentSectionId || simpleTipMode) return;
       
       try {
-        console.log(`Looking for existing thread for analysis: ${analysisId}`);
-        
         const { data: metadataData, error: metadataError } = await supabase
           .from('ai_chat_metadata')
           .select('*')
@@ -172,12 +165,8 @@ export function useSeekerDialog({
         
         if (metadataData && metadataData.length > 0) {
           setCurrentThreadId(metadataData[0].thread_id);
-          console.log(`Found existing thread: ${metadataData[0].thread_id}`);
-          
           // Mark that we've already sent resume content for existing threads
           setResumeContentSent(true);
-        } else {
-          console.log(`No existing thread found for analysis: ${analysisId}`);
         }
       } catch (error) {
         console.error('Error finding existing thread:', error);
@@ -320,9 +309,6 @@ export function useSeekerDialog({
         setResumeContentSent(true);
       }
       
-      console.log(`Sending message to AI assistant ${analysisId ? `for analysis: ${analysisId}` : 'for general support'}`);
-      console.log(`Using thread ID: ${currentThreadId || "new thread"}`);
-      
       // 創建請求數據
       const requestBody: any = { 
         message: contextMessage ? `${contextMessage}\n\n${message}` : message,
@@ -353,7 +339,6 @@ export function useSeekerDialog({
       // 處理響應數據
       if (data.threadId && data.threadId !== currentThreadId) {
         setCurrentThreadId(data.threadId);
-        console.log(`Chat using thread: ${data.threadId}`);
       }
       
       const suggestion = data.suggestion || null;

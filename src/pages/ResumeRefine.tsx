@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useCallback } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from "@/contexts/AuthContext";
@@ -32,6 +31,8 @@ const ResumeRefine = () => {
   } | null>(null);
   const [jobDescription, setJobDescription] = useState<any>(null);
   const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const analysisId = paramAnalysisId || locationAnalysisId;
 
@@ -44,122 +45,37 @@ const ResumeRefine = () => {
 
   useEffect(() => {
     const fetchResumeData = async () => {
-      if (analysisId && !resumeId && session?.user?.id) {
-        try {
-          console.log(`Fetching resume data for analysis ID: ${analysisId}`);
-          
-          // First get the analysis record to get the resume_id
-          const { data: analysisData, error: analysisError } = await supabase
-            .from('resume_analyses')
-            .select('id, resume_id, job_id, job:job_id(job_title)')
-            .eq('id', analysisId)
-            .single();
-          
-          if (analysisError) throw analysisError;
-          
-          if (analysisData) {
-            console.log(`Found analysis data: resume_id=${analysisData.resume_id}, job_id=${analysisData.job_id}`);
-            
-            // If we have a job relationship, fetch job description data
-            const jobId = analysisData.job_id;
-            if (jobId) {
-              const { data: jobData, error: jobError } = await supabase
-                .from('jobs')
-                .select('job_description')
-                .eq('id', jobId)
-                .single();
-                
-              if (jobError) throw jobError;
-              
-              if (jobData) {
-                setJobDescription(jobData.job_description);
-              }
-            }
-            
-            // Now get the editor content which has the formatted resume
-            const { data: editorData, error: editorError } = await supabase
-              .from('resume_editors')
-              .select('content')
-              .eq('analysis_id', analysisId)
-              .single();
-              
-            if (editorError) throw editorError;
-            
-            // Get the formatted resume content
-            let resumeContent = null;
-            if (editorData?.content) {
-              resumeContent = JSON.stringify(editorData.content, null, 2);
-            }
-            
-            // Extract job title safely, handling all possible data shapes from Supabase
-            let fetchedJobTitle: string | null = null;
-            
-            if (analysisData.job) {
-              // Case 1: job is an array (happens with some Supabase joins)
-              if (Array.isArray(analysisData.job)) {
-                if (analysisData.job.length > 0 && typeof analysisData.job[0] === 'object') {
-                  // Access first array element's job_title
-                  fetchedJobTitle = analysisData.job[0].job_title || null;
-                }
-              } 
-              // Case 2: job is an object (direct relation)
-              else if (typeof analysisData.job === 'object' && analysisData.job !== null) {
-                fetchedJobTitle = (analysisData.job as JobData).job_title || null;
-              }
-            }
-            
-            setResumeData({
-              resumeId: analysisData.resume_id,
-              goldenResume: resumeContent,
-              analysisId: analysisData.id,
-              jobTitle: fetchedJobTitle
-            });
-          }
-        } catch (error) {
-          console.error('Error fetching resume data:', error);
-          toast({
-            title: "Error",
-            description: "Could not fetch resume data. Please try again.",
-            variant: "destructive"
-          });
-          navigate('/alchemy-records');
-        }
-      } else if (resumeId && analysisId) {
-        // Format goldenResume if it's provided directly through location state
-        let formattedGoldenResume = goldenResume;
+      if (!analysisId) {
+        setError('No analysis ID provided');
+        return;
+      }
+
+      try {
+        setLoading(true);
         
-        if (goldenResume) {
-          try {
-            // Check if it's already JSON and format it
-            const parsedContent = JSON.parse(goldenResume);
-            formattedGoldenResume = JSON.stringify(parsedContent, null, 2);
-          } catch {
-            // If parsing fails, use raw string
-            formattedGoldenResume = goldenResume;
-          }
+        // 獲取分析數據
+        const { data: analysisData, error: analysisError } = await supabase
+          .from('resume_analyses')
+          .select('*')
+          .eq('id', analysisId)
+          .single();
+        
+        if (analysisError) throw analysisError;
+        if (!analysisData) {
+          setError('Analysis not found');
+          return;
         }
         
-        setResumeData({
-          resumeId,
-          goldenResume: formattedGoldenResume,
-          analysisId,
-          jobTitle
-        });
+        setResumeData(analysisData);
+        setLoading(false);
+      } catch (error) {
+        setError('Failed to load resume data');
+        setLoading(false);
       }
     };
 
-    // Check if there's a saved analysis ID in localStorage when the component mounts
-    const savedAnalysisId = localStorage.getItem('currentAnalysisId');
-    
-    if (session) {
-      if (analysisId) {
-        fetchResumeData();
-      } else if (savedAnalysisId) {
-        // If we have a saved ID but not in the URL, navigate to it
-        navigate(`/resume-refine/${savedAnalysisId}`);
-      }
-    }
-  }, [session, analysisId, resumeId, goldenResume, jobTitle, navigate, toast]);
+    fetchResumeData();
+  }, [analysisId, supabase]);
 
   useEffect(() => {
     if (!isLoading && !session) {
@@ -212,7 +128,7 @@ const ResumeRefine = () => {
     });
   }, [toast]);
 
-  if (isLoading) {
+  if (loading) {
     return <div className="container mx-auto px-4 py-8">Loading...</div>;
   }
 

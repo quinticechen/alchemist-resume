@@ -177,7 +177,6 @@ const Pricing = () => {
       }
 
       const environment = getEnvironment();
-      console.log(`Creating Stripe checkout session in ${environment} environment`);
       
       let retryCount = 0;
       const maxRetries = 2;

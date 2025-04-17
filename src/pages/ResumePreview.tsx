@@ -122,124 +122,56 @@ const ResumePreview = () => {
       return;
     }
 
-    const fetchResumeData = async () => {
-      try {
-        setLoading(true);
+    const fetchEditorContent = async () => {
+      if (!analysisId) {
+        setError("No analysis ID provided");
+        return;
+      }
 
-        console.log("Fetching data for analysis ID:", analysisId);
-        
+      setLoading(true);
+      try {
+        // 獲取編輯器內容
         const { data: editorData, error: editorError } = await supabase
           .from('resume_editors')
           .select('content')
           .eq('analysis_id', analysisId)
-          .maybeSingle();
-        
+          .single();
+
         if (editorError) {
-          console.error('Editor data error:', editorError);
           throw editorError;
         }
-        
+
         if (!editorData || !editorData.content) {
-          console.error('No editor content found');
-          toast({ 
-            title: "Resume content not found", 
-            description: "Could not find resume content for preview", 
-            variant: "destructive" 
-          });
-          navigate('/alchemy-records');
+          setError("No resume content found");
           return;
         }
-        
-        console.log("Found editor content:", editorData.content);
-        
+
+        // 獲取分析數據
         const { data: analysisData, error: analysisError } = await supabase
           .from('resume_analyses')
-          .select(`
-            id,
-            google_doc_url,
-            resume:resume_id(file_name),
-            job:job_id(job_title)
-          `)
+          .select('*')
           .eq('id', analysisId)
           .single();
-        
+
         if (analysisError) {
-          console.error('Analysis data error:', analysisError);
           throw analysisError;
         }
+
+        // 處理數據
+        const content = editorData.content;
         
-        if (!analysisData) {
-          console.error('No analysis data found');
-          toast({ 
-            title: "Resume not found", 
-            description: "The requested resume could not be found", 
-            variant: "destructive" 
-          });
-          navigate('/alchemy-records');
-          return;
-        }
-
-        console.log("Found analysis data:", analysisData);
-
-        let jobTitle = 'Unnamed Position';
-        let fileName = 'Resume';
-
-        if (analysisData.job) {
-          if (Array.isArray(analysisData.job)) {
-            const firstJob = analysisData.job[0] as JobData;
-            if (firstJob && firstJob.job_title) {
-              jobTitle = firstJob.job_title;
-            }
-          } else if (typeof analysisData.job === 'object' && analysisData.job !== null) {
-            const jobObj = analysisData.job as JobData;
-            if (jobObj.job_title) {
-              jobTitle = jobObj.job_title;
-            }
-          }
-        }
-
-        if (analysisData.resume) {
-          if (Array.isArray(analysisData.resume)) {
-            const firstResume = analysisData.resume[0] as ResumeData;
-            if (firstResume && firstResume.file_name) {
-              fileName = firstResume.file_name;
-            }
-          } else if (typeof analysisData.resume === 'object' && analysisData.resume !== null) {
-            const resumeObj = analysisData.resume as ResumeData;
-            if (resumeObj.file_name) {
-              fileName = resumeObj.file_name;
-            }
-          }
-        }
-
-        const content = editorData.content as EditorContent;
-        console.log("Preparing resume data with content:", content);
-
-        const sectionOrder = content.sectionOrder && Array.isArray(content.sectionOrder) && content.sectionOrder.length > 0 
-          ? content.sectionOrder 
-          : DEFAULT_SECTION_ORDER;
-
-        setResumeData({
-          ...analysisData,
-          resume: content.resume || {},
-          sectionOrder: sectionOrder,
-          jobTitle,
-          fileName,
-          googleDocUrl: analysisData.google_doc_url
-        });
+        // 轉換數據格式
+        const preparedData = prepareResumeData(content);
+        setResumeData(preparedData);
+        setResumeAnalysis(analysisData);
+        setLoading(false);
       } catch (error) {
-        console.error('Error fetching resume data:', error);
-        toast({ 
-          title: "Error", 
-          description: "Failed to load resume data", 
-          variant: "destructive" 
-        });
-      } finally {
+        setError("Failed to load resume data");
         setLoading(false);
       }
     };
 
-    fetchResumeData();
+    fetchEditorContent();
   }, [session, isLoading, navigate, analysisId, toast]);
 
   useEffect(() => {
@@ -372,8 +304,6 @@ const ResumePreview = () => {
   if (!resumeData) {
     return null;
   }
-
-  console.log("Rendering with resume data:", resumeData);
 
   const personalInfo = resumeData.resume?.personalInfo || {};
   const experiences = resumeData.resume?.professionalExperience || [];

@@ -176,23 +176,27 @@ const ResumeEditor = ({
     setHasUnsavedChanges(contentChanged);
   }, [resumeData, savedData, setHasUnsavedChanges]);
 
-  const handleSectionToggle = useCallback((section: ResumeSection) => {
-    console.log("Toggle section:", section);
-    setCollapsedSections(prev => ({
-      ...prev,
-      [section]: !prev[section]
-    }));
-  }, []);
+  const handleSectionToggle = (section: string) => {
+    const updatedSections = [...sectionOrder];
+    if (updatedSections.includes(section)) {
+      const index = updatedSections.indexOf(section);
+      updatedSections.splice(index, 1);
+    } else {
+      updatedSections.push(section);
+    }
+    
+    setSectionOrder(updatedSections);
+    parentSectionChangeHandler?.(updatedSections[0] as ResumeSection);
+  };
 
-  const handleSectionsReorder = useCallback((sections: ResumeSection[]) => {
-    console.log("Reordering sections:", sections);
+  const handleSectionsReorder = (sections: ResumeSection[]) => {
     setSectionOrder(sections);
     
     setResumeData((prevData: any) => ({
       ...prevData,
       sectionOrder: sections
     }));
-  }, []);
+  };
 
   const handleResumeDataChange = useCallback((updatedData: any) => {
     setResumeData(updatedData);

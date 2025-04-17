@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { loadStripe, Stripe } from "@stripe/stripe-js";
 import { supabase } from "../integrations/supabase/client";
