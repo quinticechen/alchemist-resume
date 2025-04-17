@@ -6,7 +6,7 @@ import ResumeEditor from '@/components/alchemy-records/ResumeEditor';
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { ResumeSection } from '@/utils/resumeUtils';
+import { ResumeSection, getAllSections } from '@/utils/resumeUtils';
 import JellyfishDialog from "@/components/JellyfishDialog";
 
 // Define a more precise type for job data
@@ -34,6 +34,13 @@ const ResumeRefine = () => {
   const { toast } = useToast();
 
   const analysisId = paramAnalysisId || locationAnalysisId;
+
+  // Use localStorage to preserve the current page across tab switching
+  useEffect(() => {
+    if (analysisId) {
+      localStorage.setItem('currentAnalysisId', analysisId);
+    }
+  }, [analysisId]);
 
   useEffect(() => {
     const fetchResumeData = async () => {
@@ -141,18 +148,37 @@ const ResumeRefine = () => {
       }
     };
 
-    if (session && analysisId) {
-      fetchResumeData();
+    // Check if there's a saved analysis ID in localStorage when the component mounts
+    const savedAnalysisId = localStorage.getItem('currentAnalysisId');
+    
+    if (session) {
+      if (analysisId) {
+        fetchResumeData();
+      } else if (savedAnalysisId) {
+        // If we have a saved ID but not in the URL, navigate to it
+        navigate(`/resume-refine/${savedAnalysisId}`);
+      }
     }
   }, [session, analysisId, resumeId, goldenResume, jobTitle, navigate, toast]);
 
   useEffect(() => {
     if (!isLoading && !session) {
+      // Save the current page before redirecting
+      if (analysisId) {
+        localStorage.setItem('redirectAfterLogin', `/resume-refine/${analysisId}`);
+      } else {
+        localStorage.setItem('redirectAfterLogin', '/resume-refine');
+      }
       navigate('/login', { state: { from: '/resume-refine' } });
     }
     
     if (!isLoading && session && !analysisId) {
-      navigate('/alchemy-records');
+      const savedAnalysisId = localStorage.getItem('currentAnalysisId');
+      if (savedAnalysisId) {
+        navigate(`/resume-refine/${savedAnalysisId}`);
+      } else {
+        navigate('/alchemy-records');
+      }
     }
 
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {

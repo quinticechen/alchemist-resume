@@ -12,6 +12,7 @@ import { ResumeSection, getFormattedResume, getAllSections } from '@/utils/resum
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNavigate } from 'react-router-dom';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
+import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 
 export interface ResumeEditorProps {
   resumeId: string;
@@ -42,6 +43,17 @@ const ResumeEditor = ({
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  // Initialize all sections as collapsed except the first one
+  useEffect(() => {
+    if (sectionOrder.length > 0) {
+      const initialCollapsedState: Record<string, boolean> = {};
+      sectionOrder.forEach((section, index) => {
+        initialCollapsedState[section] = index !== 0; // Only first section is expanded
+      });
+      setCollapsedSections(initialCollapsedState);
+    }
+  }, [sectionOrder.length]);
 
   useEffect(() => {
     const fetchResumeAndJobData = async () => {
@@ -244,6 +256,16 @@ const ResumeEditor = ({
     }
   };
 
+  const handleDragEnd = (result: DropResult) => {
+    if (!result.destination) return;
+    
+    const items = Array.from(sectionOrder);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
+    
+    handleSectionsReorder(items);
+  };
+
   if (isLoading) {
     return <div className="text-center py-4">Loading editor...</div>;
   }
@@ -279,17 +301,39 @@ const ResumeEditor = ({
                     />
                   </div>
                   
-                  {sectionOrder.map((section) => (
-                    <SectionEditor 
-                      key={section}
-                      section={section} 
-                      resumeData={resumeData} 
-                      onChange={handleResumeDataChange}
-                      isCollapsed={collapsedSections[section]}
-                      onToggleCollapse={handleSectionToggle}
-                      isDraggable={true}
-                    />
-                  ))}
+                  <DragDropContext onDragEnd={handleDragEnd}>
+                    <Droppable droppableId="droppable-sections">
+                      {(provided) => (
+                        <div
+                          {...provided.droppableProps}
+                          ref={provided.innerRef}
+                          className="space-y-4"
+                        >
+                          {sectionOrder.map((section, index) => (
+                            <Draggable key={section} draggableId={section} index={index}>
+                              {(provided) => (
+                                <div
+                                  ref={provided.innerRef}
+                                  {...provided.draggableProps}
+                                >
+                                  <SectionEditor 
+                                    key={section}
+                                    section={section} 
+                                    resumeData={resumeData} 
+                                    onChange={handleResumeDataChange}
+                                    isCollapsed={collapsedSections[section]}
+                                    onToggleCollapse={handleSectionToggle}
+                                    isDraggable={true}
+                                  />
+                                </div>
+                              )}
+                            </Draggable>
+                          ))}
+                          {provided.placeholder}
+                        </div>
+                      )}
+                    </Droppable>
+                  </DragDropContext>
                 </div>
               </ResizablePanel>
 

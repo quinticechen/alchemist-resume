@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { ResumeSection } from '@/utils/resumeUtils';
+import { ResumeSection, getSectionDisplayName } from '@/utils/resumeUtils';
 import PersonalInfoSection from './PersonalInfoSection';
 import ProfessionalSummarySection from './ProfessionalSummarySection';
 import ExperienceSection from './ExperienceSection';
@@ -18,7 +18,7 @@ interface SectionEditorProps {
   resumeData: any;
   onChange: (updatedData: any) => void;
   isCollapsed?: boolean;
-  onToggleCollapse?: (section: ResumeSection, collapsed: boolean) => void;
+  onToggleCollapse?: (section: ResumeSection) => void;
   isDraggable?: boolean;
 }
 
@@ -54,7 +54,7 @@ const SectionEditor = ({
 
   const handleToggleCollapse = () => {
     if (onToggleCollapse) {
-      onToggleCollapse(section, !isCollapsed);
+      onToggleCollapse(section);
     }
   };
 
@@ -88,30 +88,16 @@ const SectionEditor = ({
     }
   };
 
-  const getSectionTitle = () => {
-    switch (section) {
-      case 'personalInfo': return 'Personal Information';
-      case 'professionalSummary': return 'Professional Summary';
-      case 'professionalExperience': return 'Professional Experience';
-      case 'education': return 'Education';
-      case 'skills': return 'Skills';
-      case 'projects': return 'Projects';
-      case 'volunteer': return 'Volunteer Experience';
-      case 'certifications': return 'Certifications';
-      default: return 'Section';
-    }
-  };
-
   return (
     <Collapsible 
       open={!isCollapsed} 
-      onOpenChange={(open) => onToggleCollapse && onToggleCollapse(section, !open)} 
+      onOpenChange={(open) => onToggleCollapse && onToggleCollapse(section)} 
       className="mb-6 border rounded-md shadow-sm"
     >
       <div className="bg-gray-50 p-4 flex justify-between items-center border-b">
         <div className="flex items-center gap-2">
           {isDraggable && <GripVertical className="h-4 w-4 text-gray-400 cursor-grab" />}
-          <h3 className="text-lg font-medium">{getSectionTitle()}</h3>
+          <h3 className="text-lg font-medium">{getSectionDisplayName(section)}</h3>
         </div>
         <CollapsibleTrigger asChild>
           <Button variant="ghost" size="sm" onClick={handleToggleCollapse} className="p-1 h-8 w-8">

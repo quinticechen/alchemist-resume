@@ -61,6 +61,7 @@ const SectionSelector = ({
                       <button
                         onClick={() => onSectionToggle(section)}
                         className="p-1 hover:bg-gray-200 rounded-full"
+                        aria-label={collapsedSections[section] ? "Expand section" : "Collapse section"}
                       >
                         {collapsedSections[section] ? 
                           <ChevronDown className="h-4 w-4" /> : 

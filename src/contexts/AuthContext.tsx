@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
@@ -29,6 +30,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       sessionStorage.removeItem('userAuthenticated');
       sessionStorage.removeItem('hasVisitedWorkshop');
       sessionStorage.removeItem('welcomeToastShown');
+      localStorage.removeItem('currentAnalysisId');
+      localStorage.removeItem('redirectAfterLogin');
     } catch (error) {
       console.error('Error signing out:', error);
     }
@@ -42,19 +45,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setSession(newSession);
         
         if (event === 'SIGNED_IN') {
-          const isFirstSignIn = !localStorage.getItem('hasSignedInBefore');
-          
-          if (isFirstSignIn && newSession) {
-            localStorage.setItem('hasSignedInBefore', 'true');
-            navigate('/user-onboard');
+          // Check for redirect after login
+          const redirectPath = localStorage.getItem('redirectAfterLogin');
+          if (redirectPath) {
+            localStorage.removeItem('redirectAfterLogin');
+            navigate(redirectPath);
+          } else {
+            const isFirstSignIn = !localStorage.getItem('hasSignedInBefore');
+            
+            if (isFirstSignIn && newSession) {
+              localStorage.setItem('hasSignedInBefore', 'true');
+              navigate('/user-onboard');
+            }
           }
         }
       }
     );
 
+    // Check for existing session on page load
     supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
       setSession(initialSession);
       setIsLoading(false);
+      
+      // If there's a session and a stored redirect path, navigate there
+      if (initialSession) {
+        const redirectPath = localStorage.getItem('redirectAfterLogin');
+        if (redirectPath) {
+          localStorage.removeItem('redirectAfterLogin');
+          navigate(redirectPath);
+        }
+      }
     });
 
     return () => {
