@@ -212,8 +212,18 @@ const ProcessingPreview = ({
 
   // Navigate to resume preview
   const handleViewGoldenResume = () => {
-    navigate('/resume-preview', { 
-      state: { analysisId }
+    if (!analysisId) {
+      toast({
+        title: "錯誤",
+        description: "無法找到簡歷分析ID",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // 使用 navigate 時，將 analysisId 添加到 URL 路徑，而不僅是狀態
+    navigate(`/resume-preview/${analysisId}`, { 
+      state: { analysisId }  // 同時在狀態中傳遞，以確保兼容性
     });
   };
 

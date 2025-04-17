@@ -99,6 +99,8 @@ const ResumePreview = () => {
   const params = useParams();
   const { toast } = useToast();
   const [resumeData, setResumeData] = useState<any>(null);
+  const [resumeAnalysis, setResumeAnalysis] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [style, setStyle] = useState<string>(() => {
     return localStorage.getItem(LOCAL_STORAGE_STYLE_KEY) || 'classic';
