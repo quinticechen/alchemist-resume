@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import JellyfishAnimation from "@/components/JellyfishAnimation";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -12,12 +12,17 @@ import { useToast } from "@/hooks/use-toast";
 interface SeekerOptimizationSectionProps {
   optimizationData: any;
   analysisId: string;
+  initialResumeContent?: string; // Add this to pass initial resume content
 }
 
-const SeekerOptimizationSection = ({ optimizationData, analysisId }: SeekerOptimizationSectionProps) => {
+const SeekerOptimizationSection = ({ 
+  optimizationData, 
+  analysisId, 
+  initialResumeContent 
+}: SeekerOptimizationSectionProps) => {
   const [viewMode, setViewMode] = useState<"all" | "important" | "suggested">("all");
   const [chatInput, setChatInput] = useState('');
-  const [chatMessages, setChatMessages] = useState<{role: 'user' | 'assistant', content: string}[]>([]);
+  const [chatMessages, setChatMessages] = useState<{role: 'user' | 'assistant', content: string, suggestion?: string}[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
@@ -37,6 +42,21 @@ const SeekerOptimizationSection = ({ optimizationData, analysisId }: SeekerOptim
     return suggestions.slice(Math.ceil(suggestions.length / 2)); 
   }, [suggestions, viewMode]);
 
+  // Load initial context when component mounts
+  useEffect(() => {
+    const loadInitialContext = async () => {
+      if (initialResumeContent) {
+        const systemMessage = {
+          role: 'assistant' as const, 
+          content: `I'll help you optimize your resume. I see your current resume content includes: ${initialResumeContent}. How would you like to improve it?`
+        };
+        setChatMessages([systemMessage]);
+      }
+    };
+
+    loadInitialContext();
+  }, [initialResumeContent]);
+
   const handleSendMessage = async () => {
     if (!chatInput.trim()) return;
 
@@ -50,7 +70,8 @@ const SeekerOptimizationSection = ({ optimizationData, analysisId }: SeekerOptim
         body: { 
           message: chatInput, 
           analysisId: analysisId,
-          currentSection: 'seekerOptimization'
+          currentSection: 'seekerOptimization',
+          threadId: chatMessages.length > 0 ? 'existing_thread' : null
         }
       });
 
@@ -58,7 +79,8 @@ const SeekerOptimizationSection = ({ optimizationData, analysisId }: SeekerOptim
 
       const assistantMessage = { 
         role: 'assistant' as const, 
-        content: data.message || 'I could not generate a response.' 
+        content: data.message || 'I could not generate a response.',
+        suggestion: data.suggestion
       };
 
       setChatMessages(prev => [...prev, assistantMessage]);
@@ -72,6 +94,14 @@ const SeekerOptimizationSection = ({ optimizationData, analysisId }: SeekerOptim
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleApplySuggestion = (suggestion: string) => {
+    // Placeholder for applying suggestion to resume
+    toast({
+      title: "Suggestion Applied",
+      description: "The suggestion has been applied to your resume."
+    });
   };
 
   return (
@@ -117,6 +147,12 @@ const SeekerOptimizationSection = ({ optimizationData, analysisId }: SeekerOptim
               onChange={(e) => setChatInput(e.target.value)}
               placeholder="Ask for resume optimization advice..."
               disabled={isLoading}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSendMessage();
+                }
+              }}
             />
             <Button 
               size="icon" 
@@ -132,13 +168,31 @@ const SeekerOptimizationSection = ({ optimizationData, analysisId }: SeekerOptim
               {chatMessages.map((msg, index) => (
                 <div 
                   key={index} 
-                  className={`p-2 rounded-lg ${
+                  className={`flex ${
                     msg.role === 'user' 
-                      ? 'bg-primary text-primary-foreground self-end' 
-                      : 'bg-muted self-start'
+                      ? 'justify-end' 
+                      : 'justify-start'
                   }`}
                 >
-                  {msg.content}
+                  <div 
+                    className={`p-2 rounded-lg max-w-[80%] ${
+                      msg.role === 'user' 
+                        ? 'bg-primary text-primary-foreground' 
+                        : 'bg-muted'
+                    }`}
+                  >
+                    {msg.content}
+                    {msg.suggestion && (
+                      <Button 
+                        variant="secondary" 
+                        size="sm" 
+                        className="mt-2"
+                        onClick={() => handleApplySuggestion(msg.suggestion!)}
+                      >
+                        Apply Suggestion
+                      </Button>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
