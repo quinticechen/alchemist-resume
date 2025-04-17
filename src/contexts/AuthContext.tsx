@@ -77,6 +77,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     });
 
+    // Set session flag to maintain state across tabs
+    window.addEventListener('focus', async () => {
+      if (document.visibilityState === 'visible') {
+        const { data } = await supabase.auth.getSession();
+        if (data?.session) {
+          // Use the same session across tabs - don't redirect
+          setSession(data.session);
+        }
+      }
+    });
+
     return () => {
       subscription.unsubscribe();
     };

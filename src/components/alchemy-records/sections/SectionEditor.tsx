@@ -89,29 +89,28 @@ const SectionEditor = ({
   };
 
   return (
-    <Collapsible 
-      open={!isCollapsed} 
-      onOpenChange={(open) => onToggleCollapse && onToggleCollapse(section)} 
-      className="mb-6 border rounded-md shadow-sm"
-    >
+    <div className="mb-6 border rounded-md shadow-sm">
       <div className="bg-gray-50 p-4 flex justify-between items-center border-b">
         <div className="flex items-center gap-2">
           {isDraggable && <GripVertical className="h-4 w-4 text-gray-400 cursor-grab" />}
           <h3 className="text-lg font-medium">{getSectionDisplayName(section)}</h3>
         </div>
-        <CollapsibleTrigger asChild>
-          <Button variant="ghost" size="sm" onClick={handleToggleCollapse} className="p-1 h-8 w-8">
-            {isCollapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
-          </Button>
-        </CollapsibleTrigger>
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={handleToggleCollapse} 
+          className="p-1 h-8 w-8"
+        >
+          {isCollapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
+        </Button>
       </div>
       
-      <CollapsibleContent>
+      {!isCollapsed && (
         <div className="p-4">
           {renderSectionContent()}
         </div>
-      </CollapsibleContent>
-    </Collapsible>
+      )}
+    </div>
   );
 };
 

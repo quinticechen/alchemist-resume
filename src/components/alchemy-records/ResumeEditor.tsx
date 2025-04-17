@@ -53,7 +53,7 @@ const ResumeEditor = ({
       });
       setCollapsedSections(initialCollapsedState);
     }
-  }, [sectionOrder.length]);
+  }, []);
 
   useEffect(() => {
     const fetchResumeAndJobData = async () => {
@@ -93,6 +93,13 @@ const ResumeEditor = ({
           
           if (content.sectionOrder && Array.isArray(content.sectionOrder)) {
             setSectionOrder(content.sectionOrder);
+            
+            // Set initial collapsed sections state
+            const initialCollapsedState: Record<string, boolean> = {};
+            content.sectionOrder.forEach((section: string, index: number) => {
+              initialCollapsedState[section] = index !== 0; // Only first section is expanded
+            });
+            setCollapsedSections(initialCollapsedState);
           }
           
           setResumeData(content);
@@ -145,12 +152,13 @@ const ResumeEditor = ({
   }, [analysisId, goldenResume, toast]);
 
   useEffect(() => {
-    const contentChanged = JSON.stringify(resumeData) !== savedData && savedData !== '';
+    const contentChanged = JSON.stringify(resumeData) !== savedData && savedData !== null;
     setLocalHasUnsavedChanges(contentChanged);
     setHasUnsavedChanges(contentChanged);
   }, [resumeData, savedData, setHasUnsavedChanges]);
 
   const handleSectionToggle = useCallback((section: ResumeSection) => {
+    console.log("Toggle section:", section);
     setCollapsedSections(prev => ({
       ...prev,
       [section]: !prev[section]
@@ -158,6 +166,7 @@ const ResumeEditor = ({
   }, []);
 
   const handleSectionsReorder = useCallback((sections: ResumeSection[]) => {
+    console.log("Reordering sections:", sections);
     setSectionOrder(sections);
     
     setResumeData((prevData: any) => ({
@@ -315,6 +324,7 @@ const ResumeEditor = ({
                                 <div
                                   ref={provided.innerRef}
                                   {...provided.draggableProps}
+                                  {...provided.dragHandleProps}
                                 >
                                   <SectionEditor 
                                     key={section}
