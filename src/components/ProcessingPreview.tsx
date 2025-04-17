@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import Lottie from "react-lottie";
 import Loading from "@/animations/Loading.json";
 import Failed from "@/animations/Failed.json";
+import { RealtimeChannel } from "@supabase/supabase-js";
 
 interface ProcessingPreviewProps {
   analysisId: string;
@@ -28,6 +29,15 @@ interface AnalysisData {
   formatted_golden_resume: any;
 }
 
+// 定義 ResumeAnalysis 介面
+interface ResumeAnalysis {
+  id: string;
+  status: string;
+  error_message?: string;
+  google_doc_url?: string;
+  progress?: number;
+}
+
 const ProcessingPreview = ({
   analysisId,
   jobUrl,
@@ -41,6 +51,12 @@ const ProcessingPreview = ({
   const [status, setStatus] = useState<ProcessingStatus>(isTimeout ? "timeout" : "pending");
   const [error, setError] = useState<string | null>(null);
   const [formattedGoldenResume, setFormattedGoldenResume] = useState<any | null>(null);
+  const [analysisData, setAnalysisData] = useState<any | null>(null);
+  const [processingState, setProcessingState] = useState({
+    status: 'processing',
+    message: 'Optimizing your resume...',
+    progress: 0
+  });
   const { toast } = useToast();
   const navigate = useNavigate();
 
