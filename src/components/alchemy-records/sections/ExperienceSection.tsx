@@ -136,7 +136,7 @@ const ExperienceSection = ({ data, onChange, showAddForm = true }: ExperienceSec
 
   return (
     <div className="space-y-4">
-      {activeExpIndex === null && (
+      {activeExpIndex === null ? (
         <>
           {showAddForm && (
             <Button 
@@ -210,9 +210,7 @@ const ExperienceSection = ({ data, onChange, showAddForm = true }: ExperienceSec
             </div>
           )}
         </>
-      )}
-      
-      {activeExpIndex !== null && (
+      ) : (
         <Card>
           <CardHeader>
             <CardTitle>

@@ -118,7 +118,7 @@ const EducationSection = ({ data, onChange, showAddForm = true }: EducationSecti
 
   return (
     <div className="space-y-4">
-      {activeEduIndex === null && (
+      {activeEduIndex === null ? (
         <>
           {showAddForm && (
             <Button 
@@ -194,9 +194,7 @@ const EducationSection = ({ data, onChange, showAddForm = true }: EducationSecti
             </div>
           )}
         </>
-      )}
-      
-      {activeEduIndex !== null && (
+      ) : (
         <Card>
           <CardHeader>
             <CardTitle>

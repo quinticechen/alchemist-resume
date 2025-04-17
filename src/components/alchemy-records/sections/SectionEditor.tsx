@@ -68,13 +68,13 @@ const SectionEditor = ({
       case 'education':
         return <EducationSection data={data} onChange={handleDataChange} showAddForm={true} />;
       case 'skills':
-        return <SkillsSection data={data} onChange={handleDataChange} />;
+        return <SkillsSection data={data} onChange={handleDataChange} showAddForm={true} />;
       case 'projects':
-        return <ProjectsSection data={data} onChange={handleDataChange} />;
+        return <ProjectsSection data={data} onChange={handleDataChange} showAddForm={true} />;
       case 'volunteer':
-        return <VolunteerSection data={data} onChange={handleDataChange} />;
+        return <VolunteerSection data={data} onChange={handleDataChange} showAddForm={true} />;
       case 'certifications':
-        return <CertificationsSection data={data} onChange={handleDataChange} />;
+        return <CertificationsSection data={data} onChange={handleDataChange} showAddForm={true} />;
       default:
         return <div>Section editor not available</div>;
     }
