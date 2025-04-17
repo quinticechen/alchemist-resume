@@ -54,7 +54,7 @@ const SeekerChatSheet: React.FC<SeekerChatSheetProps> = ({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <SeekerAnimation width={50} height={50} />
-            <SheetTitle>Chat with Alchemy Ooze</SheetTitle>
+            <SheetTitle>Chat with Seeker</SheetTitle>
           </div>
         </div>
       </SheetHeader>
