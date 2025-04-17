@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -49,7 +48,8 @@ const ResumeEditor = ({
     if (sectionOrder.length > 0) {
       const initialCollapsedState: Record<string, boolean> = {};
       sectionOrder.forEach((section, index) => {
-        initialCollapsedState[section] = index !== 0; // Only first section is expanded
+        // Set professionalExperience and the first section to be expanded initially
+        initialCollapsedState[section] = (index !== 0 && section !== 'professionalExperience');
       });
       setCollapsedSections(initialCollapsedState);
     }
