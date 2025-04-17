@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -13,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNavigate } from 'react-router-dom';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export interface ResumeEditorProps {
   resumeId: string;
@@ -44,23 +44,31 @@ const ResumeEditor = ({
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  // Initialize all sections as collapsed except the first one and professionalExperience
   useEffect(() => {
     if (sectionOrder.length > 0) {
-      // Move professionalExperience to the first position if it exists
       const newSectionOrder = [...sectionOrder];
+      
+      const personalInfoIndex = newSectionOrder.indexOf('personalInfo');
       const expIndex = newSectionOrder.indexOf('professionalExperience');
       
-      if (expIndex > 0) {
-        // If professionalExperience exists and is not already first, move it to first position
-        newSectionOrder.splice(expIndex, 1);
-        newSectionOrder.unshift('professionalExperience');
-        setSectionOrder(newSectionOrder);
+      if (personalInfoIndex > -1) {
+        newSectionOrder.splice(personalInfoIndex, 1);
       }
+      
+      if (expIndex > -1) {
+        newSectionOrder.splice(expIndex > personalInfoIndex && personalInfoIndex > -1 ? expIndex - 1 : expIndex, 1);
+      }
+      
+      if (expIndex > -1) {
+        newSectionOrder.unshift('professionalExperience');
+      }
+      
+      newSectionOrder.unshift('personalInfo');
+      
+      setSectionOrder(newSectionOrder);
       
       const initialCollapsedState: Record<string, boolean> = {};
       newSectionOrder.forEach((section, index) => {
-        // Only the first section is expanded initially
         initialCollapsedState[section] = index !== 0;
       });
       setCollapsedSections(initialCollapsedState);
@@ -106,10 +114,8 @@ const ResumeEditor = ({
           if (content.sectionOrder && Array.isArray(content.sectionOrder)) {
             setSectionOrder(content.sectionOrder);
             
-            // Set initial collapsed sections state
             const initialCollapsedState: Record<string, boolean> = {};
             content.sectionOrder.forEach((section: string, index: number) => {
-              // Set professionalExperience and the first section to be expanded initially
               initialCollapsedState[section] = (index !== 0 && section !== 'professionalExperience');
             });
             setCollapsedSections(initialCollapsedState);
@@ -282,8 +288,20 @@ const ResumeEditor = ({
     if (!result.destination) return;
     
     const items = Array.from(sectionOrder);
+    
+    if (items[result.source.index] === 'personalInfo') {
+      return;
+    }
+    
     const [reorderedItem] = items.splice(result.source.index, 1);
+    
     items.splice(result.destination.index, 0, reorderedItem);
+    
+    const personalInfoIndex = items.indexOf('personalInfo');
+    if (personalInfoIndex > 0) {
+      const [personalInfo] = items.splice(personalInfoIndex, 1);
+      items.unshift(personalInfo);
+    }
     
     handleSectionsReorder(items);
   };
@@ -297,85 +315,100 @@ const ResumeEditor = ({
       <div className="flex-1 min-h-0">
         <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as 'visual' | 'json')} className="h-full">
           <TabsContent value="visual" className="mt-0 h-full">
-            <ResizablePanelGroup direction="horizontal" className="h-[700px]">
-              {/* Job Description (Left) */}
+            <ResizablePanelGroup direction="horizontal" className="h-[calc(100vh-200px)]">
               <ResizablePanel defaultSize={25} minSize={15}>
-                <div className="h-full p-2 overflow-y-auto">
-                  <JobDescriptionViewer jobData={jobData} />
-                </div>
+                <ScrollArea className="h-full">
+                  <div className="h-full p-2">
+                    <JobDescriptionViewer jobData={jobData} />
+                  </div>
+                </ScrollArea>
               </ResizablePanel>
 
               <ResizableHandle withHandle />
 
-              {/* Resume Editor (Middle) */}
               <ResizablePanel defaultSize={50} minSize={30}>
-                <div className="h-full overflow-auto p-2">
-                  <div className="mb-4 flex items-center">
-                    <h3 className="text-xl font-semibold">Resume Sections</h3>
+                <ScrollArea className="h-full">
+                  <div className="p-2">
+                    <div className="mb-4 flex items-center">
+                      <h3 className="text-xl font-semibold">Resume Sections</h3>
+                    </div>
+                    
+                    <div className="lg:hidden mb-4">
+                      <SectionSelector 
+                        sections={sectionOrder}
+                        onSectionToggle={handleSectionToggle}
+                        onSectionsReorder={handleSectionsReorder}
+                        collapsedSections={collapsedSections}
+                      />
+                    </div>
+                    
+                    <SectionEditor 
+                      key="personalInfo"
+                      section="personalInfo" 
+                      resumeData={resumeData} 
+                      onChange={handleResumeDataChange}
+                      isCollapsed={collapsedSections['personalInfo']}
+                      onToggleCollapse={handleSectionToggle}
+                      isDraggable={false}
+                    />
+                    
+                    <DragDropContext onDragEnd={handleDragEnd}>
+                      <Droppable droppableId="droppable-sections">
+                        {(provided) => (
+                          <div
+                            {...provided.droppableProps}
+                            ref={provided.innerRef}
+                            className="space-y-4"
+                          >
+                            {sectionOrder
+                              .filter(section => section !== 'personalInfo')
+                              .map((section, index) => (
+                                <Draggable key={section} draggableId={section} index={index}>
+                                  {(provided) => (
+                                    <div
+                                      ref={provided.innerRef}
+                                      {...provided.draggableProps}
+                                      {...provided.dragHandleProps}
+                                    >
+                                      <SectionEditor 
+                                        key={section}
+                                        section={section} 
+                                        resumeData={resumeData} 
+                                        onChange={handleResumeDataChange}
+                                        isCollapsed={collapsedSections[section]}
+                                        onToggleCollapse={handleSectionToggle}
+                                        isDraggable={true}
+                                      />
+                                    </div>
+                                  )}
+                                </Draggable>
+                              ))}
+                            {provided.placeholder}
+                          </div>
+                        )}
+                      </Droppable>
+                    </DragDropContext>
                   </div>
-                  
-                  <div className="lg:hidden mb-4">
-                    <SectionSelector 
-                      sections={sectionOrder}
-                      onSectionToggle={handleSectionToggle}
-                      onSectionsReorder={handleSectionsReorder}
-                      collapsedSections={collapsedSections}
+                </ScrollArea>
+              </ResizablePanel>
+
+              <ResizableHandle withHandle />
+
+              <ResizablePanel defaultSize={25} minSize={15}>
+                <ScrollArea className="h-full">
+                  <div className="p-2">
+                    <SeekerOptimizationSection 
+                      optimizationData={resumeData} 
+                      analysisId={analysisId}
                     />
                   </div>
-                  
-                  <DragDropContext onDragEnd={handleDragEnd}>
-                    <Droppable droppableId="droppable-sections">
-                      {(provided) => (
-                        <div
-                          {...provided.droppableProps}
-                          ref={provided.innerRef}
-                          className="space-y-4"
-                        >
-                          {sectionOrder.map((section, index) => (
-                            <Draggable key={section} draggableId={section} index={index}>
-                              {(provided) => (
-                                <div
-                                  ref={provided.innerRef}
-                                  {...provided.draggableProps}
-                                  {...provided.dragHandleProps}
-                                >
-                                  <SectionEditor 
-                                    key={section}
-                                    section={section} 
-                                    resumeData={resumeData} 
-                                    onChange={handleResumeDataChange}
-                                    isCollapsed={collapsedSections[section]}
-                                    onToggleCollapse={handleSectionToggle}
-                                    isDraggable={true}
-                                  />
-                                </div>
-                              )}
-                            </Draggable>
-                          ))}
-                          {provided.placeholder}
-                        </div>
-                      )}
-                    </Droppable>
-                  </DragDropContext>
-                </div>
-              </ResizablePanel>
-
-              <ResizableHandle withHandle />
-
-              {/* Seeker Optimization (Right) */}
-              <ResizablePanel defaultSize={25} minSize={15}>
-                <div className="h-full p-2 overflow-y-auto">
-                  <SeekerOptimizationSection 
-                    optimizationData={resumeData} 
-                    analysisId={analysisId}
-                  />
-                </div>
+                </ScrollArea>
               </ResizablePanel>
             </ResizablePanelGroup>
           </TabsContent>
           
           <TabsContent value="json" className="mt-0 h-full">
-            <div className="border rounded-md h-[700px]">
+            <div className="border rounded-md h-[calc(100vh-200px)]">
               <textarea
                 value={JSON.stringify(resumeData, null, 2)}
                 onChange={handleRawJsonChange}
