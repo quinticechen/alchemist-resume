@@ -10,9 +10,10 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 interface CertificationsSectionProps {
   data: any;
   onChange: (updatedData: any) => void;
+  showAddForm?: boolean;
 }
 
-const CertificationsSection = ({ data, onChange }: CertificationsSectionProps) => {
+const CertificationsSection = ({ data, onChange, showAddForm = true }: CertificationsSectionProps) => {
   const [activeCertIndex, setActiveCertIndex] = useState<number | null>(null);
   const [editing, setEditing] = useState<{ [key: string]: string }>({});
   
@@ -109,15 +110,17 @@ const CertificationsSection = ({ data, onChange }: CertificationsSectionProps) =
 
   return (
     <div className="space-y-4">
-      {activeCertIndex === null && (
+      {activeCertIndex === null ? (
         <>
-          <Button 
-            onClick={() => initEditForm(null)} 
-            className="mb-4" 
-            variant="outline"
-          >
-            <PlusCircle className="h-4 w-4 mr-2" />Add Certification
-          </Button>
+          {showAddForm && (
+            <Button 
+              onClick={() => initEditForm(null)} 
+              className="mb-4" 
+              variant="outline"
+            >
+              <PlusCircle className="h-4 w-4 mr-2" />Add Certification
+            </Button>
+          )}
           
           {certificationsList.length > 0 ? (
             <Table>
@@ -179,9 +182,7 @@ const CertificationsSection = ({ data, onChange }: CertificationsSectionProps) =
             </div>
           )}
         </>
-      )}
-      
-      {activeCertIndex !== null && (
+      ) : (
         <Card>
           <CardHeader>
             <CardTitle>
