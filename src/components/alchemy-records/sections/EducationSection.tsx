@@ -15,7 +15,13 @@ interface EducationSectionProps {
 
 const EducationSection = ({ data, onChange, showAddForm = true }: EducationSectionProps) => {
   const [activeEduIndex, setActiveEduIndex] = useState<number | null>(null);
-  const [editing, setEditing] = useState<{ [key: string]: string }>({});
+  const [editing, setEditing] = useState<{ [key: string]: string }>({
+    degreeName: '',
+    institution: '',
+    enrollmentDate: '',
+    graduationDate: '',
+    gpa: '',
+  });
   
   // Handle the case where education is an array or a single object
   const educationArray = Array.isArray(data?.education) 
@@ -23,8 +29,10 @@ const EducationSection = ({ data, onChange, showAddForm = true }: EducationSecti
     : (data?.education ? [data.education] : []);
   
   console.log('Education data:', educationArray);
+  console.log('showAddForm prop:', showAddForm);
   
   const initEditForm = (idx: number | null) => {
+    console.log('Initializing education edit form with index:', idx);
     if (idx !== null && educationArray[idx]) {
       const edu = educationArray[idx];
       setEditing({
@@ -44,6 +52,7 @@ const EducationSection = ({ data, onChange, showAddForm = true }: EducationSecti
       });
     }
     setActiveEduIndex(idx);
+    console.log('Active education index set to:', idx);
   };
   
   const handleSaveEducation = () => {
@@ -116,15 +125,21 @@ const EducationSection = ({ data, onChange, showAddForm = true }: EducationSecti
     });
   };
 
+  const handleAddEducationClick = () => {
+    console.log('Add Education button clicked');
+    initEditForm(null);
+  };
+
   return (
     <div className="space-y-4">
       {activeEduIndex === null ? (
         <>
           {showAddForm && (
             <Button 
-              onClick={() => initEditForm(null)} 
+              onClick={handleAddEducationClick}
               className="mb-4" 
               variant="outline"
+              type="button"
             >
               <PlusCircle className="h-4 w-4 mr-2" />Add Education
             </Button>
@@ -156,6 +171,7 @@ const EducationSection = ({ data, onChange, showAddForm = true }: EducationSecti
                           variant="ghost" 
                           size="sm" 
                           onClick={() => initEditForm(idx)}
+                          type="button"
                         >
                           Edit
                         </Button>
@@ -163,6 +179,7 @@ const EducationSection = ({ data, onChange, showAddForm = true }: EducationSecti
                           variant="ghost" 
                           size="sm"
                           onClick={() => handleRemoveEducation(idx)}
+                          type="button"
                         >
                           <MinusCircle className="h-4 w-4" />
                         </Button>
@@ -171,6 +188,7 @@ const EducationSection = ({ data, onChange, showAddForm = true }: EducationSecti
                           size="sm"
                           onClick={() => handleMoveEducation(idx, 'up')}
                           disabled={idx === 0}
+                          type="button"
                         >
                           <MoveUp className="h-4 w-4" />
                         </Button>
@@ -179,6 +197,7 @@ const EducationSection = ({ data, onChange, showAddForm = true }: EducationSecti
                           size="sm"
                           onClick={() => handleMoveEducation(idx, 'down')}
                           disabled={idx === educationArray.length - 1}
+                          type="button"
                         >
                           <MoveDown className="h-4 w-4" />
                         </Button>
@@ -255,11 +274,13 @@ const EducationSection = ({ data, onChange, showAddForm = true }: EducationSecti
             <Button 
               variant="outline" 
               onClick={() => setActiveEduIndex(null)}
+              type="button"
             >
               Cancel
             </Button>
             <Button 
               onClick={handleSaveEducation}
+              type="button"
             >
               Save Education
             </Button>

@@ -15,7 +15,11 @@ interface CertificationsSectionProps {
 
 const CertificationsSection = ({ data, onChange, showAddForm = true }: CertificationsSectionProps) => {
   const [activeCertIndex, setActiveCertIndex] = useState<number | null>(null);
-  const [editing, setEditing] = useState<{ [key: string]: string }>({});
+  const [editing, setEditing] = useState<{ [key: string]: string }>({
+    name: '',
+    dateAchieved: '',
+    expiredDate: '',
+  });
   
   const certificationsList = Array.isArray(data?.certifications) ? data.certifications : [];
   
@@ -111,16 +115,18 @@ const CertificationsSection = ({ data, onChange, showAddForm = true }: Certifica
     });
   };
 
+  const handleAddCertClick = () => {
+    console.log('Add Certification button clicked');
+    initEditForm(null);
+  };
+
   return (
     <div className="space-y-4">
       {activeCertIndex === null ? (
         <>
           {showAddForm && (
             <Button 
-              onClick={() => {
-                console.log('Add Certification button clicked');
-                initEditForm(null);
-              }} 
+              onClick={handleAddCertClick}
               className="mb-4" 
               variant="outline"
               type="button"

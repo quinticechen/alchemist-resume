@@ -16,13 +16,24 @@ interface ExperienceSectionProps {
 
 const ExperienceSection = ({ data, onChange, showAddForm = true }: ExperienceSectionProps) => {
   const [activeExpIndex, setActiveExpIndex] = useState<number | null>(null);
-  const [editing, setEditing] = useState<{ [key: string]: string }>({});
+  const [editing, setEditing] = useState<{ [key: string]: string }>({
+    companyName: '',
+    location: '',
+    jobTitle: '',
+    startDate: '',
+    endDate: '',
+    companyIntroduction: '',
+  });
   const [achievements, setAchievements] = useState<string[]>([]);
   
   const experienceList = data?.professionalExperience || [];
   
+  console.log('Experience data:', experienceList);
+  console.log('showAddForm prop:', showAddForm);
+  
   // Initialize edit form with experience data or empty form
   const initEditForm = (idx: number | null) => {
+    console.log('Initializing experience edit form with index:', idx);
     if (idx !== null && experienceList[idx]) {
       const exp = experienceList[idx];
       setEditing({
@@ -46,6 +57,7 @@ const ExperienceSection = ({ data, onChange, showAddForm = true }: ExperienceSec
       setAchievements([]);
     }
     setActiveExpIndex(idx);
+    console.log('Active experience index set to:', idx);
   };
   
   const handleSaveExperience = () => {
@@ -134,15 +146,21 @@ const ExperienceSection = ({ data, onChange, showAddForm = true }: ExperienceSec
     });
   };
 
+  const handleAddExperienceClick = () => {
+    console.log('Add Experience button clicked');
+    initEditForm(null);
+  };
+
   return (
     <div className="space-y-4">
       {activeExpIndex === null ? (
         <>
           {showAddForm && (
             <Button 
-              onClick={() => initEditForm(null)} 
+              onClick={handleAddExperienceClick} 
               className="mb-4" 
               variant="outline"
+              type="button"
             >
               <PlusCircle className="h-4 w-4 mr-2" />Add Experience
             </Button>
@@ -172,6 +190,7 @@ const ExperienceSection = ({ data, onChange, showAddForm = true }: ExperienceSec
                           variant="ghost" 
                           size="sm" 
                           onClick={() => initEditForm(idx)}
+                          type="button"
                         >
                           Edit
                         </Button>
@@ -179,6 +198,7 @@ const ExperienceSection = ({ data, onChange, showAddForm = true }: ExperienceSec
                           variant="ghost" 
                           size="sm"
                           onClick={() => handleRemoveExperience(idx)}
+                          type="button"
                         >
                           <MinusCircle className="h-4 w-4" />
                         </Button>
@@ -187,6 +207,7 @@ const ExperienceSection = ({ data, onChange, showAddForm = true }: ExperienceSec
                           size="sm"
                           onClick={() => handleMoveExperience(idx, 'up')}
                           disabled={idx === 0}
+                          type="button"
                         >
                           <MoveUp className="h-4 w-4" />
                         </Button>
@@ -195,6 +216,7 @@ const ExperienceSection = ({ data, onChange, showAddForm = true }: ExperienceSec
                           size="sm"
                           onClick={() => handleMoveExperience(idx, 'down')}
                           disabled={idx === experienceList.length - 1}
+                          type="button"
                         >
                           <MoveDown className="h-4 w-4" />
                         </Button>
@@ -285,6 +307,7 @@ const ExperienceSection = ({ data, onChange, showAddForm = true }: ExperienceSec
                   onClick={handleAddAchievement} 
                   variant="outline" 
                   size="sm"
+                  type="button"
                 >
                   <PlusCircle className="h-4 w-4 mr-1" /> Add
                 </Button>
@@ -305,6 +328,7 @@ const ExperienceSection = ({ data, onChange, showAddForm = true }: ExperienceSec
                         size="sm" 
                         onClick={() => handleRemoveAchievement(idx)}
                         className="mt-2"
+                        type="button"
                       >
                         <MinusCircle className="h-4 w-4" />
                       </Button>
@@ -322,11 +346,13 @@ const ExperienceSection = ({ data, onChange, showAddForm = true }: ExperienceSec
             <Button 
               variant="outline" 
               onClick={() => setActiveExpIndex(null)}
+              type="button"
             >
               Cancel
             </Button>
             <Button 
               onClick={handleSaveExperience}
+              type="button"
             >
               Save Experience
             </Button>
