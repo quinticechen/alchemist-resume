@@ -2,10 +2,10 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { MessageCircle } from "lucide-react";
-import JellyfishAnimation from "@/components/JellyfishAnimation";
+import SeekerAnimation from "@/components/SeekerAnimation";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-interface JellyfishButtonProps {
+interface SeekerButtonProps {
   onClick: () => void;
   position: "top" | "middle" | "bottom";
   className?: string;
@@ -14,7 +14,7 @@ interface JellyfishButtonProps {
   chatMessage?: string;
 }
 
-const JellyfishButton: React.FC<JellyfishButtonProps> = ({ 
+const SeekerButton: React.FC<SeekerButtonProps> = ({ 
   onClick, 
   position, 
   className = "", 
@@ -50,7 +50,7 @@ const JellyfishButton: React.FC<JellyfishButtonProps> = ({
         <div className="absolute -top-10 right-0 opacity-0 group-hover:opacity-100 transition-opacity bg-background text-xs p-2 rounded shadow whitespace-nowrap">
           {simpleTipMode ? "View Resume Tip" : "Chat with Alchemy Ooze"}
         </div>
-        <JellyfishAnimation 
+        <SeekerAnimation 
           width={100} 
           height={100} 
           mobileWidth={80}
@@ -65,4 +65,4 @@ const JellyfishButton: React.FC<JellyfishButtonProps> = ({
   );
 };
 
-export default JellyfishButton;
+export default SeekerButton;

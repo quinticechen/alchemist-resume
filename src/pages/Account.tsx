@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Check, Github, Linkedin, Mail } from "lucide-react";
-import JellyfishDialog from "@/components/JellyfishDialog";
+import SeekerDialog from "@/components/SeekerDialog";
 
 interface Profile {
   email: string;
@@ -173,7 +173,7 @@ const Account = () => {
 
   return (
     <div className="relative">
-      <JellyfishDialog position="middle" />
+      <SeekerDialog position="middle" />
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-3xl mx-auto space-y-6">
           <Card>

@@ -2,7 +2,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import JellyfishAnimation from "@/components/JellyfishAnimation";
+import SeekerAnimation from "@/components/SeekerAnimation";
 import { Card } from "@/components/ui/card";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -29,9 +29,9 @@ const UserOnboard = () => {
             </div>
           </div>
           
-          {/* Jellyfish animation */}
+          {/* Seeker animation */}
           <div className="absolute top-full -mt-2">
-            <JellyfishAnimation 
+            <SeekerAnimation 
               width={100} 
               height={100} 
               mobileWidth={80}
@@ -41,7 +41,7 @@ const UserOnboard = () => {
           </div>
         </div>
         
-        {/* Add spacing to account for the jellyfish */}
+        {/* Add spacing to account for the Seeker */}
         <div className="mt-16"></div>
 
         <Card className="p-6 md:p-8 shadow-sm border border-neutral-200 bg-white w-full max-w-2xl mx-auto mt-12">

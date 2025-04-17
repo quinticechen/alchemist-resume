@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import JellyfishAnimation from "@/components/JellyfishAnimation";
+import SeekerAnimation from "@/components/SeekerAnimation";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -234,7 +234,7 @@ const SeekerOptimizationSection = ({ optimizationData, analysisId }: SeekerOptim
     <Card className="h-full overflow-hidden flex flex-col">
       <CardHeader>
         <CardTitle className="text-lg flex items-center gap-2">
-          <JellyfishAnimation width={18} height={18} />
+          <SeekerAnimation width={18} height={18} />
           Seeker Optimization Assistant
           {initializationStatus === 'error' && (
             <Button
@@ -257,7 +257,7 @@ const SeekerOptimizationSection = ({ optimizationData, analysisId }: SeekerOptim
           </div>
         ) : initializationStatus === 'loading' ? (
           <div className="flex flex-col items-center justify-center h-full">
-            <JellyfishAnimation width={120} height={120} />
+            <SeekerAnimation width={120} height={120} />
             <p className="text-sm text-muted-foreground mt-4">Loading assistant...</p>
           </div>
         ) : initializationStatus === 'error' ? (
@@ -276,7 +276,7 @@ const SeekerOptimizationSection = ({ optimizationData, analysisId }: SeekerOptim
         ) : (
           <>
             <div className="flex justify-center mb-4">
-              <JellyfishAnimation width={120} height={120} />
+              <SeekerAnimation width={120} height={120} />
             </div>
             
             <ScrollArea className="flex-1 pr-4">

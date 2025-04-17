@@ -7,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { ResumeSection, getAllSections } from '@/utils/resumeUtils';
-import JellyfishDialog from "@/components/JellyfishDialog";
+import SeekerDialog from "@/components/SeekerDialog";
 
 // Define a more precise type for job data
 interface JobData {
@@ -226,7 +226,7 @@ const ResumeRefine = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100 relative">
-      <JellyfishDialog 
+      <SeekerDialog 
         position="bottom" 
         title="Resume Assistant" 
         onSuggestionApply={handleSuggestionApply}

@@ -5,12 +5,12 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Lightbulb, Loader2, Send } from "lucide-react";
-import JellyfishAnimation from "@/components/JellyfishAnimation";
-import JellyfishChatMessage from "./JellyfishChatMessage";
+import SeekerAnimation from "@/components/SeekerAnimation";
+import SeekerChatMessage from "./SeekerChatMessage";
 import ErrorMessage from "./ErrorMessage";
-import type { ChatMessage } from "@/hooks/use-jellyfish-dialog";
+import type { ChatMessage } from "@/hooks/use-Seeker-dialog";
 
-interface JellyfishChatSheetProps {
+interface SeekerChatSheetProps {
   chats: ChatMessage[];
   inputValue: string;
   isLoading: boolean;
@@ -28,7 +28,7 @@ interface JellyfishChatSheetProps {
   sheetDescriptionId: string;
 }
 
-const JellyfishChatSheet: React.FC<JellyfishChatSheetProps> = ({
+const SeekerChatSheet: React.FC<SeekerChatSheetProps> = ({
   chats,
   inputValue,
   isLoading,
@@ -54,7 +54,7 @@ const JellyfishChatSheet: React.FC<JellyfishChatSheetProps> = ({
       <SheetHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <JellyfishAnimation width={50} height={50} />
+            <SeekerAnimation width={50} height={50} />
             <SheetTitle>Chat with Alchemy Ooze</SheetTitle>
           </div>
         </div>
@@ -63,7 +63,7 @@ const JellyfishChatSheet: React.FC<JellyfishChatSheetProps> = ({
       <ScrollArea className="flex-1 p-4 mt-2 mb-4" id={sheetDescriptionId}>
         <div className="flex flex-col gap-4">
           {displayChats.map((chat, index) => (
-            <JellyfishChatMessage 
+            <SeekerChatMessage 
               key={`${chat.threadId || ''}-${index}`}
               chat={chat}
               onApplySuggestion={onApplySuggestion}
@@ -140,4 +140,4 @@ const JellyfishChatSheet: React.FC<JellyfishChatSheetProps> = ({
   );
 };
 
-export default JellyfishChatSheet;
+export default SeekerChatSheet;

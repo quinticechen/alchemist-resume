@@ -2,12 +2,12 @@
 import React from "react";
 import { Dialog } from "@/components/ui/dialog";
 import { Sheet } from "@/components/ui/sheet";
-import { useJellyfishDialog } from "@/hooks/use-jellyfish-dialog";
-import JellyfishButton from "./ooze/JellyfishButton";
-import JellyfishTipDialog from "./ooze/JellyfishTipDialog";
-import JellyfishChatSheet from "./ooze/JellyfishChatSheet";
+import { useSeekerDialog } from "@/hooks/use-Seeker-dialog";
+import SeekerButton from "./seeker/SeekerButton";
+import SeekerTipDialog from "./seeker/SeekerTipDialog";
+import SeekerChatSheet from "./seeker/SeekerChatSheet";
 
-interface JellyfishDialogProps {
+interface SeekerDialogProps {
   className?: string;
   title?: string;
   position?: "top" | "middle" | "bottom";
@@ -18,7 +18,7 @@ interface JellyfishDialogProps {
   jobData?: any;
 }
 
-const JellyfishDialog: React.FC<JellyfishDialogProps> = ({ 
+const SeekerDialog: React.FC<SeekerDialogProps> = ({ 
   className = "",
   title = "Resume Assistant",
   position = "middle",
@@ -28,8 +28,8 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
   simpleTipMode = false,
   jobData = null
 }) => {
-  const dialogDescriptionId = "jellyfishDialogDescription";
-  const sheetDescriptionId = "jellyfishSheetDescription";
+  const dialogDescriptionId = "SeekerDialogDescription";
+  const sheetDescriptionId = "SeekerSheetDescription";
   
   // Use the custom hook to manage the dialog state and chat functionality
   const {
@@ -56,7 +56,7 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
     handleGenerateSuggestion,
     handleRetry,
     handleApplySuggestion
-  } = useJellyfishDialog({
+  } = useSeekerDialog({
     simpleTipMode,
     currentSectionId,
     onGenerateSuggestion,
@@ -73,8 +73,8 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
 
   return (
     <>
-      {/* Jellyfish Button */}
-      <JellyfishButton 
+      {/* Seeker Button */}
+      <SeekerButton 
         onClick={handleOpenDialog} 
         position={position} 
         className={className}
@@ -83,7 +83,7 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
 
       {/* Tip Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <JellyfishTipDialog
+        <SeekerTipDialog
           title={dialogTitle}
           message={message}
           onClose={() => setIsDialogOpen(false)}
@@ -96,7 +96,7 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
       {/* Chat Sheet */}
       {!simpleTipMode && (
         <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-          <JellyfishChatSheet
+          <SeekerChatSheet
             chats={chats}
             inputValue={inputValue}
             isLoading={isLoading}
@@ -119,4 +119,4 @@ const JellyfishDialog: React.FC<JellyfishDialogProps> = ({
   );
 };
 
-export default JellyfishDialog;
+export default SeekerDialog;

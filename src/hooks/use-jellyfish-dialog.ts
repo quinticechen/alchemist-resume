@@ -36,7 +36,7 @@ const resumeTips = [
   "Use reverse chronological order for your work experience."
 ];
 
-export interface UseJellyfishDialogOptions {
+export interface UseSeekerDialogOptions {
   simpleTipMode?: boolean;
   currentSectionId?: string;
   onGenerateSuggestion?: (sectionId: string) => void;
@@ -44,13 +44,13 @@ export interface UseJellyfishDialogOptions {
   jobData?: any;
 }
 
-export function useJellyfishDialog({
+export function useSeekerDialog({
   simpleTipMode = false,
   currentSectionId = "",
   onGenerateSuggestion,
   onSuggestionApply,
   jobData = null
-}: UseJellyfishDialogOptions = {}) {
+}: UseSeekerDialogOptions = {}) {
   // UI state
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -110,7 +110,7 @@ export function useJellyfishDialog({
     
     const id = extractAnalysisId();
     setAnalysisId(id);
-    console.log(`JellyfishDialog initialized with analysis ID: ${id || "none"}`);
+    console.log(`SeekerDialog initialized with analysis ID: ${id || "none"}`);
     
     // Reset error state when analysis ID changes
     setApiError(null);

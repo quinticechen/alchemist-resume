@@ -1,10 +1,10 @@
 
 import React from "react";
 import Lottie from "react-lottie";
-import jellyfishAnimation from "@/animations/OOze.chat.json";
+import SeekerAnimation from "@/animations/OOze.chat.json";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-interface JellyfishAnimationProps {
+interface SeekerAnimationProps {
   width?: number;
   height?: number;
   className?: string;
@@ -17,7 +17,7 @@ interface JellyfishAnimationProps {
   showShadow?: boolean;
 }
 
-const JellyfishAnimation: React.FC<JellyfishAnimationProps> = ({ 
+const SeekerAnimation: React.FC<SeekerAnimationProps> = ({ 
   width = 200, 
   height = 200,
   mobileWidth = 120,
@@ -34,7 +34,7 @@ const JellyfishAnimation: React.FC<JellyfishAnimationProps> = ({
   const defaultOptions = {
     loop,
     autoplay,
-    animationData: jellyfishAnimation,
+    animationData: SeekerAnimation,
     rendererSettings: {
       preserveAspectRatio: "xMidYMid slice"
     }
@@ -64,4 +64,4 @@ const JellyfishAnimation: React.FC<JellyfishAnimationProps> = ({
   );
 };
 
-export default JellyfishAnimation;
+export default SeekerAnimation;

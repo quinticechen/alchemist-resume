@@ -2,9 +2,9 @@
 import React from 'react';
 import { DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import JellyfishAnimation from "@/components/JellyfishAnimation";
+import SeekerAnimation from "@/components/SeekerAnimation";
 
-interface JellyfishTipDialogProps {
+interface SeekerTipDialogProps {
   title: string;
   message: string;
   onClose: () => void;
@@ -13,7 +13,7 @@ interface JellyfishTipDialogProps {
   dialogDescriptionId: string;
 }
 
-const JellyfishTipDialog: React.FC<JellyfishTipDialogProps> = ({
+const SeekerTipDialog: React.FC<SeekerTipDialogProps> = ({
   title,
   message,
   onClose,
@@ -27,7 +27,7 @@ const JellyfishTipDialog: React.FC<JellyfishTipDialogProps> = ({
         <DialogTitle className="text-center">{title}</DialogTitle>
       </DialogHeader>
       <div className="flex flex-col items-center gap-4 py-4" id={dialogDescriptionId}>
-        <JellyfishAnimation width={150} height={150} />
+        <SeekerAnimation width={150} height={150} />
         <p className="text-center text-lg font-medium text-primary">{message}</p>
         <div className="flex gap-2 mt-2">
           <Button 
@@ -47,4 +47,4 @@ const JellyfishTipDialog: React.FC<JellyfishTipDialogProps> = ({
   );
 };
 
-export default JellyfishTipDialog;
+export default SeekerTipDialog;

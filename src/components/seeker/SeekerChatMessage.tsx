@@ -1,15 +1,15 @@
 
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import type { ChatMessage } from "@/hooks/use-jellyfish-dialog";
+import type { ChatMessage } from "@/hooks/use-Seeker-dialog";
 
-interface JellyfishChatMessageProps {
+interface SeekerChatMessageProps {
   chat: ChatMessage;
   onApplySuggestion?: (suggestion: string) => void;
   index: number; // Add index prop to help with unique keys
 }
 
-const JellyfishChatMessage: React.FC<JellyfishChatMessageProps> = ({ 
+const SeekerChatMessage: React.FC<SeekerChatMessageProps> = ({ 
   chat, 
   onApplySuggestion,
   index
@@ -53,4 +53,4 @@ const JellyfishChatMessage: React.FC<JellyfishChatMessageProps> = ({
   );
 };
 
-export default JellyfishChatMessage;
+export default SeekerChatMessage;
