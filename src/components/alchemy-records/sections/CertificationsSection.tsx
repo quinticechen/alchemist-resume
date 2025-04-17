@@ -127,7 +127,7 @@ const CertificationsSection = ({ data, onChange, showAddForm = true }: Certifica
       {activeCertIndex === null ? (
         <>
           {showAddForm && (
-            <Button 
+            <Button
               onClick={() => {
                 console.log('Direct button click handler for Certification');
                 // 使用-1表示這是一個新添加操作
@@ -139,7 +139,7 @@ const CertificationsSection = ({ data, onChange, showAddForm = true }: Certifica
                 });
                 console.log('activeCertIndex set to -1 to indicate new item');
               }}
-              className="mb-4" 
+              className="mb-4"
               variant="outline"
               type="button"
             >
