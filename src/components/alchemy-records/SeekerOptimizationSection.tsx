@@ -150,8 +150,6 @@ const SeekerOptimizationSection = ({ optimizationData, analysisId }: SeekerOptim
     setIsLoading(true);
     setDebugInfo(null);
     
-    await saveChatMessage(userMessage);
-
     try {
       console.log(`Sending message to edge function with analysisId: ${analysisId}, threadId: ${threadId || 'new'}`);
       
