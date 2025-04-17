@@ -31,6 +31,8 @@ const SectionEditor = ({
 }: SectionEditorProps) => {
   // Extract resume from the data structure if it exists, otherwise use the data as is
   const data = resumeData?.resume || resumeData || {};
+  
+  console.log(`SectionEditor for ${section} - isCollapsed:`, isCollapsed);
 
   const handleDataChange = (updatedSectionData: any) => {
     // Check if we're working with a nested resume structure
@@ -58,23 +60,28 @@ const SectionEditor = ({
   };
 
   const renderSectionContent = () => {
+    // Always pass showAddForm as true when not collapsed
+    const showAddForm = !isCollapsed;
+    
+    console.log(`Rendering section ${section} with showAddForm:`, showAddForm);
+    
     switch (section) {
       case 'personalInfo':
         return <PersonalInfoSection data={data} onChange={handleDataChange} />;
       case 'professionalSummary':
         return <ProfessionalSummarySection data={data} onChange={handleDataChange} />;
       case 'professionalExperience':
-        return <ExperienceSection data={data} onChange={handleDataChange} showAddForm={true} />;
+        return <ExperienceSection data={data} onChange={handleDataChange} showAddForm={showAddForm} />;
       case 'education':
-        return <EducationSection data={data} onChange={handleDataChange} showAddForm={true} />;
+        return <EducationSection data={data} onChange={handleDataChange} showAddForm={showAddForm} />;
       case 'skills':
-        return <SkillsSection data={data} onChange={handleDataChange} showAddForm={true} />;
+        return <SkillsSection data={data} onChange={handleDataChange} showAddForm={showAddForm} />;
       case 'projects':
-        return <ProjectsSection data={data} onChange={handleDataChange} showAddForm={true} />;
+        return <ProjectsSection data={data} onChange={handleDataChange} showAddForm={showAddForm} />;
       case 'volunteer':
-        return <VolunteerSection data={data} onChange={handleDataChange} showAddForm={true} />;
+        return <VolunteerSection data={data} onChange={handleDataChange} showAddForm={showAddForm} />;
       case 'certifications':
-        return <CertificationsSection data={data} onChange={handleDataChange} showAddForm={true} />;
+        return <CertificationsSection data={data} onChange={handleDataChange} showAddForm={showAddForm} />;
       default:
         return <div>Section editor not available</div>;
     }
@@ -92,6 +99,7 @@ const SectionEditor = ({
           size="sm" 
           onClick={handleToggleCollapse} 
           className="p-1 h-8 w-8"
+          type="button"
         >
           {isCollapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
         </Button>

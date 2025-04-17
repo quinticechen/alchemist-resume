@@ -17,11 +17,13 @@ const CertificationsSection = ({ data, onChange, showAddForm = true }: Certifica
   const [activeCertIndex, setActiveCertIndex] = useState<number | null>(null);
   const [editing, setEditing] = useState<{ [key: string]: string }>({});
   
-  const certificationsList = data?.certifications || [];
+  const certificationsList = Array.isArray(data?.certifications) ? data.certifications : [];
   
   console.log('Certifications data:', certificationsList);
+  console.log('showAddForm prop:', showAddForm);
   
   const initEditForm = (idx: number | null) => {
+    console.log('Initializing edit form with index:', idx);
     if (idx !== null && certificationsList[idx]) {
       const cert = certificationsList[idx];
       setEditing({
@@ -37,6 +39,7 @@ const CertificationsSection = ({ data, onChange, showAddForm = true }: Certifica
       });
     }
     setActiveCertIndex(idx);
+    console.log('Active certification index set to:', idx);
   };
   
   const handleSaveCertification = () => {
@@ -114,9 +117,13 @@ const CertificationsSection = ({ data, onChange, showAddForm = true }: Certifica
         <>
           {showAddForm && (
             <Button 
-              onClick={() => initEditForm(null)} 
+              onClick={() => {
+                console.log('Add Certification button clicked');
+                initEditForm(null);
+              }} 
               className="mb-4" 
               variant="outline"
+              type="button"
             >
               <PlusCircle className="h-4 w-4 mr-2" />Add Certification
             </Button>
@@ -144,6 +151,7 @@ const CertificationsSection = ({ data, onChange, showAddForm = true }: Certifica
                           variant="ghost" 
                           size="sm" 
                           onClick={() => initEditForm(idx)}
+                          type="button"
                         >
                           Edit
                         </Button>
@@ -151,6 +159,7 @@ const CertificationsSection = ({ data, onChange, showAddForm = true }: Certifica
                           variant="ghost" 
                           size="sm"
                           onClick={() => handleRemoveCertification(idx)}
+                          type="button"
                         >
                           <MinusCircle className="h-4 w-4" />
                         </Button>
@@ -159,6 +168,7 @@ const CertificationsSection = ({ data, onChange, showAddForm = true }: Certifica
                           size="sm"
                           onClick={() => handleMoveCertification(idx, 'up')}
                           disabled={idx === 0}
+                          type="button"
                         >
                           <MoveUp className="h-4 w-4" />
                         </Button>
@@ -167,6 +177,7 @@ const CertificationsSection = ({ data, onChange, showAddForm = true }: Certifica
                           size="sm"
                           onClick={() => handleMoveCertification(idx, 'down')}
                           disabled={idx === certificationsList.length - 1}
+                          type="button"
                         >
                           <MoveDown className="h-4 w-4" />
                         </Button>
@@ -225,11 +236,13 @@ const CertificationsSection = ({ data, onChange, showAddForm = true }: Certifica
             <Button 
               variant="outline" 
               onClick={() => setActiveCertIndex(null)}
+              type="button"
             >
               Cancel
             </Button>
             <Button 
               onClick={handleSaveCertification}
+              type="button"
             >
               Save Certification
             </Button>
