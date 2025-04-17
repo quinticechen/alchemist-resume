@@ -10,7 +10,7 @@ import ProjectsSection from './ProjectsSection';
 import VolunteerSection from './VolunteerSection';
 import CertificationsSection from './CertificationsSection';
 import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronUp, GripVertical } from "lucide-react";
+import { ChevronDown, ChevronUp, GripVertical, Lock } from "lucide-react";
 
 interface SectionEditorProps {
   section: ResumeSection;
@@ -87,11 +87,15 @@ const SectionEditor = ({
     }
   };
 
+  // Personal info section is special - not draggable and has a lock icon
+  const isPersonalInfo = section === 'personalInfo';
+
   return (
     <div className="mb-6 border rounded-md shadow-sm">
       <div className="bg-gray-50 p-4 flex justify-between items-center border-b">
         <div className="flex items-center gap-2">
-          {isDraggable && <GripVertical className="h-4 w-4 text-gray-400 cursor-grab" />}
+          {isDraggable && !isPersonalInfo && <GripVertical className="h-4 w-4 text-gray-400 cursor-grab" />}
+          {isPersonalInfo && <Lock className="h-4 w-4 text-gray-400" />}
           <h3 className="text-lg font-medium">{getSectionDisplayName(section)}</h3>
         </div>
         <Button 

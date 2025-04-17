@@ -5,7 +5,7 @@ import JellyfishAnimation from "@/components/JellyfishAnimation";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Lightbulb, AlertCircle, Send, Bot, User, Loader2, Bug, RefreshCw } from "lucide-react";
+import { Lightbulb, AlertCircle, Send, User, Loader2, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -172,14 +172,12 @@ const SeekerOptimizationSection = ({ optimizationData, analysisId }: SeekerOptim
 
       if (error) {
         console.error('Edge function error:', error);
-        setDebugInfo(`Edge function error: ${JSON.stringify(error)}`);
         throw error;
       }
 
       console.log('Edge function response:', data);
       
       if (!data) {
-        setDebugInfo('Error: No data returned from edge function');
         throw new Error("Empty response from edge function");
       }
 
@@ -227,40 +225,6 @@ const SeekerOptimizationSection = ({ optimizationData, analysisId }: SeekerOptim
     }
   };
 
-  const handleDebugClick = async () => {
-    if (!analysisId) return;
-    
-    setIsLoading(true);
-    
-    try {
-      const { data, error } = await supabase.functions.invoke('resume-ai-assistant', {
-        body: { 
-          debug: true,
-          analysisId: analysisId
-        }
-      });
-      
-      if (error) throw error;
-      
-      setDebugInfo(JSON.stringify(data, null, 2));
-      
-      toast({
-        title: "Debug Info Fetched",
-        description: "Check the debug panel for details.",
-        variant: "default"
-      });
-    } catch (error) {
-      console.error('Error fetching debug info:', error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch debug information.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const handleRetryInitialization = () => {
     setInitializationStatus('idle');
     // This will trigger the useEffect to reload chat history
@@ -270,7 +234,7 @@ const SeekerOptimizationSection = ({ optimizationData, analysisId }: SeekerOptim
     <Card className="h-full overflow-hidden flex flex-col">
       <CardHeader>
         <CardTitle className="text-lg flex items-center gap-2">
-          <Bot size={18} />
+          <JellyfishAnimation width={18} height={18} />
           Seeker Optimization Assistant
           {initializationStatus === 'error' && (
             <Button
@@ -282,28 +246,6 @@ const SeekerOptimizationSection = ({ optimizationData, analysisId }: SeekerOptim
             >
               <RefreshCw className="h-4 w-4 mr-1" />
               Retry
-            </Button>
-          )}
-          {debugInfo && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="ml-auto"
-              onClick={() => setDebugInfo(null)}
-            >
-              Hide Debug
-            </Button>
-          )}
-          {!debugInfo && initializationStatus !== 'error' && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="ml-auto"
-              onClick={handleDebugClick}
-              disabled={isLoading}
-            >
-              <Bug className="h-4 w-4 mr-1" />
-              Debug
             </Button>
           )}
         </CardTitle>
@@ -352,7 +294,6 @@ const SeekerOptimizationSection = ({ optimizationData, analysisId }: SeekerOptim
                       }`}
                     >
                       <div className="flex gap-2">
-                        {message.role === 'assistant' && <Bot className="h-5 w-5 flex-shrink-0" />}
                         <p className="whitespace-pre-wrap">{message.content}</p>
                         {message.role === 'user' && <User className="h-5 w-5 flex-shrink-0" />}
                       </div>

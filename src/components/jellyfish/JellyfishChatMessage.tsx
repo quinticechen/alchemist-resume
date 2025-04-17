@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { Bot } from "lucide-react";
 import type { ChatMessage } from "@/hooks/use-jellyfish-dialog";
 
 interface JellyfishChatMessageProps {
@@ -31,21 +30,18 @@ const JellyfishChatMessage: React.FC<JellyfishChatMessageProps> = ({
         }`}
       >
         {chat.role === 'assistant' && (
-          <div className="flex items-start gap-2">
-            <Bot className="h-4 w-4 mt-1 flex-shrink-0" />
-            <div>
-              <p className="whitespace-pre-wrap">{chat.content}</p>
-              {chat.suggestion && onApplySuggestion && (
-                <Button 
-                  variant="secondary" 
-                  size="sm" 
-                  className="mt-2"
-                  onClick={() => onApplySuggestion(chat.suggestion!)}
-                >
-                  Apply Suggestion
-                </Button>
-              )}
-            </div>
+          <div>
+            <p className="whitespace-pre-wrap">{chat.content}</p>
+            {chat.suggestion && onApplySuggestion && (
+              <Button 
+                variant="secondary" 
+                size="sm" 
+                className="mt-2"
+                onClick={() => onApplySuggestion(chat.suggestion!)}
+              >
+                Apply Suggestion
+              </Button>
+            )}
           </div>
         )}
         
