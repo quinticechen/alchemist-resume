@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
-import { ResumeSection } from '@/utils/resumeUtils';
+import { ResumeSection, getFormattedResume } from '@/utils/resumeUtils';
 
 const RESUME_STYLES = [
   { id: 'classic', name: 'Classic', color: 'bg-white' },
@@ -92,6 +92,46 @@ const DEFAULT_SECTION_ORDER: ResumeSection[] = [
   'certifications'
 ];
 
+// 處理簡歷數據格式
+const prepareResumeData = (content: any) => {
+  try {
+    console.log('準備處理的原始數據:', content);
+    
+    // 如果內容是字符串，嘗試解析為 JSON
+    let parsedContent = content;
+    if (typeof content === 'string') {
+      try {
+        parsedContent = JSON.parse(content);
+      } catch (e) {
+        console.error('解析 JSON 字符串失敗:', e);
+      }
+    }
+    
+    // 確保數據具有正確的結構
+    return {
+      resume: parsedContent.resume || {},
+      sectionOrder: parsedContent.sectionOrder || DEFAULT_SECTION_ORDER,
+      jobTitle: parsedContent.jobTitle || 'My Resume'
+    };
+  } catch (error) {
+    console.error('Error preparing resume data:', error);
+    // 返回一個默認的數據結構，避免頁面崩潰
+    return {
+      resume: {
+        personalInfo: {},
+        professionalExperience: [],
+        education: [],
+        skills: { technical: [], soft: [] },
+        projects: [],
+        volunteer: [],
+        certifications: []
+      },
+      sectionOrder: DEFAULT_SECTION_ORDER,
+      jobTitle: 'My Resume'
+    };
+  }
+};
+
 const ResumePreview = () => {
   const { session, isLoading } = useAuth();
   const navigate = useNavigate();
@@ -132,14 +172,7 @@ const ResumePreview = () => {
 
       setLoading(true);
       try {
-        // 如果已經有 resume 數據，直接使用
-        if (locationState.resume) {
-          setResumeData({ resume: locationState.resume });
-          setLoading(false);
-          return;
-        }
-
-        // 獲取編輯器內容
+        // 總是從 Supabase 獲取編輯器內容
         const { data: editorData, error: editorError } = await supabase
           .from('resume_editors')
           .select('content')
@@ -152,6 +185,7 @@ const ResumePreview = () => {
 
         if (!editorData || !editorData.content) {
           setError("No resume content found");
+          setLoading(false);
           return;
         }
 
@@ -168,20 +202,23 @@ const ResumePreview = () => {
 
         // 處理數據
         const content = editorData.content;
+        console.log('從 Supabase 獲取的原始 content 數據:', content);
         
         // 轉換數據格式
         const preparedData = prepareResumeData(content);
+        console.log('處理後的簡歷數據:', preparedData);
         setResumeData(preparedData);
         setResumeAnalysis(analysisData);
         setLoading(false);
       } catch (error) {
+        console.error('獲取簡歷數據失敗:', error);
         setError("Failed to load resume data");
         setLoading(false);
       }
     };
 
     fetchEditorContent();
-  }, [session, isLoading, navigate, analysisId, toast, locationState.resume]);
+  }, [session, isLoading, navigate, analysisId, toast]);
 
   useEffect(() => {
     localStorage.setItem(LOCAL_STORAGE_STYLE_KEY, style);
@@ -317,6 +354,13 @@ const ResumePreview = () => {
   if (!resumeData) {
     return <div className="container mx-auto px-4 py-8">No resume data available</div>;
   }
+
+  // 調試日誌
+  console.log('最終渲染的 resumeData:', resumeData);
+  console.log('personalInfo:', resumeData.resume?.personalInfo);
+  console.log('professionalExperience:', resumeData.resume?.professionalExperience);
+  console.log('education:', resumeData.resume?.education);
+  console.log('skills:', resumeData.resume?.skills);
 
   const personalInfo = resumeData.resume?.personalInfo || {};
   const experiences = resumeData.resume?.professionalExperience || [];

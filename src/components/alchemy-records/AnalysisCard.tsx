@@ -138,12 +138,14 @@ const AnalysisCard = ({
         <Button
           variant="outline"
           size="sm"
-          onClick={() => navigate(`/resume-preview/${id}`, {
-            state: {
-              analysisId: id,
-              resume: resume.formatted_resume
-            }
-          })}
+          onClick={() => {
+            console.log('點擊了 Golden Resume 按鈕，ID:', id);
+            navigate(`/resume-preview/${id}`, {
+              state: {
+                analysisId: id
+              }
+            });
+          }}
           className="text-info border-info/20 hover:bg-info/5"
         >
           <Crown className="h-4 w-4 mr-2" />
