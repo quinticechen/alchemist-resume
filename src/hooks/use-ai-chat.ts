@@ -38,6 +38,7 @@ export const useAIChat = (
   const params = useParams();
   const [effectiveAnalysisId, setEffectiveAnalysisId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [lastQueryTimestamp, setLastQueryTimestamp] = useState<number>(0);
 
   // Extract analysis ID with improved robustness
   useEffect(() => {
@@ -98,7 +99,9 @@ export const useAIChat = (
 
       try {
         console.log(`Loading chat history for analysis: ${effectiveAnalysisId}`);
+        setLastQueryTimestamp(Date.now());
         
+        // Query metadata first to get thread information
         const { data: metadataData, error: metadataError } = await supabase
           .from('ai_chat_metadata')
           .select('*')
@@ -116,9 +119,12 @@ export const useAIChat = (
             assistant_id: metadataData[0].assistant_id,
             run_id: metadataData[0].run_id
           });
-          console.log(`Using existing thread: ${threadId}`);
+          console.log(`Found existing metadata for analysis ${effectiveAnalysisId}, thread: ${threadId}`);
+        } else {
+          console.log(`No existing metadata found for analysis ${effectiveAnalysisId}`);
         }
         
+        // Now query for messages
         const { data, error } = await supabase
           .from('ai_chat_messages')
           .select('*')
@@ -137,6 +143,13 @@ export const useAIChat = (
           
           setMessages(displayMessages);
           console.log(`Loaded ${displayMessages.length} messages for analysis: ${effectiveAnalysisId}`);
+          
+          // If we have messages but no threadId from metadata, try to extract from messages
+          if (!threadId && displayMessages.length > 0 && displayMessages[0].thread_id) {
+            threadId = displayMessages[0].thread_id;
+            setCurrentThreadId(threadId);
+            console.log(`Extracted thread ID from message: ${threadId}`);
+          }
         } else {
           const welcomeMessage: ChatMessage = {
             id: crypto.randomUUID(),
@@ -250,54 +263,35 @@ export const useAIChat = (
       let suggestion = null;
       let content = data.message;
       let threadId = data.threadId;
-      let assistantId = data.assistantId;
-      let runId = data.runId;
-      let systemPrompt = data.systemPrompt;
-      
-      if (systemPrompt) {
-        const systemMessage: ChatMessage = {
-          id: crypto.randomUUID(),
-          role: 'system',
-          content: systemPrompt,
-          timestamp: new Date(),
-          section: currentSectionId,
-          thread_id: threadId
-        };
-        
-        await saveChatMessage(systemMessage);
-        console.log("Stored system message in database");
-      }
       
       if (threadId) {
         setCurrentThreadId(threadId);
-        console.log(`Using OpenAI thread ID: ${threadId}`);
+        console.log(`Using thread ID from response: ${threadId}`);
         
-        if (assistantId && runId) {
-          setThreadMetadata({
-            thread_id: threadId,
-            assistant_id: assistantId,
-            run_id: runId
-          });
-          
-          if (threadId !== currentThreadId) {
-            try {
-              const { error: metadataError } = await supabase
-                .from('ai_chat_metadata')
-                .insert({
-                  analysis_id: effectiveAnalysisId,
-                  thread_id: threadId,
-                  assistant_id: assistantId,
-                  run_id: runId,
-                  section: currentSectionId
-                });
-                
-              if (metadataError) throw metadataError;
-              console.log(`Stored new thread metadata: ${threadId}`);
-            } catch (metadataErr) {
-              console.error('Error saving thread metadata:', metadataErr);
+        // Refresh metadata after a delay to ensure the edge function had time to save it
+        setTimeout(async () => {
+          try {
+            const { data: refreshedMetadataData } = await supabase
+              .from('ai_chat_metadata')
+              .select('*')
+              .eq('analysis_id', effectiveAnalysisId)
+              .eq('thread_id', threadId)
+              .maybeSingle();
+              
+            if (refreshedMetadataData) {
+              setThreadMetadata({
+                thread_id: refreshedMetadataData.thread_id,
+                assistant_id: refreshedMetadataData.assistant_id,
+                run_id: refreshedMetadataData.run_id
+              });
+              console.log(`Refreshed metadata for thread: ${threadId}`);
+            } else {
+              console.warn(`No metadata found for thread ${threadId} after refresh`);
             }
+          } catch (refreshError) {
+            console.error('Error refreshing thread metadata:', refreshError);
           }
-        }
+        }, 1000);
       } else {
         console.warn("No thread ID returned from resume-ai-assistant");
       }

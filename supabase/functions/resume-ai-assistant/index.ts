@@ -274,25 +274,59 @@ async function saveMessage(analysisId: string, role: string, content: string, th
  */
 async function saveThreadMetadata(analysisId: string, threadId: string, systemPrompt: string) {
   try {
-    await supabaseAdmin
+    console.log(`Saving thread metadata for analysis ${analysisId}, thread ${threadId}`);
+    
+    const metadataRecord = {
+      analysis_id: analysisId,
+      thread_id: threadId,
+      run_id: "", // We're not using assistants API, so this is empty
+      assistant_id: "", // We're not using assistants API, so this is empty
+      section: "",
+      updated_at: new Date().toISOString()
+    };
+    
+    // Try to get existing metadata first
+    const { data: existingMetadata, error: selectError } = await supabaseAdmin
       .from("ai_chat_metadata")
-      .upsert({
-        analysis_id: analysisId,
-        thread_id: threadId,
-        run_id: "",
-        assistant_id: "",
-        section: "",
-        updated_at: new Date().toISOString()
-      }, {
-        onConflict: 'analysis_id,thread_id'
-      });
+      .select("*")
+      .eq("analysis_id", analysisId)
+      .eq("thread_id", threadId)
+      .maybeSingle();
       
-    console.log(`Updated thread metadata in database`);
+    if (selectError) {
+      console.error(`Error checking existing metadata: ${selectError.message}`);
+    }
+    
+    if (existingMetadata) {
+      // Update existing record
+      const { error: updateError } = await supabaseAdmin
+        .from("ai_chat_metadata")
+        .update(metadataRecord)
+        .eq("analysis_id", analysisId)
+        .eq("thread_id", threadId);
+        
+      if (updateError) {
+        console.error(`Error updating thread metadata: ${updateError.message}`);
+      } else {
+        console.log(`Updated existing thread metadata for ${threadId}`);
+      }
+    } else {
+      // Insert new record
+      const { error: insertError } = await supabaseAdmin
+        .from("ai_chat_metadata")
+        .insert(metadataRecord);
+        
+      if (insertError) {
+        console.error(`Error inserting thread metadata: ${insertError.message}`);
+      } else {
+        console.log(`Inserted new thread metadata for ${threadId}`);
+      }
+    }
     
     // Store system message
     await saveMessage(analysisId, "system", systemPrompt, threadId);
   } catch (error) {
-    console.log("Error storing metadata, continuing:", error.message);
+    console.error(`Error storing metadata: ${error.message}`);
   }
 }
 
@@ -438,7 +472,7 @@ async function handleRequest(req: Request) {
     // Save assistant message to database
     await saveMessage(analysisId, "assistant", aiResponse, newThreadId);
     
-    // Save thread metadata
+    // Save thread metadata - IMPORTANT FIX: We always save metadata regardless if it's a new thread or existing
     await saveThreadMetadata(analysisId, newThreadId, systemPrompt);
     
     console.log("Successfully completed request, returning response");
