@@ -5,7 +5,7 @@ import JellyfishAnimation from "@/components/JellyfishAnimation";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Lightbulb, AlertCircle, Send, Bot, User, Loader2 } from "lucide-react";
+import { Lightbulb, AlertCircle, Send, Bot, User, Loader2, Bug } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -26,6 +26,7 @@ const SeekerOptimizationSection = ({ optimizationData, analysisId }: SeekerOptim
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [threadId, setThreadId] = useState<string | null>(null);
+  const [debugInfo, setDebugInfo] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
@@ -49,6 +50,8 @@ const SeekerOptimizationSection = ({ optimizationData, analysisId }: SeekerOptim
       if (!analysisId) return;
       
       try {
+        console.log(`Loading chat history for analysis ID: ${analysisId}`);
+        
         // Try to get thread ID first
         const { data: metadataData } = await supabase
           .from('ai_chat_metadata')
@@ -59,6 +62,7 @@ const SeekerOptimizationSection = ({ optimizationData, analysisId }: SeekerOptim
           
         if (metadataData && metadataData.length > 0) {
           setThreadId(metadataData[0].thread_id);
+          console.log(`Retrieved thread ID: ${metadataData[0].thread_id}`);
         }
         
         // Get message history
@@ -82,6 +86,7 @@ const SeekerOptimizationSection = ({ optimizationData, analysisId }: SeekerOptim
             }));
           
           setMessages(displayMessages);
+          console.log(`Loaded ${displayMessages.length} messages for analysis: ${analysisId}`);
         }
       } catch (error) {
         console.error('Error loading chat history:', error);
@@ -130,24 +135,46 @@ const SeekerOptimizationSection = ({ optimizationData, analysisId }: SeekerOptim
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setIsLoading(true);
+    setDebugInfo(null);
     
     await saveChatMessage(userMessage);
 
     try {
+      console.log(`Sending message to edge function with analysisId: ${analysisId}, threadId: ${threadId || 'new'}`);
+      
+      // Enhanced edge function call with more detailed request logging
+      const startTime = new Date().getTime();
+      const requestPayload = { 
+        message: input, 
+        analysisId: analysisId,
+        threadId: threadId
+      };
+      
+      console.log('Request payload:', JSON.stringify(requestPayload));
+      
       const { data, error } = await supabase.functions.invoke('resume-ai-assistant', {
-        body: { 
-          message: input, 
-          analysisId: analysisId,
-          threadId: threadId
-        }
+        body: requestPayload
       });
 
+      const endTime = new Date().getTime();
+      console.log(`Edge function response time: ${endTime - startTime}ms`);
+
       if (error) {
+        console.error('Edge function error:', error);
+        setDebugInfo(`Edge function error: ${JSON.stringify(error)}`);
         throw error;
+      }
+
+      console.log('Edge function response:', data);
+      
+      if (!data) {
+        setDebugInfo('Error: No data returned from edge function');
+        throw new Error("Empty response from edge function");
       }
 
       if (data?.threadId) {
         setThreadId(data.threadId);
+        console.log(`Setting thread ID from response: ${data.threadId}`);
       }
 
       const aiMessage: ChatMessage = {
@@ -159,7 +186,7 @@ const SeekerOptimizationSection = ({ optimizationData, analysisId }: SeekerOptim
 
       setMessages(prev => [...prev, aiMessage]);
       await saveChatMessage(aiMessage);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error getting AI response:', error);
       
       const errorMessage: ChatMessage = {
@@ -174,7 +201,7 @@ const SeekerOptimizationSection = ({ optimizationData, analysisId }: SeekerOptim
       
       toast({
         title: "Error",
-        description: "Failed to get AI response. Please try again.",
+        description: `Failed to get AI response: ${error.message}`,
         variant: "destructive"
       });
     } finally {
@@ -189,52 +216,116 @@ const SeekerOptimizationSection = ({ optimizationData, analysisId }: SeekerOptim
     }
   };
 
+  const handleDebugClick = async () => {
+    if (!analysisId) return;
+    
+    setIsLoading(true);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('resume-ai-assistant', {
+        body: { 
+          debug: true,
+          analysisId: analysisId
+        }
+      });
+      
+      if (error) throw error;
+      
+      setDebugInfo(JSON.stringify(data, null, 2));
+      
+      toast({
+        title: "Debug Info Fetched",
+        description: "Check the debug panel for details.",
+        variant: "default"
+      });
+    } catch (error) {
+      console.error('Error fetching debug info:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch debug information.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <Card className="h-full overflow-hidden flex flex-col">
       <CardHeader>
         <CardTitle className="text-lg flex items-center gap-2">
           <Bot size={18} />
           Seeker Optimization Assistant
+          {debugInfo && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="ml-auto"
+              onClick={() => setDebugInfo(null)}
+            >
+              Hide Debug
+            </Button>
+          )}
+          {!debugInfo && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="ml-auto"
+              onClick={handleDebugClick}
+              disabled={isLoading}
+            >
+              <Bug className="h-4 w-4 mr-1" />
+              Debug
+            </Button>
+          )}
         </CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col flex-1 overflow-hidden p-4">
-        <div className="flex justify-center mb-4">
-          <JellyfishAnimation width={120} height={120} />
-        </div>
-        
-        <ScrollArea className="flex-1 pr-4">
-          <div className="space-y-4">
-            {messages.map((message) => (
-              <div 
-                key={message.id} 
-                className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
-                <div 
-                  className={`rounded-lg p-3 max-w-[85%] ${
-                    message.role === 'user' 
-                      ? 'bg-primary text-primary-foreground' 
-                      : 'bg-muted'
-                  }`}
-                >
-                  <div className="flex gap-2">
-                    {message.role === 'assistant' && <Bot className="h-5 w-5 flex-shrink-0" />}
-                    <p className="whitespace-pre-wrap">{message.content}</p>
-                    {message.role === 'user' && <User className="h-5 w-5 flex-shrink-0" />}
-                  </div>
-                </div>
-              </div>
-            ))}
-            
-            {!analysisId && (
-              <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-800 flex items-center gap-2">
-                <AlertCircle className="h-4 w-4" />
-                <p className="text-sm">Analysis ID not found. Some features may be limited.</p>
-              </div>
-            )}
-            
-            <div ref={messagesEndRef} />
+        {debugInfo ? (
+          <div className="flex-1 overflow-auto bg-slate-100 p-4 rounded text-xs font-mono">
+            <pre>{debugInfo}</pre>
           </div>
-        </ScrollArea>
+        ) : (
+          <>
+            <div className="flex justify-center mb-4">
+              <JellyfishAnimation width={120} height={120} />
+            </div>
+            
+            <ScrollArea className="flex-1 pr-4">
+              <div className="space-y-4">
+                {messages.map((message) => (
+                  <div 
+                    key={message.id} 
+                    className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                  >
+                    <div 
+                      className={`rounded-lg p-3 max-w-[85%] ${
+                        message.role === 'user' 
+                          ? 'bg-primary text-primary-foreground' 
+                          : 'bg-muted'
+                      }`}
+                    >
+                      <div className="flex gap-2">
+                        {message.role === 'assistant' && <Bot className="h-5 w-5 flex-shrink-0" />}
+                        <p className="whitespace-pre-wrap">{message.content}</p>
+                        {message.role === 'user' && <User className="h-5 w-5 flex-shrink-0" />}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                
+                {!analysisId && (
+                  <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-800 flex items-center gap-2">
+                    <AlertCircle className="h-4 w-4" />
+                    <p className="text-sm">Analysis ID not found. Some features may be limited.</p>
+                  </div>
+                )}
+                
+                <div ref={messagesEndRef} />
+              </div>
+            </ScrollArea>
+          </>
+        )}
         
         <div className="mt-4 pt-4 border-t">
           <div className="flex gap-2">
