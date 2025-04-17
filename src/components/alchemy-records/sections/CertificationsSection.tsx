@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -47,19 +46,21 @@ const CertificationsSection = ({ data, onChange, showAddForm = true }: Certifica
   };
   
   const handleSaveCertification = () => {
+    console.log('Save Certification button clicked');
+    console.log('Current editing data:', editing);
+    console.log('Current activeCertIndex:', activeCertIndex);
+    
     const updatedCertifications = [...certificationsList];
     
-    const certItem = {
-      ...editing
-    };
-    
-    if (activeCertIndex !== null) {
+    if (activeCertIndex !== null && activeCertIndex >= 0) {
       // Update existing item
-      updatedCertifications[activeCertIndex] = certItem;
+      updatedCertifications[activeCertIndex] = editing;
     } else {
-      // Add new item
-      updatedCertifications.push(certItem);
+      // Add new item (activeCertIndex === null or activeCertIndex === -1)
+      updatedCertifications.push(editing);
     }
+    
+    console.log('Updated certifications list before save:', updatedCertifications);
     
     onChange({
       ...data,
@@ -68,6 +69,7 @@ const CertificationsSection = ({ data, onChange, showAddForm = true }: Certifica
     
     // Reset form
     setActiveCertIndex(null);
+    console.log('Form reset, activeCertIndex set to null');
   };
   
   const handleRemoveCertification = (idx: number) => {
@@ -126,7 +128,17 @@ const CertificationsSection = ({ data, onChange, showAddForm = true }: Certifica
         <>
           {showAddForm && (
             <Button 
-              onClick={handleAddCertClick}
+              onClick={() => {
+                console.log('Direct button click handler for Certification');
+                // 使用-1表示這是一個新添加操作
+                setActiveCertIndex(-1);
+                setEditing({
+                  name: '',
+                  dateAchieved: '',
+                  expiredDate: ''
+                });
+                console.log('activeCertIndex set to -1 to indicate new item');
+              }}
               className="mb-4" 
               variant="outline"
               type="button"
@@ -203,7 +215,7 @@ const CertificationsSection = ({ data, onChange, showAddForm = true }: Certifica
         <Card>
           <CardHeader>
             <CardTitle>
-              {activeCertIndex === null ? 'Add Certification' : 'Edit Certification'}
+              {activeCertIndex >= 0 ? 'Edit Certification' : 'Add Certification'}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">

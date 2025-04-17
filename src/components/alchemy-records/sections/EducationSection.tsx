@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -56,20 +55,21 @@ const EducationSection = ({ data, onChange, showAddForm = true }: EducationSecti
   };
   
   const handleSaveEducation = () => {
+    console.log('Save Education button clicked');
+    console.log('Current editing data:', editing);
+    console.log('Current activeEduIndex:', activeEduIndex);
+    
     const updatedEducation = [...educationArray];
     
-    const educationItem = {
-      ...editing,
-      gpa: editing.gpa ? parseFloat(editing.gpa) : undefined
-    };
-    
-    if (activeEduIndex !== null) {
+    if (activeEduIndex !== null && activeEduIndex >= 0) {
       // Update existing item
-      updatedEducation[activeEduIndex] = educationItem;
+      updatedEducation[activeEduIndex] = editing;
     } else {
-      // Add new item
-      updatedEducation.push(educationItem);
+      // Add new item (activeEduIndex === null or activeEduIndex === -1)
+      updatedEducation.push(editing);
     }
+    
+    console.log('Updated education list before save:', updatedEducation);
     
     onChange({
       ...data,
@@ -78,6 +78,7 @@ const EducationSection = ({ data, onChange, showAddForm = true }: EducationSecti
     
     // Reset form
     setActiveEduIndex(null);
+    console.log('Form reset, activeEduIndex set to null');
   };
   
   const handleRemoveEducation = (idx: number) => {
@@ -136,7 +137,19 @@ const EducationSection = ({ data, onChange, showAddForm = true }: EducationSecti
         <>
           {showAddForm && (
             <Button 
-              onClick={handleAddEducationClick}
+              onClick={() => {
+                console.log('Direct button click handler for Education');
+                // 使用-1表示這是一個新添加操作
+                setActiveEduIndex(-1);
+                setEditing({
+                  degreeName: '',
+                  institution: '',
+                  enrollmentDate: '',
+                  graduationDate: '',
+                  gpa: ''
+                });
+                console.log('activeEduIndex set to -1 to indicate new item');
+              }}
               className="mb-4" 
               variant="outline"
               type="button"
@@ -217,7 +230,7 @@ const EducationSection = ({ data, onChange, showAddForm = true }: EducationSecti
         <Card>
           <CardHeader>
             <CardTitle>
-              {activeEduIndex === null ? 'Add Education' : 'Edit Education'}
+              {activeEduIndex >= 0 ? 'Edit Education' : 'Add Education'}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">

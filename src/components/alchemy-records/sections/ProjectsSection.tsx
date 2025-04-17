@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,7 +15,7 @@ interface ProjectsSectionProps {
 
 const ProjectsSection = ({ data, onChange, showAddForm = true }: ProjectsSectionProps) => {
   const [activeProjectIndex, setActiveProjectIndex] = useState<number | null>(null);
-  const [editing, setEditing] = useState<{ [key: string]: string }>({});
+  const [editing, setEditing] = useState({ name: '', startDate: '', endDate: '' });
   const [achievements, setAchievements] = useState<string[]>([]);
   
   const projectsList = data?.projects || [];
@@ -27,21 +26,21 @@ const ProjectsSection = ({ data, onChange, showAddForm = true }: ProjectsSection
       setEditing({
         name: project.name || '',
         startDate: project.startDate || '',
-        endDate: project.endDate || '',
+        endDate: project.endDate || ''
       });
       setAchievements(project.achievements || []);
     } else {
-      setEditing({
-        name: '',
-        startDate: '',
-        endDate: '',
-      });
+      setEditing({ name: '', startDate: '', endDate: '' });
       setAchievements([]);
     }
     setActiveProjectIndex(idx);
   };
   
   const handleSaveProject = () => {
+    console.log('Save Project button clicked');
+    console.log('Current editing data:', editing);
+    console.log('Current activeProjectIndex:', activeProjectIndex);
+    
     const updatedProjects = [...projectsList];
     
     const projectItem = {
@@ -49,13 +48,15 @@ const ProjectsSection = ({ data, onChange, showAddForm = true }: ProjectsSection
       achievements: achievements
     };
     
-    if (activeProjectIndex !== null) {
+    if (activeProjectIndex !== null && activeProjectIndex >= 0) {
       // Update existing item
       updatedProjects[activeProjectIndex] = projectItem;
     } else {
-      // Add new item
+      // Add new item (activeProjectIndex === null or activeProjectIndex === -1)
       updatedProjects.push(projectItem);
     }
+    
+    console.log('Updated projects list before save:', updatedProjects);
     
     onChange({
       ...data,
@@ -64,6 +65,7 @@ const ProjectsSection = ({ data, onChange, showAddForm = true }: ProjectsSection
     
     // Reset form
     setActiveProjectIndex(null);
+    console.log('Form reset, activeProjectIndex set to null');
   };
   
   const handleRemoveProject = (idx: number) => {
@@ -129,13 +131,25 @@ const ProjectsSection = ({ data, onChange, showAddForm = true }: ProjectsSection
 
   return (
     <div className="space-y-4">
-      {activeProjectIndex === null && (
+      {activeProjectIndex === null ? (
         <>
           {showAddForm && (
             <Button 
-              onClick={() => initEditForm(null)} 
+              onClick={() => {
+                console.log('Direct button click handler for Project');
+                // 使用-1表示這是一個新添加操作
+                setActiveProjectIndex(-1);
+                setEditing({
+                  name: '',
+                  startDate: '',
+                  endDate: ''
+                });
+                setAchievements([]);
+                console.log('activeProjectIndex set to -1 to indicate new item');
+              }}
               className="mb-4" 
               variant="outline"
+              type="button"
             >
               <PlusCircle className="h-4 w-4 mr-2" />Add Project
             </Button>
@@ -163,6 +177,7 @@ const ProjectsSection = ({ data, onChange, showAddForm = true }: ProjectsSection
                           variant="ghost" 
                           size="sm" 
                           onClick={() => initEditForm(idx)}
+                          type="button"
                         >
                           Edit
                         </Button>
@@ -170,6 +185,7 @@ const ProjectsSection = ({ data, onChange, showAddForm = true }: ProjectsSection
                           variant="ghost" 
                           size="sm"
                           onClick={() => handleRemoveProject(idx)}
+                          type="button"
                         >
                           <MinusCircle className="h-4 w-4" />
                         </Button>
@@ -178,6 +194,7 @@ const ProjectsSection = ({ data, onChange, showAddForm = true }: ProjectsSection
                           size="sm"
                           onClick={() => handleMoveProject(idx, 'up')}
                           disabled={idx === 0}
+                          type="button"
                         >
                           <MoveUp className="h-4 w-4" />
                         </Button>
@@ -186,6 +203,7 @@ const ProjectsSection = ({ data, onChange, showAddForm = true }: ProjectsSection
                           size="sm"
                           onClick={() => handleMoveProject(idx, 'down')}
                           disabled={idx === projectsList.length - 1}
+                          type="button"
                         >
                           <MoveDown className="h-4 w-4" />
                         </Button>
@@ -201,13 +219,11 @@ const ProjectsSection = ({ data, onChange, showAddForm = true }: ProjectsSection
             </div>
           )}
         </>
-      )}
-      
-      {activeProjectIndex !== null && (
+      ) : (
         <Card>
           <CardHeader>
             <CardTitle>
-              {activeProjectIndex === null ? 'Add Project' : 'Edit Project'}
+              {activeProjectIndex >= 0 ? 'Edit Project' : 'Add Project'}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -248,6 +264,7 @@ const ProjectsSection = ({ data, onChange, showAddForm = true }: ProjectsSection
                   onClick={handleAddAchievement} 
                   variant="outline" 
                   size="sm"
+                  type="button"
                 >
                   <PlusCircle className="h-4 w-4 mr-1" /> Add
                 </Button>
@@ -268,6 +285,7 @@ const ProjectsSection = ({ data, onChange, showAddForm = true }: ProjectsSection
                         size="sm" 
                         onClick={() => handleRemoveAchievement(idx)}
                         className="mt-2"
+                        type="button"
                       >
                         <MinusCircle className="h-4 w-4" />
                       </Button>
@@ -285,11 +303,13 @@ const ProjectsSection = ({ data, onChange, showAddForm = true }: ProjectsSection
             <Button 
               variant="outline" 
               onClick={() => setActiveProjectIndex(null)}
+              type="button"
             >
               Cancel
             </Button>
             <Button 
               onClick={handleSaveProject}
+              type="button"
             >
               Save Project
             </Button>

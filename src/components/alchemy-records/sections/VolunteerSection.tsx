@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -42,28 +41,35 @@ const VolunteerSection = ({ data, onChange, showAddForm = true }: VolunteerSecti
   };
   
   const handleSaveVolunteer = () => {
-    const updatedVolunteer = [...volunteerList];
+    console.log('Save Volunteer button clicked');
+    console.log('Current editing data:', editing);
+    console.log('Current activeVolunteerIndex:', activeVolunteerIndex);
+    
+    const updatedVolunteers = [...volunteerList];
     
     const volunteerItem = {
       ...editing,
       achievements: achievements
     };
     
-    if (activeVolunteerIndex !== null) {
+    if (activeVolunteerIndex !== null && activeVolunteerIndex >= 0) {
       // Update existing item
-      updatedVolunteer[activeVolunteerIndex] = volunteerItem;
+      updatedVolunteers[activeVolunteerIndex] = volunteerItem;
     } else {
-      // Add new item
-      updatedVolunteer.push(volunteerItem);
+      // Add new item (activeVolunteerIndex === null or activeVolunteerIndex === -1)
+      updatedVolunteers.push(volunteerItem);
     }
+    
+    console.log('Updated volunteer list before save:', updatedVolunteers);
     
     onChange({
       ...data,
-      volunteer: updatedVolunteer
+      volunteer: updatedVolunteers
     });
     
     // Reset form
     setActiveVolunteerIndex(null);
+    console.log('Form reset, activeVolunteerIndex set to null');
   };
   
   const handleRemoveVolunteer = (idx: number) => {
@@ -129,13 +135,24 @@ const VolunteerSection = ({ data, onChange, showAddForm = true }: VolunteerSecti
 
   return (
     <div className="space-y-4">
-      {activeVolunteerIndex === null && (
+      {activeVolunteerIndex === null ? (
         <>
           {showAddForm && (
             <Button 
-              onClick={() => initEditForm(null)} 
+              onClick={() => {
+                console.log('Direct button click handler for Volunteer');
+                setActiveVolunteerIndex(-1);
+                setEditing({
+                  name: '',
+                  startDate: '',
+                  endDate: ''
+                });
+                setAchievements([]);
+                console.log('activeVolunteerIndex set to -1 to indicate new item');
+              }}
               className="mb-4" 
               variant="outline"
+              type="button"
             >
               <PlusCircle className="h-4 w-4 mr-2" />Add Volunteer Experience
             </Button>
@@ -201,13 +218,11 @@ const VolunteerSection = ({ data, onChange, showAddForm = true }: VolunteerSecti
             </div>
           )}
         </>
-      )}
-      
-      {activeVolunteerIndex !== null && (
+      ) : (
         <Card>
           <CardHeader>
             <CardTitle>
-              {activeVolunteerIndex === null ? 'Add Volunteer Experience' : 'Edit Volunteer Experience'}
+              {activeVolunteerIndex >= 0 ? 'Edit Volunteer Experience' : 'Add Volunteer Experience'}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
