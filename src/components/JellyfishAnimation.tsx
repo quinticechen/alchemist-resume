@@ -1,7 +1,7 @@
 
 import React from "react";
 import Lottie from "react-lottie";
-import jellyfishAnimation from "@/animations/Jellyfish.yellow.money.json";
+import jellyfishAnimation from "@/animations/OOze.chat.json";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface JellyfishAnimationProps {

@@ -3,9 +3,9 @@ import React from "react";
 import { Dialog } from "@/components/ui/dialog";
 import { Sheet } from "@/components/ui/sheet";
 import { useJellyfishDialog } from "@/hooks/use-jellyfish-dialog";
-import JellyfishButton from "./jellyfish/JellyfishButton";
-import JellyfishTipDialog from "./jellyfish/JellyfishTipDialog";
-import JellyfishChatSheet from "./jellyfish/JellyfishChatSheet";
+import JellyfishButton from "./ooze/JellyfishButton";
+import JellyfishTipDialog from "./ooze/JellyfishTipDialog";
+import JellyfishChatSheet from "./ooze/JellyfishChatSheet";
 
 interface JellyfishDialogProps {
   className?: string;

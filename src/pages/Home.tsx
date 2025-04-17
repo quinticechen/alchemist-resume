@@ -13,7 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
 import { useToast } from "@/hooks/use-toast";
 import Lottie from "react-lottie";
-import animationData from "@/animations/Jellyfish.yellow.money.json";
+import animationData from "@/animations/OOze.chat.json";
 
 const companies = ["Google", "Amazon", "Microsoft", "Apple", "Meta"];
 

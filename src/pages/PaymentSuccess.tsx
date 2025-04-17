@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Lottie from "react-lottie";
-import animationData from "@/animations/Jellyfish.yellow.money.json";
+import animationData from "@/animations/OOze.chat.json";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
