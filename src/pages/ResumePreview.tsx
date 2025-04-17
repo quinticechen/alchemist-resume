@@ -132,6 +132,13 @@ const ResumePreview = () => {
 
       setLoading(true);
       try {
+        // 如果已經有 resume 數據，直接使用
+        if (locationState.resume) {
+          setResumeData({ resume: locationState.resume });
+          setLoading(false);
+          return;
+        }
+
         // 獲取編輯器內容
         const { data: editorData, error: editorError } = await supabase
           .from('resume_editors')
@@ -174,7 +181,7 @@ const ResumePreview = () => {
     };
 
     fetchEditorContent();
-  }, [session, isLoading, navigate, analysisId, toast]);
+  }, [session, isLoading, navigate, analysisId, toast, locationState.resume]);
 
   useEffect(() => {
     localStorage.setItem(LOCAL_STORAGE_STYLE_KEY, style);

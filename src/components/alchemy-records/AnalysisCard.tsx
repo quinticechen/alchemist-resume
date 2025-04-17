@@ -140,7 +140,8 @@ const AnalysisCard = ({
           size="sm"
           onClick={() => navigate(`/resume-preview/${id}`, {
             state: {
-              analysisId: id
+              analysisId: id,
+              resume: resume.formatted_resume
             }
           })}
           className="text-info border-info/20 hover:bg-info/5"
