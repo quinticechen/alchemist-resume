@@ -66,9 +66,8 @@ const ResumeEditor: React.FC<ResumeEditorProps> = ({
 
         <TabsContent value="personalInfo">
           <PersonalInfoSection 
-            resumeId={resumeId} 
-            initialData={resumeContent.resume.personalInfo} 
-            onUpdate={(data) => updateResumeSection('personalInfo', data)} 
+            data={resumeContent.resume.personalInfo} 
+            onChange={(data) => updateResumeSection('personalInfo', data)} 
           />
         </TabsContent>
 
@@ -86,57 +85,50 @@ const ResumeEditor: React.FC<ResumeEditorProps> = ({
 
             <TabsContent value="professionalSummary">
               <ProfessionalSummarySection 
-                resumeId={resumeId} 
-                initialData={resumeContent.resume.professionalSummary} 
-                onUpdate={(data) => updateResumeSection('professionalSummary', data)} 
+                data={resumeContent.resume.professionalSummary} 
+                onChange={(data) => updateResumeSection('professionalSummary', data)} 
               />
             </TabsContent>
 
             <TabsContent value="experience">
               <ExperienceSection 
-                resumeId={resumeId} 
-                initialData={resumeContent.resume.professionalExperience} 
-                onUpdate={(data) => updateResumeSection('professionalExperience', data)} 
+                data={resumeContent.resume.professionalExperience} 
+                onChange={(data) => updateResumeSection('professionalExperience', data)} 
               />
             </TabsContent>
 
             <TabsContent value="education">
               <EducationSection 
-                resumeId={resumeId} 
-                initialData={resumeContent.resume.education} 
-                onUpdate={(data) => updateResumeSection('education', data)} 
+                data={resumeContent.resume.education} 
+                onChange={(data) => updateResumeSection('education', data)} 
               />
             </TabsContent>
 
             <TabsContent value="skills">
               <SkillsSection 
-                resumeId={resumeId} 
-                initialData={resumeContent.resume.skills} 
-                onUpdate={(data) => updateResumeSection('skills', data)} 
+                data={resumeContent.resume.skills} 
+                onChange={(data) => updateResumeSection('skills', data)} 
               />
             </TabsContent>
 
             <TabsContent value="projects">
               <ProjectsSection 
-                resumeId={resumeId} 
-                initialData={resumeContent.resume.projects} 
-                onUpdate={(data) => updateResumeSection('projects', data)} 
+                data={resumeContent.resume.projects} 
+                onChange={(data) => updateResumeSection('projects', data)} 
               />
             </TabsContent>
 
             <TabsContent value="certifications">
               <CertificationsSection 
-                resumeId={resumeId} 
-                initialData={resumeContent.resume.certifications} 
-                onUpdate={(data) => updateResumeSection('certifications', data)} 
+                data={resumeContent.resume.certifications} 
+                onChange={(data) => updateResumeSection('certifications', data)} 
               />
             </TabsContent>
 
             <TabsContent value="volunteer">
               <VolunteerSection 
-                resumeId={resumeId} 
-                initialData={resumeContent.resume.volunteer} 
-                onUpdate={(data) => updateResumeSection('volunteer', data)} 
+                data={resumeContent.resume.volunteer} 
+                onChange={(data) => updateResumeSection('volunteer', data)} 
               />
             </TabsContent>
           </Tabs>
