@@ -62,7 +62,7 @@ export const useStripeInit = () => {
     if (attempts < maxAttempts && !stripePromise && error === null) {
       initializeStripe();
     }
-  }, [attempts, environment]);
+  }, [attempts, environment, maxAttempts, stripePromise, error, toast]);
 
   return { stripePromise, isStripeInitializing, error };
 };
