@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -364,7 +365,10 @@ const ResumeEditor = ({
               {/* Seeker Optimization (Right) */}
               <ResizablePanel defaultSize={25} minSize={15}>
                 <div className="h-full p-2 overflow-y-auto">
-                  <SeekerOptimizationSection optimizationData={resumeData} />
+                  <SeekerOptimizationSection 
+                    optimizationData={resumeData} 
+                    analysisId={analysisId}
+                  />
                 </div>
               </ResizablePanel>
             </ResizablePanelGroup>
