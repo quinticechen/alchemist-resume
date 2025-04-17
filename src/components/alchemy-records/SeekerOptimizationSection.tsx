@@ -37,7 +37,7 @@ const SeekerOptimizationSection = ({ optimizationData, analysisId }: SeekerOptim
         {
           id: crypto.randomUUID(),
           role: 'assistant',
-          content: 'Hello! I can help optimize your resume. What would you like help with?',
+          content: "Let me take a look at this resume... (tentacles gently waving) Oh my! Although it's been through alchemy, we can add a bit more magic to make it shine even brighter!",
           timestamp: new Date()
         }
       ]);
