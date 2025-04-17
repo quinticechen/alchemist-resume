@@ -219,10 +219,19 @@ const ResumePreview = () => {
           ? content.sectionOrder 
           : DEFAULT_SECTION_ORDER;
 
+        let finalSectionOrder = [...sectionOrder];
+        if (finalSectionOrder.includes('professionalExperience')) {
+          const expIndex = finalSectionOrder.indexOf('professionalExperience');
+          if (expIndex > 0) {
+            finalSectionOrder.splice(expIndex, 1);
+            finalSectionOrder.unshift('professionalExperience');
+          }
+        }
+
         setResumeData({
           ...analysisData,
           resume: content.resume || {},
-          sectionOrder: sectionOrder,
+          sectionOrder: finalSectionOrder,
           jobTitle,
           fileName,
           googleDocUrl: analysisData.google_doc_url
@@ -539,6 +548,9 @@ const ResumePreview = () => {
                             {exp.startDate} - {exp.endDate || 'Present'}
                           </p>
                         </div>
+                        {exp.companyIntroduction && (
+                          <p className="text-gray-700 mt-2 italic">{exp.companyIntroduction}</p>
+                        )}
                         {exp.achievements && (
                           <ul className="list-disc ml-5 mt-2 text-gray-700">
                             {exp.achievements.map((achievement: string, i: number) => (
