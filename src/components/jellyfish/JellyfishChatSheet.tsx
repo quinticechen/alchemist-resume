@@ -45,8 +45,9 @@ const JellyfishChatSheet: React.FC<JellyfishChatSheetProps> = ({
   onApplySuggestion,
   sheetDescriptionId
 }) => {
-  // Filter out system messages for display
-  const displayChats = chats.filter(chat => chat.role !== 'system');
+  // Filter out system messages for display and deduplicate messages
+  const displayChats = chats
+    .filter(chat => chat.role !== 'system');
   
   return (
     <SheetContent className="w-[400px] sm:w-[540px] overflow-hidden flex flex-col" aria-describedby={sheetDescriptionId}>
@@ -63,9 +64,10 @@ const JellyfishChatSheet: React.FC<JellyfishChatSheetProps> = ({
         <div className="flex flex-col gap-4">
           {displayChats.map((chat, index) => (
             <JellyfishChatMessage 
-              key={index}
+              key={`${chat.threadId || ''}-${index}`}
               chat={chat}
               onApplySuggestion={onApplySuggestion}
+              index={index}
             />
           ))}
           

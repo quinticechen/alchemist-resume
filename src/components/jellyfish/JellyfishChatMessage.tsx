@@ -1,20 +1,28 @@
 
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, Loader2 } from "lucide-react";
+import { Bot } from "lucide-react";
 import type { ChatMessage } from "@/hooks/use-jellyfish-dialog";
 
 interface JellyfishChatMessageProps {
   chat: ChatMessage;
   onApplySuggestion?: (suggestion: string) => void;
+  index: number; // Add index prop to help with unique keys
 }
 
 const JellyfishChatMessage: React.FC<JellyfishChatMessageProps> = ({ 
   chat, 
-  onApplySuggestion 
+  onApplySuggestion,
+  index
 }) => {
+  // Generate a unique key for each message to prevent duplicates
+  const messageKey = chat.threadId ? `${chat.threadId}-${index}` : `msg-${index}`;
+  
   return (
-    <div className={`flex ${chat.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+    <div 
+      key={messageKey}
+      className={`flex ${chat.role === 'user' ? 'justify-end' : 'justify-start'}`}
+    >
       <div 
         className={`rounded-lg p-3 max-w-[80%] ${
           chat.role === 'user' 
@@ -22,16 +30,27 @@ const JellyfishChatMessage: React.FC<JellyfishChatMessageProps> = ({
             : 'bg-muted'
         }`}
       >
-        <p className="whitespace-pre-wrap">{chat.content}</p>
-        {chat.suggestion && onApplySuggestion && (
-          <Button 
-            variant="secondary" 
-            size="sm" 
-            className="mt-2"
-            onClick={() => onApplySuggestion(chat.suggestion!)}
-          >
-            Apply Suggestion
-          </Button>
+        {chat.role === 'assistant' && (
+          <div className="flex items-start gap-2">
+            <Bot className="h-4 w-4 mt-1 flex-shrink-0" />
+            <div>
+              <p className="whitespace-pre-wrap">{chat.content}</p>
+              {chat.suggestion && onApplySuggestion && (
+                <Button 
+                  variant="secondary" 
+                  size="sm" 
+                  className="mt-2"
+                  onClick={() => onApplySuggestion(chat.suggestion!)}
+                >
+                  Apply Suggestion
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
+        
+        {chat.role !== 'assistant' && (
+          <p className="whitespace-pre-wrap">{chat.content}</p>
         )}
       </div>
     </div>

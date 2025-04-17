@@ -39,6 +39,7 @@ export const useAIChat = (
   const [effectiveAnalysisId, setEffectiveAnalysisId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [lastQueryTimestamp, setLastQueryTimestamp] = useState<number>(0);
+  const [resumeContentSent, setResumeContentSent] = useState<boolean>(false);
 
   // Extract analysis ID with improved robustness
   useEffect(() => {
@@ -120,6 +121,9 @@ export const useAIChat = (
             run_id: metadataData[0].run_id
           });
           console.log(`Found existing metadata for analysis ${effectiveAnalysisId}, thread: ${threadId}`);
+          
+          // Mark that we've already sent resume content since this is an existing thread
+          setResumeContentSent(true);
         } else {
           console.log(`No existing metadata found for analysis ${effectiveAnalysisId}`);
         }
@@ -206,6 +210,25 @@ export const useAIChat = (
     }
   };
 
+  // Function to fetch resume content from resume_editors
+  const fetchResumeContent = async () => {
+    if (!effectiveAnalysisId) return null;
+    
+    try {
+      const { data, error } = await supabase
+        .from('resume_editors')
+        .select('content')
+        .eq('analysis_id', effectiveAnalysisId)
+        .single();
+
+      if (error) throw error;
+      return data?.content ? JSON.stringify(data.content) : null;
+    } catch (error) {
+      console.error('Error fetching resume content:', error);
+      return null;
+    }
+  };
+
   const handleSendMessage = async () => {
     if (input.trim() === '') return;
     
@@ -240,6 +263,14 @@ export const useAIChat = (
       console.log(`Sending message to resume-ai-assistant for analysis: ${effectiveAnalysisId}`);
       console.log(`Using thread ID: ${currentThreadId || "new thread"}`);
       
+      // Check if this is the first message and we need to send resume content
+      let resumeContent = null;
+      if (!resumeContentSent) {
+        resumeContent = await fetchResumeContent();
+        setResumeContentSent(true);
+        console.log("Sending resume content with first message");
+      }
+      
       const { data, error } = await supabase.functions.invoke('resume-ai-assistant', {
         body: { 
           message: input, 
@@ -247,7 +278,8 @@ export const useAIChat = (
           resumeId,
           currentSection: currentSectionId,
           history: messages.map(msg => ({ role: msg.role, content: msg.content })),
-          threadId: currentThreadId
+          threadId: currentThreadId,
+          resumeContent: resumeContent
         }
       });
 

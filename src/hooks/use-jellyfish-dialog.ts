@@ -66,6 +66,7 @@ export function useJellyfishDialog({
   const [currentThreadId, setCurrentThreadId] = useState<string | null>(null);
   const [analysisId, setAnalysisId] = useState<string | null>(null);
   const [apiError, setApiError] = useState<string | null>(null);
+  const [resumeContentSent, setResumeContentSent] = useState<boolean>(false);
   
   const { toast } = useToast();
   const location = useLocation();
@@ -172,6 +173,9 @@ export function useJellyfishDialog({
         if (metadataData && metadataData.length > 0) {
           setCurrentThreadId(metadataData[0].thread_id);
           console.log(`Found existing thread: ${metadataData[0].thread_id}`);
+          
+          // Mark that we've already sent resume content for existing threads
+          setResumeContentSent(true);
         } else {
           console.log(`No existing thread found for analysis: ${analysisId}`);
         }
@@ -182,6 +186,25 @@ export function useJellyfishDialog({
     
     findExistingThread();
   }, [analysisId, currentSectionId, simpleTipMode]);
+
+  // Function to fetch resume content from resume_editors
+  const fetchResumeContent = async () => {
+    if (!analysisId) return null;
+    
+    try {
+      const { data, error } = await supabase
+        .from('resume_editors')
+        .select('content')
+        .eq('analysis_id', analysisId)
+        .single();
+
+      if (error) throw error;
+      return data?.content ? JSON.stringify(data.content) : null;
+    } catch (error) {
+      console.error('Error fetching resume content:', error);
+      return null;
+    }
+  };
 
   // Helper functions
   const getRandomTip = () => {
@@ -293,12 +316,21 @@ export function useJellyfishDialog({
       console.log(`Sending message to AI assistant for analysis: ${analysisId}`);
       console.log(`Using thread ID: ${currentThreadId || "new thread"}`);
       
+      // Check if we need to get resume content for the first message
+      let resumeContent = null;
+      if (!resumeContentSent) {
+        resumeContent = await fetchResumeContent();
+        setResumeContentSent(true);
+        console.log("Sending resume content with first message");
+      }
+      
       const { data, error } = await supabase.functions.invoke('resume-ai-assistant', {
         body: { 
           message,
           analysisId,
           currentSection: currentSectionId,
-          threadId: currentThreadId
+          threadId: currentThreadId,
+          resumeContent: resumeContent
         }
       });
       

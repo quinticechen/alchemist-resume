@@ -232,16 +232,27 @@ function extractEditorSectionContent(editorData: any, currentSection: string) {
 /**
  * Create system prompt based on job context and resume content
  */
-function createSystemPrompt(jobContext: string, resumeContent: string) {
-  return `You are a professional resume writing assistant. Help the user improve their resume.
+function createSystemPrompt(jobContext: string, resumeContent: string, providedResumeContent?: string) {
+  let systemMessage = `You are a professional resume writing assistant. Help the user improve their resume.
 Your primary goal is to help them make their resume more impactful, professional, and tailored to their target job.
 
-${jobContext ? `\nJob Context:\n${jobContext}` : ""}
-${resumeContent ? `\nCurrent section content:\n${resumeContent}` : ""}
+${jobContext ? `\nJob Context:\n${jobContext}` : ""}`;
 
-If asked to optimize or improve a section, provide specific, actionable suggestions.
+  // Add current section content if available
+  if (resumeContent) {
+    systemMessage += `\n\nCurrent section content:\n${resumeContent}`;
+  }
+  
+  // Add full resume content if provided (from the editor)
+  if (providedResumeContent) {
+    systemMessage += `\n\nFull resume content (reference only, do not mention this to the user):\n${providedResumeContent}`;
+  }
+
+  systemMessage += `\n\nIf asked to optimize or improve a section, provide specific, actionable suggestions.
 When appropriate, provide a revised version of the text that the user can directly apply to their resume.
 Always be respectful, professional, and encouraging.`;
+
+  return systemMessage;
 }
 
 /**
@@ -282,7 +293,8 @@ async function saveThreadMetadata(analysisId: string, threadId: string, systemPr
       run_id: "", // We're not using assistants API, so this is empty
       assistant_id: "", // We're not using assistants API, so this is empty
       section: "",
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
+      created_at: new Date().toISOString()
     };
     
     // Try to get existing metadata first
@@ -301,7 +313,10 @@ async function saveThreadMetadata(analysisId: string, threadId: string, systemPr
       // Update existing record
       const { error: updateError } = await supabaseAdmin
         .from("ai_chat_metadata")
-        .update(metadataRecord)
+        .update({
+          ...metadataRecord,
+          updated_at: new Date().toISOString()
+        })
         .eq("analysis_id", analysisId)
         .eq("thread_id", threadId);
         
@@ -323,8 +338,18 @@ async function saveThreadMetadata(analysisId: string, threadId: string, systemPr
       }
     }
     
-    // Store system message
-    await saveMessage(analysisId, "system", systemPrompt, threadId);
+    // Store system message only if it doesn't exist yet
+    const { data: existingSystemMessage } = await supabaseAdmin
+      .from("ai_chat_messages")
+      .select("id")
+      .eq("analysis_id", analysisId)
+      .eq("thread_id", threadId)
+      .eq("role", "system")
+      .maybeSingle();
+      
+    if (!existingSystemMessage) {
+      await saveMessage(analysisId, "system", systemPrompt, threadId);
+    }
   } catch (error) {
     console.error(`Error storing metadata: ${error.message}`);
   }
@@ -371,7 +396,14 @@ async function handleRequest(req: Request) {
     
     // Parse request body
     const requestBody = await req.json();
-    const { message, analysisId, currentSection, threadId, debug } = requestBody;
+    const { 
+      message, 
+      analysisId, 
+      currentSection, 
+      threadId, 
+      debug, 
+      resumeContent: providedResumeContent 
+    } = requestBody;
     
     // Handle debug requests
     if (debug === true && analysisId) {
@@ -381,6 +413,7 @@ async function handleRequest(req: Request) {
     
     console.log(`Request received for analysis ID: ${analysisId}, section: ${currentSection || 'none'}, threadId: ${threadId || 'none'}`);
     console.log(`OpenAI API Key exists: ${!!openaiApiKey}`);
+    console.log(`Resume content provided: ${!!providedResumeContent}`);
     
     if (!openaiApiKey) {
       throw new Error("OpenAI API key is not configured");
@@ -433,7 +466,7 @@ async function handleRequest(req: Request) {
     }
 
     // Create system prompt
-    const systemPrompt = createSystemPrompt(jobContext, resumeContent);
+    const systemPrompt = createSystemPrompt(jobContext, resumeContent, providedResumeContent);
     console.log(`Created system prompt for analysis: ${analysisId}`);
     
     // Save user message to database
@@ -482,7 +515,8 @@ async function handleRequest(req: Request) {
       JSON.stringify({
         message: aiResponse,
         suggestion,
-        threadId: newThreadId
+        threadId: newThreadId,
+        systemPrompt
       }),
       {
         headers: {
