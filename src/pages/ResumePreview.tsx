@@ -299,12 +299,16 @@ const ResumePreview = () => {
     }
   };
 
-  if (isLoading || loading) {
+  if (isLoading) {
     return <div className="container mx-auto px-4 py-8">Loading...</div>;
   }
 
+  if (loading) {
+    return <div className="container mx-auto px-4 py-8">Loading resume data...</div>;
+  }
+
   if (!resumeData) {
-    return null;
+    return <div className="container mx-auto px-4 py-8">No resume data available</div>;
   }
 
   const personalInfo = resumeData.resume?.personalInfo || {};
