@@ -12,10 +12,11 @@ export interface ChatMessage {
 }
 
 const welcomeMessages = [
-  "Welcome! I'm your resume assistant! Click me anytime for resume tips!",
-  "Hi there! Need help optimizing your resume? I'm here to help!",
-  "Hello resume creator! I'm your friendly AI assistant!",
-  "Greetings! I'm your resume buddy! Let me know if you need suggestions!"
+  "Hi! I'm Seeker, hello new friend! Welcome aboard the Resume Alchemist! I'm your buddy Seeker! Don't worry—with me by your side, I guarantee we'll ride the waves and find your dream treasure!", 
+  "Hi! I'm Seeker, first time here? Fantastic! There are so many amazing features to discover—let's explore together! I promise you'll be amazed!",
+  "Hi! I'm Seeker, come on! Let me show you around every corner of this ship! Together we'll craft a resume that will take everyone's breath away!",
+  "Hi! I'm Seeker, see that glowing button over there? That's our magical starting point! Are you ready?",
+  "Hi! I'm Seeker, trust me—everyone has their own special sparkle. Let me help you find yours!"
 ];
 
 const resumeTips = [
