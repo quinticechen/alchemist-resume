@@ -5,13 +5,13 @@ import JellyfishAnimation from "@/components/JellyfishAnimation";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Lightbulb, AlertCircle, Send, Bot, User, Loader2, Bug } from "lucide-react";
+import { Lightbulb, AlertCircle, Send, Bot, User, Loader2, Bug, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 interface ChatMessage {
   id: string;
-  role: 'user' | 'assistant';
+  role: 'user' | 'assistant' | 'system';
   content: string;
   timestamp: Date;
 }
@@ -27,6 +27,7 @@ const SeekerOptimizationSection = ({ optimizationData, analysisId }: SeekerOptim
   const [isLoading, setIsLoading] = useState(false);
   const [threadId, setThreadId] = useState<string | null>(null);
   const [debugInfo, setDebugInfo] = useState<string | null>(null);
+  const [initializationStatus, setInitializationStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
@@ -47,9 +48,13 @@ const SeekerOptimizationSection = ({ optimizationData, analysisId }: SeekerOptim
   useEffect(() => {
     // Load existing chat history if we have an analysis ID
     const loadChatHistory = async () => {
-      if (!analysisId) return;
+      if (!analysisId) {
+        setInitializationStatus('error');
+        return;
+      }
       
       try {
+        setInitializationStatus('loading');
         console.log(`Loading chat history for analysis ID: ${analysisId}`);
         
         // Try to get thread ID first
@@ -80,7 +85,7 @@ const SeekerOptimizationSection = ({ optimizationData, analysisId }: SeekerOptim
             .filter(msg => msg.role !== 'system')
             .map(msg => ({
               id: msg.id,
-              role: msg.role as 'user' | 'assistant',
+              role: msg.role as 'user' | 'assistant' | 'system',
               content: msg.content,
               timestamp: new Date(msg.timestamp)
             }));
@@ -88,13 +93,21 @@ const SeekerOptimizationSection = ({ optimizationData, analysisId }: SeekerOptim
           setMessages(displayMessages);
           console.log(`Loaded ${displayMessages.length} messages for analysis: ${analysisId}`);
         }
+        
+        setInitializationStatus('success');
       } catch (error) {
         console.error('Error loading chat history:', error);
+        setInitializationStatus('error');
+        toast({
+          title: "Error",
+          description: "Failed to load chat history. Please try again.",
+          variant: "destructive"
+        });
       }
     };
     
     loadChatHistory();
-  }, [analysisId]);
+  }, [analysisId, toast]);
 
   useEffect(() => {
     // Auto-scroll to bottom when messages change
@@ -250,12 +263,29 @@ const SeekerOptimizationSection = ({ optimizationData, analysisId }: SeekerOptim
     }
   };
 
+  const handleRetryInitialization = () => {
+    setInitializationStatus('idle');
+    // This will trigger the useEffect to reload chat history
+  };
+
   return (
     <Card className="h-full overflow-hidden flex flex-col">
       <CardHeader>
         <CardTitle className="text-lg flex items-center gap-2">
           <Bot size={18} />
           Seeker Optimization Assistant
+          {initializationStatus === 'error' && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="ml-auto"
+              onClick={handleRetryInitialization}
+              disabled={isLoading}
+            >
+              <RefreshCw className="h-4 w-4 mr-1" />
+              Retry
+            </Button>
+          )}
           {debugInfo && (
             <Button
               variant="ghost"
@@ -266,7 +296,7 @@ const SeekerOptimizationSection = ({ optimizationData, analysisId }: SeekerOptim
               Hide Debug
             </Button>
           )}
-          {!debugInfo && (
+          {!debugInfo && initializationStatus !== 'error' && (
             <Button
               variant="ghost"
               size="sm"
@@ -284,6 +314,24 @@ const SeekerOptimizationSection = ({ optimizationData, analysisId }: SeekerOptim
         {debugInfo ? (
           <div className="flex-1 overflow-auto bg-slate-100 p-4 rounded text-xs font-mono">
             <pre>{debugInfo}</pre>
+          </div>
+        ) : initializationStatus === 'loading' ? (
+          <div className="flex flex-col items-center justify-center h-full">
+            <JellyfishAnimation width={120} height={120} />
+            <p className="text-sm text-muted-foreground mt-4">Loading assistant...</p>
+          </div>
+        ) : initializationStatus === 'error' ? (
+          <div className="flex flex-col items-center justify-center h-full">
+            <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
+            <h3 className="text-lg font-medium mb-2">Connection Error</h3>
+            <p className="text-center text-muted-foreground mb-4">
+              Could not connect to the AI assistant. 
+              Please check your connection and try again.
+            </p>
+            <Button onClick={handleRetryInitialization}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Retry Connection
+            </Button>
           </div>
         ) : (
           <>
@@ -335,11 +383,11 @@ const SeekerOptimizationSection = ({ optimizationData, analysisId }: SeekerOptim
               onKeyDown={handleKeyDown}
               placeholder="Ask for resume optimization suggestions..."
               className="resize-none"
-              disabled={isLoading || !analysisId}
+              disabled={isLoading || !analysisId || initializationStatus !== 'success'}
             />
             <Button 
               onClick={handleSendMessage} 
-              disabled={isLoading || input.trim() === '' || !analysisId}
+              disabled={isLoading || input.trim() === '' || !analysisId || initializationStatus !== 'success'}
               size="icon"
             >
               {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
