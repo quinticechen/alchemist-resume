@@ -43,15 +43,12 @@ const ResumeEditor = ({
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  // Initialize all sections as collapsed except the first one and professionalExperience
   useEffect(() => {
     if (sectionOrder.length > 0) {
-      // Move professionalExperience to the first position if it exists
       const newSectionOrder = [...sectionOrder];
       const expIndex = newSectionOrder.indexOf('professionalExperience');
       
       if (expIndex > 0) {
-        // If professionalExperience exists and is not already first, move it to first position
         newSectionOrder.splice(expIndex, 1);
         newSectionOrder.unshift('professionalExperience');
         setSectionOrder(newSectionOrder);
@@ -59,7 +56,6 @@ const ResumeEditor = ({
       
       const initialCollapsedState: Record<string, boolean> = {};
       newSectionOrder.forEach((section, index) => {
-        // Only the first section is expanded initially
         initialCollapsedState[section] = index !== 0;
       });
       setCollapsedSections(initialCollapsedState);
@@ -105,10 +101,8 @@ const ResumeEditor = ({
           if (content.sectionOrder && Array.isArray(content.sectionOrder)) {
             setSectionOrder(content.sectionOrder);
             
-            // Set initial collapsed sections state
             const initialCollapsedState: Record<string, boolean> = {};
             content.sectionOrder.forEach((section: string, index: number) => {
-              // Set professionalExperience and the first section to be expanded initially
               initialCollapsedState[section] = (index !== 0 && section !== 'professionalExperience');
             });
             setCollapsedSections(initialCollapsedState);
@@ -297,7 +291,6 @@ const ResumeEditor = ({
         <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as 'visual' | 'json')} className="h-full">
           <TabsContent value="visual" className="mt-0 h-full">
             <ResizablePanelGroup direction="horizontal" className="h-[700px]">
-              {/* Job Description (Left) */}
               <ResizablePanel defaultSize={25} minSize={15}>
                 <div className="h-full p-2 overflow-y-auto">
                   <JobDescriptionViewer jobData={jobData} />
@@ -306,7 +299,6 @@ const ResumeEditor = ({
 
               <ResizableHandle withHandle />
 
-              {/* Resume Editor (Middle) */}
               <ResizablePanel defaultSize={50} minSize={30}>
                 <div className="h-full overflow-auto p-2">
                   <div className="mb-4 flex items-center">
@@ -361,10 +353,12 @@ const ResumeEditor = ({
 
               <ResizableHandle withHandle />
 
-              {/* Seeker Optimization (Right) */}
               <ResizablePanel defaultSize={25} minSize={15}>
                 <div className="h-full p-2 overflow-y-auto">
-                  <SeekerOptimizationSection optimizationData={resumeData} />
+                  <SeekerOptimizationSection 
+                    optimizationData={resumeData} 
+                    analysisId={analysisId} 
+                  />
                 </div>
               </ResizablePanel>
             </ResizablePanelGroup>
