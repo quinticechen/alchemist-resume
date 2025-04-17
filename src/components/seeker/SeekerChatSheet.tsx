@@ -78,41 +78,36 @@ const SeekerChatSheet: React.FC<SeekerChatSheetProps> = ({
             />
           )}
           
-          {!analysisId && (
-            <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-800">
-              <p className="font-medium">Unable to find resume analysis ID</p>
-              <p className="text-sm mt-1">Try refreshing the page or navigating back to the resume list.</p>
-            </div>
-          )}
-          
           <div ref={messagesEndRef} />
         </div>
       </ScrollArea>
       
       <div className="border-t pt-4 pb-2 space-y-4">
-        <Button 
-          variant="outline" 
-          className="w-full flex items-center gap-2"
-          onClick={onGenerateSuggestion}
-          disabled={isLoading || !analysisId}
-        >
-          <Lightbulb className="h-4 w-4" />
-          Generate Suggestion for Current Section
-        </Button>
+        {analysisId && (
+          <Button 
+            variant="outline" 
+            className="w-full flex items-center gap-2"
+            onClick={onGenerateSuggestion}
+            disabled={isLoading}
+          >
+            <Lightbulb className="h-4 w-4" />
+            Generate Suggestion for Current Section
+          </Button>
+        )}
         
         <div className="flex gap-2">
           <Textarea
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={onKeyDown}
-            placeholder="Ask for resume advice..."
+            placeholder="Ask for help with anything..."
             className="resize-none"
-            disabled={isLoading || !analysisId}
+            disabled={isLoading}
           />
           <Button 
             size="icon" 
             onClick={onSend} 
-            disabled={isLoading || inputValue.trim() === '' || !analysisId}
+            disabled={isLoading || inputValue.trim() === ''}
           >
             {isLoading ? (
               <Loader2 className="h-4 w-4 animate-spin" />

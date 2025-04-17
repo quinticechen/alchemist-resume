@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { useLocation, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -296,98 +295,104 @@ export function useSeekerDialog({
     }
     
     try {
-      await sendToAIAssistant(lastUserMessage.content);
+      await sendToAIAssistant(lastUserMessage.content, true);
     } finally {
       setIsRetrying(false);
     }
   };
 
-  const sendToAIAssistant = async (message: string) => {
-    if (!analysisId) {
-      toast({
-        title: "Error",
-        description: "Unable to identify the current resume analysis. Try refreshing the page.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
+  const sendToAIAssistant = async (message: string, isRetry = false) => {
     setIsLoading(true);
+    setApiError(null);
+    
     try {
-      console.log(`Sending message to AI assistant for analysis: ${analysisId}`);
-      console.log(`Using thread ID: ${currentThreadId || "new thread"}`);
+      // 準備上下文信息
+      let contextMessage = '';
       
-      // Check if we need to get resume content for the first message
+      if (!hasInitialJobContext && !resumeContentSent && jobData) {
+        contextMessage = `Here's information about the job I'm applying for:\n${JSON.stringify(jobData)}`;
+      }
+      
+      // 如果有分析ID，獲取簡歷內容
       let resumeContent = null;
-      if (!resumeContentSent) {
+      if (analysisId && !resumeContentSent) {
         resumeContent = await fetchResumeContent();
         setResumeContentSent(true);
-        console.log("Sending resume content with first message");
+      }
+      
+      console.log(`Sending message to AI assistant ${analysisId ? `for analysis: ${analysisId}` : 'for general support'}`);
+      console.log(`Using thread ID: ${currentThreadId || "new thread"}`);
+      
+      // 創建請求數據
+      const requestBody: any = { 
+        message: contextMessage ? `${contextMessage}\n\n${message}` : message,
+        threadId: currentThreadId,
+        mode: analysisId ? 'resume' : 'general'
+      };
+      
+      // 只有在簡歷模式下添加這些字段
+      if (analysisId) {
+        requestBody.analysisId = analysisId;
+        requestBody.currentSection = currentSectionId;
+        requestBody.resumeContent = resumeContent;
       }
       
       const { data, error } = await supabase.functions.invoke('resume-ai-assistant', {
-        body: { 
-          message,
-          analysisId,
-          currentSection: currentSectionId,
-          threadId: currentThreadId,
-          resumeContent: resumeContent
-        }
+        body: requestBody
       });
       
       if (error) {
-        console.error('Error invoking resume-ai-assistant:', error);
+        console.error('Error invoking AI assistant:', error);
         throw error;
       }
       
       if (!data) {
-        throw new Error("No data returned from resume-ai-assistant");
+        throw new Error("No data returned from AI assistant");
       }
       
-      let suggestion = null;
-      let content = data.message;
-      let threadId = data.threadId;
-      let systemPrompt = data.systemPrompt;
-      
-      if (threadId) {
-        setCurrentThreadId(threadId);
-        console.log(`Chat using OpenAI thread: ${threadId}`);
-      } else {
-        console.warn("No thread ID returned from resume-ai-assistant");
+      // 處理響應數據
+      if (data.threadId && data.threadId !== currentThreadId) {
+        setCurrentThreadId(data.threadId);
+        console.log(`Chat using thread: ${data.threadId}`);
       }
       
-      if (data.suggestion) {
-        suggestion = data.suggestion;
-      }
+      const suggestion = data.suggestion || null;
       
-      if (systemPrompt) {
-        const hasSystemPrompt = chats.some(chat => 
-          chat.role === 'system' && chat.threadId === threadId
-        );
-        
-        if (!hasSystemPrompt) {
-          setChats(prev => [...prev, {
-            role: 'system',
-            content: systemPrompt,
-            threadId: threadId
-          }]);
+      // 更新聊天記錄
+      setChats(prev => {
+        // 如果是重試，替換最後一條助手消息
+        if (isRetry) {
+          const lastAssistantIndex = [...prev].reverse().findIndex(msg => msg.role === 'assistant');
+          if (lastAssistantIndex !== -1) {
+            // 移除最後一條助手消息
+            const newChats = [...prev];
+            newChats.splice(prev.length - 1 - lastAssistantIndex, 1);
+            
+            // 添加新消息
+            return [...newChats, {
+              role: 'assistant',
+              content: data.message,
+              suggestion,
+              section: currentSectionId,
+              threadId: data.threadId
+            }];
+          }
         }
-      }
-      
-      // Add AI response to chat
-      setChats(prev => [...prev, {
-        role: 'assistant',
-        content: content,
-        suggestion: suggestion,
-        threadId: threadId
-      }]);
-      
-      setApiError(null);
+        
+        // 否則只添加新消息
+        return [...prev, {
+          role: 'assistant',
+          content: data.message,
+          suggestion,
+          section: currentSectionId,
+          threadId: data.threadId
+        }];
+      });
       
     } catch (error) {
       console.error('Error getting AI response:', error);
       
-      setApiError(`Failed to connect to AI service. Please try again.`);
+      setApiError(error instanceof Error ? error.message : String(error));
       
       setChats(prev => [...prev, {
         role: 'assistant',
@@ -396,7 +401,7 @@ export function useSeekerDialog({
       
       toast({
         title: "Error",
-        description: "Failed to get AI response. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to get a response from the AI assistant",
         variant: "destructive"
       });
     } finally {

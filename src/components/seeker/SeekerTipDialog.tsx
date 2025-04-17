@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -38,7 +37,7 @@ const SeekerTipDialog: React.FC<SeekerTipDialogProps> = ({
           </Button>
           {showChatButton && onOpenChat && (
             <Button onClick={onOpenChat}>
-              Chat with Alchemy Seeker
+              Chat with Seeker
             </Button>
           )}
         </div>
