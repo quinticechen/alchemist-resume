@@ -45,11 +45,25 @@ const JobDescriptionViewer = ({ jobData }: JobDescriptionViewerProps) => {
             </div>
           )}
 
-          {jobData.job?.keywords && jobData.job.keywords.length > 0 && (
+          {/* Display 10keywords if available */}
+          {jobData.job?.["10keywords"] && (
             <div>
               <h3 className="font-medium">Keywords</h3>
               <div className="flex flex-wrap gap-1 mt-1">
-                {/* Display all keywords without limiting to 10 */}
+                {jobData.job["10keywords"].split(', ').map((keyword: string, idx: number) => (
+                  <span key={idx} className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
+                    {keyword}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          {/* Also display keywords if available (fallback) */}
+          {!jobData.job?.["10keywords"] && jobData.job?.keywords && jobData.job.keywords.length > 0 && (
+            <div>
+              <h3 className="font-medium">Keywords</h3>
+              <div className="flex flex-wrap gap-1 mt-1">
                 {jobData.job.keywords.map((keyword: string, idx: number) => (
                   <span key={idx} className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
                     {keyword}
