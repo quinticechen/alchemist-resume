@@ -9,7 +9,6 @@ import SkillsSection from './SkillsSection';
 import ProjectsSection from './ProjectsSection';
 import VolunteerSection from './VolunteerSection';
 import CertificationsSection from './CertificationsSection';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronUp, GripVertical } from "lucide-react";
 

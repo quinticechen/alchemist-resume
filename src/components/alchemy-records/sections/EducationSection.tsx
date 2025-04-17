@@ -10,9 +10,10 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 interface EducationSectionProps {
   data: any;
   onChange: (updatedData: any) => void;
+  showAddForm?: boolean;
 }
 
-const EducationSection = ({ data, onChange }: EducationSectionProps) => {
+const EducationSection = ({ data, onChange, showAddForm = true }: EducationSectionProps) => {
   const [activeEduIndex, setActiveEduIndex] = useState<number | null>(null);
   const [editing, setEditing] = useState<{ [key: string]: string }>({});
   
@@ -119,13 +120,15 @@ const EducationSection = ({ data, onChange }: EducationSectionProps) => {
     <div className="space-y-4">
       {activeEduIndex === null && (
         <>
-          <Button 
-            onClick={() => initEditForm(null)} 
-            className="mb-4" 
-            variant="outline"
-          >
-            <PlusCircle className="h-4 w-4 mr-2" />Add Education
-          </Button>
+          {showAddForm && (
+            <Button 
+              onClick={() => initEditForm(null)} 
+              className="mb-4" 
+              variant="outline"
+            >
+              <PlusCircle className="h-4 w-4 mr-2" />Add Education
+            </Button>
+          )}
           
           {educationArray.length > 0 ? (
             <Table>

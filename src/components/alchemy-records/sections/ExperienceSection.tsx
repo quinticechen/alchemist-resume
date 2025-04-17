@@ -11,9 +11,10 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 interface ExperienceSectionProps {
   data: any;
   onChange: (updatedData: any) => void;
+  showAddForm?: boolean;
 }
 
-const ExperienceSection = ({ data, onChange }: ExperienceSectionProps) => {
+const ExperienceSection = ({ data, onChange, showAddForm = true }: ExperienceSectionProps) => {
   const [activeExpIndex, setActiveExpIndex] = useState<number | null>(null);
   const [editing, setEditing] = useState<{ [key: string]: string }>({});
   const [achievements, setAchievements] = useState<string[]>([]);
@@ -30,6 +31,7 @@ const ExperienceSection = ({ data, onChange }: ExperienceSectionProps) => {
         jobTitle: exp.jobTitle || '',
         startDate: exp.startDate || '',
         endDate: exp.endDate || '',
+        companyIntroduction: exp.companyIntroduction || '',
       });
       setAchievements(exp.achievements || []);
     } else {
@@ -39,6 +41,7 @@ const ExperienceSection = ({ data, onChange }: ExperienceSectionProps) => {
         jobTitle: '',
         startDate: '',
         endDate: '',
+        companyIntroduction: '',
       });
       setAchievements([]);
     }
@@ -135,13 +138,15 @@ const ExperienceSection = ({ data, onChange }: ExperienceSectionProps) => {
     <div className="space-y-4">
       {activeExpIndex === null && (
         <>
-          <Button 
-            onClick={() => initEditForm(null)} 
-            className="mb-4" 
-            variant="outline"
-          >
-            <PlusCircle className="h-4 w-4 mr-2" />Add Experience
-          </Button>
+          {showAddForm && (
+            <Button 
+              onClick={() => initEditForm(null)} 
+              className="mb-4" 
+              variant="outline"
+            >
+              <PlusCircle className="h-4 w-4 mr-2" />Add Experience
+            </Button>
+          )}
           
           {experienceList.length > 0 ? (
             <Table>
@@ -240,6 +245,17 @@ const ExperienceSection = ({ data, onChange }: ExperienceSectionProps) => {
                 id="location" 
                 value={editing.location} 
                 onChange={(e) => handleEditingChange('location', e.target.value)}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="companyIntroduction">Company Introduction</Label>
+              <Textarea 
+                id="companyIntroduction"
+                value={editing.companyIntroduction} 
+                onChange={(e) => handleEditingChange('companyIntroduction', e.target.value)}
+                placeholder="Briefly describe the company..."
+                className="min-h-[100px]"
               />
             </div>
             
