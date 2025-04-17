@@ -57,13 +57,6 @@ const SectionEditor = ({
     }
   };
 
-  // Always include showAddForm prop for all section components that need it
-  const sectionProps = {
-    data,
-    onChange: handleDataChange,
-    showAddForm: true
-  };
-
   const renderSectionContent = () => {
     switch (section) {
       case 'personalInfo':
@@ -71,17 +64,17 @@ const SectionEditor = ({
       case 'professionalSummary':
         return <ProfessionalSummarySection data={data} onChange={handleDataChange} />;
       case 'professionalExperience':
-        return <ExperienceSection {...sectionProps} />;
+        return <ExperienceSection data={data} onChange={handleDataChange} showAddForm={true} />;
       case 'education':
-        return <EducationSection {...sectionProps} />;
+        return <EducationSection data={data} onChange={handleDataChange} showAddForm={true} />;
       case 'skills':
-        return <SkillsSection {...sectionProps} />;
+        return <SkillsSection data={data} onChange={handleDataChange} />;
       case 'projects':
-        return <ProjectsSection {...sectionProps} />;
+        return <ProjectsSection data={data} onChange={handleDataChange} />;
       case 'volunteer':
-        return <VolunteerSection {...sectionProps} />;
+        return <VolunteerSection data={data} onChange={handleDataChange} />;
       case 'certifications':
-        return <CertificationsSection {...sectionProps} />;
+        return <CertificationsSection data={data} onChange={handleDataChange} />;
       default:
         return <div>Section editor not available</div>;
     }

@@ -11,9 +11,10 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 interface VolunteerSectionProps {
   data: any;
   onChange: (updatedData: any) => void;
+  showAddForm?: boolean;
 }
 
-const VolunteerSection = ({ data, onChange }: VolunteerSectionProps) => {
+const VolunteerSection = ({ data, onChange, showAddForm = true }: VolunteerSectionProps) => {
   const [activeVolunteerIndex, setActiveVolunteerIndex] = useState<number | null>(null);
   const [editing, setEditing] = useState<{ [key: string]: string }>({});
   const [achievements, setAchievements] = useState<string[]>([]);
@@ -130,13 +131,15 @@ const VolunteerSection = ({ data, onChange }: VolunteerSectionProps) => {
     <div className="space-y-4">
       {activeVolunteerIndex === null && (
         <>
-          <Button 
-            onClick={() => initEditForm(null)} 
-            className="mb-4" 
-            variant="outline"
-          >
-            <PlusCircle className="h-4 w-4 mr-2" />Add Volunteer Experience
-          </Button>
+          {showAddForm && (
+            <Button 
+              onClick={() => initEditForm(null)} 
+              className="mb-4" 
+              variant="outline"
+            >
+              <PlusCircle className="h-4 w-4 mr-2" />Add Volunteer Experience
+            </Button>
+          )}
           
           {volunteerList.length > 0 ? (
             <Table>

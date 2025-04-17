@@ -11,9 +11,10 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 interface ProjectsSectionProps {
   data: any;
   onChange: (updatedData: any) => void;
+  showAddForm?: boolean;
 }
 
-const ProjectsSection = ({ data, onChange }: ProjectsSectionProps) => {
+const ProjectsSection = ({ data, onChange, showAddForm = true }: ProjectsSectionProps) => {
   const [activeProjectIndex, setActiveProjectIndex] = useState<number | null>(null);
   const [editing, setEditing] = useState<{ [key: string]: string }>({});
   const [achievements, setAchievements] = useState<string[]>([]);
@@ -130,13 +131,15 @@ const ProjectsSection = ({ data, onChange }: ProjectsSectionProps) => {
     <div className="space-y-4">
       {activeProjectIndex === null && (
         <>
-          <Button 
-            onClick={() => initEditForm(null)} 
-            className="mb-4" 
-            variant="outline"
-          >
-            <PlusCircle className="h-4 w-4 mr-2" />Add Project
-          </Button>
+          {showAddForm && (
+            <Button 
+              onClick={() => initEditForm(null)} 
+              className="mb-4" 
+              variant="outline"
+            >
+              <PlusCircle className="h-4 w-4 mr-2" />Add Project
+            </Button>
+          )}
           
           {projectsList.length > 0 ? (
             <Table>

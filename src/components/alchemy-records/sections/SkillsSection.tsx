@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,9 +8,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 interface SkillsSectionProps {
   data: any;
   onChange: (updatedData: any) => void;
+  showAddForm?: boolean;
 }
 
-const SkillsSection = ({ data, onChange }: SkillsSectionProps) => {
+const SkillsSection = ({ data, onChange, showAddForm = true }: SkillsSectionProps) => {
   const [newTechnicalSkill, setNewTechnicalSkill] = useState('');
   const [newSoftSkill, setNewSoftSkill] = useState('');
   
@@ -86,25 +86,27 @@ const SkillsSection = ({ data, onChange }: SkillsSectionProps) => {
           <CardTitle>Technical Skills</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex space-x-2">
-            <Input 
-              value={newTechnicalSkill} 
-              onChange={(e) => setNewTechnicalSkill(e.target.value)}
-              placeholder="Add a technical skill..."
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  handleAddTechnicalSkill();
-                }
-              }}
-            />
-            <Button 
-              onClick={handleAddTechnicalSkill}
-              disabled={!newTechnicalSkill.trim()}
-            >
-              <PlusCircle className="h-4 w-4 mr-2" />Add
-            </Button>
-          </div>
+          {showAddForm && (
+            <div className="flex space-x-2">
+              <Input 
+                value={newTechnicalSkill} 
+                onChange={(e) => setNewTechnicalSkill(e.target.value)}
+                placeholder="Add a technical skill..."
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleAddTechnicalSkill();
+                  }
+                }}
+              />
+              <Button 
+                onClick={handleAddTechnicalSkill}
+                disabled={!newTechnicalSkill.trim()}
+              >
+                <PlusCircle className="h-4 w-4 mr-2" />Add
+              </Button>
+            </div>
+          )}
           
           <div className="flex flex-wrap gap-2 mt-2">
             {(skills.technical || []).map((skill: string, idx: number) => (
@@ -136,25 +138,27 @@ const SkillsSection = ({ data, onChange }: SkillsSectionProps) => {
           <CardTitle>Soft Skills</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex space-x-2">
-            <Input 
-              value={newSoftSkill} 
-              onChange={(e) => setNewSoftSkill(e.target.value)}
-              placeholder="Add a soft skill..."
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  handleAddSoftSkill();
-                }
-              }}
-            />
-            <Button 
-              onClick={handleAddSoftSkill}
-              disabled={!newSoftSkill.trim()}
-            >
-              <PlusCircle className="h-4 w-4 mr-2" />Add
-            </Button>
-          </div>
+          {showAddForm && (
+            <div className="flex space-x-2">
+              <Input 
+                value={newSoftSkill} 
+                onChange={(e) => setNewSoftSkill(e.target.value)}
+                placeholder="Add a soft skill..."
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleAddSoftSkill();
+                  }
+                }}
+              />
+              <Button 
+                onClick={handleAddSoftSkill}
+                disabled={!newSoftSkill.trim()}
+              >
+                <PlusCircle className="h-4 w-4 mr-2" />Add
+              </Button>
+            </div>
+          )}
           
           <div className="flex flex-wrap gap-2 mt-2">
             {(skills.soft || []).map((skill: string, idx: number) => (
