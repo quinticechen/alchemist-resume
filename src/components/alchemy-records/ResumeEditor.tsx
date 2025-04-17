@@ -43,13 +43,24 @@ const ResumeEditor = ({
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  // Initialize all sections as collapsed except the first one
+  // Initialize all sections as collapsed except the first one and professionalExperience
   useEffect(() => {
     if (sectionOrder.length > 0) {
+      // Move professionalExperience to the first position if it exists
+      const newSectionOrder = [...sectionOrder];
+      const expIndex = newSectionOrder.indexOf('professionalExperience');
+      
+      if (expIndex > 0) {
+        // If professionalExperience exists and is not already first, move it to first position
+        newSectionOrder.splice(expIndex, 1);
+        newSectionOrder.unshift('professionalExperience');
+        setSectionOrder(newSectionOrder);
+      }
+      
       const initialCollapsedState: Record<string, boolean> = {};
-      sectionOrder.forEach((section, index) => {
-        // Set professionalExperience and the first section to be expanded initially
-        initialCollapsedState[section] = (index !== 0 && section !== 'professionalExperience');
+      newSectionOrder.forEach((section, index) => {
+        // Only the first section is expanded initially
+        initialCollapsedState[section] = index !== 0;
       });
       setCollapsedSections(initialCollapsedState);
     }
@@ -97,7 +108,8 @@ const ResumeEditor = ({
             // Set initial collapsed sections state
             const initialCollapsedState: Record<string, boolean> = {};
             content.sectionOrder.forEach((section: string, index: number) => {
-              initialCollapsedState[section] = index !== 0; // Only first section is expanded
+              // Set professionalExperience and the first section to be expanded initially
+              initialCollapsedState[section] = (index !== 0 && section !== 'professionalExperience');
             });
             setCollapsedSections(initialCollapsedState);
           }

@@ -60,6 +60,11 @@ const ExperienceSection = ({ data, onChange, showAddForm = true }: ExperienceSec
   };
   
   const handleSaveExperience = () => {
+    console.log('Save Experience button clicked');
+    console.log('Current editing data:', editing);
+    console.log('Current achievements:', achievements);
+    console.log('Current activeExpIndex:', activeExpIndex);
+    
     const updatedExperience = [...experienceList];
     
     const experienceItem = {
@@ -67,13 +72,15 @@ const ExperienceSection = ({ data, onChange, showAddForm = true }: ExperienceSec
       achievements: achievements
     };
     
-    if (activeExpIndex !== null) {
+    if (activeExpIndex !== null && activeExpIndex >= 0) {
       // Update existing item
       updatedExperience[activeExpIndex] = experienceItem;
     } else {
-      // Add new item
+      // Add new item (activeExpIndex === null or activeExpIndex === -1)
       updatedExperience.push(experienceItem);
     }
+    
+    console.log('Updated experienceList before save:', updatedExperience);
     
     onChange({
       ...data,
@@ -82,6 +89,7 @@ const ExperienceSection = ({ data, onChange, showAddForm = true }: ExperienceSec
     
     // Reset form
     setActiveExpIndex(null);
+    console.log('Form reset, activeExpIndex set to null');
   };
   
   const handleRemoveExperience = (idx: number) => {
@@ -147,7 +155,10 @@ const ExperienceSection = ({ data, onChange, showAddForm = true }: ExperienceSec
 
   const handleAddExperienceClick = () => {
     console.log('Add Experience button clicked');
+    console.log('Current activeExpIndex before init:', activeExpIndex);
+    console.log('Current experienceList:', experienceList);
     initEditForm(null);
+    console.log('Updated activeExpIndex after init:', activeExpIndex);
   };
 
   return (
@@ -156,7 +167,20 @@ const ExperienceSection = ({ data, onChange, showAddForm = true }: ExperienceSec
         <>
           {showAddForm && (
             <Button 
-              onClick={handleAddExperienceClick} 
+              onClick={() => {
+                console.log('Direct button click handler');
+                setActiveExpIndex(-1);
+                setEditing({
+                  companyName: '',
+                  location: '',
+                  jobTitle: '',
+                  startDate: '',
+                  endDate: '',
+                  companyIntroduction: '',
+                });
+                setAchievements([]);
+                console.log('activeExpIndex set to -1 to indicate new item');
+              }}
               className="mb-4" 
               variant="outline"
               type="button"
@@ -235,7 +259,7 @@ const ExperienceSection = ({ data, onChange, showAddForm = true }: ExperienceSec
         <Card>
           <CardHeader>
             <CardTitle>
-              {activeExpIndex === null ? 'Add Experience' : 'Edit Experience'}
+              {activeExpIndex >= 0 ? 'Edit Experience' : 'Add Experience'}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
