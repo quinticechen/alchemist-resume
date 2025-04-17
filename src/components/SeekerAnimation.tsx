@@ -1,9 +1,9 @@
 import React from "react";
 import Lottie from "react-lottie";
-import OozeAnimationData from "@/animations/OOze.chat.json";
+import SeekerAnimationData from "@/animations/Seeker.chat.json";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-interface OozeAnimationProps {
+interface SeekerAnimationProps {
   width?: number;
   height?: number;
   className?: string;
@@ -16,7 +16,7 @@ interface OozeAnimationProps {
   showShadow?: boolean;
 }
 
-const OozeAnimation: React.FC<OozeAnimationProps> = ({ 
+const SeekerAnimation: React.FC<SeekerAnimationProps> = ({ 
   width = 200, 
   height = 200,
   mobileWidth = 120,
@@ -33,7 +33,7 @@ const OozeAnimation: React.FC<OozeAnimationProps> = ({
   const defaultOptions = {
     loop,
     autoplay,
-    animationData: OozeAnimationData,
+    animationData: SeekerAnimationData,
     rendererSettings: {
       preserveAspectRatio: "xMidYMid slice"
     }
@@ -63,4 +63,4 @@ const OozeAnimation: React.FC<OozeAnimationProps> = ({
   );
 };
 
-export default OozeAnimation;
+export default SeekerAnimation;

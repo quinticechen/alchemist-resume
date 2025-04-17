@@ -2,7 +2,7 @@
 import React from 'react';
 import { DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import SeekerAnimation from "@/components/OozeAnimation";
+import SeekerAnimation from "@/components/SeekerAnimation";
 
 interface SeekerTipDialogProps {
   title: string;
@@ -38,7 +38,7 @@ const SeekerTipDialog: React.FC<SeekerTipDialogProps> = ({
           </Button>
           {showChatButton && onOpenChat && (
             <Button onClick={onOpenChat}>
-              Chat with Alchemy Ooze
+              Chat with Alchemy Seeker
             </Button>
           )}
         </div>

@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { MessageCircle } from "lucide-react";
-import SeekerAnimation from "@/components/OozeAnimation";
+import SeekerAnimation from "@/components/SeekerAnimation";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface SeekerButtonProps {
@@ -48,7 +48,7 @@ const SeekerButton: React.FC<SeekerButtonProps> = ({
         className="hover:bg-transparent p-0 h-auto w-auto relative group"
       >
         <div className="absolute -top-10 right-0 opacity-0 group-hover:opacity-100 transition-opacity bg-background text-xs p-2 rounded shadow whitespace-nowrap">
-          {simpleTipMode ? "View Resume Tip" : "Chat with Alchemy Ooze"}
+          {simpleTipMode ? "View Resume Tip" : "Chat with Seeker"}
         </div>
         <SeekerAnimation 
           width={100} 
