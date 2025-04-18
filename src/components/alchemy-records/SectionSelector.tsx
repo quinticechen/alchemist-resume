@@ -19,35 +19,39 @@ const SectionSelector = ({
 }: SectionSelectorProps) => {
   
   const handleDragEnd = (result: DropResult) => {
-    // If there's no destination, do nothing
-    if (!result.destination) return;
-    
-    // Create a deep copy of the sections array to avoid mutating the prop
-    const itemsCopy = [...sections];
-    
-    // Don't allow moving personalInfo section
-    if (itemsCopy[result.source.index] === 'personalInfo') {
+    // If there's no destination or it hasn't moved, do nothing
+    if (!result.destination || result.destination.index === result.source.index) {
       return;
     }
     
-    // Get the item being dragged
-    const [draggedItem] = itemsCopy.splice(result.source.index, 1);
+    // Create a completely new array to avoid mutation issues
+    const newSectionOrder = [...sections];
     
-    // Insert at the destination index
-    itemsCopy.splice(result.destination.index, 0, draggedItem);
+    // Get the section being moved
+    const draggedSection = newSectionOrder[result.source.index];
     
-    // Make sure personalInfo stays at the top
-    // First, remove personalInfo from wherever it is
-    const personalInfoIndex = itemsCopy.findIndex(item => item === 'personalInfo');
-    if (personalInfoIndex > -1) {
-      // Remove personalInfo
-      itemsCopy.splice(personalInfoIndex, 1);
-      // Always place it at the front of the array
-      itemsCopy.unshift('personalInfo');
+    // Don't allow moving personalInfo section
+    if (draggedSection === 'personalInfo') {
+      return;
+    }
+    
+    // Remove the section from its original position
+    newSectionOrder.splice(result.source.index, 1);
+    
+    // Add it to the new position
+    newSectionOrder.splice(result.destination.index, 0, draggedSection);
+    
+    // Ensure personalInfo is always at the top if it exists in the array
+    const personalInfoIndex = newSectionOrder.findIndex(section => section === 'personalInfo');
+    if (personalInfoIndex > 0) {
+      // Remove personalInfo from its current position
+      newSectionOrder.splice(personalInfoIndex, 1);
+      // Add it back at the beginning
+      newSectionOrder.unshift('personalInfo');
     }
     
     // Update the parent component with the new order
-    onSectionsReorder(itemsCopy);
+    onSectionsReorder(newSectionOrder);
   };
   
   return (
