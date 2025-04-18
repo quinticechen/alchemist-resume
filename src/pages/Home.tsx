@@ -1,3 +1,72 @@
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import {
+  ArrowRight,
+  Upload,
+  Zap,
+  CheckCircle,
+  Globe,
+  MapPin,
+} from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { Session } from "@supabase/supabase-js";
+import { useToast } from "@/hooks/use-toast";
+import Lottie from "react-lottie";
+import animationData from "@/animations/OOze.chat.json";
+
+const companies = ["Google", "Amazon", "Microsoft", "Apple", "Meta"];
+
+const features = [
+  {
+    title: "Upload Resume",
+    description: "Submit your existing PDF resume",
+    icon: Upload,
+  },
+  {
+    title: "Add Job Link",
+    description: "Paste the URL of your target job posting",
+    icon: ArrowRight,
+  },
+  {
+    title: "Get Optimized",
+    description: "Receive a perfectly matched resume",
+    icon: Zap,
+  },
+];
+
+const globalPlatforms = [
+  { name: "LinkedIn", url: "linkedin.com" },
+  { name: "Indeed", url: "indeed.com" },
+  { name: "Glassdoor", url: "glassdoor.com" },
+  { name: "Foundit", url: "foundit.in" },
+  { name: "ZipRecruiter", url: "ziprecruiter.com" },
+  { name: "SimplyHired", url: "simplyhired.com" },
+];
+
+const asianPlatforms = [
+  { name: "104 Job Bank", url: "104.com.tw" },
+  { name: "1111 Job Bank", url: "1111.com.tw" },
+  { name: "JobsDB", url: "jobsdb.com" },
+  { name: "Rikunabi NEXT", url: "next.rikunabi.com" },
+  // { name: "51job", url: "51job.com" },
+];
+
+const faqs = [
+  {
+    question: "How many free uses do I get?",
+    answer: "New users receive 3 free uses to try our service.",
+  },
+  {
+    question: "What file formats are supported?",
+    answer: "Currently, we support PDF format for resume uploads.",
+  },
+  {
+    question: "How long does the process take?",
+    answer: "The optimization process typically takes 2-3 minutes.",
+  },
+];
+
 const Home = () => {
   const navigate = useNavigate();
   const [session, setSession] = useState<Session | null>(null);
@@ -27,11 +96,13 @@ const Home = () => {
           throw sessionError;
         }
 
+        // console.log("Initial session check:", initialSession);
         setSession(initialSession);
 
         const {
           data: { subscription },
         } = supabase.auth.onAuthStateChange((event, currentSession) => {
+          // console.log("Auth state changed:", event, currentSession);
           setSession(currentSession);
 
           if (event === "SIGNED_IN" && currentSession) {
@@ -43,8 +114,11 @@ const Home = () => {
           }
         });
 
-        // No return here within initializeSession
+        return () => {
+          subscription.unsubscribe();
+        };
       } catch (error) {
+        // console.error("Session initialization error:", error);
         toast({
           title: "Error",
           description:
@@ -57,13 +131,6 @@ const Home = () => {
     };
 
     initializeSession();
-
-    // Return the cleanup function directly from the useEffect
-    return () => {
-      if (subscription && typeof subscription.unsubscribe === "function") {
-        subscription.unsubscribe();
-      }
-    };
   }, [navigate, toast]);
 
   const handleStartTrial = async () => {
