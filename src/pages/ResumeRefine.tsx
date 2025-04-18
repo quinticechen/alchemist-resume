@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useCallback } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from "@/contexts/AuthContext";
@@ -7,10 +8,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { ResumeSection, getAllSections } from '@/utils/resumeUtils';
 import SeekerDialog from "@/components/SeekerDialog";
+import { ResumeData } from '@/types/resume';
 
 // Define a more precise type for job data
 interface JobData {
   job_title?: string;
+}
+
+interface ResumeDataState {
+  resumeId: string;
+  goldenResume: string | ResumeData | null;
+  analysisId: string;
+  jobTitle?: string;
 }
 
 const ResumeRefine = () => {
@@ -23,12 +32,7 @@ const ResumeRefine = () => {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
   const [activeSectionContent, setActiveSectionContent] = useState<string>("");
-  const [resumeData, setResumeData] = useState<{
-    resumeId: string;
-    goldenResume: string | null;
-    analysisId: string;
-    jobTitle?: string;
-  } | null>(null);
+  const [resumeData, setResumeData] = useState<ResumeDataState | null>(null);
   const [jobDescription, setJobDescription] = useState<any>(null);
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
@@ -66,7 +70,12 @@ const ResumeRefine = () => {
           return;
         }
         
-        setResumeData(analysisData);
+        setResumeData({
+          resumeId: analysisData.resume_id || '',
+          goldenResume: analysisData.formatted_golden_resume,
+          analysisId: analysisData.id,
+          jobTitle: analysisData.job?.job_title
+        });
         setLoading(false);
       } catch (error) {
         setError('Failed to load resume data');
@@ -75,7 +84,7 @@ const ResumeRefine = () => {
     };
 
     fetchResumeData();
-  }, [analysisId, supabase]);
+  }, [analysisId]);
 
   useEffect(() => {
     if (!isLoading && !session) {

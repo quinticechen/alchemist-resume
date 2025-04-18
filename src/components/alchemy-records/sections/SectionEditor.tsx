@@ -9,8 +9,7 @@ import SkillsSection from './SkillsSection';
 import ProjectsSection from './ProjectsSection';
 import VolunteerSection from './VolunteerSection';
 import CertificationsSection from './CertificationsSection';
-import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronUp, GripVertical, Lock } from "lucide-react";
+import { Lock } from "lucide-react";
 import { ResumeData } from '@/types/resume';
 
 interface SectionEditorProps {
@@ -32,12 +31,6 @@ const SectionEditor = ({
 }: SectionEditorProps) => {
   const data = resumeData?.resume || resumeData;
   
-  const handleToggleCollapse = () => {
-    if (onToggleCollapse) {
-      onToggleCollapse(section);
-    }
-  };
-
   // Remove the section title since it's already displayed in the parent component
   const renderSectionContent = () => {
     if (isCollapsed) {
@@ -66,11 +59,8 @@ const SectionEditor = ({
     }
   };
 
-  const isPersonalInfo = section === 'personalInfo';
-
   return (
     <div className="border rounded-lg p-4 bg-white">
-      {/* Remove the separate title and collapsible controls as they're redundant */}
       {renderSectionContent()}
     </div>
   );

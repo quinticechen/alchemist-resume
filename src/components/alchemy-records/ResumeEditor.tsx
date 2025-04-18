@@ -18,7 +18,7 @@ import { ResumeData } from '@/types/resume';
 
 interface ResumeEditorProps {
   resumeId?: string;
-  goldenResume?: ResumeData;
+  goldenResume?: string | ResumeData;
   analysisId?: string;
   setHasUnsavedChanges?: (value: boolean) => void;
   activeSection?: string;
@@ -140,29 +140,55 @@ const ResumeEditor: FC<ResumeEditorProps> = ({
           const content = editorData.content;
           
           if (content.sectionOrder && Array.isArray(content.sectionOrder)) {
-            setSectionOrder(content.sectionOrder);
+            // Ensure we're using the correct typed array
+            const typedSectionOrder: ResumeSection[] = content.sectionOrder.filter((section: string) => 
+              getAllSections().includes(section as ResumeSection)
+            ) as ResumeSection[];
+            
+            setSectionOrder(typedSectionOrder);
             
             const initialCollapsedState: Record<string, boolean> = {};
-            content.sectionOrder.forEach((section: string, index: number) => {
+            typedSectionOrder.forEach((section: ResumeSection, index: number) => {
               initialCollapsedState[section] = (index !== 0 && section !== 'professionalExperience');
             });
             setCollapsedSections(initialCollapsedState);
           }
           
-          setResumeData(content);
+          setResumeData(content as ResumeData);
           setSavedData(JSON.stringify(content));
           setEditorId(editorData.id);
         } else {
-          let initialContent = {};
+          let initialContent: ResumeData = {
+            resume: {
+              personalInfo: {
+                firstName: '',
+                lastName: '',
+                email: '',
+                phone: '',
+                location: '',
+                linkedIn: ''
+              },
+              professionalSummary: '',
+              professionalExperience: [],
+              education: [],
+              skills: { technical: [], soft: [] },
+              projects: [],
+              volunteer: [],
+              certifications: [],
+              guidanceForOptimization: []
+            },
+            sectionOrder: getAllSections()
+          };
           
           if (goldenResume) {
             try {
-              initialContent = typeof goldenResume === 'string' 
+              const parsedContent = typeof goldenResume === 'string' 
                 ? JSON.parse(goldenResume) 
                 : goldenResume;
+              
+              initialContent = parsedContent as ResumeData;
             } catch (e) {
               console.error("Failed to parse golden resume:", e);
-              initialContent = {};
             }
           }
           
@@ -204,7 +230,7 @@ const ResumeEditor: FC<ResumeEditorProps> = ({
     setHasUnsavedChanges(contentChanged);
   }, [resumeData, savedData, setHasUnsavedChanges]);
 
-  const handleSectionToggle = (sectionId: string) => {
+  const handleSectionToggle = (sectionId: ResumeSection) => {
     setCollapsedSections(prev => {
       const newSet = { ...prev };
       if (newSet[sectionId]) {
@@ -236,6 +262,7 @@ const ResumeEditor: FC<ResumeEditorProps> = ({
     }
 
     setSectionOrder(items);
+    setLocalHasUnsavedChanges(true);
     setHasUnsavedChanges(true);
 
     try {
@@ -270,11 +297,12 @@ const ResumeEditor: FC<ResumeEditorProps> = ({
     setHasUnsavedChanges(true);
   };
 
-  const handleSectionOrderChange = (newOrder: string[]) => {
+  const handleSectionOrderChange = (newOrder: ResumeSection[]) => {
     setResumeData(prevData => ({
       ...prevData,
       sectionOrder: newOrder
     }));
+    setLocalHasUnsavedChanges(true);
     setHasUnsavedChanges(true);
   };
 
@@ -292,6 +320,7 @@ const ResumeEditor: FC<ResumeEditorProps> = ({
         throw new Error('Failed to save resume');
       }
 
+      setLocalHasUnsavedChanges(false);
       setHasUnsavedChanges(false);
       showToast('Resume saved successfully');
     } catch (error) {
@@ -313,7 +342,7 @@ const ResumeEditor: FC<ResumeEditorProps> = ({
   const handleRawJsonChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     try {
       const parsed = JSON.parse(e.target.value);
-      setResumeData(parsed);
+      setResumeData(parsed as ResumeData);
     } catch (error) {
       console.error("Invalid JSON:", error);
     }
@@ -372,15 +401,11 @@ const ResumeEditor: FC<ResumeEditorProps> = ({
               <ResizablePanel defaultSize={50} minSize={30}>
                 <ScrollArea className="h-full">
                   <div className="p-2">
-                    <div className="mb-4 flex items-center">
-                      <h3 className="text-xl font-semibold">Resume Sections</h3>
-                    </div>
-                    
                     <div className="lg:hidden mb-4">
                       <SectionSelector 
                         sections={sectionOrder}
                         onSectionToggle={handleSectionToggle}
-                        onSectionsReorder={handleSectionsReorder}
+                        onSectionsReorder={handleSectionOrderChange}
                         collapsedSections={collapsedSections}
                       />
                     </div>
@@ -434,7 +459,7 @@ const ResumeEditor: FC<ResumeEditorProps> = ({
                                         <SectionEditor
                                           section={sectionId}
                                           resumeData={resumeData}
-                                          onChange={(updatedData: ResumeData) => setResumeData(updatedData)}
+                                          onChange={handleDataChange}
                                           isCollapsed={collapsedSections[sectionId]}
                                           onToggleCollapse={handleSectionToggle}
                                           isDraggable={sectionId !== 'personalInfo'}
