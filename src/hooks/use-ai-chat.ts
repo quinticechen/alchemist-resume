@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -19,6 +18,12 @@ interface ThreadMetadata {
   assistant_id: string;
   run_id: string;
 }
+
+const resumeAlchemistMessages = [
+  "Watch this! Behold the secrets of alchemy! Bang! A dazzling resume has just come out of the oven! Are you shocked to see your own transformation?",
+  "Hey! Your resume has completed its first transformation! Shall we discuss what areas we can enhance further?",
+  "Yoo-hoo~ Your resume has transformed perfectly! Any other parts you'd like to modify?"
+];
 
 export const useAIChat = (
   resumeId?: string, 
@@ -41,22 +46,18 @@ export const useAIChat = (
   const [lastQueryTimestamp, setLastQueryTimestamp] = useState<number>(0);
   const [resumeContentSent, setResumeContentSent] = useState<boolean>(false);
 
-  // Extract analysis ID with improved robustness
   useEffect(() => {
     const extractAnalysisId = () => {
-      // First priority: Check URL parameters
       if (params.analysisId) {
         console.log(`Found analysis ID in URL params: ${params.analysisId}`);
         return params.analysisId;
       }
       
-      // If explicitly provided
       if (providedAnalysisId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(providedAnalysisId)) {
         console.log(`Using provided analysisId prop: ${providedAnalysisId}`);
         return providedAnalysisId;
       }
       
-      // Check URL path segments
       const pathSegments = location.pathname.split('/');
       const potentialIds = pathSegments.filter(segment => 
         /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(segment)
@@ -67,7 +68,6 @@ export const useAIChat = (
         return potentialIds[0];
       }
       
-      // Check location state
       if (location.state && location.state.analysisId) {
         console.log(`Found analysisId in location state: ${location.state.analysisId}`);
         return location.state.analysisId;
@@ -81,16 +81,13 @@ export const useAIChat = (
     setEffectiveAnalysisId(id);
     console.log(`AIChatInterface initialized with effective analysis ID: ${id || "none"}`);
     
-    // Reset API error when analysis ID changes
     setApiError(null);
   }, [providedAnalysisId, location, params]);
 
-  // Auto-scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Load chat history when analysis ID is available
   useEffect(() => {
     const loadChatHistory = async () => {
       if (!effectiveAnalysisId) {
@@ -102,7 +99,6 @@ export const useAIChat = (
         console.log(`Loading chat history for analysis: ${effectiveAnalysisId}`);
         setLastQueryTimestamp(Date.now());
         
-        // Query metadata first to get thread information
         const { data: metadataData, error: metadataError } = await supabase
           .from('ai_chat_metadata')
           .select('*')
@@ -122,13 +118,11 @@ export const useAIChat = (
           });
           console.log(`Found existing metadata for analysis ${effectiveAnalysisId}, thread: ${threadId}`);
           
-          // Mark that we've already sent resume content since this is an existing thread
           setResumeContentSent(true);
         } else {
           console.log(`No existing metadata found for analysis ${effectiveAnalysisId}`);
         }
         
-        // Now query for messages
         const { data, error } = await supabase
           .from('ai_chat_messages')
           .select('*')
@@ -148,7 +142,6 @@ export const useAIChat = (
           setMessages(displayMessages);
           console.log(`Loaded ${displayMessages.length} messages for analysis: ${effectiveAnalysisId}`);
           
-          // If we have messages but no threadId from metadata, try to extract from messages
           if (!threadId && displayMessages.length > 0 && displayMessages[0].thread_id) {
             threadId = displayMessages[0].thread_id;
             setCurrentThreadId(threadId);
@@ -210,7 +203,6 @@ export const useAIChat = (
     }
   };
 
-  // Function to fetch resume content from resume_editors
   const fetchResumeContent = async () => {
     if (!effectiveAnalysisId) return null;
     
@@ -241,7 +233,6 @@ export const useAIChat = (
       return;
     }
     
-    // Clear any previous API errors
     setApiError(null);
     
     const userMessage: ChatMessage = {
@@ -263,7 +254,6 @@ export const useAIChat = (
       console.log(`Sending message to resume-ai-assistant for analysis: ${effectiveAnalysisId}`);
       console.log(`Using thread ID: ${currentThreadId || "new thread"}`);
       
-      // Check if this is the first message and we need to send resume content
       let resumeContent = null;
       if (!resumeContentSent) {
         resumeContent = await fetchResumeContent();
@@ -300,7 +290,6 @@ export const useAIChat = (
         setCurrentThreadId(threadId);
         console.log(`Using thread ID from response: ${threadId}`);
         
-        // Refresh metadata after a delay to ensure the edge function had time to save it
         setTimeout(async () => {
           try {
             const { data: refreshedMetadataData } = await supabase
@@ -348,12 +337,10 @@ export const useAIChat = (
       
       await saveChatMessage(aiMessage);
       
-      // Clear any previous errors
       setApiError(null);
     } catch (error) {
       console.error('Error getting AI response:', error);
       
-      // Set API error state
       setApiError("Failed to connect to AI service. Please try again.");
       
       const errorMessage: ChatMessage = {
@@ -406,6 +393,48 @@ export const useAIChat = (
     const optimizePrompt = `Please optimize this resume section to make it more professional and impactful: "${currentSectionContent}"`;
     setInput(optimizePrompt);
   };
+
+  const initializeChat = async () => {
+    if (!effectiveAnalysisId) {
+      console.error("Missing analysisId for chat initialization");
+      return;
+    }
+
+    try {
+      const { data: editorData, error: editorError } = await supabase
+        .from('resume_editors')
+        .select('content')
+        .eq('analysis_id', effectiveAnalysisId)
+        .maybeSingle();
+
+      if (editorError) throw editorError;
+
+      const guidance = editorData?.content?.guidanceForOptimization || '';
+      const randomGreeting = resumeAlchemistMessages[Math.floor(Math.random() * resumeAlchemistMessages.length)];
+      
+      const initialMessage = {
+        id: crypto.randomUUID(),
+        role: 'assistant' as const,
+        content: `${randomGreeting}\n\n${guidance}`,
+        timestamp: new Date()
+      };
+
+      setMessages([initialMessage]);
+      await saveChatMessage(initialMessage);
+
+    } catch (error) {
+      console.error('Error initializing chat:', error);
+      toast({
+        title: "Error",
+        description: "Failed to initialize chat. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  useEffect(() => {
+    initializeChat();
+  }, [effectiveAnalysisId]);
 
   return {
     messages,

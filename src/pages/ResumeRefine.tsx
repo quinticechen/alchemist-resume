@@ -211,15 +211,6 @@ const ResumeRefine = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100 relative">
-      <OozeDialog 
-        position="bottom" 
-        resumeEditMode={true}
-        title="Resume Alchemist" 
-        onSuggestionApply={handleSuggestionApply}
-        onGenerateSuggestion={handleGenerateSuggestion}
-        jobData={jobDescription}
-        currentSectionId={section}
-      />
       
       <div className="container mx-auto px-4 py-12">
         <div className="max-w-7xl mx-auto">

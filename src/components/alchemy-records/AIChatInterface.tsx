@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import { useAIChat } from "@/hooks/use-ai-chat";
 import ChatHeader from "./chat/ChatHeader";
@@ -50,6 +51,7 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
     <div className="relative rounded-xl bg-white shadow-apple h-full">
       <ChatHeader 
         CustomAnimation={OozeAnimation}
+        title="Ooze Instruction"
         onOptimizeClick={() => {
           handleOptimizeCurrentSection();
           if (inputRef.current) {
