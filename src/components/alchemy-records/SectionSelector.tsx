@@ -21,16 +21,21 @@ const SectionSelector = ({
   const handleDragEnd = (result: DropResult) => {
     if (!result.destination) return;
     
+    // Get all sections including personalInfo
     const items = Array.from(sections);
     
-    // Get the dragged item
-    const [reorderedItem] = items.splice(result.source.index, 1);
+    // Get the source index from the result
+    const sourceIndex = result.source.index;
     
     // Don't allow dragging personalInfo
-    if (reorderedItem === 'personalInfo') {
+    if (items[sourceIndex] === 'personalInfo') {
       return;
     }
     
+    // Get the dragged item
+    const [reorderedItem] = items.splice(sourceIndex, 1);
+    
+    // Insert at the destination index
     items.splice(result.destination.index, 0, reorderedItem);
     
     // Ensure personalInfo stays at the top
@@ -40,6 +45,7 @@ const SectionSelector = ({
       items.unshift(personalInfo);
     }
     
+    // Update the parent component with the new order
     onSectionsReorder(items);
   };
   
@@ -88,13 +94,13 @@ const SectionSelector = ({
                     <div
                       ref={provided.innerRef}
                       {...provided.draggableProps}
+                      {...provided.dragHandleProps}
                       className="flex items-center bg-white hover:bg-gray-50 rounded-md border p-2"
                       style={{
                         ...provided.draggableProps.style,
                       }}
                     >
                       <div 
-                        {...provided.dragHandleProps}
                         className="p-1 cursor-grab"
                       >
                         <GripVertical className="h-4 w-4 text-gray-400" />
