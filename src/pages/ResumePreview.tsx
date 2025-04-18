@@ -3,12 +3,15 @@ import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Pencil, FileText, Download, Edit } from "lucide-react";
+import { Pencil, FileText, Download, Edit, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { ResumeSection, getFormattedResume } from '@/utils/resumeUtils';
+import Lottie from 'lottie-react';
+import loadingAnimation from '@/animations/Loading.json';
+import { ResumeData } from '@/types/resume';
 
 const RESUME_STYLES = [
   { id: 'classic', name: 'Classic', color: 'bg-white' },
@@ -18,12 +21,6 @@ const RESUME_STYLES = [
   { id: 'creative', name: 'Creative', color: 'bg-purple-50' },
 ];
 
-interface ResumeData {
-  file_name?: string;
-  file_path?: string;
-  formatted_resume?: any;
-}
-
 interface JobData {
   job_title?: string;
   company_name?: string | null;
@@ -31,13 +28,29 @@ interface JobData {
   job_url?: string | null;
 }
 
+interface PersonalInfo {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  location?: string;
+  linkedIn?: string;
+}
+
+interface Education {
+  degreeName: string;
+  institution: string;
+  enrollmentDate: string;
+  graduationDate: string;
+  description?: string;
+}
+
 interface EditorContent {
   resume?: {
-    personalInfo?: any;
-    summary?: string;
+    personalInfo?: PersonalInfo;
     professionalSummary?: string;
     professionalExperience?: any[];
-    education?: any;
+    education?: Education[];
     skills?: any;
     projects?: any[];
     volunteer?: any[];
@@ -93,38 +106,64 @@ const DEFAULT_SECTION_ORDER: ResumeSection[] = [
 ];
 
 // 處理簡歷數據格式
-const prepareResumeData = (content: any) => {
+const prepareResumeData = (content: unknown): ResumeData => {
   try {
     console.log('準備處理的原始數據:', content);
     
     // 如果內容是字符串，嘗試解析為 JSON
-    let parsedContent = content;
-    if (typeof content === 'string') {
-      try {
-        parsedContent = JSON.parse(content);
-      } catch (e) {
-        console.error('解析 JSON 字符串失敗:', e);
-      }
-    }
+    let parsedContent = typeof content === 'string' ? JSON.parse(content) : content;
+    
+    // 使用 getFormattedResume 格式化數據
+    const formattedContent = getFormattedResume(parsedContent);
+    console.log('格式化後的數據:', formattedContent);
     
     // 確保數據具有正確的結構
-    return {
-      resume: parsedContent.resume || {},
-      sectionOrder: parsedContent.sectionOrder || DEFAULT_SECTION_ORDER,
-      jobTitle: parsedContent.jobTitle || 'My Resume'
+    const result: ResumeData = {
+      resume: {
+        personalInfo: formattedContent.resume?.personalInfo || {
+          firstName: '',
+          lastName: '',
+          phone: '',
+          email: '',
+          location: '',
+          linkedIn: ''
+        },
+        professionalSummary: formattedContent.resume?.professionalSummary || '',
+        professionalExperience: formattedContent.resume?.professionalExperience || [],
+        projects: formattedContent.resume?.projects || [],
+        volunteer: formattedContent.resume?.volunteer || [],
+        education: formattedContent.resume?.education || [],
+        skills: formattedContent.resume?.skills || { technical: [], soft: [] },
+        certifications: formattedContent.resume?.certifications || [],
+        guidanceForOptimization: formattedContent.resume?.guidanceForOptimization || []
+      },
+      sectionOrder: formattedContent.sectionOrder || DEFAULT_SECTION_ORDER,
+      jobTitle: formattedContent.jobTitle || 'My Resume'
     };
+    
+    console.log('最終處理的數據:', result);
+    return result;
   } catch (error) {
     console.error('Error preparing resume data:', error);
-    // 返回一個默認的數據結構，避免頁面崩潰
+    // 返回一個默認的數據結構
     return {
       resume: {
-        personalInfo: {},
+        personalInfo: {
+          firstName: '',
+          lastName: '',
+          phone: '',
+          email: '',
+          location: '',
+          linkedIn: ''
+        },
+        professionalSummary: '',
         professionalExperience: [],
-        education: [],
-        skills: { technical: [], soft: [] },
         projects: [],
         volunteer: [],
-        certifications: []
+        education: [],
+        skills: { technical: [], soft: [] },
+        certifications: [],
+        guidanceForOptimization: []
       },
       sectionOrder: DEFAULT_SECTION_ORDER,
       jobTitle: 'My Resume'
@@ -138,8 +177,9 @@ const ResumePreview = () => {
   const location = useLocation();
   const params = useParams();
   const { toast } = useToast();
-  const [resumeData, setResumeData] = useState<any>(null);
+  const [resumeData, setResumeData] = useState<ResumeData | null>(null);
   const [resumeAnalysis, setResumeAnalysis] = useState<any>(null);
+  const [jobTitle, setJobTitle] = useState<string>('My Resume');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [style, setStyle] = useState<string>(() => {
@@ -172,7 +212,7 @@ const ResumePreview = () => {
 
       setLoading(true);
       try {
-        // 總是從 Supabase 獲取編輯器內容
+        // 獲取編輯器內容
         const { data: editorData, error: editorError } = await supabase
           .from('resume_editors')
           .select('content')
@@ -189,15 +229,25 @@ const ResumePreview = () => {
           return;
         }
 
-        // 獲取分析數據
+        // 獲取分析數據和職位標題
         const { data: analysisData, error: analysisError } = await supabase
           .from('resume_analyses')
-          .select('*')
+          .select(`
+            *,
+            job:job_id (
+              job_title
+            )
+          `)
           .eq('id', analysisId)
           .single();
 
         if (analysisError) {
           throw analysisError;
+        }
+
+        // 設置職位標題
+        if (analysisData?.job?.job_title) {
+          setJobTitle(analysisData.job.job_title);
         }
 
         // 處理數據
@@ -343,12 +393,16 @@ const ResumePreview = () => {
     }
   };
 
-  if (isLoading) {
-    return <div className="container mx-auto px-4 py-8">Loading...</div>;
-  }
-
-  if (loading) {
-    return <div className="container mx-auto px-4 py-8">Loading resume data...</div>;
+  if (isLoading || loading) {
+    return (
+      <div className="container mx-auto px-4 py-8 flex flex-col items-center justify-center min-h-[50vh]">
+        <Lottie 
+          animationData={loadingAnimation} 
+          className="w-32 h-32"
+          loop={true}
+        />
+      </div>
+    );
   }
 
   if (!resumeData) {
@@ -384,7 +438,7 @@ const ResumePreview = () => {
         <div className="max-w-4xl mx-auto">
           <div className="flex flex-col items-center mb-6 text-center">
             <h1 className="text-3xl font-bold bg-gradient-primary text-transparent bg-clip-text mb-4">
-              {resumeData.jobTitle}
+              {jobTitle}
             </h1>
             <div className="flex gap-4">
               <Button 
@@ -412,6 +466,15 @@ const ResumePreview = () => {
               >
                 <Download className="h-4 w-4" />
                 Export PDF
+              </Button>
+
+              <Button 
+                variant="outline" 
+                onClick={() => navigate(`/chat/${analysisId}`)}
+                className="flex items-center gap-2"
+              >
+                <MessageCircle className="h-4 w-4" />
+                Chat with Seeker
               </Button>
             </div>
           </div>
@@ -542,7 +605,7 @@ const ResumePreview = () => {
                 );
               }
               
-              if (sectionKey === 'education' && resumeData.resume?.education) {
+              if (sectionKey === 'education' && resumeData.resume?.education?.length > 0) {
                 return (
                   <div key={sectionKey} className="mb-6 relative group">
                     <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -555,39 +618,25 @@ const ResumePreview = () => {
                         <Edit className="h-4 w-4" />
                       </Button>
                     </div>
-                    <h2 className={`text-xl font-bold mb-2 ${
+                    <h2 className={`text-xl font-bold mb-4 ${
                       style === 'modern' ? 'text-blue-600' : 
                       style === 'professional' ? 'text-amber-600' : 
                       style === 'creative' ? 'text-purple-600' : 'text-gray-800'
                     }`}>
                       Education
                     </h2>
-                    
-                    {Array.isArray(resumeData.resume.education) ? (
-                      resumeData.resume.education.map((edu: any, index: number) => (
-                        <div key={index} className="mb-3">
-                          <h3 className="font-bold text-gray-800">{edu.degreeName}</h3>
-                          <p className="text-gray-600">{edu.institution}</p>
-                          {edu.enrollmentDate && edu.graduationDate ? (
-                            <p className="text-gray-500">{edu.enrollmentDate} - {edu.graduationDate}</p>
-                          ) : (
-                            <p className="text-gray-500">Graduated: {edu.graduationDate}</p>
-                          )}
-                          {edu.gpa && <p className="text-gray-500">GPA: {edu.gpa}</p>}
-                        </div>
-                      ))
-                    ) : (
-                      <div>
-                        <h3 className="font-bold text-gray-800">{resumeData.resume.education.degreeName}</h3>
-                        <p className="text-gray-600">{resumeData.resume.education.institution}</p>
-                        {resumeData.resume.education.enrollmentDate && resumeData.resume.education.graduationDate ? (
-                          <p className="text-gray-500">{resumeData.resume.education.enrollmentDate} - {resumeData.resume.education.graduationDate}</p>
+                    {resumeData.resume.education.map((edu: Education, index: number) => (
+                      <div key={index} className="mb-4 last:mb-0">
+                        <h3 className="font-bold text-gray-800">{edu.degreeName}</h3>
+                        <p className="text-gray-600">{edu.institution}</p>
+                        {edu.enrollmentDate && edu.graduationDate ? (
+                          <p className="text-gray-500">{edu.enrollmentDate} - {edu.graduationDate}</p>
                         ) : (
-                          <p className="text-gray-500">Graduated: {resumeData.resume.education.graduationDate}</p>
+                          <p className="text-gray-500">Graduated: {edu.graduationDate}</p>
                         )}
-                        {resumeData.resume.education.gpa && <p className="text-gray-500">GPA: {resumeData.resume.education.gpa}</p>}
+                        {edu.gpa && <p className="text-gray-500">GPA: {edu.gpa}</p>}
                       </div>
-                    )}
+                    ))}
                   </div>
                 );
               }
