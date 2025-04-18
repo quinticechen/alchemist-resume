@@ -18,6 +18,13 @@ const resumeAlchemistMessages = [
   "Greetings, Resume Alchemist at your service! Shall we refine your professional masterpiece?"
 ];
 
+const universalSupportMessages = [
+  "Hi there! I'm Ooze, your friendly assistant. How can I help you today?",
+  "Hello! I'm here to assist you. What can I help you with?",
+  "Greetings! I'm Ooze, ready to provide support. What do you need help with?",
+  "Welcome! I'm your AI assistant Ooze. How may I assist you today?"
+];
+
 export interface UseSeekerDialogOptions {
   resumeEditMode?: boolean;
   jobData?: any;
