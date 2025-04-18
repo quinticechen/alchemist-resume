@@ -511,16 +511,13 @@ const ResumeEditor = ({
   const handleDragEnd = (result: DropResult) => {
     if (!result.destination) return;
 
-    const items = sectionOrder.filter(section => section !== 'personalInfo'); // Exclude personalInfo from the draggable items
+    const items = sectionOrder.filter((section) => section !== "personalInfo"); // Exclude personalInfo from the draggable items
     const [reorderedItem] = items.splice(result.source.index, 1);
     items.splice(result.destination.index, 0, reorderedItem);
 
     // Ensure personalInfo is always at the beginning when updating the state
-    handleSectionsReorder(['personalInfo', ...items]);
-  };
-
-    handleSectionsReorder(items);
-  };
+    handleSectionsReorder(["personalInfo", ...items]);
+  }; // This is the correct closing brace for handleDragEnd
 
   if (isLoading) {
     return <div className="text-center py-4">Loading editor...</div>;
