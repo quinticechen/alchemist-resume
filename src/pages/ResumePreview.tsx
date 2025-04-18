@@ -6,12 +6,15 @@ import { useToast } from "@/hooks/use-toast";
 import { Pencil, FileText, Download, Edit, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Sheet } from "@/components/ui/sheet";
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { ResumeSection, getFormattedResume } from '@/utils/resumeUtils';
 import Lottie from 'lottie-react';
 import loadingAnimation from '@/animations/Loading.json';
-import { ResumeData } from '@/types/resume';
+import { ResumeData, ResumeAnalysis, Resume, Experience, Education, Project, Volunteer, Certification, PersonalInfo, Skills } from '@/types/resume';
+import SeekerChatSheet from "@/components/seeker/SeekerChatSheet";
+import { useSeekerDialog } from "@/hooks/use-seeker-dialog";
 
 const RESUME_STYLES = [
   { id: 'classic', name: 'Classic', color: 'bg-white' },
@@ -28,40 +31,23 @@ interface JobData {
   job_url?: string | null;
 }
 
-interface PersonalInfo {
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  location?: string;
-  linkedIn?: string;
-}
-
-interface Education {
-  degreeName: string;
-  institution: string;
-  enrollmentDate: string;
-  graduationDate: string;
-  description?: string;
-}
-
 interface EditorContent {
   resume?: {
     personalInfo?: PersonalInfo;
     professionalSummary?: string;
-    professionalExperience?: any[];
+    professionalExperience?: Experience[];
     education?: Education[];
-    skills?: any;
-    projects?: any[];
-    volunteer?: any[];
-    certifications?: any[];
+    skills?: Skills;
+    projects?: Project[];
+    volunteer?: Volunteer[];
+    certifications?: Certification[];
   };
   sectionOrder?: ResumeSection[];
 }
 
 const LOCAL_STORAGE_STYLE_KEY = 'resumePreviewStyle';
 
-const isSectionEmpty = (data: any, section: string): boolean => {
+const isSectionEmpty = (data: ResumeData | null, section: string): boolean => {
   if (!data || !data.resume) return true;
   
   const sectionMapping: Record<string, string[]> = {
@@ -111,7 +97,7 @@ const prepareResumeData = (content: unknown): ResumeData => {
     console.log('準備處理的原始數據:', content);
     
     // 如果內容是字符串，嘗試解析為 JSON
-    let parsedContent = typeof content === 'string' ? JSON.parse(content) : content;
+    const parsedContent = typeof content === 'string' ? JSON.parse(content) : content;
     
     // 使用 getFormattedResume 格式化數據
     const formattedContent = getFormattedResume(parsedContent);
@@ -178,7 +164,7 @@ const ResumePreview = () => {
   const params = useParams();
   const { toast } = useToast();
   const [resumeData, setResumeData] = useState<ResumeData | null>(null);
-  const [resumeAnalysis, setResumeAnalysis] = useState<any>(null);
+  const [resumeAnalysis, setResumeAnalysis] = useState<ResumeAnalysis | null>(null);
   const [jobTitle, setJobTitle] = useState<string>('My Resume');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -192,6 +178,25 @@ const ResumePreview = () => {
   const { analysisId: locationAnalysisId } = locationState;
   
   const analysisId = paramAnalysisId || locationAnalysisId;
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const {
+    chats,
+    inputValue,
+    isLoading: isChatLoading,
+    isRetrying,
+    apiError,
+    currentThreadId,
+    messagesEndRef,
+    setInputValue,
+    handleKeyDown,
+    handleSendMessage: handleSend,
+    handleGenerateSuggestion,
+    handleRetry,
+    handleApplySuggestion
+  } = useSeekerDialog({
+    currentSectionId: 'resume',
+    jobData: resumeData
+  });
 
   useEffect(() => {
     if (!isLoading && !session && !analysisId) {
@@ -416,7 +421,7 @@ const ResumePreview = () => {
   console.log('education:', resumeData.resume?.education);
   console.log('skills:', resumeData.resume?.skills);
 
-  const personalInfo = resumeData.resume?.personalInfo || {};
+  const personalInfo = resumeData.resume?.personalInfo || {} as PersonalInfo;
   const experiences = resumeData.resume?.professionalExperience || [];
   const firstName = personalInfo.firstName || 'John';
   const lastName = personalInfo.lastName || 'Smith';
@@ -470,7 +475,7 @@ const ResumePreview = () => {
 
               <Button 
                 variant="outline" 
-                onClick={() => navigate(`/chat/${analysisId}`)}
+                onClick={() => setIsChatOpen(true)}
                 className="flex items-center gap-2"
               >
                 <MessageCircle className="h-4 w-4" />
@@ -578,7 +583,7 @@ const ResumePreview = () => {
                     }`}>
                       Professional Experience
                     </h2>
-                    {resumeData.resume.professionalExperience.map((exp: any, index: number) => (
+                    {resumeData.resume.professionalExperience.map((exp: Experience, index: number) => (
                       <div key={index} className="mb-4">
                         <div className="flex justify-between items-start">
                           <div>
@@ -708,7 +713,7 @@ const ResumePreview = () => {
                     }`}>
                       Projects
                     </h2>
-                    {resumeData.resume.projects.map((project: any, index: number) => (
+                    {resumeData.resume.projects.map((project: Project, index: number) => (
                       <div key={index} className="mb-4">
                         <div className="flex justify-between items-start">
                           <h3 className="font-bold text-gray-800">{project.name}</h3>
@@ -752,7 +757,7 @@ const ResumePreview = () => {
                       Certifications
                     </h2>
                     <ul className="list-disc ml-5 text-gray-700">
-                      {resumeData.resume.certifications.map((cert: any, i: number) => (
+                      {resumeData.resume.certifications.map((cert: Certification, i: number) => (
                         <li key={i}>
                           {cert.name} 
                           {cert.dateAchieved && <span className="text-gray-500"> (Achieved: {cert.dateAchieved}</span>}
@@ -785,7 +790,7 @@ const ResumePreview = () => {
                     }`}>
                       Volunteer Experience
                     </h2>
-                    {resumeData.resume.volunteer.map((vol: any, index: number) => (
+                    {resumeData.resume.volunteer.map((vol: Volunteer, index: number) => (
                       <div key={index} className="mb-4">
                         <div className="flex justify-between items-start">
                           <h3 className="font-bold text-gray-800">{vol.name}</h3>
@@ -859,6 +864,26 @@ const ResumePreview = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      <Sheet open={isChatOpen} onOpenChange={setIsChatOpen}>
+        <SeekerChatSheet
+          chats={chats}
+          inputValue={inputValue}
+          isLoading={isChatLoading}
+          isRetrying={isRetrying}
+          apiError={apiError}
+          analysisId={analysisId}
+          currentThreadId={currentThreadId}
+          messagesEndRef={messagesEndRef}
+          setInputValue={setInputValue}
+          onKeyDown={handleKeyDown}
+          onSend={handleSend}
+          onGenerateSuggestion={handleGenerateSuggestion}
+          onRetry={handleRetry}
+          onApplySuggestion={handleApplySuggestion}
+          sheetDescriptionId="seeker-chat-description"
+        />
+      </Sheet>
     </div>
   );
 };
