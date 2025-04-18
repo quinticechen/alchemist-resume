@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, FC } from 'react';
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -370,6 +369,29 @@ const ResumeEditor: FC<ResumeEditorProps> = ({
     handleSectionsReorder(result);
   };
 
+  const getSectionDisplayName = (sectionId: ResumeSection) => {
+    switch (sectionId) {
+      case 'personalInfo':
+        return 'Personal Information';
+      case 'professionalExperience':
+        return 'Professional Experience';
+      case 'education':
+        return 'Education';
+      case 'skills':
+        return 'Skills';
+      case 'projects':
+        return 'Projects';
+      case 'volunteer':
+        return 'Volunteer';
+      case 'certifications':
+        return 'Certifications';
+      case 'guidanceForOptimization':
+        return 'Guidance for Optimization';
+      default:
+        return sectionId;
+    }
+  };
+
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
     toast({
       title: type === 'success' ? 'Success' : 'Error',
@@ -429,18 +451,18 @@ const ResumeEditor: FC<ResumeEditorProps> = ({
                                   <div
                                     ref={provided.innerRef}
                                     {...provided.draggableProps}
-                                    className="mb-8 bg-white rounded-lg shadow-sm border border-neutral-200"
+                                    className="mb-4 bg-white rounded-lg shadow-sm border border-neutral-200"
                                   >
-                                    <div className="flex items-center justify-between p-4 bg-neutral-50 rounded-t-lg border-b border-neutral-200">
+                                    <div className="flex items-center justify-between p-3 bg-neutral-50 rounded-t-lg border-b border-neutral-200">
                                       <div className="flex items-center gap-2">
                                         {sectionId === 'personalInfo' ? (
-                                          <Lock className="h-5 w-5 text-neutral-400" />
+                                          <Lock className="h-4 w-4 text-neutral-400" />
                                         ) : (
                                           <div {...provided.dragHandleProps}>
-                                            <GripVertical className="h-5 w-5 text-neutral-400" />
+                                            <GripVertical className="h-4 w-4 text-neutral-400" />
                                           </div>
                                         )}
-                                        <h2 className="text-lg font-semibold">{sectionId}</h2>
+                                        <h2 className="text-md font-semibold">{getSectionDisplayName(sectionId)}</h2>
                                       </div>
                                       <Button
                                         variant="ghost"
@@ -448,14 +470,14 @@ const ResumeEditor: FC<ResumeEditorProps> = ({
                                         onClick={() => handleSectionToggle(sectionId)}
                                       >
                                         {collapsedSections[sectionId] ? (
-                                          <ChevronDown className="h-5 w-5" />
+                                          <ChevronDown className="h-4 w-4" />
                                         ) : (
-                                          <ChevronUp className="h-5 w-5" />
+                                          <ChevronUp className="h-4 w-4" />
                                         )}
                                       </Button>
                                     </div>
                                     {!collapsedSections[sectionId] && (
-                                      <div className="p-4">
+                                      <div className="px-3 py-2">
                                         <SectionEditor
                                           section={sectionId}
                                           resumeData={resumeData}

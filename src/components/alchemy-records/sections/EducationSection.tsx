@@ -91,7 +91,7 @@ const EducationSection = ({ data, onChange, showAddForm = true }: EducationSecti
   };
   
   const handleAddEducationClick = () => {
-    initEditForm(null);
+    initEditForm(-1); // Using -1 instead of null to trigger "Add Education" mode
   };
 
   const handleDeleteEducation = (index: number) => {
@@ -237,7 +237,7 @@ const EducationSection = ({ data, onChange, showAddForm = true }: EducationSecti
           {showAddForm && (
             <Button
               variant="outline"
-              className="flex items-center"
+              className="flex items-center w-full justify-center"
               onClick={handleAddEducationClick}
             >
               <PlusCircle className="h-4 w-4 mr-2" />
