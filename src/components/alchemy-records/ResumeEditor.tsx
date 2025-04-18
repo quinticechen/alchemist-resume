@@ -542,6 +542,7 @@ const ResumeEditor = ({
                       />
                     </div>
 
+                    {/* Render Personal Info separately and non-draggable */}
                     <SectionEditor
                       key="personalInfo"
                       section="personalInfo"
@@ -561,18 +562,6 @@ const ResumeEditor = ({
                             ref={provided.innerRef}
                             className="space-y-4"
                           >
-                            {/* Render Personal Info separately and non-draggable */}
-                            <SectionEditor
-                              key="personalInfo"
-                              section="personalInfo"
-                              resumeData={resumeData}
-                              onChange={handleResumeDataChange}
-                              isCollapsed={collapsedSections["personalInfo"]}
-                              onToggleCollapse={handleSectionToggle}
-                              isDraggable={false}
-                              onAutoSave={scheduleAutoSave}
-                            />
-
                             {/* Render other sections as draggable */}
                             {sectionOrder
                               .filter((section) => section !== "personalInfo")
