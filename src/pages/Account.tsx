@@ -1,32 +1,7 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React from 'react';
 import { useAuth } from "@/contexts/AuthContext";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Check, Github, Linkedin, Mail } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import SeekerDialog from "@/components/SeekerDialog";
-
-interface Profile {
-  email: string;
-  full_name: string | null;
-  avatar_url: string | null;
-  usage_count: number;
-  free_trial_limit: number;
-  monthly_usage_count: number;
-  provider: string;
-  has_completed_survey: boolean;
-  subscription_status: 'apprentice' | 'alchemist' | 'grandmaster';
-}
-
-interface Subscription {
-  tier: 'apprentice' | 'alchemist' | 'grandmaster';
-  current_period_end: string;
-  cancel_at_period_end: boolean;
-  status: string;
-}
 
 const Account = () => {
   const { session, isLoading: authLoading } = useAuth();
@@ -77,7 +52,6 @@ const Account = () => {
       setSubscription(subscription);
       setNewFullName(profile.full_name || "");
     } catch (error: any) {
-      // console.error('Error fetching profile:', error);
       toast({
         title: "Error",
         description: "Failed to load profile information",
@@ -118,7 +92,6 @@ const Account = () => {
         description: "Profile updated successfully",
       });
     } catch (error: any) {
-      // console.error('Error updating profile:', error);
       toast({
         title: "Error",
         description: "Failed to update profile",
@@ -173,7 +146,7 @@ const Account = () => {
 
   return (
     <div className="relative">
-      <SeekerDialog position="middle" />
+      <SeekerDialog position="bottom" />
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-3xl mx-auto space-y-6">
           <Card>

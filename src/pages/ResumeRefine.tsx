@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { ResumeSection, getAllSections } from '@/utils/resumeUtils';
-import OozeDialog from "@/components/SeekerDialog";
+import OozeDialog from "@/components/OozeDialog";
 
 interface JobData {
   job_title?: string;

@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -24,19 +23,16 @@ const AlchemyRecords = () => {
     handleFeedback
   } = useAlchemyRecords();
 
-  // Redirect to login if not authenticated
   useEffect(() => {
     if (!isLoading && !session) {
       navigate('/login', { state: { from: '/alchemy-records' } });
     }
   }, [session, isLoading, navigate]);
 
-  // Show loading state while checking authentication or loading data
   if (isLoading || loading) {
     return <div className="container mx-auto px-4 py-8">Loading...</div>;
   }
 
-  // Don't render anything if not authenticated (will redirect)
   if (!session) {
     return null;
   }

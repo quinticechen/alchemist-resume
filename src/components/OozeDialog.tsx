@@ -3,25 +3,33 @@ import React from "react";
 import { Dialog } from "@/components/ui/dialog";
 import { Sheet } from "@/components/ui/sheet";
 import { useSeekerDialog } from "@/hooks/use-seeker-dialog";
-import SeekerButton from "./seeker/SeekerButton";
-import SeekerTipDialog from "./seeker/SeekerTipDialog";
-import SeekerChatSheet from "./seeker/SeekerChatSheet";
+import OozeButton from "./seeker/OozeButton";
+import OozeTipDialog from "./seeker/OozeTipDialog";
+import OozeChatSheet from "./seeker/OozeChatSheet";
 
-export interface SeekerDialogProps {
+export interface OozeDialogProps {
   className?: string;
   position?: "top" | "middle" | "bottom";
-  simpleTipMode?: boolean;
+  resumeEditMode?: boolean;
   title?: string;
+  onSuggestionApply?: (text: string, sectionId: string) => void;
+  onGenerateSuggestion?: (sectionId: string) => void;
+  jobData?: any;
+  currentSectionId?: string;
 }
 
-const SeekerDialog: React.FC<SeekerDialogProps> = ({ 
+const OozeDialog: React.FC<OozeDialogProps> = ({ 
   className = "",
   position = "middle",
-  simpleTipMode = false,
-  title = "Seeker Support"
+  resumeEditMode = true,
+  title = "Resume Alchemist",
+  onSuggestionApply,
+  onGenerateSuggestion,
+  jobData,
+  currentSectionId
 }) => {
-  const dialogDescriptionId = "SeekerDialogDescription";
-  const sheetDescriptionId = "SeekerSheetDescription";
+  const dialogDescriptionId = "OozeDialogDescription";
+  const sheetDescriptionId = "OozeSheetDescription";
   
   const {
     // State
@@ -42,7 +50,11 @@ const SeekerDialog: React.FC<SeekerDialogProps> = ({
     handleSendMessage,
     handleKeyDown
   } = useSeekerDialog({
-    resumeEditMode: false,
+    resumeEditMode,
+    jobData,
+    currentSectionId,
+    onSuggestionApply,
+    onGenerateSuggestion
   });
 
   const handleOpenChat = () => {
@@ -52,29 +64,29 @@ const SeekerDialog: React.FC<SeekerDialogProps> = ({
 
   return (
     <>
-      {/* Seeker Button */}
-      <SeekerButton 
+      {/* Ooze Button */}
+      <OozeButton 
         onClick={handleOpenDialog} 
         position={position} 
         className={className}
-        simpleTipMode={simpleTipMode}
+        resumeEditMode={resumeEditMode}
       />
 
       {/* Tip Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <SeekerTipDialog
+        <OozeTipDialog
           title={title}
           message={message}
           onClose={() => setIsDialogOpen(false)}
           onOpenChat={handleOpenChat}
-          showChatButton={true}
+          resumeEditMode={resumeEditMode}
           dialogDescriptionId={dialogDescriptionId}
         />
       </Dialog>
 
       {/* Chat Sheet */}
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-        <SeekerChatSheet
+        <OozeChatSheet
           chats={chats}
           inputValue={inputValue}
           isLoading={isLoading}
@@ -90,4 +102,4 @@ const SeekerDialog: React.FC<SeekerDialogProps> = ({
   );
 };
 
-export default SeekerDialog;
+export default OozeDialog;
