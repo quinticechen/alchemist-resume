@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -70,6 +70,8 @@ const ResumeEditor = ({
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
   const { toast } = useToast();
   const navigate = useNavigate();
+  const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const activeSectionRef = useRef<ResumeSection | null>(null);
 
   useEffect(() => {
     if (sectionOrder.length > 0) {
@@ -94,11 +96,15 @@ const ResumeEditor = ({
       
       setSectionOrder(newSectionOrder);
       
+      // Initially set all sections to collapsed except the first one
       const initialCollapsedState: Record<string, boolean> = {};
       newSectionOrder.forEach((section, index) => {
         initialCollapsedState[section] = index !== 0;
       });
       setCollapsedSections(initialCollapsedState);
+      
+      // Set the initial active section
+      activeSectionRef.current = newSectionOrder[0];
     }
   }, []);
 
@@ -173,9 +179,10 @@ const ResumeEditor = ({
           if (processedContent.sectionOrder && Array.isArray(processedContent.sectionOrder)) {
             setSectionOrder(processedContent.sectionOrder);
             
+            // Only expand the first section initially
             const initialCollapsedState: Record<string, boolean> = {};
             processedContent.sectionOrder.forEach((section: string, index: number) => {
-              initialCollapsedState[section] = (index !== 0 && section !== 'professionalExperience');
+              initialCollapsedState[section] = (index !== 0);
             });
             setCollapsedSections(initialCollapsedState);
           }
@@ -268,26 +275,49 @@ const ResumeEditor = ({
     setHasUnsavedChanges(contentChanged);
   }, [resumeData, savedData, setHasUnsavedChanges]);
 
+  // Function to handle section toggling and ensure only one section is expanded at a time
   const handleSectionToggle = useCallback((section: ResumeSection) => {
     console.log("Toggle section:", section);
-    setCollapsedSections(prev => ({
-      ...prev,
-      [section]: !prev[section]
-    }));
+    
+    // If section is collapsed and being expanded, collapse all other sections
+    setCollapsedSections(prev => {
+      const wasPreviouslyCollapsed = prev[section];
+      
+      if (wasPreviouslyCollapsed) {
+        // This section is being expanded, so collapse all others
+        const newState: Record<string, boolean> = {};
+        Object.keys(prev).forEach(key => {
+          newState[key as ResumeSection] = key !== section;
+        });
+        activeSectionRef.current = section;
+        return newState;
+      } else {
+        // This section is being collapsed
+        return { ...prev, [section]: true };
+      }
+    });
   }, []);
 
   const handleSectionsReorder = useCallback((sections: ResumeSection[]) => {
     console.log("Reordering sections:", sections);
     setSectionOrder(sections);
     
-    setResumeData((prevData: any) => ({
-      ...prevData,
-      sectionOrder: sections
-    }));
+    setResumeData((prevData: any) => {
+      if (!prevData) return null;
+      return {
+        ...prevData,
+        sectionOrder: sections
+      };
+    });
+    
+    // Trigger auto-save after reordering
+    scheduleAutoSave();
   }, []);
 
   const handleResumeDataChange = useCallback((updatedData: any) => {
     setResumeData(updatedData);
+    // Data has changed, schedule auto-save
+    scheduleAutoSave();
   }, []);
 
   const validateResumeData = (data: any): boolean => {
@@ -308,12 +338,26 @@ const ResumeEditor = ({
     }
   };
 
-  const handleSaveContent = async () => {
+  // Schedule auto-save after changes, debounced to avoid too many requests
+  const scheduleAutoSave = useCallback(() => {
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+    }
+    
+    autoSaveTimerRef.current = setTimeout(() => {
+      handleSaveContent(true);
+    }, 2000); // Wait 2 seconds of inactivity before saving
+  }, []);
+
+  // Save content to Supabase
+  const handleSaveContent = async (isAutoSave = false) => {
     if (!resumeData || JSON.stringify(resumeData) === savedData || !editorId) {
-      toast({
-        title: "No changes to save",
-        description: "You haven't made any changes to your resume.",
-      });
+      if (!isAutoSave) {
+        toast({
+          title: "No changes to save",
+          description: "You haven't made any changes to your resume.",
+        });
+      }
       return;
     }
 
@@ -328,7 +372,7 @@ const ResumeEditor = ({
       return;
     }
 
-    setIsSaving(true);
+    if (!isAutoSave) setIsSaving(true);
     try {
       const dataToSave = {
         ...resumeData,
@@ -342,7 +386,7 @@ const ResumeEditor = ({
         }));
       }
       
-      console.log("Saving data:", dataToSave);
+      console.log(`${isAutoSave ? "Auto-saving" : "Saving"} data:`, dataToSave);
       
       const { error } = await supabase
         .from('resume_editors')
@@ -356,25 +400,43 @@ const ResumeEditor = ({
         throw error;
       }
 
-      toast({
-        title: "Success",
-        description: "Resume saved successfully!",
-        duration: 3000,
-      });
+      if (!isAutoSave) {
+        toast({
+          title: "Success",
+          description: "Resume saved successfully!",
+          duration: 3000,
+        });
+      } else {
+        console.log("Auto-saved resume successfully");
+      }
+      
       setSavedData(JSON.stringify(dataToSave));
       setLocalHasUnsavedChanges(false);
       setHasUnsavedChanges(false);
     } catch (error: any) {
       console.error("Save error:", error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to save resume. Please try again.",
-        variant: "destructive",
-      });
+      if (!isAutoSave) {
+        toast({
+          title: "Error",
+          description: error.message || "Failed to save resume. Please try again.",
+          variant: "destructive",
+        });
+      } else {
+        console.error("Auto-save failed:", error);
+      }
     } finally {
-      setIsSaving(false);
+      if (!isAutoSave) setIsSaving(false);
     }
   };
+
+  // Cleanup auto-save timer on unmount
+  useEffect(() => {
+    return () => {
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current);
+      }
+    };
+  }, []);
 
   const handlePreview = () => {
     navigate(`/resume-preview/${analysisId}`, { 
@@ -390,6 +452,7 @@ const ResumeEditor = ({
     try {
       const parsed = JSON.parse(e.target.value);
       setResumeData(parsed);
+      scheduleAutoSave();
     } catch (error) {
       console.error("Invalid JSON:", error);
     }
@@ -400,18 +463,20 @@ const ResumeEditor = ({
     
     const items = Array.from(sectionOrder);
     
+    // Check if we're trying to move the personalInfo section
     if (items[result.source.index] === 'personalInfo') {
+      // Don't allow personalInfo to be moved
       return;
     }
     
     const [reorderedItem] = items.splice(result.source.index, 1);
-    
     items.splice(result.destination.index, 0, reorderedItem);
     
+    // Ensure personalInfo stays at the top
     const personalInfoIndex = items.indexOf('personalInfo');
     if (personalInfoIndex > 0) {
-      const [personalInfo] = items.splice(personalInfoIndex, 1);
-      items.unshift(personalInfo);
+      items.splice(personalInfoIndex, 1);
+      items.unshift('personalInfo');
     }
     
     handleSectionsReorder(items);
@@ -461,6 +526,7 @@ const ResumeEditor = ({
                       isCollapsed={collapsedSections['personalInfo']}
                       onToggleCollapse={handleSectionToggle}
                       isDraggable={false}
+                      onAutoSave={scheduleAutoSave}
                     />
                     
                     <DragDropContext onDragEnd={handleDragEnd}>
@@ -474,12 +540,15 @@ const ResumeEditor = ({
                             {sectionOrder
                               .filter(section => section !== 'personalInfo')
                               .map((section, index) => (
-                                <Draggable key={section} draggableId={section} index={index}>
+                                <Draggable key={section} draggableId={section} index={index} isDragDisabled={false}>
                                   {(provided) => (
                                     <div
                                       ref={provided.innerRef}
                                       {...provided.draggableProps}
                                       {...provided.dragHandleProps}
+                                      style={{
+                                        ...provided.draggableProps.style,
+                                      }}
                                     >
                                       <SectionEditor 
                                         key={section}
@@ -489,6 +558,7 @@ const ResumeEditor = ({
                                         isCollapsed={collapsedSections[section]}
                                         onToggleCollapse={handleSectionToggle}
                                         isDraggable={true}
+                                        onAutoSave={scheduleAutoSave}
                                       />
                                     </div>
                                   )}
@@ -554,7 +624,7 @@ const ResumeEditor = ({
                 Preview
               </Button>
               <Button
-                onClick={handleSaveContent}
+                onClick={() => handleSaveContent(false)}
                 disabled={isSaving || !hasUnsavedChanges}
                 className={isSaving ? "cursor-not-allowed" : ""}
               >

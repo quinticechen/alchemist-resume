@@ -83,12 +83,15 @@ const SectionSelector = ({
               {sections
                 .filter(section => section !== 'personalInfo')
                 .map((section, index) => (
-                <Draggable key={section} draggableId={section} index={index}>
+                <Draggable key={section} draggableId={section} index={index} isDragDisabled={false}>
                   {(provided) => (
                     <div
                       ref={provided.innerRef}
                       {...provided.draggableProps}
                       className="flex items-center bg-white hover:bg-gray-50 rounded-md border p-2"
+                      style={{
+                        ...provided.draggableProps.style,
+                      }}
                     >
                       <div 
                         {...provided.dragHandleProps}

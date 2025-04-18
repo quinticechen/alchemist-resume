@@ -19,6 +19,7 @@ interface SectionEditorProps {
   isCollapsed?: boolean;
   onToggleCollapse?: (section: ResumeSection) => void;
   isDraggable?: boolean;
+  onAutoSave?: () => void;
 }
 
 const SectionEditor = ({ 
@@ -27,7 +28,8 @@ const SectionEditor = ({
   onChange, 
   isCollapsed = false, 
   onToggleCollapse,
-  isDraggable = false
+  isDraggable = false,
+  onAutoSave
 }: SectionEditorProps) => {
   // Extract resume from the data structure if it exists, otherwise use the data as is
   const data = resumeData?.resume || resumeData || {};
@@ -50,6 +52,11 @@ const SectionEditor = ({
         ...resumeData,
         ...updatedSectionData
       });
+    }
+    
+    // Call onAutoSave if provided to trigger saving to Supabase
+    if (onAutoSave) {
+      onAutoSave();
     }
   };
 
