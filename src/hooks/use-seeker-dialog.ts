@@ -11,10 +11,10 @@ export interface ChatMessage {
 }
 
 const universalSupportMessages = [
-  "Hi there! How can I help you today?",
-  "Welcome! I'm here to assist you with any questions or concerns.",
-  "Need guidance? I'm ready to help you navigate our platform.",
-  "Have a question? Feel free to ask, and I'll do my best to help!"
+  "Hey there! I'm Seeker, ready to explore opportunities with you! How can I help you today?",
+  "Welcome aboard! I'm Seeker, your friendly guide in this journey. I'm here to assist you with any questions or concerns.",
+  "Hi! I'm Seeker, let's discover your perfect career path together! Have a question? Feel free to ask, and I'll do my best to help!",
+  "Great to meet you! I'm Seeker, your companion in this job adventure! How can I help you today?"
 ];
 
 export interface UseSeekerDialogOptions {
