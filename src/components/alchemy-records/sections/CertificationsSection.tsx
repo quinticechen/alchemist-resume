@@ -1,8 +1,9 @@
+
 import React, { useState } from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, MinusCircle, MoveUp, MoveDown } from 'lucide-react';
+import { PlusCircle } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -22,12 +23,8 @@ const CertificationsSection = ({ data, onChange, showAddForm = true }: Certifica
   
   const certificationsList = Array.isArray(data?.certifications) ? data.certifications : [];
   
-  console.log('Certifications data:', certificationsList);
-  console.log('showAddForm prop:', showAddForm);
-  
   const initEditForm = (idx: number | null) => {
-    console.log('Initializing edit form with index:', idx);
-    if (idx !== null && certificationsList[idx]) {
+    if (idx !== null && idx >= 0 && certificationsList[idx]) {
       const cert = certificationsList[idx];
       setEditing({
         name: cert.name || '',
@@ -42,124 +39,132 @@ const CertificationsSection = ({ data, onChange, showAddForm = true }: Certifica
       });
     }
     setActiveCertIndex(idx);
-    console.log('Active certification index set to:', idx);
   };
   
   const handleSaveCertification = () => {
-    console.log('Save Certification button clicked');
-    console.log('Current editing data:', editing);
-    console.log('Current activeCertIndex:', activeCertIndex);
-    
     const updatedCertifications = [...certificationsList];
     
     if (activeCertIndex !== null && activeCertIndex >= 0) {
       // Update existing item
       updatedCertifications[activeCertIndex] = editing;
     } else {
-      // Add new item (activeCertIndex === null or activeCertIndex === -1)
+      // Add new item
       updatedCertifications.push(editing);
     }
     
-    console.log('Updated certifications list before save:', updatedCertifications);
-    
-    onChange({
-      ...data,
-      certifications: updatedCertifications
-    });
+    // Check if we're dealing with the nested structure
+    if (data?.resume?.certifications) {
+      onChange({
+        ...data,
+        resume: {
+          ...data.resume,
+          certifications: updatedCertifications
+        }
+      });
+    } else {
+      onChange({
+        ...data,
+        certifications: updatedCertifications
+      });
+    }
     
     // Reset form
     setActiveCertIndex(null);
-    console.log('Form reset, activeCertIndex set to null');
-  };
-  
-  const handleRemoveCertification = (idx: number) => {
-    const updatedCertifications = [...certificationsList];
-    updatedCertifications.splice(idx, 1);
-    
-    onChange({
-      ...data,
-      certifications: updatedCertifications
-    });
-    
-    if (activeCertIndex === idx) {
-      setActiveCertIndex(null);
-    }
-  };
-  
-  const handleMoveCertification = (idx: number, direction: 'up' | 'down') => {
-    if ((direction === 'up' && idx === 0) || 
-        (direction === 'down' && idx === certificationsList.length - 1)) {
-      return;
-    }
-    
-    const updatedCertifications = [...certificationsList];
-    const newIdx = direction === 'up' ? idx - 1 : idx + 1;
-    
-    [updatedCertifications[idx], updatedCertifications[newIdx]] = 
-      [updatedCertifications[newIdx], updatedCertifications[idx]];
-    
-    onChange({
-      ...data,
-      certifications: updatedCertifications
-    });
-    
-    if (activeCertIndex === idx) {
-      setActiveCertIndex(newIdx);
-    } else if (activeCertIndex === newIdx) {
-      setActiveCertIndex(idx);
-    }
-  };
-  
-  const handleEditingChange = (field: string, value: string) => {
     setEditing({
-      ...editing,
-      [field]: value
+      name: '',
+      dateAchieved: '',
+      expiredDate: '',
     });
   };
 
-  const handleAddCertClick = () => {
-    console.log('Add Certification button clicked');
-    initEditForm(null);
+  const handleDeleteCertification = (index: number) => {
+    const updatedCertifications = [...certificationsList];
+    updatedCertifications.splice(index, 1);
+    
+    // Check if we're dealing with the nested structure
+    if (data?.resume?.certifications) {
+      onChange({
+        ...data,
+        resume: {
+          ...data.resume,
+          certifications: updatedCertifications
+        }
+      });
+    } else {
+      onChange({
+        ...data,
+        certifications: updatedCertifications
+      });
+    }
+  };
+
+  const handleEditCertification = (index: number) => {
+    initEditForm(index);
   };
 
   return (
     <div className="space-y-4">
-      {activeCertIndex === null ? (
-        <>
-          {showAddForm && (
+      {activeCertIndex !== null ? (
+        <div className="border p-4 rounded-lg">
+          <h3 className="text-lg font-medium mb-4">
+            {activeCertIndex >= 0 ? "Edit Certification" : "Add Certification"}
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div className="col-span-2">
+              <Label htmlFor="name">Certification Name</Label>
+              <Input
+                id="name"
+                value={editing.name}
+                onChange={(e) => setEditing({ ...editing, name: e.target.value })}
+                placeholder="e.g., AWS Certified Solutions Architect"
+              />
+            </div>
+            <div>
+              <Label htmlFor="dateAchieved">Date Achieved</Label>
+              <Input
+                id="dateAchieved"
+                value={editing.dateAchieved}
+                onChange={(e) => setEditing({ ...editing, dateAchieved: e.target.value })}
+                placeholder="e.g., 2023-04"
+              />
+            </div>
+            <div>
+              <Label htmlFor="expiredDate">Expiration Date</Label>
+              <Input
+                id="expiredDate"
+                value={editing.expiredDate}
+                onChange={(e) => setEditing({ ...editing, expiredDate: e.target.value })}
+                placeholder="e.g., 2026-04 or leave blank if none"
+              />
+            </div>
+          </div>
+          <div className="flex justify-end space-x-2">
             <Button
-              onClick={() => {
-                console.log('Direct button click handler for Certification');
-                // 使用-1表示這是一個新添加操作
-                setActiveCertIndex(-1);
-                setEditing({
-                  name: '',
-                  dateAchieved: '',
-                  expiredDate: ''
-                });
-                console.log('activeCertIndex set to -1 to indicate new item');
-              }}
-              className="mb-4"
               variant="outline"
-              type="button"
+              onClick={() => setActiveCertIndex(null)}
             >
-              <PlusCircle className="h-4 w-4 mr-2" />Add Certification
+              Cancel
             </Button>
-          )}
-          
+            <Button onClick={handleSaveCertification}>
+              Save
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <>
           {certificationsList.length > 0 ? (
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Certification Name</TableHead>
                   <TableHead>Date Achieved</TableHead>
-                  <TableHead>Expiration Date</TableHead>
+                  <TableHead>Expiration</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {certificationsList.map((cert: any, idx: number) => (
-                  <TableRow key={idx}>
+                {certificationsList.map((cert: any, index: number) => (
+                  <TableRow key={index}>
                     <TableCell className="font-medium">{cert.name}</TableCell>
                     <TableCell>{cert.dateAchieved}</TableCell>
                     <TableCell>{cert.expiredDate || 'N/A'}</TableCell>
@@ -168,36 +173,17 @@ const CertificationsSection = ({ data, onChange, showAddForm = true }: Certifica
                         <Button 
                           variant="ghost" 
                           size="sm" 
-                          onClick={() => initEditForm(idx)}
-                          type="button"
+                          onClick={() => handleEditCertification(index)}
                         >
                           Edit
                         </Button>
                         <Button 
                           variant="ghost" 
-                          size="sm"
-                          onClick={() => handleRemoveCertification(idx)}
-                          type="button"
+                          size="sm" 
+                          onClick={() => handleDeleteCertification(index)}
+                          className="text-red-500"
                         >
-                          <MinusCircle className="h-4 w-4" />
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => handleMoveCertification(idx, 'up')}
-                          disabled={idx === 0}
-                          type="button"
-                        >
-                          <MoveUp className="h-4 w-4" />
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => handleMoveCertification(idx, 'down')}
-                          disabled={idx === certificationsList.length - 1}
-                          type="button"
-                        >
-                          <MoveDown className="h-4 w-4" />
+                          Delete
                         </Button>
                       </div>
                     </TableCell>
@@ -207,65 +193,23 @@ const CertificationsSection = ({ data, onChange, showAddForm = true }: Certifica
             </Table>
           ) : (
             <div className="text-center p-4 bg-gray-50 rounded-md">
-              No certifications added yet. Click "Add Certification" to get started.
+              <p className="text-gray-500">No certifications added yet.</p>
+            </div>
+          )}
+          
+          {showAddForm && (
+            <div className="text-center mt-4">
+              <Button
+                variant="outline"
+                onClick={() => initEditForm(-1)}
+                className="flex items-center mx-auto"
+              >
+                <PlusCircle className="h-4 w-4 mr-2" />
+                Add Certification
+              </Button>
             </div>
           )}
         </>
-      ) : (
-        <Card>
-          <CardHeader>
-            <CardTitle>
-              {activeCertIndex >= 0 ? 'Edit Certification' : 'Add Certification'}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Certification Name</Label>
-              <Input 
-                id="name" 
-                value={editing.name} 
-                onChange={(e) => handleEditingChange('name', e.target.value)}
-              />
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="dateAchieved">Date Achieved (YYYY-MM)</Label>
-                <Input 
-                  id="dateAchieved" 
-                  value={editing.dateAchieved} 
-                  onChange={(e) => handleEditingChange('dateAchieved', e.target.value)}
-                  placeholder="YYYY-MM"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="expiredDate">Expiration Date (YYYY-MM)</Label>
-                <Input 
-                  id="expiredDate" 
-                  value={editing.expiredDate} 
-                  onChange={(e) => handleEditingChange('expiredDate', e.target.value)}
-                  placeholder="YYYY-MM"
-                />
-              </div>
-            </div>
-          </CardContent>
-          <CardFooter className="flex justify-between">
-            <Button 
-              variant="outline" 
-              onClick={() => setActiveCertIndex(null)}
-              type="button"
-            >
-              Cancel
-            </Button>
-            <Button 
-              onClick={handleSaveCertification}
-              type="button"
-            >
-              Save Certification
-            </Button>
-          </CardFooter>
-        </Card>
       )}
     </div>
   );

@@ -31,7 +31,6 @@ const SectionEditor = ({
 }: SectionEditorProps) => {
   const data = resumeData?.resume || resumeData;
   
-  // Remove the section title since it's already displayed in the parent component
   const renderSectionContent = () => {
     if (isCollapsed) {
       return null;
@@ -43,17 +42,17 @@ const SectionEditor = ({
       case 'professionalSummary':
         return <ProfessionalSummarySection data={data} onChange={onChange} />;
       case 'professionalExperience':
-        return <ExperienceSection data={data} onChange={onChange} showAddForm={true} />;
+        return <ExperienceSection data={data} onChange={onChange} showAddForm={false} />;
       case 'education':
-        return <EducationSection data={data} onChange={onChange} showAddForm={true} />;
+        return <EducationSection data={data} onChange={onChange} showAddForm={false} />;
       case 'skills':
-        return <SkillsSection data={data} onChange={onChange} showAddForm={true} />;
+        return <SkillsSection data={data} onChange={onChange} showAddForm={false} />;
       case 'projects':
-        return <ProjectsSection data={data} onChange={onChange} showAddForm={true} />;
+        return <ProjectsSection data={data} onChange={onChange} showAddForm={false} />;
       case 'volunteer':
-        return <VolunteerSection data={data} onChange={onChange} showAddForm={true} />;
+        return <VolunteerSection data={data} onChange={onChange} showAddForm={false} />;
       case 'certifications':
-        return <CertificationsSection data={data} onChange={onChange} showAddForm={true} />;
+        return <CertificationsSection data={data} onChange={onChange} showAddForm={false} />;
       default:
         return <div>Section editor not available</div>;
     }

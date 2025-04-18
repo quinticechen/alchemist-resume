@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -86,29 +87,7 @@ const SkillsSection = ({ data, onChange, showAddForm = true }: SkillsSectionProp
           <CardTitle>Technical Skills</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {showAddForm && (
-            <div className="flex space-x-2">
-              <Input 
-                value={newTechnicalSkill} 
-                onChange={(e) => setNewTechnicalSkill(e.target.value)}
-                placeholder="Add a technical skill..."
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleAddTechnicalSkill();
-                  }
-                }}
-              />
-              <Button 
-                onClick={handleAddTechnicalSkill}
-                disabled={!newTechnicalSkill.trim()}
-              >
-                <PlusCircle className="h-4 w-4 mr-2" />Add
-              </Button>
-            </div>
-          )}
-          
-          <div className="flex flex-wrap gap-2 mt-2">
+          <div className="flex flex-wrap gap-2">
             {(skills.technical || []).map((skill: string, idx: number) => (
               <div 
                 key={idx} 
@@ -130,6 +109,28 @@ const SkillsSection = ({ data, onChange, showAddForm = true }: SkillsSectionProp
               <div className="text-gray-500 italic">No technical skills added yet</div>
             )}
           </div>
+          
+          {showAddForm && (
+            <div className="flex space-x-2">
+              <Input 
+                value={newTechnicalSkill} 
+                onChange={(e) => setNewTechnicalSkill(e.target.value)}
+                placeholder="Add a technical skill..."
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleAddTechnicalSkill();
+                  }
+                }}
+              />
+              <Button 
+                onClick={handleAddTechnicalSkill}
+                disabled={!newTechnicalSkill.trim()}
+              >
+                <PlusCircle className="h-4 w-4 mr-2" />Add
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
       
@@ -138,29 +139,7 @@ const SkillsSection = ({ data, onChange, showAddForm = true }: SkillsSectionProp
           <CardTitle>Soft Skills</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {showAddForm && (
-            <div className="flex space-x-2">
-              <Input 
-                value={newSoftSkill} 
-                onChange={(e) => setNewSoftSkill(e.target.value)}
-                placeholder="Add a soft skill..."
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleAddSoftSkill();
-                  }
-                }}
-              />
-              <Button 
-                onClick={handleAddSoftSkill}
-                disabled={!newSoftSkill.trim()}
-              >
-                <PlusCircle className="h-4 w-4 mr-2" />Add
-              </Button>
-            </div>
-          )}
-          
-          <div className="flex flex-wrap gap-2 mt-2">
+          <div className="flex flex-wrap gap-2">
             {(skills.soft || []).map((skill: string, idx: number) => (
               <div 
                 key={idx} 
@@ -182,6 +161,28 @@ const SkillsSection = ({ data, onChange, showAddForm = true }: SkillsSectionProp
               <div className="text-gray-500 italic">No soft skills added yet</div>
             )}
           </div>
+          
+          {showAddForm && (
+            <div className="flex space-x-2">
+              <Input 
+                value={newSoftSkill} 
+                onChange={(e) => setNewSoftSkill(e.target.value)}
+                placeholder="Add a soft skill..."
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleAddSoftSkill();
+                  }
+                }}
+              />
+              <Button 
+                onClick={handleAddSoftSkill}
+                disabled={!newSoftSkill.trim()}
+              >
+                <PlusCircle className="h-4 w-4 mr-2" />Add
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

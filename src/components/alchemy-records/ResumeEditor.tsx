@@ -307,25 +307,27 @@ const ResumeEditor: FC<ResumeEditorProps> = ({
   };
 
   const handleSave = async () => {
+    setIsSaving(true);
     try {
-      const response = await fetch(`/api/resumes/${resumeId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(resumeData),
-      });
+      // Save the resume data to Supabase
+      const { error } = await supabase
+        .from('resume_editors')
+        .update({
+          content: resumeData
+        })
+        .eq('id', editorId);
 
-      if (!response.ok) {
-        throw new Error('Failed to save resume');
-      }
+      if (error) throw error;
 
+      setSavedData(JSON.stringify(resumeData));
       setLocalHasUnsavedChanges(false);
       setHasUnsavedChanges(false);
       showToast('Resume saved successfully');
     } catch (error) {
       console.error('Error saving resume:', error);
       showToast('Failed to save resume', 'error');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -364,7 +366,7 @@ const ResumeEditor: FC<ResumeEditorProps> = ({
     const personalInfoIndex = items.indexOf('personalInfo');
     if (personalInfoIndex > 0) {
       items.splice(personalInfoIndex, 1);
-      items.unshift(personalInfo);
+      items.unshift('personalInfo');
     }
     
     handleSectionsReorder(result);

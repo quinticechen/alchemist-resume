@@ -188,46 +188,44 @@ const EducationSection = ({ data, onChange, showAddForm = true }: EducationSecti
       ) : (
         <>
           {educationArray.length > 0 ? (
-            <div>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Degree</TableHead>
-                    <TableHead>Institution</TableHead>
-                    <TableHead>Graduation</TableHead>
-                    <TableHead>Actions</TableHead>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Degree</TableHead>
+                  <TableHead>Institution</TableHead>
+                  <TableHead>Graduation</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {educationArray.map((edu: any, index: number) => (
+                  <TableRow key={index}>
+                    <TableCell>{edu.degreeName}</TableCell>
+                    <TableCell>{edu.institution}</TableCell>
+                    <TableCell>{edu.graduationDate}</TableCell>
+                    <TableCell>
+                      <div className="flex space-x-2">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => handleEditEducation(index)}
+                        >
+                          Edit
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => handleDeleteEducation(index)}
+                          className="text-red-500"
+                        >
+                          Delete
+                        </Button>
+                      </div>
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {educationArray.map((edu: any, index: number) => (
-                    <TableRow key={index}>
-                      <TableCell>{edu.degreeName}</TableCell>
-                      <TableCell>{edu.institution}</TableCell>
-                      <TableCell>{edu.graduationDate}</TableCell>
-                      <TableCell>
-                        <div className="flex space-x-2">
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            onClick={() => handleEditEducation(index)}
-                          >
-                            Edit
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            onClick={() => handleDeleteEducation(index)}
-                            className="text-red-500"
-                          >
-                            Delete
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                ))}
+              </TableBody>
+            </Table>
           ) : (
             <div className="text-center p-4 bg-gray-50 rounded-md">
               <p className="text-gray-500">No education entries yet.</p>
@@ -235,14 +233,16 @@ const EducationSection = ({ data, onChange, showAddForm = true }: EducationSecti
           )}
 
           {showAddForm && (
-            <Button
-              variant="outline"
-              className="flex items-center w-full justify-center"
-              onClick={handleAddEducationClick}
-            >
-              <PlusCircle className="h-4 w-4 mr-2" />
-              Add Education
-            </Button>
+            <div className="text-center mt-4">
+              <Button
+                variant="outline"
+                className="flex items-center mx-auto"
+                onClick={handleAddEducationClick}
+              >
+                <PlusCircle className="h-4 w-4 mr-2" />
+                Add Education
+              </Button>
+            </div>
           )}
         </>
       )}
