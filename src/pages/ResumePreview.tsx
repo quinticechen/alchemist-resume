@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { useAuth } from "@/contexts/AuthContext";
@@ -10,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { ResumeSection } from '@/utils/resumeUtils';
+import OozeDialog from "@/components/SeekerDialog";
 
 const RESUME_STYLES = [
   { id: 'classic', name: 'Classic', color: 'bg-white' },
@@ -32,7 +32,6 @@ interface JobData {
   job_url?: string | null;
 }
 
-// Improved interface for the resume data structure
 interface EditorContent {
   resume?: ResumeContent;
   sectionOrder?: ResumeSection[];
@@ -107,7 +106,6 @@ const DEFAULT_SECTION_ORDER: ResumeSection[] = [
   'certifications'
 ];
 
-// Helper function to normalize resume data structure
 const normalizeResumeData = (data: any): EditorContent => {
   if (!data) return { resume: {} };
   
@@ -115,21 +113,17 @@ const normalizeResumeData = (data: any): EditorContent => {
   
   let result: EditorContent = { resume: {} };
   
-  // Handle different data structure scenarios
   if (data.resume) {
     if (data.resume.resume) {
-      // Double nested structure: { resume: { resume: {...} } }
       result = {
         resume: data.resume.resume,
         sectionOrder: data.sectionOrder || DEFAULT_SECTION_ORDER
       };
     } else {
-      // Regular structure: { resume: {...} }
       result = data;
     }
   } else if (Object.keys(data).includes('personalInfo') || 
             Object.keys(data).includes('professionalExperience')) {
-    // Direct data structure without resume wrapper
     result = { resume: data };
   }
   
@@ -196,7 +190,6 @@ const ResumePreview = () => {
         
         console.log("Found editor content:", editorData.content);
         
-        // Normalize the data structure
         const normalizedContent = normalizeResumeData(editorData.content);
         console.log("Normalized content:", normalizedContent);
         
@@ -440,6 +433,12 @@ const ResumePreview = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100">
+      <OozeDialog 
+        position="bottom" 
+        title="Resume Alchemist" 
+        resumeEditMode={true}
+      />
+
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
           <div className="flex flex-col items-center mb-6 text-center">

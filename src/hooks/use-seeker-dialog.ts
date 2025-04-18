@@ -8,25 +8,28 @@ export interface ChatMessage {
   content: string;
   suggestion?: string;
   threadId?: string;
+  sectionId?: string;
 }
 
-const universalSupportMessages = [
-  "Hey there! I'm Seeker, ready to explore opportunities with you! How can I help you today?",
-  "Welcome aboard! I'm Seeker, your friendly guide in this journey. I'm here to assist you with any questions or concerns.",
-  "Hi! I'm Seeker, let's discover your perfect career path together! Have a question? Feel free to ask, and I'll do my best to help!",
-  "Great to meet you! I'm Seeker, your companion in this job adventure! How can I help you today?"
+const resumeAlchemistMessages = [
+  "Ready to transform your resume into pure gold! Let me help you optimize each section.",
+  "Ooze is here to sprinkle some alchemical magic on your resume!",
+  "Let's turn your resume from ordinary to extraordinary! Which section shall we alchemize first?",
+  "Greetings, Resume Alchemist at your service! Shall we refine your professional masterpiece?"
 ];
 
 export interface UseSeekerDialogOptions {
-  simpleTipMode?: boolean;
+  resumeEditMode?: boolean;
   jobData?: any;
+  currentSectionId?: string;
   onSuggestionApply?: (text: string, sectionId: string) => void;
   onGenerateSuggestion?: (sectionId: string) => void;
 }
 
 export function useSeekerDialog({
-  simpleTipMode = false,
+  resumeEditMode = false,
   jobData = null,
+  currentSectionId,
   onSuggestionApply,
   onGenerateSuggestion
 }: UseSeekerDialogOptions = {}) {
@@ -52,15 +55,20 @@ export function useSeekerDialog({
 
   // Initialize chat with a welcome message
   useEffect(() => {
-    const randomIndex = Math.floor(Math.random() * universalSupportMessages.length);
+    const messages = resumeEditMode 
+      ? resumeAlchemistMessages 
+      : universalSupportMessages;
+    
+    const randomIndex = Math.floor(Math.random() * messages.length);
     setChats([{
       role: 'assistant',
-      content: universalSupportMessages[randomIndex]
+      content: messages[randomIndex],
+      ...(resumeEditMode && currentSectionId ? { sectionId: currentSectionId } : {})
     }]);
-  }, []);
+  }, [resumeEditMode, currentSectionId]);
 
   const handleOpenDialog = () => {
-    if (simpleTipMode) {
+    if (resumeEditMode) {
       setIsDialogOpen(true);
     } else {
       setIsSheetOpen(!isSheetOpen);
@@ -74,7 +82,8 @@ export function useSeekerDialog({
       // Add user message
       setChats(prev => [...prev, {
         role: 'user',
-        content: inputValue
+        content: inputValue,
+        ...(currentSectionId ? { sectionId: currentSectionId } : {})
       }]);
       
       const message = inputValue;
@@ -88,92 +97,60 @@ export function useSeekerDialog({
   const simulateAIResponse = async (userMessage: string) => {
     setIsLoading(true);
     try {
-      // Placeholder for AI response generation
+      // Enhanced logic for resume editing
       let aiResponse = generateAIResponse(userMessage);
       
-      // Check if the message is requesting a suggestion for a section
-      const lowerMessage = userMessage.toLowerCase();
-      if (lowerMessage.includes('suggest') || lowerMessage.includes('improve') || lowerMessage.includes('optimize')) {
-        const sectionMatches = [
-          { term: 'summary', id: 'summary' },
-          { term: 'experience', id: 'experience' },
-          { term: 'education', id: 'education' },
-          { term: 'skills', id: 'skills' },
-          { term: 'projects', id: 'projects' }
-        ];
+      if (resumeEditMode && currentSectionId && onGenerateSuggestion) {
+        onGenerateSuggestion(currentSectionId);
         
-        for (const match of sectionMatches) {
-          if (lowerMessage.includes(match.term)) {
-            // If we have job data and the callback, generate a suggestion
-            if (jobData && onGenerateSuggestion) {
-              onGenerateSuggestion(match.id);
-              
-              // Add additional response for suggestion generation
-              aiResponse = `I'm generating suggestions for your ${match.term} section based on the job description. One moment please...`;
-              
-              // Add a simulated suggestion after a delay if we have the callback
-              if (onSuggestionApply) {
-                setTimeout(() => {
-                  const suggestion = `Here's a suggested improvement for your ${match.term} section based on the job description: [Example suggestion content]`;
-                  
-                  setChats(prev => [...prev, {
-                    role: 'assistant',
-                    content: suggestion,
-                    suggestion: `[Example suggestion for ${match.term}]`,
-                    threadId: match.id
-                  }]);
-                }, 2000);
-              }
-              break;
-            }
-          }
-        }
+        // Simulate suggestion generation
+        setTimeout(() => {
+          const suggestion = `Here's an optimization for your ${currentSectionId} section: [Example suggestion for ${currentSectionId}]`;
+          
+          setChats(prev => [...prev, {
+            role: 'assistant',
+            content: suggestion,
+            suggestion: `[Example suggestion for ${currentSectionId}]`,
+            sectionId: currentSectionId
+          }]);
+        }, 1500);
       }
       
       setTimeout(() => {
         setChats(prev => [...prev, {
           role: 'assistant',
-          content: aiResponse
+          content: aiResponse,
+          ...(currentSectionId ? { sectionId: currentSectionId } : {})
         }]);
         setIsLoading(false);
       }, 1000);
     } catch (error) {
       console.error('Error getting AI response:', error);
-      setApiError("Failed to connect to support service. Please try again.");
+      setApiError("Failed to connect to Resume Alchemist. Please try again.");
       setIsLoading(false);
     }
   };
   
   const generateAIResponse = (userMessage: string): string => {
-    // Very basic response generation logic
     const lowerMessage = userMessage.toLowerCase();
     
+    if (resumeEditMode) {
+      // Resume editing specific responses
+      if (lowerMessage.includes('help') || lowerMessage.includes('improve')) {
+        return "I can help you improve your resume section. What specific guidance do you need?";
+      }
+      
+      if (currentSectionId) {
+        return `Let's focus on optimizing your ${currentSectionId} section. What aspect would you like to enhance?`;
+      }
+    }
+    
+    // Fallback universal support messages
     if (lowerMessage.includes('help') || lowerMessage.includes('support')) {
-      return "I'm here to help! Could you please provide more details about what you need assistance with?";
+      return "I'm here to help! Could you provide more details about what you need?";
     }
     
-    if (lowerMessage.includes('pricing') || lowerMessage.includes('plan')) {
-      return "Our pricing plans are designed to suit various needs. Would you like me to guide you through our different options?";
-    }
-    
-    if (lowerMessage.includes('resume') || lowerMessage.includes('job')) {
-      return "I can help you with resume optimization and job-related guidance. What specific area would you like assistance with?";
-    }
-    
-    return "Thank you for your message. I'm processing your request and will provide the best possible assistance.";
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
-    }
-  };
-
-  const showRandomTip = () => {
-    const randomIndex = Math.floor(Math.random() * universalSupportMessages.length);
-    setMessage(universalSupportMessages[randomIndex]);
-    setIsDialogOpen(true);
+    return "Thank you for your message. I'll do my best to assist you.";
   };
 
   return {
@@ -193,9 +170,11 @@ export function useSeekerDialog({
     setInputValue,
     handleOpenDialog,
     handleSendMessage,
-    handleKeyDown,
-    
-    // Helpers
-    showRandomTip
+    handleKeyDown: (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        handleSendMessage();
+      }
+    },
   };
 }

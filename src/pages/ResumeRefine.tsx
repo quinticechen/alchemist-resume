@@ -6,9 +6,8 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { ResumeSection, getAllSections } from '@/utils/resumeUtils';
-import SeekerDialog from "@/components/SeekerDialog";
+import OozeDialog from "@/components/SeekerDialog";
 
-// Define a more precise type for job data
 interface JobData {
   job_title?: string;
 }
@@ -34,7 +33,6 @@ const ResumeRefine = () => {
 
   const analysisId = paramAnalysisId || locationAnalysisId;
 
-  // Use localStorage to preserve the current page across tab switching
   useEffect(() => {
     if (analysisId) {
       localStorage.setItem('currentAnalysisId', analysisId);
@@ -47,7 +45,6 @@ const ResumeRefine = () => {
         try {
           console.log(`Fetching resume data for analysis ID: ${analysisId}`);
           
-          // First get the analysis record to get the resume_id
           const { data: analysisData, error: analysisError } = await supabase
             .from('resume_analyses')
             .select('id, resume_id, job_id, job:job_id(job_title)')
@@ -59,7 +56,6 @@ const ResumeRefine = () => {
           if (analysisData) {
             console.log(`Found analysis data: resume_id=${analysisData.resume_id}, job_id=${analysisData.job_id}`);
             
-            // If we have a job relationship, fetch job description data
             const jobId = analysisData.job_id;
             if (jobId) {
               const { data: jobData, error: jobError } = await supabase
@@ -75,7 +71,6 @@ const ResumeRefine = () => {
               }
             }
             
-            // Now get the editor content which has the formatted resume
             const { data: editorData, error: editorError } = await supabase
               .from('resume_editors')
               .select('content')
@@ -86,27 +81,20 @@ const ResumeRefine = () => {
             
             console.log("Editor data:", editorData);
             
-            // Get the formatted resume content
             let resumeContent = null;
             if (editorData?.content) {
-              // Ensure the data has the expected format
               resumeContent = JSON.stringify(editorData.content, null, 2);
               console.log("Formatted content:", resumeContent);
             }
             
-            // Extract job title safely, handling all possible data shapes from Supabase
             let fetchedJobTitle: string | null = null;
             
             if (analysisData.job) {
-              // Case 1: job is an array (happens with some Supabase joins)
               if (Array.isArray(analysisData.job)) {
                 if (analysisData.job.length > 0 && typeof analysisData.job[0] === 'object') {
-                  // Access first array element's job_title
                   fetchedJobTitle = analysisData.job[0].job_title || null;
                 }
-              } 
-              // Case 2: job is an object (direct relation)
-              else if (typeof analysisData.job === 'object' && analysisData.job !== null) {
+              } else if (typeof analysisData.job === 'object' && analysisData.job !== null) {
                 fetchedJobTitle = (analysisData.job as JobData).job_title || null;
               }
             }
@@ -128,16 +116,13 @@ const ResumeRefine = () => {
           navigate('/alchemy-records');
         }
       } else if (resumeId && analysisId) {
-        // Format goldenResume if it's provided directly through location state
         let formattedGoldenResume = goldenResume;
         
         if (goldenResume) {
           try {
-            // Check if it's already JSON and format it
             const parsedContent = JSON.parse(goldenResume);
             formattedGoldenResume = JSON.stringify(parsedContent, null, 2);
           } catch {
-            // If parsing fails, use raw string
             formattedGoldenResume = goldenResume;
           }
         }
@@ -151,14 +136,12 @@ const ResumeRefine = () => {
       }
     };
 
-    // Check if there's a saved analysis ID in localStorage when the component mounts
     const savedAnalysisId = localStorage.getItem('currentAnalysisId');
     
     if (session) {
       if (analysisId) {
         fetchResumeData();
       } else if (savedAnalysisId) {
-        // If we have a saved ID but not in the URL, navigate to it
         navigate(`/resume-refine/${savedAnalysisId}`);
       }
     }
@@ -166,7 +149,6 @@ const ResumeRefine = () => {
 
   useEffect(() => {
     if (!isLoading && !session) {
-      // Save the current page before redirecting
       if (analysisId) {
         localStorage.setItem('redirectAfterLogin', `/resume-refine/${analysisId}`);
       } else {
@@ -204,14 +186,14 @@ const ResumeRefine = () => {
     
     toast({
       title: "Suggestion Applied",
-      description: `The suggestion has been applied to your resume.`
+      description: `The Ooze AI suggestion has been applied to your resume section: ${sectionId}`
     });
   }, [toast, resumeData]);
   
   const handleGenerateSuggestion = useCallback((sectionId: string) => {
     toast({
       title: "Generating Suggestion",
-      description: "The assistant is generating a suggestion for you. Check the AI chat panel for the result."
+      description: `Ooze is generating a suggestion for your ${sectionId} section. Check the AI chat panel for the result.`
     });
   }, [toast]);
 
@@ -229,12 +211,14 @@ const ResumeRefine = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100 relative">
-      <SeekerDialog 
+      <OozeDialog 
         position="bottom" 
-        title="Resume Assistant" 
+        resumeEditMode={true}
+        title="Resume Alchemist" 
         onSuggestionApply={handleSuggestionApply}
         onGenerateSuggestion={handleGenerateSuggestion}
         jobData={jobDescription}
+        currentSectionId={section}
       />
       
       <div className="container mx-auto px-4 py-12">
