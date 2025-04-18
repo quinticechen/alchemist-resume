@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { ResumeSection } from '@/utils/resumeUtils';
-import OozeDialog from "@/components/SeekerDialog";
+import OozeDialog from "@/components/OozeDialog";
 
 const RESUME_STYLES = [
   { id: 'classic', name: 'Classic', color: 'bg-white' },
@@ -433,6 +433,7 @@ const ResumePreview = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100">
+      
       <OozeDialog 
         position="bottom" 
         title="Resume Alchemist" 
@@ -848,29 +849,4 @@ const ResumePreview = () => {
                   <div className={`text-xs p-2 ${
                     styleOption.id === 'modern' ? 'border-b-2 border-blue-300' : 
                     styleOption.id === 'minimal' ? 'border-b border-gray-200' : 
-                    styleOption.id === 'professional' ? 'border-b-2 border-amber-300' : 
-                    styleOption.id === 'creative' ? 'border-b-2 border-purple-300' : 'border-b-2 border-neutral-200'
-                  }`}>
-                    <p className="font-bold">{firstName} {lastName}</p>
-                    <p className="text-xs text-gray-600">{email} • {phone}</p>
-                  </div>
-                  <div className="mt-2">
-                    <p className={`font-bold text-xs ${
-                      styleOption.id === 'modern' ? 'text-blue-600' : 
-                      styleOption.id === 'professional' ? 'text-amber-600' : 
-                      styleOption.id === 'creative' ? 'text-purple-600' : 'text-gray-800'
-                    }`}>Professional Experience</p>
-                    <p className="text-xs mt-1 font-semibold">{latestExperience.jobTitle}</p>
-                    <p className="text-xs text-gray-600">{latestExperience.companyName}, {latestExperience.startDate}-{latestExperience.endDate || 'Present'}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </DialogContent>
-      </Dialog>
-    </div>
-  );
-};
-
-export default ResumePreview;
+                    styleOption.id === 'professional' ? 'border-

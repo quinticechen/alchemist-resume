@@ -1,7 +1,36 @@
-import React from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { Check, Github, Linkedin, Mail, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import SeekerDialog from "@/components/SeekerDialog";
+
+// Define TypeScript interfaces for the data
+interface Profile {
+  id: string;
+  full_name?: string;
+  email?: string;
+  provider?: string;
+  avatar_url?: string;
+  subscription_status?: string;
+  usage_count?: number;
+  free_trial_limit?: number;
+  monthly_usage_count?: number;
+}
+
+interface Subscription {
+  id: string;
+  status: string;
+  tier: string;
+  current_period_start?: string;
+  current_period_end?: string;
+  cancel_at_period_end?: boolean;
+}
 
 const Account = () => {
   const { session, isLoading: authLoading } = useAuth();
@@ -125,7 +154,7 @@ const Account = () => {
       return Math.max(0, (profile.free_trial_limit || Number(limit)) - (profile.usage_count || 0));
     }
 
-    return 0; // 如果是其他方案，返回0
+    return 0;
   };
 
   const handleSubscribe = () => {
