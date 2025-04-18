@@ -10,6 +10,7 @@ interface ChatHeaderProps {
   showChat: boolean;
   disabled?: boolean;
   CustomAnimation: React.ComponentType<any>;
+  title?: string; // Added the missing title prop
 }
 
 const ChatHeader: React.FC<ChatHeaderProps> = ({ 
@@ -17,7 +18,8 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
   onToggleChat, 
   showChat, 
   disabled,
-  CustomAnimation
+  CustomAnimation,
+  title = "Chat with AI Assistant" // Default value if not provided
 }) => {
   return (
     <CardHeader className="border-b">
@@ -25,7 +27,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
         <div className="flex items-center gap-2">
           <CustomAnimation width={50} height={50} />
           <CardTitle className="text-lg">
-            {showChat ? "Chat with AI Assistant" : "AI Assistant"}
+            {showChat ? title : "AI Assistant"}
           </CardTitle>
         </div>
         <div className="flex items-center gap-2">
