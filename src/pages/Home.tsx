@@ -27,13 +27,11 @@ const Home = () => {
           throw sessionError;
         }
 
-        // console.log("Initial session check:", initialSession);
         setSession(initialSession);
 
         const {
           data: { subscription },
         } = supabase.auth.onAuthStateChange((event, currentSession) => {
-          // console.log("Auth state changed:", event, currentSession);
           setSession(currentSession);
 
           if (event === "SIGNED_IN" && currentSession) {
@@ -45,11 +43,8 @@ const Home = () => {
           }
         });
 
-        return () => {
-          subscription.unsubscribe();
-        };
+        // No return here within initializeSession
       } catch (error) {
-        // console.error("Session initialization error:", error);
         toast({
           title: "Error",
           description:
@@ -62,6 +57,13 @@ const Home = () => {
     };
 
     initializeSession();
+
+    // Return the cleanup function directly from the useEffect
+    return () => {
+      if (subscription && typeof subscription.unsubscribe === "function") {
+        subscription.unsubscribe();
+      }
+    };
   }, [navigate, toast]);
 
   const handleStartTrial = async () => {
