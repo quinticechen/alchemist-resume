@@ -7,16 +7,24 @@ import SeekerButton from "./seeker/SeekerButton";
 import SeekerTipDialog from "./seeker/SeekerTipDialog";
 import SeekerChatSheet from "./seeker/SeekerChatSheet";
 
-interface SeekerDialogProps {
+export interface SeekerDialogProps {
   className?: string;
   position?: "top" | "middle" | "bottom";
   simpleTipMode?: boolean;
+  title?: string;
+  onSuggestionApply?: (text: string, sectionId: string) => void;
+  onGenerateSuggestion?: (sectionId: string) => void;
+  jobData?: any;
 }
 
 const SeekerDialog: React.FC<SeekerDialogProps> = ({ 
   className = "",
   position = "middle",
-  simpleTipMode = false
+  simpleTipMode = false,
+  title = "Support Assistant",
+  onSuggestionApply,
+  onGenerateSuggestion,
+  jobData
 }) => {
   const dialogDescriptionId = "SeekerDialogDescription";
   const sheetDescriptionId = "SeekerSheetDescription";
@@ -41,7 +49,10 @@ const SeekerDialog: React.FC<SeekerDialogProps> = ({
     handleSendMessage,
     handleKeyDown
   } = useSeekerDialog({
-    simpleTipMode
+    simpleTipMode,
+    jobData,
+    onSuggestionApply,
+    onGenerateSuggestion
   });
 
   const handleOpenChat = () => {
@@ -62,7 +73,7 @@ const SeekerDialog: React.FC<SeekerDialogProps> = ({
       {/* Tip Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <SeekerTipDialog
-          title="Support Assistant"
+          title={title}
           message={message}
           onClose={() => setIsDialogOpen(false)}
           onOpenChat={handleOpenChat}

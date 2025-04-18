@@ -19,10 +19,16 @@ const universalSupportMessages = [
 
 export interface UseSeekerDialogOptions {
   simpleTipMode?: boolean;
+  jobData?: any;
+  onSuggestionApply?: (text: string, sectionId: string) => void;
+  onGenerateSuggestion?: (sectionId: string) => void;
 }
 
 export function useSeekerDialog({
-  simpleTipMode = false
+  simpleTipMode = false,
+  jobData = null,
+  onSuggestionApply,
+  onGenerateSuggestion
 }: UseSeekerDialogOptions = {}) {
   // UI state
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -83,7 +89,46 @@ export function useSeekerDialog({
     setIsLoading(true);
     try {
       // Placeholder for AI response generation
-      const aiResponse = generateAIResponse(userMessage);
+      let aiResponse = generateAIResponse(userMessage);
+      
+      // Check if the message is requesting a suggestion for a section
+      const lowerMessage = userMessage.toLowerCase();
+      if (lowerMessage.includes('suggest') || lowerMessage.includes('improve') || lowerMessage.includes('optimize')) {
+        const sectionMatches = [
+          { term: 'summary', id: 'summary' },
+          { term: 'experience', id: 'experience' },
+          { term: 'education', id: 'education' },
+          { term: 'skills', id: 'skills' },
+          { term: 'projects', id: 'projects' }
+        ];
+        
+        for (const match of sectionMatches) {
+          if (lowerMessage.includes(match.term)) {
+            // If we have job data and the callback, generate a suggestion
+            if (jobData && onGenerateSuggestion) {
+              onGenerateSuggestion(match.id);
+              
+              // Add additional response for suggestion generation
+              aiResponse = `I'm generating suggestions for your ${match.term} section based on the job description. One moment please...`;
+              
+              // Add a simulated suggestion after a delay if we have the callback
+              if (onSuggestionApply) {
+                setTimeout(() => {
+                  const suggestion = `Here's a suggested improvement for your ${match.term} section based on the job description: [Example suggestion content]`;
+                  
+                  setChats(prev => [...prev, {
+                    role: 'assistant',
+                    content: suggestion,
+                    suggestion: `[Example suggestion for ${match.term}]`,
+                    threadId: match.id
+                  }]);
+                }, 2000);
+              }
+              break;
+            }
+          }
+        }
+      }
       
       setTimeout(() => {
         setChats(prev => [...prev, {
