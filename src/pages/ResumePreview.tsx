@@ -3,19 +3,12 @@ import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Pencil, FileText, Download, Edit, MessageCircle } from "lucide-react";
+import { Pencil, FileText, Download, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Sheet } from "@/components/ui/sheet";
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
-import { ResumeSection, getFormattedResume } from '@/utils/resumeUtils';
-import Lottie from 'lottie-react';
-import loadingAnimation from '@/animations/Loading.json';
-import { ResumeData, ResumeAnalysis, Resume, Experience, Education, Project, Volunteer, Certification, PersonalInfo, Skills } from '@/types/resume';
-import SeekerChatSheet from "@/components/seeker/SeekerChatSheet";
-import { useSeekerDialog } from "@/hooks/use-seeker-dialog";
-import SeekerAnimation from "@/components/SeekerAnimation";
+import { ResumeSection } from '@/utils/resumeUtils';
 
 const RESUME_STYLES = [
   { id: 'classic', name: 'Classic', color: 'bg-white' },
@@ -24,6 +17,12 @@ const RESUME_STYLES = [
   { id: 'professional', name: 'Professional', color: 'bg-amber-50' },
   { id: 'creative', name: 'Creative', color: 'bg-purple-50' },
 ];
+
+interface ResumeData {
+  file_name?: string;
+  file_path?: string;
+  formatted_resume?: any;
+}
 
 interface JobData {
   job_title?: string;
@@ -34,21 +33,22 @@ interface JobData {
 
 interface EditorContent {
   resume?: {
-    personalInfo?: PersonalInfo;
+    personalInfo?: any;
+    summary?: string;
     professionalSummary?: string;
-    professionalExperience?: Experience[];
-    education?: Education[];
-    skills?: Skills;
-    projects?: Project[];
-    volunteer?: Volunteer[];
-    certifications?: Certification[];
+    professionalExperience?: any[];
+    education?: any;
+    skills?: any;
+    projects?: any[];
+    volunteer?: any[];
+    certifications?: any[];
   };
   sectionOrder?: ResumeSection[];
 }
 
 const LOCAL_STORAGE_STYLE_KEY = 'resumePreviewStyle';
 
-const isSectionEmpty = (data: ResumeData | null, section: string): boolean => {
+const isSectionEmpty = (data: any, section: string): boolean => {
   if (!data || !data.resume) return true;
   
   const sectionMapping: Record<string, string[]> = {
@@ -92,77 +92,13 @@ const DEFAULT_SECTION_ORDER: ResumeSection[] = [
   'certifications'
 ];
 
-const prepareResumeData = (content: unknown): ResumeData => {
-  try {
-    console.log('Processing raw data:', content);
-    
-    const parsedContent = typeof content === 'string' ? JSON.parse(content) : content;
-    
-    const formattedContent = getFormattedResume(parsedContent);
-    console.log('Formatted data:', formattedContent);
-    
-    const result: ResumeData = {
-      resume: {
-        personalInfo: formattedContent.resume?.personalInfo || {
-          firstName: '',
-          lastName: '',
-          phone: '',
-          email: '',
-          location: '',
-          linkedIn: ''
-        },
-        professionalSummary: formattedContent.resume?.professionalSummary || '',
-        professionalExperience: formattedContent.resume?.professionalExperience || [],
-        projects: formattedContent.resume?.projects || [],
-        volunteer: formattedContent.resume?.volunteer || [],
-        education: formattedContent.resume?.education || [],
-        skills: formattedContent.resume?.skills || { technical: [], soft: [] },
-        certifications: formattedContent.resume?.certifications || [],
-        guidanceForOptimization: formattedContent.resume?.guidanceForOptimization || []
-      },
-      sectionOrder: formattedContent.sectionOrder || DEFAULT_SECTION_ORDER,
-      jobTitle: formattedContent.jobTitle || 'My Resume'
-    };
-    
-    console.log('Final processed data:', result);
-    return result;
-  } catch (error) {
-    console.error('Error preparing resume data:', error);
-    return {
-      resume: {
-        personalInfo: {
-          firstName: '',
-          lastName: '',
-          phone: '',
-          email: '',
-          location: '',
-          linkedIn: ''
-        },
-        professionalSummary: '',
-        professionalExperience: [],
-        projects: [],
-        volunteer: [],
-        education: [],
-        skills: { technical: [], soft: [] },
-        certifications: [],
-        guidanceForOptimization: []
-      },
-      sectionOrder: DEFAULT_SECTION_ORDER,
-      jobTitle: 'My Resume'
-    };
-  }
-};
-
 const ResumePreview = () => {
   const { session, isLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const params = useParams();
   const { toast } = useToast();
-  const [resumeData, setResumeData] = useState<ResumeData | null>(null);
-  const [resumeAnalysis, setResumeAnalysis] = useState<ResumeAnalysis | null>(null);
-  const [jobTitle, setJobTitle] = useState<string>('My Resume');
-  const [error, setError] = useState<string | null>(null);
+  const [resumeData, setResumeData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [style, setStyle] = useState<string>(() => {
     return localStorage.getItem(LOCAL_STORAGE_STYLE_KEY) || 'classic';
@@ -174,25 +110,6 @@ const ResumePreview = () => {
   const { analysisId: locationAnalysisId } = locationState;
   
   const analysisId = paramAnalysisId || locationAnalysisId;
-  const [isChatOpen, setIsChatOpen] = useState(false);
-  const {
-    chats,
-    inputValue,
-    isLoading: isChatLoading,
-    isRetrying,
-    apiError,
-    currentThreadId,
-    messagesEndRef,
-    setInputValue,
-    handleKeyDown,
-    handleSendMessage: handleSend,
-    handleGenerateSuggestion,
-    handleRetry,
-    handleApplySuggestion
-  } = useSeekerDialog({
-    currentSectionId: 'resume',
-    jobData: resumeData
-  });
 
   useEffect(() => {
     if (!isLoading && !session && !analysisId) {
@@ -205,65 +122,124 @@ const ResumePreview = () => {
       return;
     }
 
-    const fetchEditorContent = async () => {
-      if (!analysisId) {
-        setError("No analysis ID provided");
-        return;
-      }
-
-      setLoading(true);
+    const fetchResumeData = async () => {
       try {
+        setLoading(true);
+
+        console.log("Fetching data for analysis ID:", analysisId);
+        
         const { data: editorData, error: editorError } = await supabase
           .from('resume_editors')
           .select('content')
           .eq('analysis_id', analysisId)
-          .single();
-
+          .maybeSingle();
+        
         if (editorError) {
+          console.error('Editor data error:', editorError);
           throw editorError;
         }
-
+        
         if (!editorData || !editorData.content) {
-          setError("No resume content found");
-          setLoading(false);
+          console.error('No editor content found');
+          toast({ 
+            title: "Resume content not found", 
+            description: "Could not find resume content for preview", 
+            variant: "destructive" 
+          });
+          navigate('/alchemy-records');
           return;
         }
-
+        
+        console.log("Found editor content:", editorData.content);
+        
         const { data: analysisData, error: analysisError } = await supabase
           .from('resume_analyses')
           .select(`
-            *,
-            job:job_id (
-              job_title
-            )
+            id,
+            google_doc_url,
+            resume:resume_id(file_name),
+            job:job_id(job_title)
           `)
           .eq('id', analysisId)
           .single();
-
+        
         if (analysisError) {
+          console.error('Analysis data error:', analysisError);
           throw analysisError;
         }
-
-        if (analysisData?.job?.job_title) {
-          setJobTitle(analysisData.job.job_title);
+        
+        if (!analysisData) {
+          console.error('No analysis data found');
+          toast({ 
+            title: "Resume not found", 
+            description: "The requested resume could not be found", 
+            variant: "destructive" 
+          });
+          navigate('/alchemy-records');
+          return;
         }
 
-        const content = editorData.content;
-        console.log('From Supabase retrieved raw content data:', content);
-        
-        const preparedData = prepareResumeData(content);
-        console.log('Processed resume data:', preparedData);
-        setResumeData(preparedData);
-        setResumeAnalysis(analysisData);
-        setLoading(false);
+        console.log("Found analysis data:", analysisData);
+
+        let jobTitle = 'Unnamed Position';
+        let fileName = 'Resume';
+
+        if (analysisData.job) {
+          if (Array.isArray(analysisData.job)) {
+            const firstJob = analysisData.job[0] as JobData;
+            if (firstJob && firstJob.job_title) {
+              jobTitle = firstJob.job_title;
+            }
+          } else if (typeof analysisData.job === 'object' && analysisData.job !== null) {
+            const jobObj = analysisData.job as JobData;
+            if (jobObj.job_title) {
+              jobTitle = jobObj.job_title;
+            }
+          }
+        }
+
+        if (analysisData.resume) {
+          if (Array.isArray(analysisData.resume)) {
+            const firstResume = analysisData.resume[0] as ResumeData;
+            if (firstResume && firstResume.file_name) {
+              fileName = firstResume.file_name;
+            }
+          } else if (typeof analysisData.resume === 'object' && analysisData.resume !== null) {
+            const resumeObj = analysisData.resume as ResumeData;
+            if (resumeObj.file_name) {
+              fileName = resumeObj.file_name;
+            }
+          }
+        }
+
+        const content = editorData.content as EditorContent;
+        console.log("Preparing resume data with content:", content);
+
+        const sectionOrder = content.sectionOrder && Array.isArray(content.sectionOrder) && content.sectionOrder.length > 0 
+          ? content.sectionOrder 
+          : DEFAULT_SECTION_ORDER;
+
+        setResumeData({
+          ...analysisData,
+          resume: content.resume || {},
+          sectionOrder: sectionOrder,
+          jobTitle,
+          fileName,
+          googleDocUrl: analysisData.google_doc_url
+        });
       } catch (error) {
-        console.error('Failed to load resume data:', error);
-        setError("Failed to load resume data");
+        console.error('Error fetching resume data:', error);
+        toast({ 
+          title: "Error", 
+          description: "Failed to load resume data", 
+          variant: "destructive" 
+        });
+      } finally {
         setLoading(false);
       }
     };
 
-    fetchEditorContent();
+    fetchResumeData();
   }, [session, isLoading, navigate, analysisId, toast]);
 
   useEffect(() => {
@@ -390,28 +366,16 @@ const ResumePreview = () => {
   };
 
   if (isLoading || loading) {
-    return (
-      <div className="container mx-auto px-4 py-8 flex flex-col items-center justify-center min-h-[50vh]">
-        <Lottie 
-          animationData={loadingAnimation} 
-          className="w-32 h-32"
-          loop={true}
-        />
-      </div>
-    );
+    return <div className="container mx-auto px-4 py-8">Loading...</div>;
   }
 
   if (!resumeData) {
-    return <div className="container mx-auto px-4 py-8">No resume data available</div>;
+    return null;
   }
 
-  console.log('Final rendered resumeData:', resumeData);
-  console.log('personalInfo:', resumeData.resume?.personalInfo);
-  console.log('professionalExperience:', resumeData.resume?.professionalExperience);
-  console.log('education:', resumeData.resume?.education);
-  console.log('skills:', resumeData.resume?.skills);
+  console.log("Rendering with resume data:", resumeData);
 
-  const personalInfo = resumeData.resume?.personalInfo || {} as PersonalInfo;
+  const personalInfo = resumeData.resume?.personalInfo || {};
   const experiences = resumeData.resume?.professionalExperience || [];
   const firstName = personalInfo.firstName || 'John';
   const lastName = personalInfo.lastName || 'Smith';
@@ -433,7 +397,7 @@ const ResumePreview = () => {
         <div className="max-w-4xl mx-auto">
           <div className="flex flex-col items-center mb-6 text-center">
             <h1 className="text-3xl font-bold bg-gradient-primary text-transparent bg-clip-text mb-4">
-              {jobTitle}
+              {resumeData.jobTitle}
             </h1>
             <div className="flex gap-4">
               <Button 
@@ -564,7 +528,7 @@ const ResumePreview = () => {
                     }`}>
                       Professional Experience
                     </h2>
-                    {resumeData.resume.professionalExperience.map((exp: Experience, index: number) => (
+                    {resumeData.resume.professionalExperience.map((exp: any, index: number) => (
                       <div key={index} className="mb-4">
                         <div className="flex justify-between items-start">
                           <div>
@@ -591,7 +555,7 @@ const ResumePreview = () => {
                 );
               }
               
-              if (sectionKey === 'education' && resumeData.resume?.education?.length > 0) {
+              if (sectionKey === 'education' && resumeData.resume?.education) {
                 return (
                   <div key={sectionKey} className="mb-6 relative group">
                     <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -604,25 +568,39 @@ const ResumePreview = () => {
                         <Edit className="h-4 w-4" />
                       </Button>
                     </div>
-                    <h2 className={`text-xl font-bold mb-4 ${
+                    <h2 className={`text-xl font-bold mb-2 ${
                       style === 'modern' ? 'text-blue-600' : 
                       style === 'professional' ? 'text-amber-600' : 
                       style === 'creative' ? 'text-purple-600' : 'text-gray-800'
                     }`}>
                       Education
                     </h2>
-                    {resumeData.resume.education.map((edu: Education, index: number) => (
-                      <div key={index} className="mb-4 last:mb-0">
-                        <h3 className="font-bold text-gray-800">{edu.degreeName}</h3>
-                        <p className="text-gray-600">{edu.institution}</p>
-                        {edu.enrollmentDate && edu.graduationDate ? (
-                          <p className="text-gray-500">{edu.enrollmentDate} - {edu.graduationDate}</p>
+                    
+                    {Array.isArray(resumeData.resume.education) ? (
+                      resumeData.resume.education.map((edu: any, index: number) => (
+                        <div key={index} className="mb-3">
+                          <h3 className="font-bold text-gray-800">{edu.degreeName}</h3>
+                          <p className="text-gray-600">{edu.institution}</p>
+                          {edu.enrollmentDate && edu.graduationDate ? (
+                            <p className="text-gray-500">{edu.enrollmentDate} - {edu.graduationDate}</p>
+                          ) : (
+                            <p className="text-gray-500">Graduated: {edu.graduationDate}</p>
+                          )}
+                          {edu.gpa && <p className="text-gray-500">GPA: {edu.gpa}</p>}
+                        </div>
+                      ))
+                    ) : (
+                      <div>
+                        <h3 className="font-bold text-gray-800">{resumeData.resume.education.degreeName}</h3>
+                        <p className="text-gray-600">{resumeData.resume.education.institution}</p>
+                        {resumeData.resume.education.enrollmentDate && resumeData.resume.education.graduationDate ? (
+                          <p className="text-gray-500">{resumeData.resume.education.enrollmentDate} - {resumeData.resume.education.graduationDate}</p>
                         ) : (
-                          <p className="text-gray-500">Graduated: {edu.graduationDate}</p>
+                          <p className="text-gray-500">Graduated: {resumeData.resume.education.graduationDate}</p>
                         )}
-                        {edu.gpa && <p className="text-gray-500">GPA: {edu.gpa}</p>}
+                        {resumeData.resume.education.gpa && <p className="text-gray-500">GPA: {resumeData.resume.education.gpa}</p>}
                       </div>
-                    ))}
+                    )}
                   </div>
                 );
               }
@@ -694,7 +672,7 @@ const ResumePreview = () => {
                     }`}>
                       Projects
                     </h2>
-                    {resumeData.resume.projects.map((project: Project, index: number) => (
+                    {resumeData.resume.projects.map((project: any, index: number) => (
                       <div key={index} className="mb-4">
                         <div className="flex justify-between items-start">
                           <h3 className="font-bold text-gray-800">{project.name}</h3>
@@ -738,7 +716,7 @@ const ResumePreview = () => {
                       Certifications
                     </h2>
                     <ul className="list-disc ml-5 text-gray-700">
-                      {resumeData.resume.certifications.map((cert: Certification, i: number) => (
+                      {resumeData.resume.certifications.map((cert: any, i: number) => (
                         <li key={i}>
                           {cert.name} 
                           {cert.dateAchieved && <span className="text-gray-500"> (Achieved: {cert.dateAchieved}</span>}
@@ -771,7 +749,7 @@ const ResumePreview = () => {
                     }`}>
                       Volunteer Experience
                     </h2>
-                    {resumeData.resume.volunteer.map((vol: Volunteer, index: number) => (
+                    {resumeData.resume.volunteer.map((vol: any, index: number) => (
                       <div key={index} className="mb-4">
                         <div className="flex justify-between items-start">
                           <h3 className="font-bold text-gray-800">{vol.name}</h3>
@@ -798,13 +776,6 @@ const ResumePreview = () => {
             })}
           </div>
         </div>
-      </div>
-
-      <div 
-        className="fixed bottom-6 right-6 cursor-pointer transition-transform hover:scale-110"
-        onClick={() => setIsChatOpen(true)}
-      >
-        <SeekerAnimation width={60} height={60} />
       </div>
 
       <Dialog open={styleDialogOpen} onOpenChange={setStyleDialogOpen}>
@@ -852,26 +823,6 @@ const ResumePreview = () => {
           </div>
         </DialogContent>
       </Dialog>
-
-      <Sheet open={isChatOpen} onOpenChange={setIsChatOpen}>
-        <SeekerChatSheet
-          chats={chats}
-          inputValue={inputValue}
-          isLoading={isChatLoading}
-          isRetrying={isRetrying}
-          apiError={apiError}
-          analysisId={analysisId}
-          currentThreadId={currentThreadId}
-          messagesEndRef={messagesEndRef}
-          setInputValue={setInputValue}
-          onKeyDown={handleKeyDown}
-          onSend={handleSend}
-          onGenerateSuggestion={handleGenerateSuggestion}
-          onRetry={handleRetry}
-          onApplySuggestion={handleApplySuggestion}
-          sheetDescriptionId="seeker-chat-description"
-        />
-      </Sheet>
     </div>
   );
 };

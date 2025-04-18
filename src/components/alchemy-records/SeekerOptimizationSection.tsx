@@ -1,6 +1,7 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import OozeAnimation from "@/components/OozeAnimation";
+import SeekerAnimation from "@/components/SeekerAnimation";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -37,7 +38,7 @@ const SeekerOptimizationSection = ({ optimizationData, analysisId }: SeekerOptim
         {
           id: crypto.randomUUID(),
           role: 'assistant',
-          content: "Let me take a look at this resume... (tentacles gently waving) Oh my! Although it's been through alchemy, we can add a bit more magic to make it shine even brighter!",
+          content: 'Hello! I can help optimize your resume. What would you like help with?',
           timestamp: new Date()
         }
       ]);
@@ -54,6 +55,7 @@ const SeekerOptimizationSection = ({ optimizationData, analysisId }: SeekerOptim
       
       try {
         setInitializationStatus('loading');
+        console.log(`Loading chat history for analysis ID: ${analysisId}`);
         
         // Try to get thread ID first
         const { data: metadataData } = await supabase
@@ -65,6 +67,7 @@ const SeekerOptimizationSection = ({ optimizationData, analysisId }: SeekerOptim
           
         if (metadataData && metadataData.length > 0) {
           setThreadId(metadataData[0].thread_id);
+          console.log(`Retrieved thread ID: ${metadataData[0].thread_id}`);
         }
         
         // Get message history
@@ -88,6 +91,7 @@ const SeekerOptimizationSection = ({ optimizationData, analysisId }: SeekerOptim
             }));
           
           setMessages(displayMessages);
+          console.log(`Loaded ${displayMessages.length} messages for analysis: ${analysisId}`);
         }
         
         setInitializationStatus('success');
@@ -147,6 +151,8 @@ const SeekerOptimizationSection = ({ optimizationData, analysisId }: SeekerOptim
     setDebugInfo(null);
     
     try {
+      console.log(`Sending message to edge function with analysisId: ${analysisId}, threadId: ${threadId || 'new'}`);
+      
       // Enhanced edge function call with more detailed request logging
       const startTime = new Date().getTime();
       const requestPayload = { 
@@ -155,23 +161,29 @@ const SeekerOptimizationSection = ({ optimizationData, analysisId }: SeekerOptim
         threadId: threadId
       };
       
+      console.log('Request payload:', JSON.stringify(requestPayload));
+      
       const { data, error } = await supabase.functions.invoke('resume-ai-assistant', {
         body: requestPayload
       });
 
       const endTime = new Date().getTime();
+      console.log(`Edge function response time: ${endTime - startTime}ms`);
 
       if (error) {
         console.error('Edge function error:', error);
         throw error;
       }
 
+      console.log('Edge function response:', data);
+      
       if (!data) {
         throw new Error("Empty response from edge function");
       }
 
       if (data?.threadId) {
         setThreadId(data.threadId);
+        console.log(`Setting thread ID from response: ${data.threadId}`);
       }
 
       const aiMessage: ChatMessage = {
@@ -222,8 +234,8 @@ const SeekerOptimizationSection = ({ optimizationData, analysisId }: SeekerOptim
     <Card className="h-full overflow-hidden flex flex-col">
       <CardHeader>
         <CardTitle className="text-lg flex items-center gap-2">
-          <OozeAnimation width={18} height={18} />
-          OOze Optimization Assistant
+          <SeekerAnimation width={18} height={18} />
+          Seeker Optimization Assistant
           {initializationStatus === 'error' && (
             <Button
               variant="ghost"
@@ -245,7 +257,7 @@ const SeekerOptimizationSection = ({ optimizationData, analysisId }: SeekerOptim
           </div>
         ) : initializationStatus === 'loading' ? (
           <div className="flex flex-col items-center justify-center h-full">
-            <OozeAnimation width={120} height={120} />
+            <SeekerAnimation width={120} height={120} />
             <p className="text-sm text-muted-foreground mt-4">Loading assistant...</p>
           </div>
         ) : initializationStatus === 'error' ? (
@@ -264,7 +276,7 @@ const SeekerOptimizationSection = ({ optimizationData, analysisId }: SeekerOptim
         ) : (
           <>
             <div className="flex justify-center mb-4">
-              <OozeAnimation width={120} height={120} />
+              <SeekerAnimation width={120} height={120} />
             </div>
             
             <ScrollArea className="flex-1 pr-4">

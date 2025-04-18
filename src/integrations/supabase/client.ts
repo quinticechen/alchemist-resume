@@ -1,3 +1,4 @@
+
 import { createClient } from '@supabase/supabase-js';
 
 // Use the project ID from our config file to construct the URL
@@ -24,18 +25,21 @@ export const getEnvironment = () => {
   // Production domains - note we're checking the exact hostnames to match
   if (hostname === 'resumealchemist.com' || hostname === 'resumealchemist.qwizai.com' || hostname === 'www.resumealchemist.com') {
     cachedEnvironment = 'production';
+    console.log(`Environment detected: production (${hostname})`);
     return cachedEnvironment;
   }
   
   // Local development
   if (hostname.includes('localhost') || hostname.includes('127.0.0.1')) {
     cachedEnvironment = 'development';
+    console.log(`Environment detected: development (${hostname})`);
     return cachedEnvironment;
   }
   
   // Staging
   if (hostname.includes('staging.resumealchemist')) {
     cachedEnvironment = 'staging';
+    console.log(`Environment detected: staging (${hostname})`);
     return cachedEnvironment;
   }
   
@@ -43,12 +47,14 @@ export const getEnvironment = () => {
   if (hostname.includes('vercel.app')) {
     if (hostname.includes('-git-') || hostname.includes('-pr-')) {
       cachedEnvironment = 'preview';
+      console.log(`Environment detected: preview (${hostname})`);
       return cachedEnvironment;
     }
   }
   
   // Default to staging for safety
   cachedEnvironment = 'staging';
+  console.log(`Environment defaulted to: staging (${hostname})`);
   return cachedEnvironment;
 };
 

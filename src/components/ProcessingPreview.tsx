@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { History, Crown, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,7 +8,6 @@ import { useNavigate } from "react-router-dom";
 import Lottie from "react-lottie";
 import Loading from "@/animations/Loading.json";
 import Failed from "@/animations/Failed.json";
-import { RealtimeChannel } from "@supabase/supabase-js";
 
 interface ProcessingPreviewProps {
   analysisId: string;
@@ -29,15 +29,6 @@ interface AnalysisData {
   formatted_golden_resume: any;
 }
 
-// 定義 ResumeAnalysis 介面
-interface ResumeAnalysis {
-  id: string;
-  status: string;
-  error_message?: string;
-  google_doc_url?: string;
-  progress?: number;
-}
-
 const ProcessingPreview = ({
   analysisId,
   jobUrl,
@@ -51,12 +42,6 @@ const ProcessingPreview = ({
   const [status, setStatus] = useState<ProcessingStatus>(isTimeout ? "timeout" : "pending");
   const [error, setError] = useState<string | null>(null);
   const [formattedGoldenResume, setFormattedGoldenResume] = useState<any | null>(null);
-  const [analysisData, setAnalysisData] = useState<any | null>(null);
-  const [processingState, setProcessingState] = useState({
-    status: 'processing',
-    message: 'Optimizing your resume...',
-    progress: 0
-  });
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -99,131 +84,177 @@ const ProcessingPreview = ({
   useEffect(() => {
     if (!analysisId) return;
     
-    let channel: RealtimeChannel;
-    
-    // 設置初始狀態和監聽分析結果
-    setProcessingState({
-      status: status || 'processing',
-      message: 'Optimizing your resume...',
-      progress: 0
-    });
-    
-    const fetchAnalysisData = async () => {
-      if (!analysisId) return;
-      
+    // If timeout is externally set, update the status
+    if (isTimeout) {
+      setStatus("timeout");
+      return;
+    }
+
+    // Initial fetch of the analysis
+    const fetchAnalysis = async () => {
       try {
-        const { data, error } = await supabase
-          .from('resume_analyses')
-          .select('*')
-          .eq('id', analysisId)
-          .single();
-        
-        if (error) throw error;
-        
-        if (data) {
-          setAnalysisData(data);
+        console.log(`Fetching analysis data for ID: ${analysisId}`);
+        const { data, error: fetchError } = await supabase
+          .from("resume_analyses")
+          .select("google_doc_url, match_score, error, status, formatted_golden_resume")
+          .eq("id", analysisId)
+          .maybeSingle();
+
+        if (fetchError) {
+          console.error("Error fetching analysis:", fetchError);
+          setStatus("error");
+          setError("Failed to fetch analysis data");
+          return;
+        }
+
+        console.log("Fetched analysis data:", data);
+
+        // Handle case when no data is found
+        if (!data) {
+          console.log("No data found for analysis ID:", analysisId);
+          return;
+        }
+
+        // Safely cast data to our expected type
+        const analysisData = data as AnalysisData;
+
+        if (analysisData.error || analysisData.status === "error") {
+          setStatus("error");
+          setError(analysisData.error || "An error occurred during processing");
+          if (setIsProcessing) {
+            setIsProcessing(false);
+          }
+          return;
+        }
+
+        if (analysisData.status === "timeout") {
+          setStatus("timeout");
+          setError(analysisData.error || "Resume generation timed out. Please try again later.");
+          if (setIsProcessing) {
+            setIsProcessing(false);
+          }
+          return;
+        }
+
+        // Store formatted golden resume if available
+        if (analysisData.formatted_golden_resume) {
+          setFormattedGoldenResume(analysisData.formatted_golden_resume);
+        }
+
+        // If the status is success, mark the generation as complete
+        // regardless of whether googleDocUrl is available
+        if (analysisData.status === "success") {
+          setStatus("success");
           
-          if (data.status === 'success' && data.google_doc_url) {
-            setProcessingState({
-              status: 'success',
-              message: 'Resume optimized successfully!',
-              progress: 100
-            });
-          } else if (data.status === 'error') {
-            setProcessingState({
-              status: 'error',
-              message: data.error_message || 'Failed to process your resume.',
-              progress: 0
-            });
-          } else if (data.status === 'timeout') {
-            setProcessingState({
-              status: 'timeout',
-              message: 'Resume processing timed out. Please try again.',
-              progress: 0
-            });
+          if (analysisData.google_doc_url) {
+            console.log("Google Doc URL found, setting success state:", analysisData.google_doc_url);
+            setGoogleDocUrl(analysisData.google_doc_url);
+            setMatchScore(analysisData.match_score);
+          }
+          
+          if (onGenerationComplete) {
+            onGenerationComplete();
+          }
+          
+          if (setIsProcessing) {
+            setIsProcessing(false);
           }
         } else {
-          setProcessingState({
-            status: 'error',
-            message: 'Analysis not found',
-            progress: 0
-          });
+          setStatus("pending");
         }
       } catch (error) {
-        setProcessingState({
-          status: 'error',
-          message: 'Failed to retrieve analysis status',
-          progress: 0
-        });
+        console.error("Exception in fetchAnalysis:", error);
+        setStatus("error");
+        setError("Failed to fetch analysis results");
       }
     };
-    
-    fetchAnalysisData();
-    
-    // 訂閱實時更新
-    const setupRealtimeSubscription = async () => {
-      channel = supabase
-        .channel(`analysis-${analysisId}`)
-        .on('postgres_changes', { 
-          event: 'UPDATE', 
-          schema: 'public', 
-          table: 'resume_analyses',
-          filter: `id=eq.${analysisId}`
-        }, (payload) => {
-          const updatedAnalysis = payload.new as ResumeAnalysis;
-          setAnalysisData(updatedAnalysis);
+
+    fetchAnalysis();
+
+    // Subscribe to real-time updates
+    const channel = supabase
+      .channel(`analysis-${analysisId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "resume_analyses",
+          filter: `id=eq.${analysisId}`,
+        },
+        (payload) => {
+          console.log("Real-time update received:", payload);
           
-          if (updatedAnalysis.status === 'error') {
-            setProcessingState({
-              status: 'error',
-              message: updatedAnalysis.error_message || 'Failed to process your resume.',
-              progress: 0
-            });
-          } else if (updatedAnalysis.status === 'timeout') {
-            setProcessingState({
-              status: 'timeout',
-              message: 'Resume processing timed out. Please try again.',
-              progress: 0
-            });
-          } else if (updatedAnalysis.status === 'success' && updatedAnalysis.google_doc_url) {
-            setProcessingState({
-              status: 'success',
-              message: 'Resume optimized successfully!',
-              progress: 100
-            });
-          } else if (updatedAnalysis.progress) {
-            setProcessingState(prev => ({
-              ...prev,
-              progress: updatedAnalysis.progress || prev.progress
-            }));
+          // Cast the new data to our expected type for type safety
+          const newData = payload.new as AnalysisData;
+
+          // Store formatted golden resume if available
+          if (newData.formatted_golden_resume) {
+            setFormattedGoldenResume(newData.formatted_golden_resume);
           }
-        })
-        .subscribe();
-    };
-    
-    setupRealtimeSubscription();
-    
+
+          // Check if there's an error in the update
+          if (newData.error || newData.status === "error") {
+            console.log("Error status detected in real-time update");
+            setStatus("error");
+            setError(newData.error || "An error occurred during processing");
+
+            if (setIsProcessing) {
+              setIsProcessing(false);
+            }
+            return;
+          }
+
+          // Check if status is timeout
+          if (newData.status === "timeout") {
+            console.log("Timeout status detected in real-time update");
+            setStatus("timeout");
+            setError(newData.error || "Resume generation took too long. Please try again later.");
+            if (setIsProcessing) {
+              setIsProcessing(false);
+            }
+            return;
+          }
+
+          // If status is success, consider generation complete
+          // regardless of whether googleDocUrl exists
+          if (newData.status === "success") {
+            console.log("Success status detected in real-time update");
+            setStatus("success");
+            
+            // Set googleDocUrl and matchScore if available
+            if (newData.google_doc_url) {
+              setGoogleDocUrl(newData.google_doc_url);
+              setMatchScore(newData.match_score);
+            }
+
+            toast({
+              title: "Resume generation complete",
+              description: "Your customized resume is ready to view",
+            });
+
+            if (onGenerationComplete) {
+              onGenerationComplete();
+            }
+            
+            if (setIsProcessing) {
+              setIsProcessing(false);
+            }
+          }
+        }
+      )
+      .subscribe();
+
     return () => {
-      if (channel) {
-        channel.unsubscribe();
-      }
+      console.log(`Unsubscribing from channel for analysis ${analysisId}`);
+      supabase.removeChannel(channel);
     };
-  }, [analysisId, supabase, status]);
+  }, [analysisId, toast, onGenerationComplete, setIsProcessing, isTimeout]);
 
   // Navigate to resume preview
   const handleViewGoldenResume = () => {
-    if (!analysisId) {
-      toast({
-        title: "錯誤",
-        description: "無法找到簡歷分析ID",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    // 使用 navigate 時，將 analysisId 添加到 URL 路徑，而不僅是狀態
-    navigate(`/resume-preview/${analysisId}`, { 
-      state: { analysisId }  // 同時在狀態中傳遞，以確保兼容性
+    navigate('/resume-preview', { 
+      state: { analysisId }
     });
   };
 

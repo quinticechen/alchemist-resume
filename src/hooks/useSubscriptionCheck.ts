@@ -1,3 +1,4 @@
+
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -37,7 +38,7 @@ export const useSubscriptionCheck = () => {
         // console.log("Fetching fresh profile data from database");
         const { data: freshProfile, error: profileError } = await supabase
           .from("profiles")
-          .select("id, subscription_status, monthly_usage_count, usage_count, free_trial_limit, has_completed_survey")
+          .select("*")
           .eq("id", userId)
           .single();
 

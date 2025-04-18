@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { loadStripe, Stripe } from "@stripe/stripe-js";
 import { supabase } from "../integrations/supabase/client";
@@ -13,28 +14,30 @@ export const useStripeInit = () => {
   const environment = getEnvironment();
 
   useEffect(() => {
-    const initializeStripe = async () => {
+    const initStripe = async () => {
       try {
         setIsStripeInitializing(true);
+        console.log(`Initializing Stripe in ${environment} environment (attempt ${attempts + 1}/${maxAttempts})`);
         
-        // 調用 edge function 獲取 Stripe 密鑰
-        const { data: keyData, error: keyError } = await supabase.functions.invoke('get-stripe-key', {
+        // Add environment to headers
+        const { data, error: funcError } = await supabase.functions.invoke("get-stripe-key", {
           headers: {
             'x-environment': environment
           }
         });
         
-        if (keyError) {
-          console.error("Error invoking get-stripe-key function:", keyError);
-          throw new Error(keyError.message || "Failed to initialize payment system");
+        if (funcError) {
+          console.error("Error invoking get-stripe-key function:", funcError);
+          throw new Error(funcError.message || "Failed to initialize payment system");
         }
         
-        if (!keyData || !keyData.key) {
+        if (!data || !data.key) {
           console.error("No Stripe key returned from function");
           throw new Error("Payment system configuration error: No key returned");
         }
         
-        const stripeInstance = loadStripe(keyData.key);
+        console.log(`Successfully got Stripe key for ${environment} environment`);
+        const stripeInstance = loadStripe(data.key);
         setStripePromise(stripeInstance);
         setError(null);
       } catch (err: any) {
@@ -60,9 +63,9 @@ export const useStripeInit = () => {
     };
 
     if (attempts < maxAttempts && !stripePromise && error === null) {
-      initializeStripe();
+      initStripe();
     }
-  }, [attempts, environment, maxAttempts, stripePromise, error, toast]);
+  }, [attempts, environment]);
 
   return { stripePromise, isStripeInitializing, error };
 };

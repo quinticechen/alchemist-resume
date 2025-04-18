@@ -1,6 +1,6 @@
 import React from "react";
 import Lottie from "react-lottie";
-import SeekerAnimationData from "@/animations/Seeker.chat.json";
+import SeekerAnimationData from "@/animations/OOze.chat.json";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface SeekerAnimationProps {

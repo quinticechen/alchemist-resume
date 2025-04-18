@@ -152,7 +152,7 @@ const Account = () => {
       return Math.max(0, (profile.free_trial_limit || Number(limit)) - (profile.usage_count || 0));
     }
 
-    return 0; // Return 0 for other plans
+    return 0; // 如果是其他方案，返回0
   };
 
   const handleSubscribe = () => {

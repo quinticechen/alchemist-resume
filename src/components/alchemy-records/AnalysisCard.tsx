@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -138,14 +139,11 @@ const AnalysisCard = ({
         <Button
           variant="outline"
           size="sm"
-          onClick={() => {
-            console.log('點擊了 Golden Resume 按鈕，ID:', id);
-            navigate(`/resume-preview/${id}`, {
-              state: {
-                analysisId: id
-              }
-            });
-          }}
+          onClick={() => navigate('/resume-preview', {
+            state: {
+              analysisId: id
+            }
+          })}
           className="text-info border-info/20 hover:bg-info/5"
         >
           <Crown className="h-4 w-4 mr-2" />

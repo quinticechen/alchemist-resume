@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -45,11 +46,13 @@ export const useAIChat = (
     const extractAnalysisId = () => {
       // First priority: Check URL parameters
       if (params.analysisId) {
+        console.log(`Found analysis ID in URL params: ${params.analysisId}`);
         return params.analysisId;
       }
       
       // If explicitly provided
       if (providedAnalysisId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(providedAnalysisId)) {
+        console.log(`Using provided analysisId prop: ${providedAnalysisId}`);
         return providedAnalysisId;
       }
       
@@ -60,23 +63,27 @@ export const useAIChat = (
       );
       
       if (potentialIds.length > 0) {
+        console.log(`Extracted analysisId from URL path: ${potentialIds[0]}`);
         return potentialIds[0];
       }
       
       // Check location state
       if (location.state && location.state.analysisId) {
+        console.log(`Found analysisId in location state: ${location.state.analysisId}`);
         return location.state.analysisId;
       }
       
+      console.warn("Could not determine analysis ID from props, URL, or state");
       return null;
     };
     
     const id = extractAnalysisId();
     setEffectiveAnalysisId(id);
+    console.log(`AIChatInterface initialized with effective analysis ID: ${id || "none"}`);
     
     // Reset API error when analysis ID changes
     setApiError(null);
-  }, [location, params, providedAnalysisId]);
+  }, [providedAnalysisId, location, params]);
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
@@ -87,10 +94,12 @@ export const useAIChat = (
   useEffect(() => {
     const loadChatHistory = async () => {
       if (!effectiveAnalysisId) {
+        console.error("Missing analysisId for chat history load");
         return;
       }
 
       try {
+        console.log(`Loading chat history for analysis: ${effectiveAnalysisId}`);
         setLastQueryTimestamp(Date.now());
         
         // Query metadata first to get thread information
@@ -111,9 +120,12 @@ export const useAIChat = (
             assistant_id: metadataData[0].assistant_id,
             run_id: metadataData[0].run_id
           });
+          console.log(`Found existing metadata for analysis ${effectiveAnalysisId}, thread: ${threadId}`);
           
           // Mark that we've already sent resume content since this is an existing thread
           setResumeContentSent(true);
+        } else {
+          console.log(`No existing metadata found for analysis ${effectiveAnalysisId}`);
         }
         
         // Now query for messages
@@ -134,11 +146,13 @@ export const useAIChat = (
             }));
           
           setMessages(displayMessages);
+          console.log(`Loaded ${displayMessages.length} messages for analysis: ${effectiveAnalysisId}`);
           
           // If we have messages but no threadId from metadata, try to extract from messages
           if (!threadId && displayMessages.length > 0 && displayMessages[0].thread_id) {
             threadId = displayMessages[0].thread_id;
             setCurrentThreadId(threadId);
+            console.log(`Extracted thread ID from message: ${threadId}`);
           }
         } else {
           const welcomeMessage: ChatMessage = {
@@ -150,6 +164,7 @@ export const useAIChat = (
           
           await saveChatMessage(welcomeMessage);
           setMessages([welcomeMessage]);
+          console.log("No existing messages, created welcome message");
         }
       } catch (error) {
         console.error('Error loading chat history:', error);
@@ -168,27 +183,30 @@ export const useAIChat = (
     }
   }, [effectiveAnalysisId]);
 
-  const saveChatMessage = async (message: ChatMessage, threadId?: string | null, analysisId?: string | null) => {
-    const targetAnalysisId = analysisId || effectiveAnalysisId;
-    if (!targetAnalysisId) return;
-    
+  const saveChatMessage = async (message: ChatMessage) => {
     try {
+      if (!effectiveAnalysisId) {
+        console.error("Cannot save chat message: Missing analysisId");
+        return;
+      }
+
       const { error } = await supabase
         .from('ai_chat_messages')
         .insert({
           id: message.id,
           role: message.role,
-          content: message.content, 
+          content: message.content,
           timestamp: message.timestamp.toISOString(),
-          analysis_id: targetAnalysisId,
-          thread_id: threadId || currentThreadId
+          analysis_id: effectiveAnalysisId,
+          section: message.section,
+          suggestion: message.suggestion,
+          thread_id: message.thread_id
         });
 
-      if (error) {
-        console.error('Error saving chat message:', error);
-      }
+      if (error) throw error;
+      console.log(`Saved message with ID: ${message.id}`);
     } catch (error) {
-      console.error('Exception in saveChatMessage:', error);
+      console.error('Error saving chat message:', error);
     }
   };
 
@@ -212,152 +230,141 @@ export const useAIChat = (
   };
 
   const handleSendMessage = async () => {
-    if (!input.trim()) {
-      return;
-    }
+    if (input.trim() === '') return;
     
     if (!effectiveAnalysisId) {
       toast({
         title: "Error",
-        description: "Unable to identify the current resume analysis. Try refreshing the page.",
-        variant: "destructive" 
-      });
-      return;
-    }
-    
-    setApiError(null);
-    
-    // Add user message to chat
-    const userMessage: ChatMessage = {
-      id: crypto.randomUUID(),
-      role: 'user',
-      content: input,
-      timestamp: new Date()
-    };
-    
-    setMessages(prev => [...prev, userMessage]);
-    
-    // Save the message
-    await saveChatMessage(userMessage);
-    
-    // Clear input
-    setInput('');
-    
-    // Send to AI assistant
-    await sendToAIAssistant(userMessage.content);
-  };
-
-  const sendToAIAssistant = async (message: string) => {
-    if (!effectiveAnalysisId) {
-      toast({
-        title: "Error",
-        description: "Unable to identify the current resume analysis. Try refreshing the page.",
+        description: "Cannot send message: Missing analysis ID",
         variant: "destructive"
       });
       return;
     }
     
+    // Clear any previous API errors
+    setApiError(null);
+    
+    const userMessage: ChatMessage = {
+      id: crypto.randomUUID(),
+      role: 'user',
+      content: input,
+      timestamp: new Date(),
+      section: currentSectionId,
+      thread_id: currentThreadId || undefined
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    setInput('');
     setIsLoading(true);
+
+    await saveChatMessage(userMessage);
+
     try {
-      // Check if we need to get resume content for the first message
+      console.log(`Sending message to resume-ai-assistant for analysis: ${effectiveAnalysisId}`);
+      console.log(`Using thread ID: ${currentThreadId || "new thread"}`);
+      
+      // Check if this is the first message and we need to send resume content
       let resumeContent = null;
       if (!resumeContentSent) {
         resumeContent = await fetchResumeContent();
         setResumeContentSent(true);
+        console.log("Sending resume content with first message");
       }
       
       const { data, error } = await supabase.functions.invoke('resume-ai-assistant', {
         body: { 
-          message,
-          analysisId: effectiveAnalysisId,
+          message: input, 
+          analysisId: effectiveAnalysisId, 
+          resumeId,
           currentSection: currentSectionId,
+          history: messages.map(msg => ({ role: msg.role, content: msg.content })),
           threadId: currentThreadId,
           resumeContent: resumeContent
         }
       });
-      
+
       if (error) {
         console.error('Error invoking resume-ai-assistant:', error);
         throw error;
       }
-      
+
       if (!data) {
         throw new Error("No data returned from resume-ai-assistant");
       }
-      
+
       let suggestion = null;
       let content = data.message;
       let threadId = data.threadId;
-      let systemPrompt = data.systemPrompt;
       
       if (threadId) {
         setCurrentThreadId(threadId);
+        console.log(`Using thread ID from response: ${threadId}`);
+        
+        // Refresh metadata after a delay to ensure the edge function had time to save it
+        setTimeout(async () => {
+          try {
+            const { data: refreshedMetadataData } = await supabase
+              .from('ai_chat_metadata')
+              .select('*')
+              .eq('analysis_id', effectiveAnalysisId)
+              .eq('thread_id', threadId)
+              .maybeSingle();
+              
+            if (refreshedMetadataData) {
+              setThreadMetadata({
+                thread_id: refreshedMetadataData.thread_id,
+                assistant_id: refreshedMetadataData.assistant_id,
+                run_id: refreshedMetadataData.run_id
+              });
+              console.log(`Refreshed metadata for thread: ${threadId}`);
+            } else {
+              console.warn(`No metadata found for thread ${threadId} after refresh`);
+            }
+          } catch (refreshError) {
+            console.error('Error refreshing thread metadata:', refreshError);
+          }
+        }, 1000);
+      } else {
+        console.warn("No thread ID returned from resume-ai-assistant");
       }
-      
+
       if (data.suggestion) {
         suggestion = data.suggestion;
+        content += "\n\nI've created a suggestion for your resume. You can apply it by clicking the 'Apply' button.";
       }
-      
-      if (systemPrompt) {
-        const hasSystemPrompt = messages.some(msg => 
-          msg.role === 'system' && msg.thread_id === threadId
-        );
-        
-        if (!hasSystemPrompt) {
-          await saveChatMessage({
-            id: crypto.randomUUID(),
-            role: 'system',
-            content: systemPrompt,
-            timestamp: new Date()
-          }, threadId, effectiveAnalysisId);
-        }
-      }
-      
-      // Add AI response to chat
-      const aiMessage = {
+
+      const aiMessage: ChatMessage = {
         id: crypto.randomUUID(),
-        role: 'assistant' as const,
+        role: 'assistant',
         content: content,
-        timestamp: new Date()
+        timestamp: new Date(),
+        section: currentSectionId,
+        suggestion: suggestion,
+        thread_id: threadId
       };
-      
+
       setMessages(prev => [...prev, aiMessage]);
+      console.log("Added AI response to chat");
       
-      // Save the message to the database
-      await saveChatMessage(aiMessage, threadId, effectiveAnalysisId);
+      await saveChatMessage(aiMessage);
       
-      // Update metadata if needed
-      if (threadId) {
-        try {
-          const { error: metadataError } = await supabase
-            .from('ai_chat_metadata')
-            .upsert({
-              analysis_id: effectiveAnalysisId,
-              thread_id: threadId,
-              updated_at: new Date().toISOString()
-            });
-            
-          if (metadataError) {
-            console.error('Error updating chat metadata:', metadataError);
-          }
-        } catch (error) {
-          console.error('Error in metadata refresh:', error);
-        }
-      }
-      
+      // Clear any previous errors
       setApiError(null);
-      
     } catch (error) {
       console.error('Error getting AI response:', error);
       
-      setApiError(`Failed to connect to AI service. Please try again.`);
+      // Set API error state
+      setApiError("Failed to connect to AI service. Please try again.");
       
-      setMessages(prev => [...prev, {
+      const errorMessage: ChatMessage = {
         id: crypto.randomUUID(),
         role: 'assistant',
-        content: "I'm sorry, I encountered an error. Please try again later.",
+        content: 'Sorry, I encountered an error while processing your request. Please try again.',
         timestamp: new Date()
-      }]);
+      };
+      
+      setMessages(prev => [...prev, errorMessage]);
+      await saveChatMessage(errorMessage);
       
       toast({
         title: "Error",

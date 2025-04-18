@@ -63,8 +63,7 @@ const SeekerDialog: React.FC<SeekerDialogProps> = ({
     jobData
   });
 
-  // 根據模式設置不同標題
-  const dialogTitle = simpleTipMode ? "Seeker Tips" : "Seeker Assistant";
+  const dialogTitle = simpleTipMode ? "Alchemy Ooze" : "Resume Assistant";
 
   const handleOpenChat = () => {
     setIsDialogOpen(false);

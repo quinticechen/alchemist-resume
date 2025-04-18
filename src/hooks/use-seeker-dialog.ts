@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { useLocation, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,11 +12,10 @@ export interface ChatMessage {
 }
 
 const welcomeMessages = [
-  "Hi! I'm Seeker, hello new friend! Welcome aboard the Resume Alchemist! I'm your buddy Seeker! Don't worry—with me by your side, I guarantee we'll ride the waves and find your dream treasure!", 
-  "Hi! I'm Seeker, first time here? Fantastic! There are so many amazing features to discover—let's explore together! I promise you'll be amazed!",
-  "Hi! I'm Seeker, come on! Let me show you around every corner of this ship! Together we'll craft a resume that will take everyone's breath away!",
-  "Hi! I'm Seeker, see that glowing button over there? That's our magical starting point! Are you ready?",
-  "Hi! I'm Seeker, trust me—everyone has their own special sparkle. Let me help you find yours!"
+  "Welcome! I'm your resume assistant! Click me anytime for resume tips!",
+  "Hi there! Need help optimizing your resume? I'm here to help!",
+  "Hello resume creator! I'm your friendly AI assistant!",
+  "Greetings! I'm your resume buddy! Let me know if you need suggestions!"
 ];
 
 const resumeTips = [
@@ -83,6 +83,7 @@ export function useSeekerDialog({
     const extractAnalysisId = () => {
       // First check URL parameters
       if (params.analysisId) {
+        console.log(`Found analysis ID in URL params: ${params.analysisId}`);
         return params.analysisId;
       }
       
@@ -93,19 +94,23 @@ export function useSeekerDialog({
       );
       
       if (potentialIds.length > 0) {
+        console.log(`Found analysis ID in URL path: ${potentialIds[0]}`);
         return potentialIds[0];
       }
       
       // Finally check location state
       if (location.state && location.state.analysisId) {
+        console.log(`Found analysis ID in location state: ${location.state.analysisId}`);
         return location.state.analysisId;
       }
       
+      console.warn("Could not determine analysis ID from URL or state");
       return null;
     };
     
     const id = extractAnalysisId();
     setAnalysisId(id);
+    console.log(`SeekerDialog initialized with analysis ID: ${id || "none"}`);
     
     // Reset error state when analysis ID changes
     setApiError(null);
@@ -151,6 +156,8 @@ export function useSeekerDialog({
       if (!analysisId || !currentSectionId || simpleTipMode) return;
       
       try {
+        console.log(`Looking for existing thread for analysis: ${analysisId}`);
+        
         const { data: metadataData, error: metadataError } = await supabase
           .from('ai_chat_metadata')
           .select('*')
@@ -165,8 +172,12 @@ export function useSeekerDialog({
         
         if (metadataData && metadataData.length > 0) {
           setCurrentThreadId(metadataData[0].thread_id);
+          console.log(`Found existing thread: ${metadataData[0].thread_id}`);
+          
           // Mark that we've already sent resume content for existing threads
           setResumeContentSent(true);
+        } else {
+          console.log(`No existing thread found for analysis: ${analysisId}`);
         }
       } catch (error) {
         console.error('Error finding existing thread:', error);
@@ -284,100 +295,98 @@ export function useSeekerDialog({
     }
     
     try {
-      await sendToAIAssistant(lastUserMessage.content, true);
+      await sendToAIAssistant(lastUserMessage.content);
     } finally {
       setIsRetrying(false);
     }
   };
 
-  const sendToAIAssistant = async (message: string, isRetry = false) => {
-    setIsLoading(true);
-    setApiError(null);
+  const sendToAIAssistant = async (message: string) => {
+    if (!analysisId) {
+      toast({
+        title: "Error",
+        description: "Unable to identify the current resume analysis. Try refreshing the page.",
+        variant: "destructive"
+      });
+      return;
+    }
     
+    setIsLoading(true);
     try {
-      // 準備上下文信息
-      let contextMessage = '';
+      console.log(`Sending message to AI assistant for analysis: ${analysisId}`);
+      console.log(`Using thread ID: ${currentThreadId || "new thread"}`);
       
-      if (!hasInitialJobContext && !resumeContentSent && jobData) {
-        contextMessage = `Here's information about the job I'm applying for:\n${JSON.stringify(jobData)}`;
-      }
-      
-      // 如果有分析ID，獲取簡歷內容
+      // Check if we need to get resume content for the first message
       let resumeContent = null;
-      if (analysisId && !resumeContentSent) {
+      if (!resumeContentSent) {
         resumeContent = await fetchResumeContent();
         setResumeContentSent(true);
-      }
-      
-      // 創建請求數據
-      const requestBody: any = { 
-        message: contextMessage ? `${contextMessage}\n\n${message}` : message,
-        threadId: currentThreadId,
-        mode: analysisId ? 'resume' : 'general'
-      };
-      
-      // 只有在簡歷模式下添加這些字段
-      if (analysisId) {
-        requestBody.analysisId = analysisId;
-        requestBody.currentSection = currentSectionId;
-        requestBody.resumeContent = resumeContent;
+        console.log("Sending resume content with first message");
       }
       
       const { data, error } = await supabase.functions.invoke('resume-ai-assistant', {
-        body: requestBody
+        body: { 
+          message,
+          analysisId,
+          currentSection: currentSectionId,
+          threadId: currentThreadId,
+          resumeContent: resumeContent
+        }
       });
       
       if (error) {
-        console.error('Error invoking AI assistant:', error);
+        console.error('Error invoking resume-ai-assistant:', error);
         throw error;
       }
       
       if (!data) {
-        throw new Error("No data returned from AI assistant");
+        throw new Error("No data returned from resume-ai-assistant");
       }
       
-      // 處理響應數據
-      if (data.threadId && data.threadId !== currentThreadId) {
-        setCurrentThreadId(data.threadId);
+      let suggestion = null;
+      let content = data.message;
+      let threadId = data.threadId;
+      let systemPrompt = data.systemPrompt;
+      
+      if (threadId) {
+        setCurrentThreadId(threadId);
+        console.log(`Chat using OpenAI thread: ${threadId}`);
+      } else {
+        console.warn("No thread ID returned from resume-ai-assistant");
       }
       
-      const suggestion = data.suggestion || null;
+      if (data.suggestion) {
+        suggestion = data.suggestion;
+      }
       
-      // 更新聊天記錄
-      setChats(prev => {
-        // 如果是重試，替換最後一條助手消息
-        if (isRetry) {
-          const lastAssistantIndex = [...prev].reverse().findIndex(msg => msg.role === 'assistant');
-          if (lastAssistantIndex !== -1) {
-            // 移除最後一條助手消息
-            const newChats = [...prev];
-            newChats.splice(prev.length - 1 - lastAssistantIndex, 1);
-            
-            // 添加新消息
-            return [...newChats, {
-              role: 'assistant',
-              content: data.message,
-              suggestion,
-              section: currentSectionId,
-              threadId: data.threadId
-            }];
-          }
-        }
+      if (systemPrompt) {
+        const hasSystemPrompt = chats.some(chat => 
+          chat.role === 'system' && chat.threadId === threadId
+        );
         
-        // 否則只添加新消息
-        return [...prev, {
-          role: 'assistant',
-          content: data.message,
-          suggestion,
-          section: currentSectionId,
-          threadId: data.threadId
-        }];
-      });
+        if (!hasSystemPrompt) {
+          setChats(prev => [...prev, {
+            role: 'system',
+            content: systemPrompt,
+            threadId: threadId
+          }]);
+        }
+      }
+      
+      // Add AI response to chat
+      setChats(prev => [...prev, {
+        role: 'assistant',
+        content: content,
+        suggestion: suggestion,
+        threadId: threadId
+      }]);
+      
+      setApiError(null);
       
     } catch (error) {
       console.error('Error getting AI response:', error);
       
-      setApiError(error instanceof Error ? error.message : String(error));
+      setApiError(`Failed to connect to AI service. Please try again.`);
       
       setChats(prev => [...prev, {
         role: 'assistant',
@@ -386,7 +395,7 @@ export function useSeekerDialog({
       
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to get a response from the AI assistant",
+        description: "Failed to get AI response. Please try again.",
         variant: "destructive"
       });
     } finally {

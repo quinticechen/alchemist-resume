@@ -1,11 +1,10 @@
-
 import React, { useState } from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, MinusCircle, MoveUp, MoveDown } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ResumeData } from '@/types/resume';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface EducationSectionProps {
   data: any;
@@ -23,15 +22,17 @@ const EducationSection = ({ data, onChange, showAddForm = true }: EducationSecti
     gpa: '',
   });
   
-  // Handle the case where education is an array or a single object or nested inside resume
+  // Handle the case where education is an array or a single object
   const educationArray = Array.isArray(data?.education) 
     ? data.education 
-    : Array.isArray(data?.resume?.education) 
-      ? data.resume.education 
-      : (data?.education ? [data.education] : []);
+    : (data?.education ? [data.education] : []);
+  
+  console.log('Education data:', educationArray);
+  console.log('showAddForm prop:', showAddForm);
   
   const initEditForm = (idx: number | null) => {
-    if (idx !== null && idx >= 0 && educationArray[idx]) {
+    console.log('Initializing education edit form with index:', idx);
+    if (idx !== null && educationArray[idx]) {
       const edu = educationArray[idx];
       setEditing({
         degreeName: edu.degreeName || '',
@@ -50,9 +51,14 @@ const EducationSection = ({ data, onChange, showAddForm = true }: EducationSecti
       });
     }
     setActiveEduIndex(idx);
+    console.log('Active education index set to:', idx);
   };
   
   const handleSaveEducation = () => {
+    console.log('Save Education button clicked');
+    console.log('Current editing data:', editing);
+    console.log('Current activeEduIndex:', activeEduIndex);
+    
     const updatedEducation = [...educationArray];
     
     if (activeEduIndex !== null && activeEduIndex >= 0) {
@@ -63,162 +69,150 @@ const EducationSection = ({ data, onChange, showAddForm = true }: EducationSecti
       updatedEducation.push(editing);
     }
     
-    // Check if we're dealing with the nested structure
-    if (data?.resume?.education) {
-      onChange({
-        ...data,
-        resume: {
-          ...data.resume,
-          education: updatedEducation
-        }
-      });
-    } else {
-      onChange({
-        ...data,
-        education: updatedEducation
-      });
-    }
+    console.log('Updated education list before save:', updatedEducation);
+    
+    onChange({
+      ...data,
+      education: updatedEducation
+    });
     
     // Reset form
     setActiveEduIndex(null);
-    setEditing({
-      degreeName: '',
-      institution: '',
-      enrollmentDate: '',
-      graduationDate: '',
-      gpa: '',
-    });
+    console.log('Form reset, activeEduIndex set to null');
   };
   
-  const handleAddEducationClick = () => {
-    initEditForm(-1); // Using -1 instead of null to trigger "Add Education" mode
-  };
-
-  const handleDeleteEducation = (index: number) => {
+  const handleRemoveEducation = (idx: number) => {
     const updatedEducation = [...educationArray];
-    updatedEducation.splice(index, 1);
+    updatedEducation.splice(idx, 1);
     
-    // Check if we're dealing with the nested structure
-    if (data?.resume?.education) {
-      onChange({
-        ...data,
-        resume: {
-          ...data.resume,
-          education: updatedEducation
-        }
-      });
-    } else {
-      onChange({
-        ...data,
-        education: updatedEducation
-      });
+    onChange({
+      ...data,
+      education: updatedEducation
+    });
+    
+    if (activeEduIndex === idx) {
+      setActiveEduIndex(null);
     }
   };
+  
+  const handleMoveEducation = (idx: number, direction: 'up' | 'down') => {
+    if ((direction === 'up' && idx === 0) || 
+        (direction === 'down' && idx === educationArray.length - 1)) {
+      return;
+    }
+    
+    const updatedEducation = [...educationArray];
+    const newIdx = direction === 'up' ? idx - 1 : idx + 1;
+    
+    [updatedEducation[idx], updatedEducation[newIdx]] = 
+      [updatedEducation[newIdx], updatedEducation[idx]];
+    
+    onChange({
+      ...data,
+      education: updatedEducation
+    });
+    
+    if (activeEduIndex === idx) {
+      setActiveEduIndex(newIdx);
+    } else if (activeEduIndex === newIdx) {
+      setActiveEduIndex(idx);
+    }
+  };
+  
+  const handleEditingChange = (field: string, value: string) => {
+    setEditing({
+      ...editing,
+      [field]: value
+    });
+  };
 
-  const handleEditEducation = (index: number) => {
-    initEditForm(index);
+  const handleAddEducationClick = () => {
+    console.log('Add Education button clicked');
+    initEditForm(null);
   };
 
   return (
-    <div className="flex flex-col space-y-4">
-      {activeEduIndex !== null ? (
-        <div className="border p-4 rounded-lg">
-          <h3 className="text-lg font-medium mb-4">
-            {activeEduIndex >= 0 ? "Edit Education" : "Add Education"}
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            <div>
-              <Label htmlFor="degreeName">Degree</Label>
-              <Input
-                id="degreeName"
-                value={editing.degreeName}
-                onChange={(e) => setEditing({ ...editing, degreeName: e.target.value })}
-                placeholder="e.g., Bachelor of Science"
-              />
-            </div>
-            <div>
-              <Label htmlFor="institution">Institution</Label>
-              <Input
-                id="institution"
-                value={editing.institution}
-                onChange={(e) => setEditing({ ...editing, institution: e.target.value })}
-                placeholder="e.g., University of California"
-              />
-            </div>
-            <div>
-              <Label htmlFor="enrollmentDate">Start Date</Label>
-              <Input
-                id="enrollmentDate"
-                value={editing.enrollmentDate}
-                onChange={(e) => setEditing({ ...editing, enrollmentDate: e.target.value })}
-                placeholder="e.g., 2018"
-              />
-            </div>
-            <div>
-              <Label htmlFor="graduationDate">Graduation Date</Label>
-              <Input
-                id="graduationDate"
-                value={editing.graduationDate}
-                onChange={(e) => setEditing({ ...editing, graduationDate: e.target.value })}
-                placeholder="e.g., 2022 or Present"
-              />
-            </div>
-            <div>
-              <Label htmlFor="gpa">GPA</Label>
-              <Input
-                id="gpa"
-                value={editing.gpa}
-                onChange={(e) => setEditing({ ...editing, gpa: e.target.value })}
-                placeholder="e.g., 3.8"
-              />
-            </div>
-          </div>
-          <div className="flex justify-end space-x-2">
-            <Button
-              variant="outline"
-              onClick={() => setActiveEduIndex(null)}
-            >
-              Cancel
-            </Button>
-            <Button onClick={handleSaveEducation}>
-              Save
-            </Button>
-          </div>
-        </div>
-      ) : (
+    <div className="space-y-4">
+      {activeEduIndex === null ? (
         <>
+          {showAddForm && (
+            <Button 
+              onClick={() => {
+                console.log('Direct button click handler for Education');
+                // 使用-1表示這是一個新添加操作
+                setActiveEduIndex(-1);
+                setEditing({
+                  degreeName: '',
+                  institution: '',
+                  enrollmentDate: '',
+                  graduationDate: '',
+                  gpa: ''
+                });
+                console.log('activeEduIndex set to -1 to indicate new item');
+              }}
+              className="mb-4" 
+              variant="outline"
+              type="button"
+            >
+              <PlusCircle className="h-4 w-4 mr-2" />Add Education
+            </Button>
+          )}
+          
           {educationArray.length > 0 ? (
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Degree</TableHead>
                   <TableHead>Institution</TableHead>
-                  <TableHead>Graduation</TableHead>
+                  <TableHead>Dates</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {educationArray.map((edu: any, index: number) => (
-                  <TableRow key={index}>
-                    <TableCell>{edu.degreeName}</TableCell>
+                {educationArray.map((edu: any, idx: number) => (
+                  <TableRow key={idx}>
+                    <TableCell className="font-medium">{edu.degreeName}</TableCell>
                     <TableCell>{edu.institution}</TableCell>
-                    <TableCell>{edu.graduationDate}</TableCell>
+                    <TableCell>
+                      {edu.enrollmentDate && edu.graduationDate ? 
+                        `${edu.enrollmentDate} to ${edu.graduationDate}` : 
+                        edu.graduationDate || 'No date'}
+                    </TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
                         <Button 
                           variant="ghost" 
                           size="sm" 
-                          onClick={() => handleEditEducation(index)}
+                          onClick={() => initEditForm(idx)}
+                          type="button"
                         >
                           Edit
                         </Button>
                         <Button 
                           variant="ghost" 
-                          size="sm" 
-                          onClick={() => handleDeleteEducation(index)}
-                          className="text-red-500"
+                          size="sm"
+                          onClick={() => handleRemoveEducation(idx)}
+                          type="button"
                         >
-                          Delete
+                          <MinusCircle className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleMoveEducation(idx, 'up')}
+                          disabled={idx === 0}
+                          type="button"
+                        >
+                          <MoveUp className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleMoveEducation(idx, 'down')}
+                          disabled={idx === educationArray.length - 1}
+                          type="button"
+                        >
+                          <MoveDown className="h-4 w-4" />
                         </Button>
                       </div>
                     </TableCell>
@@ -228,23 +222,83 @@ const EducationSection = ({ data, onChange, showAddForm = true }: EducationSecti
             </Table>
           ) : (
             <div className="text-center p-4 bg-gray-50 rounded-md">
-              <p className="text-gray-500">No education entries yet.</p>
-            </div>
-          )}
-
-          {showAddForm && (
-            <div className="text-center mt-4">
-              <Button
-                variant="outline"
-                className="flex items-center mx-auto"
-                onClick={handleAddEducationClick}
-              >
-                <PlusCircle className="h-4 w-4 mr-2" />
-                Add Education
-              </Button>
+              No education entries yet. Click "Add Education" to get started.
             </div>
           )}
         </>
+      ) : (
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              {activeEduIndex >= 0 ? 'Edit Education' : 'Add Education'}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="degreeName">Degree Name</Label>
+              <Input 
+                id="degreeName" 
+                value={editing.degreeName} 
+                onChange={(e) => handleEditingChange('degreeName', e.target.value)}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="institution">Institution</Label>
+              <Input 
+                id="institution" 
+                value={editing.institution} 
+                onChange={(e) => handleEditingChange('institution', e.target.value)}
+              />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="enrollmentDate">Enrollment Date (YYYY-MM)</Label>
+                <Input 
+                  id="enrollmentDate" 
+                  value={editing.enrollmentDate} 
+                  onChange={(e) => handleEditingChange('enrollmentDate', e.target.value)}
+                  placeholder="YYYY-MM"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="graduationDate">Graduation Date (YYYY-MM)</Label>
+                <Input 
+                  id="graduationDate" 
+                  value={editing.graduationDate} 
+                  onChange={(e) => handleEditingChange('graduationDate', e.target.value)}
+                  placeholder="YYYY-MM"
+                />
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="gpa">GPA (Optional)</Label>
+              <Input 
+                id="gpa" 
+                value={editing.gpa} 
+                onChange={(e) => handleEditingChange('gpa', e.target.value)}
+                placeholder="e.g. 3.8"
+              />
+            </div>
+          </CardContent>
+          <CardFooter className="flex justify-between">
+            <Button 
+              variant="outline" 
+              onClick={() => setActiveEduIndex(null)}
+              type="button"
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleSaveEducation}
+              type="button"
+            >
+              Save Education
+            </Button>
+          </CardFooter>
+        </Card>
       )}
     </div>
   );
