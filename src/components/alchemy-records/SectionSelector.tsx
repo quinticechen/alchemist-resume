@@ -19,35 +19,31 @@ const SectionSelector = ({
 }: SectionSelectorProps) => {
   
   const handleDragEnd = (result: DropResult) => {
-    // If there's no destination or the destination is the same as source, do nothing
-    if (!result.destination || result.destination.index === result.source.index) return;
+    // If there's no destination, do nothing
+    if (!result.destination) return;
     
-    // Create a copy of the sections array to avoid mutating the prop
-    const itemsCopy = Array.from(sections);
+    // Create a deep copy of the sections array to avoid mutating the prop
+    const itemsCopy = [...sections];
     
-    // Get the source index from the result
-    const sourceIndex = result.source.index;
-    
-    // Don't allow dragging personalInfo
-    if (itemsCopy[sourceIndex] === 'personalInfo') {
+    // Don't allow moving personalInfo section
+    if (itemsCopy[result.source.index] === 'personalInfo') {
       return;
     }
     
-    // Remove the dragged item from the array
-    const [reorderedItem] = itemsCopy.splice(sourceIndex, 1);
+    // Get the item being dragged
+    const [draggedItem] = itemsCopy.splice(result.source.index, 1);
     
     // Insert at the destination index
-    itemsCopy.splice(result.destination.index, 0, reorderedItem);
+    itemsCopy.splice(result.destination.index, 0, draggedItem);
     
-    // Fix: Always ensure personalInfo stays at the top
-    // First, check if personalInfo exists in the array
-    const personalInfoIndex = itemsCopy.indexOf('personalInfo');
+    // Make sure personalInfo stays at the top
+    // First, remove personalInfo from wherever it is
+    const personalInfoIndex = itemsCopy.findIndex(item => item === 'personalInfo');
     if (personalInfoIndex > -1) {
-      // If it's not at the top, move it to the top
-      if (personalInfoIndex > 0) {
-        const [personalInfo] = itemsCopy.splice(personalInfoIndex, 1);
-        itemsCopy.unshift(personalInfo);
-      }
+      // Remove personalInfo
+      itemsCopy.splice(personalInfoIndex, 1);
+      // Always place it at the front of the array
+      itemsCopy.unshift('personalInfo');
     }
     
     // Update the parent component with the new order
