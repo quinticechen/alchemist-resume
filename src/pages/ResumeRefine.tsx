@@ -53,7 +53,7 @@ const ResumeRefine = () => {
       try {
         setLoading(true);
         
-        // 獲取分析數據
+        // Get analysis data
         const { data: analysisData, error: analysisError } = await supabase
           .from('resume_analyses')
           .select('*')

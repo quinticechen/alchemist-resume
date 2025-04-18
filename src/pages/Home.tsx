@@ -73,7 +73,7 @@ const Home = () => {
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
-  // Lottie 設定 (使用 react-lottie)
+  // Lottie configuration (using react-lottie)
   const defaultOptions = {
     loop: true,
     autoplay: true,

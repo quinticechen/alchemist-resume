@@ -15,6 +15,7 @@ import loadingAnimation from '@/animations/Loading.json';
 import { ResumeData, ResumeAnalysis, Resume, Experience, Education, Project, Volunteer, Certification, PersonalInfo, Skills } from '@/types/resume';
 import SeekerChatSheet from "@/components/seeker/SeekerChatSheet";
 import { useSeekerDialog } from "@/hooks/use-seeker-dialog";
+import SeekerAnimation from "@/components/SeekerAnimation";
 
 const RESUME_STYLES = [
   { id: 'classic', name: 'Classic', color: 'bg-white' },
@@ -91,19 +92,19 @@ const DEFAULT_SECTION_ORDER: ResumeSection[] = [
   'certifications'
 ];
 
-// 處理簡歷數據格式
+// Process resume data format
 const prepareResumeData = (content: unknown): ResumeData => {
   try {
-    console.log('準備處理的原始數據:', content);
+    console.log('Processing raw data:', content);
     
-    // 如果內容是字符串，嘗試解析為 JSON
+    // If content is a string, try to parse as JSON
     const parsedContent = typeof content === 'string' ? JSON.parse(content) : content;
     
-    // 使用 getFormattedResume 格式化數據
+    // Use getFormattedResume to format the data
     const formattedContent = getFormattedResume(parsedContent);
-    console.log('格式化後的數據:', formattedContent);
+    console.log('Formatted data:', formattedContent);
     
-    // 確保數據具有正確的結構
+    // Ensure data has the correct structure
     const result: ResumeData = {
       resume: {
         personalInfo: formattedContent.resume?.personalInfo || {
@@ -127,11 +128,11 @@ const prepareResumeData = (content: unknown): ResumeData => {
       jobTitle: formattedContent.jobTitle || 'My Resume'
     };
     
-    console.log('最終處理的數據:', result);
+    console.log('Final processed data:', result);
     return result;
   } catch (error) {
     console.error('Error preparing resume data:', error);
-    // 返回一個默認的數據結構
+    // Return a default data structure
     return {
       resume: {
         personalInfo: {
@@ -217,7 +218,7 @@ const ResumePreview = () => {
 
       setLoading(true);
       try {
-        // 獲取編輯器內容
+        // Get editor content
         const { data: editorData, error: editorError } = await supabase
           .from('resume_editors')
           .select('content')
@@ -234,7 +235,7 @@ const ResumePreview = () => {
           return;
         }
 
-        // 獲取分析數據和職位標題
+        // Get analysis data and job title
         const { data: analysisData, error: analysisError } = await supabase
           .from('resume_analyses')
           .select(`
@@ -250,23 +251,23 @@ const ResumePreview = () => {
           throw analysisError;
         }
 
-        // 設置職位標題
+        // Set job title
         if (analysisData?.job?.job_title) {
           setJobTitle(analysisData.job.job_title);
         }
 
-        // 處理數據
+        // Process data
         const content = editorData.content;
-        console.log('從 Supabase 獲取的原始 content 數據:', content);
+        console.log('From Supabase retrieved raw content data:', content);
         
-        // 轉換數據格式
+        // Convert data format
         const preparedData = prepareResumeData(content);
-        console.log('處理後的簡歷數據:', preparedData);
+        console.log('Processed resume data:', preparedData);
         setResumeData(preparedData);
         setResumeAnalysis(analysisData);
         setLoading(false);
       } catch (error) {
-        console.error('獲取簡歷數據失敗:', error);
+        console.error('Failed to load resume data:', error);
         setError("Failed to load resume data");
         setLoading(false);
       }
@@ -414,8 +415,8 @@ const ResumePreview = () => {
     return <div className="container mx-auto px-4 py-8">No resume data available</div>;
   }
 
-  // 調試日誌
-  console.log('最終渲染的 resumeData:', resumeData);
+  // Debug log
+  console.log('Final rendered resumeData:', resumeData);
   console.log('personalInfo:', resumeData.resume?.personalInfo);
   console.log('professionalExperience:', resumeData.resume?.professionalExperience);
   console.log('education:', resumeData.resume?.education);
@@ -471,15 +472,6 @@ const ResumePreview = () => {
               >
                 <Download className="h-4 w-4" />
                 Export PDF
-              </Button>
-
-              <Button 
-                variant="outline" 
-                onClick={() => setIsChatOpen(true)}
-                className="flex items-center gap-2"
-              >
-                <MessageCircle className="h-4 w-4" />
-                Chat with Seeker
               </Button>
             </div>
           </div>
@@ -817,6 +809,14 @@ const ResumePreview = () => {
             })}
           </div>
         </div>
+      </div>
+
+      {/* Seeker Animation Button */}
+      <div 
+        className="fixed bottom-6 right-6 cursor-pointer transition-transform hover:scale-110"
+        onClick={() => setIsChatOpen(true)}
+      >
+        <SeekerAnimation width={60} height={60} />
       </div>
 
       <Dialog open={styleDialogOpen} onOpenChange={setStyleDialogOpen}>

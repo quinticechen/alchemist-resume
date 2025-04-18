@@ -13,6 +13,7 @@ import { useNavigate } from 'react-router-dom';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { ResumeData } from '@/types/resume';
 
 export interface ResumeEditorProps {
   resumeId: string;
@@ -23,6 +24,12 @@ export interface ResumeEditorProps {
   onSectionChange?: (section: ResumeSection) => void;
 }
 
+interface JobData {
+  job_title?: string;
+  company_name?: string;
+  job_description?: string;
+}
+
 const ResumeEditor = ({ 
   resumeId, 
   goldenResume, 
@@ -31,16 +38,22 @@ const ResumeEditor = ({
   activeSection: initialActiveSection,
   onSectionChange: parentSectionChangeHandler
 }: ResumeEditorProps) => {
-  const [resumeData, setResumeData] = useState<any>(null);
-  const [jobData, setJobData] = useState<any>(null);
+  const [resumeData, setResumeData] = useState<ResumeData | null>(null);
+  const [jobData, setJobData] = useState<JobData | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isSaving, setIsSaving] = useState<boolean>(false);
-  const [savedData, setSavedData] = useState<any>(null);
+  const [savedData, setSavedData] = useState<string | null>(null);
   const [hasUnsavedChanges, setLocalHasUnsavedChanges] = useState<boolean>(false);
   const [editorId, setEditorId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'visual' | 'json'>('visual');
   const [sectionOrder, setSectionOrder] = useState<ResumeSection[]>(getAllSections());
-  const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
+  const [collapsedSections, setCollapsedSections] = useState<Record<ResumeSection, boolean>>(() => {
+    const initialState: Record<ResumeSection, boolean> = {};
+    getAllSections().forEach((section) => {
+      initialState[section] = true;
+    });
+    return initialState;
+  });
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -176,26 +189,40 @@ const ResumeEditor = ({
     setHasUnsavedChanges(contentChanged);
   }, [resumeData, savedData, setHasUnsavedChanges]);
 
-  const handleSectionToggle = (section: string) => {
-    const updatedSections = [...sectionOrder];
-    if (updatedSections.includes(section)) {
-      const index = updatedSections.indexOf(section);
-      updatedSections.splice(index, 1);
-    } else {
-      updatedSections.push(section);
-    }
-    
-    setSectionOrder(updatedSections);
-    parentSectionChangeHandler?.(updatedSections[0] as ResumeSection);
+  const handleSectionToggle = (section: ResumeSection) => {
+    setCollapsedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
   };
 
   const handleSectionsReorder = (sections: ResumeSection[]) => {
     setSectionOrder(sections);
     
-    setResumeData((prevData: any) => ({
-      ...prevData,
-      sectionOrder: sections
-    }));
+    setResumeData((prevData) => {
+      if (!prevData) return null;
+      
+      const updatedData: ResumeData = {
+        ...prevData,
+        sectionOrder: sections
+      };
+      
+      if (editorId) {
+        supabase
+          .from('resume_editors')
+          .update({
+            content: updatedData
+          })
+          .eq('id', editorId)
+          .then(({ error }) => {
+            if (error) {
+              console.error('Error saving section order:', error);
+            }
+          });
+      }
+      
+      return updatedData;
+    });
   };
 
   const handleResumeDataChange = useCallback((updatedData: any) => {

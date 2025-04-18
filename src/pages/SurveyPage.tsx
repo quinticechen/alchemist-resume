@@ -157,16 +157,7 @@ const SurveyPage = () => {
       .update({ has_completed_survey: false })
       .eq("id", session.user.id);
 
-    // if (selectedPlan) {
-    //   proceedToPayment(selectedPlan);
-    // } else {
-    //   toast({
-    //     title: "Error",
-    //     description: "Please select a plan before proceeding.",
-    //     variant: "destructive",
-    //   });
-      navigate("/pricing"); // 如果沒有選擇計劃，導航到定價頁面
-    // }
+    navigate("/pricing"); // Navigate to pricing page if no plan is selected
   };
 
   const formUrl = userEmail
