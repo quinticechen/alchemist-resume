@@ -14,6 +14,32 @@ import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/componen
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 import { ScrollArea } from "@/components/ui/scroll-area";
 
+interface ResumeData {
+  resume?: {
+    personalInfo?: any;
+    summary?: string;
+    professionalSummary?: string;
+    professionalExperience?: Array<{
+      companyName?: string;
+      companyIntroduction?: string;
+      location?: string;
+      jobTitle?: string;
+      startDate?: string;
+      endDate?: string;
+      achievements?: string[];
+    }>;
+    education?: any;
+    skills?: any;
+    projects?: any[];
+    volunteer?: any[];
+    certifications?: any[];
+    guidanceForOptimization?: Array<{
+      guidance: string[];
+    }>;
+  };
+  sectionOrder?: ResumeSection[];
+}
+
 export interface ResumeEditorProps {
   resumeId: string;
   goldenResume: string | null;
@@ -31,7 +57,7 @@ const ResumeEditor = ({
   activeSection: initialActiveSection,
   onSectionChange: parentSectionChangeHandler
 }: ResumeEditorProps) => {
-  const [resumeData, setResumeData] = useState<any>(null);
+  const [resumeData, setResumeData] = useState<ResumeData | null>(null);
   const [jobData, setJobData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isSaving, setIsSaving] = useState<boolean>(false);
@@ -111,22 +137,18 @@ const ResumeEditor = ({
         if (editorData && editorData.content) {
           console.log("Found editor content:", editorData.content);
           
-          // Handle different content structures
-          let processedContent;
+          let processedContent: ResumeData;
           if (editorData.content.resume) {
-            // New format: content = { resume: {...} }
-            processedContent = editorData.content;
+            processedContent = editorData.content as ResumeData;
             
-            // Ensure professionalExperience has companyIntroduction
-            if (processedContent.resume.professionalExperience) {
+            if (processedContent.resume && processedContent.resume.professionalExperience) {
               processedContent.resume.professionalExperience = processedContent.resume.professionalExperience.map((exp: any) => ({
                 ...exp,
                 companyIntroduction: exp.companyIntroduction || ''
               }));
             }
           } else {
-            // Old format or direct resume data
-            processedContent = { resume: editorData.content };
+            processedContent = { resume: editorData.content as any };
           }
           
           if (processedContent.sectionOrder && Array.isArray(processedContent.sectionOrder)) {
@@ -144,7 +166,7 @@ const ResumeEditor = ({
           setEditorId(editorData.id);
           console.log("Set resume data:", processedContent);
         } else {
-          let initialContent = { resume: {} };
+          let initialContent: ResumeData = { resume: {} };
           
           if (goldenResume) {
             try {
@@ -152,15 +174,13 @@ const ResumeEditor = ({
                 ? JSON.parse(goldenResume) 
                 : goldenResume;
                 
-              // Check if the parsed content already has the resume wrapper
               if (parsedContent.resume) {
                 initialContent = parsedContent;
               } else {
                 initialContent = { resume: parsedContent };
               }
               
-              // Ensure professionalExperience has companyIntroduction
-              if (initialContent.resume.professionalExperience) {
+              if (initialContent.resume && initialContent.resume.professionalExperience) {
                 initialContent.resume.professionalExperience = initialContent.resume.professionalExperience.map((exp: any) => ({
                   ...exp,
                   companyIntroduction: exp.companyIntroduction || ''
@@ -239,13 +259,10 @@ const ResumeEditor = ({
         return false;
       }
       
-      // Check if data has the expected resume structure
       if (!data.resume || typeof data.resume !== 'object') {
         console.error("Invalid resume data format: missing resume object");
         return false;
       }
-      
-      // Additional validation can be added here if needed
       
       return true;
     } catch (e) {
@@ -281,7 +298,6 @@ const ResumeEditor = ({
         sectionOrder: sectionOrder
       };
       
-      // Ensure professionalExperience has companyIntroduction
       if (dataToSave.resume?.professionalExperience) {
         dataToSave.resume.professionalExperience = dataToSave.resume.professionalExperience.map((exp: any) => ({
           ...exp,

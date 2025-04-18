@@ -36,12 +36,23 @@ interface EditorContent {
     personalInfo?: any;
     summary?: string;
     professionalSummary?: string;
-    professionalExperience?: any[];
+    professionalExperience?: Array<{
+      companyName?: string;
+      companyIntroduction?: string;
+      location?: string;
+      jobTitle?: string;
+      startDate?: string;
+      endDate?: string;
+      achievements?: string[];
+    }>;
     education?: any;
     skills?: any;
     projects?: any[];
     volunteer?: any[];
     certifications?: any[];
+    guidanceForOptimization?: Array<{
+      guidance: string[];
+    }>;
   };
   sectionOrder?: ResumeSection[];
 }
@@ -212,12 +223,12 @@ const ResumePreview = () => {
           }
         }
 
-        let content = editorData.content as EditorContent;
+        let content: EditorContent = editorData.content as EditorContent;
         
         if (!content.resume && typeof content === 'object') {
           const keys = Object.keys(content);
           if (keys.includes('personalInfo') || keys.includes('professionalExperience')) {
-            content = { resume: content };
+            content = { resume: content as any };
           }
         }
         
