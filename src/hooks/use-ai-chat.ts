@@ -45,6 +45,7 @@ export const useAIChat = (
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [lastQueryTimestamp, setLastQueryTimestamp] = useState<number>(0);
   const [resumeContentSent, setResumeContentSent] = useState<boolean>(false);
+  const [processedMessageIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const extractAnalysisId = () => {
@@ -132,18 +133,32 @@ export const useAIChat = (
         if (error) throw error;
         
         if (data && data.length > 0) {
-          const displayMessages = data
-            .filter(msg => msg.role !== 'system')
-            .map(msg => ({
-              ...msg,
-              timestamp: new Date(msg.timestamp)
-            }));
+          const uniqueMessages: ChatMessage[] = [];
+          const seenContent = new Map<string, Date>();
           
-          setMessages(displayMessages);
-          console.log(`Loaded ${displayMessages.length} messages for analysis: ${effectiveAnalysisId}`);
+          data.forEach(msg => {
+            if (msg.role === 'system') return; // Skip system messages for display
+            
+            const msgDate = new Date(msg.timestamp);
+            const existingDate = seenContent.get(msg.content);
+            
+            if (!existingDate || Math.abs(msgDate.getTime() - existingDate.getTime()) > 5000) {
+              uniqueMessages.push({
+                ...msg,
+                timestamp: msgDate
+              });
+              seenContent.set(msg.content, msgDate);
+              processedMessageIds.add(msg.id);
+            } else {
+              console.log(`Filtered out duplicate message: ${msg.id}`);
+            }
+          });
           
-          if (!threadId && displayMessages.length > 0 && displayMessages[0].thread_id) {
-            threadId = displayMessages[0].thread_id;
+          setMessages(uniqueMessages);
+          console.log(`Loaded ${uniqueMessages.length} unique messages from ${data.length} total for analysis: ${effectiveAnalysisId}`);
+          
+          if (!threadId && uniqueMessages.length > 0 && uniqueMessages[0].thread_id) {
+            threadId = uniqueMessages[0].thread_id;
             setCurrentThreadId(threadId);
             console.log(`Extracted thread ID from message: ${threadId}`);
           }
@@ -182,6 +197,13 @@ export const useAIChat = (
         console.error("Cannot save chat message: Missing analysisId");
         return;
       }
+      
+      if (processedMessageIds.has(message.id)) {
+        console.log(`Skipping already processed message: ${message.id}`);
+        return;
+      }
+      
+      processedMessageIds.add(message.id);
 
       const { error } = await supabase
         .from('ai_chat_messages')
@@ -322,8 +344,10 @@ export const useAIChat = (
         content += "\n\nI've created a suggestion for your resume. You can apply it by clicking the 'Apply' button.";
       }
 
+      const aiMessageId = crypto.randomUUID();
+      
       const aiMessage: ChatMessage = {
-        id: crypto.randomUUID(),
+        id: aiMessageId,
         role: 'assistant',
         content: content,
         timestamp: new Date(),
@@ -419,8 +443,10 @@ export const useAIChat = (
         timestamp: new Date()
       };
 
-      setMessages([initialMessage]);
-      await saveChatMessage(initialMessage);
+      if (messages.length === 0) {
+        setMessages([initialMessage]);
+        await saveChatMessage(initialMessage);
+      }
 
     } catch (error) {
       console.error('Error initializing chat:', error);
@@ -433,8 +459,10 @@ export const useAIChat = (
   };
 
   useEffect(() => {
-    initializeChat();
-  }, [effectiveAnalysisId]);
+    if (effectiveAnalysisId && messages.length === 0) {
+      initializeChat();
+    }
+  }, [effectiveAnalysisId, messages.length]);
 
   return {
     messages,

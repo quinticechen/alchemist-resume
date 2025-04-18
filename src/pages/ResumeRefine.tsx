@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useCallback } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from "@/contexts/AuthContext";
@@ -5,8 +6,6 @@ import ResumeEditor from '@/components/alchemy-records/ResumeEditor';
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { ResumeSection, getAllSections } from '@/utils/resumeUtils';
-import OozeDialog from "@/components/OozeDialog";
 
 interface JobData {
   job_title?: string;
