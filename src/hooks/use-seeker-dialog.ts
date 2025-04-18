@@ -12,17 +12,17 @@ export interface ChatMessage {
 }
 
 const resumeAlchemistMessages = [
-  "Ready to transform your resume into pure gold! Let me help you optimize each section.",
-  "Ooze is here to sprinkle some alchemical magic on your resume!",
-  "Let's turn your resume from ordinary to extraordinary! Which section shall we alchemize first?",
-  "Greetings, Resume Alchemist at your service! Shall we refine your professional masterpiece?"
+"Watch this! Behold the secrets of alchemy! Bang! A dazzling resume has just come out of the oven! Are you shocked to see your own transformation?",
+"Hey! Your resume has completed its first transformation! Shall we discuss what areas we can enhance further?",
+"Yoo-hoo~ Your resume has transformed perfectly! Any other parts you'd like to modify?"
 ];
 
 const universalSupportMessages = [
-  "Hi there! I'm Ooze, your friendly assistant. How can I help you today?",
-  "Hello! I'm here to assist you. What can I help you with?",
-  "Greetings! I'm Ooze, ready to provide support. What do you need help with?",
-  "Welcome! I'm your AI assistant Ooze. How may I assist you today?"
+  "Hey there! I'm Seeker, ready to explore opportunities with you! How can I help you today?",
+  "Welcome aboard! I'm Seeker, your friendly guide in this journey. What can I help you with?",
+  "Hi! I'm Seeker, let's discover your perfect career path together! Have a question? Feel free to ask!",
+  "Great to meet you! I'm Seeker, your companion in this job adventure! What do you need help with?"
+
 ];
 
 export interface UseSeekerDialogOptions {
