@@ -9,24 +9,14 @@ import SeekerChatSheet from "./seeker/SeekerChatSheet";
 
 interface SeekerDialogProps {
   className?: string;
-  title?: string;
   position?: "top" | "middle" | "bottom";
-  currentSectionId?: string;
-  onSuggestionApply?: (text: string, sectionId: string) => void;
-  onGenerateSuggestion?: (sectionId: string) => void;
   simpleTipMode?: boolean;
-  jobData?: any;
 }
 
 const SeekerDialog: React.FC<SeekerDialogProps> = ({ 
   className = "",
-  title = "Resume Assistant",
   position = "middle",
-  currentSectionId = "",
-  onSuggestionApply,
-  onGenerateSuggestion,
-  simpleTipMode = false,
-  jobData = null
+  simpleTipMode = false
 }) => {
   const dialogDescriptionId = "SeekerDialogDescription";
   const sheetDescriptionId = "SeekerSheetDescription";
@@ -40,10 +30,7 @@ const SeekerDialog: React.FC<SeekerDialogProps> = ({
     inputValue,
     chats,
     isLoading,
-    isRetrying,
     apiError,
-    currentThreadId,
-    analysisId,
     messagesEndRef,
     
     // Actions
@@ -52,19 +39,10 @@ const SeekerDialog: React.FC<SeekerDialogProps> = ({
     setInputValue,
     handleOpenDialog,
     handleSendMessage,
-    handleKeyDown,
-    handleGenerateSuggestion,
-    handleRetry,
-    handleApplySuggestion
+    handleKeyDown
   } = useSeekerDialog({
-    simpleTipMode,
-    currentSectionId,
-    onGenerateSuggestion,
-    onSuggestionApply,
-    jobData
+    simpleTipMode
   });
-
-  const dialogTitle = simpleTipMode ? "Alchemy Ooze" : "Resume Assistant";
 
   const handleOpenChat = () => {
     setIsDialogOpen(false);
@@ -84,7 +62,7 @@ const SeekerDialog: React.FC<SeekerDialogProps> = ({
       {/* Tip Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <SeekerTipDialog
-          title={dialogTitle}
+          title="Support Assistant"
           message={message}
           onClose={() => setIsDialogOpen(false)}
           onOpenChat={handleOpenChat}
@@ -100,17 +78,11 @@ const SeekerDialog: React.FC<SeekerDialogProps> = ({
             chats={chats}
             inputValue={inputValue}
             isLoading={isLoading}
-            isRetrying={isRetrying}
             apiError={apiError}
-            analysisId={analysisId}
-            currentThreadId={currentThreadId}
             messagesEndRef={messagesEndRef}
             setInputValue={setInputValue}
             onKeyDown={handleKeyDown}
             onSend={handleSendMessage}
-            onGenerateSuggestion={() => currentSectionId && handleGenerateSuggestion()}
-            onRetry={handleRetry}
-            onApplySuggestion={(suggestion) => handleApplySuggestion(suggestion)}
             sheetDescriptionId={sheetDescriptionId}
           />
         </Sheet>
