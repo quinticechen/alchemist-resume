@@ -94,7 +94,11 @@ const SectionEditor = ({
     <div className="mb-6 border rounded-md shadow-sm">
       <div className="bg-gray-50 p-4 flex justify-between items-center border-b">
         <div className="flex items-center gap-2">
-          {isDraggable && !isPersonalInfo && <GripVertical className="h-4 w-4 text-gray-400 cursor-grab" />}
+          {isDraggable && !isPersonalInfo && (
+            <div className="cursor-grab">
+              <GripVertical className="h-4 w-4 text-gray-400" />
+            </div>
+          )}
           {isPersonalInfo && <Lock className="h-4 w-4 text-gray-400" />}
           <h3 className="text-lg font-medium">{getSectionDisplayName(section)}</h3>
         </div>
