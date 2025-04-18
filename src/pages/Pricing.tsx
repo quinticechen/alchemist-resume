@@ -10,6 +10,7 @@ import { pricingPlans, getPriceId } from "@/data/pricingPlans";
 import { Session } from "@supabase/supabase-js";
 import { Badge } from "@/components/ui/badge";
 import { trackBeginCheckout } from "@/utils/gtm";
+import SeekerDialog from "@/components/SeekerDialog";
 
 interface SubscriptionInfo {
   subscription_status: "apprentice" | "alchemist" | "grandmaster";
@@ -315,6 +316,7 @@ const Pricing = () => {
           <div className="hidden" ref={stripeBuyButtonRef}></div>
         </div>
       </div>
+      <SeekerDialog position="bottom" />
     </div>
   );
 };

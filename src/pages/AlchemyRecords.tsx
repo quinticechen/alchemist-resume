@@ -6,6 +6,7 @@ import { useAlchemyRecords } from "@/hooks/use-alchemy-records";
 import UsageStats from "@/components/alchemy-records/UsageStats";
 import AnalysisCard from "@/components/alchemy-records/AnalysisCard";
 import RecordsPagination from "@/components/alchemy-records/RecordsPagination";
+import SeekerDialog from "@/components/SeekerDialog";
 
 const AlchemyRecords = () => {
   const { session, isLoading } = useAuth();
@@ -71,6 +72,7 @@ const AlchemyRecords = () => {
           />
         </div>
       </div>
+      <SeekerDialog position="bottom" />
     </div>
   );
 };
