@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, FC } from 'react';
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -7,7 +8,7 @@ import SectionSelector from './SectionSelector';
 import SectionEditor from './sections/SectionEditor';
 import JobDescriptionViewer from './JobDescriptionViewer';
 import SeekerOptimizationSection from './SeekerOptimizationSection';
-import { ResumeSection, getFormattedResume, getAllSections } from '@/utils/resumeUtils';
+import { ResumeSection, getFormattedResume, getAllSections, getSectionDisplayName } from '@/utils/resumeUtils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNavigate } from 'react-router-dom';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
@@ -363,33 +364,10 @@ const ResumeEditor: FC<ResumeEditorProps> = ({
     const personalInfoIndex = items.indexOf('personalInfo');
     if (personalInfoIndex > 0) {
       items.splice(personalInfoIndex, 1);
-      items.unshift('personalInfo');
+      items.unshift(personalInfo);
     }
     
     handleSectionsReorder(result);
-  };
-
-  const getSectionDisplayName = (sectionId: ResumeSection) => {
-    switch (sectionId) {
-      case 'personalInfo':
-        return 'Personal Information';
-      case 'professionalExperience':
-        return 'Professional Experience';
-      case 'education':
-        return 'Education';
-      case 'skills':
-        return 'Skills';
-      case 'projects':
-        return 'Projects';
-      case 'volunteer':
-        return 'Volunteer';
-      case 'certifications':
-        return 'Certifications';
-      case 'guidanceForOptimization':
-        return 'Guidance for Optimization';
-      default:
-        return sectionId;
-    }
   };
 
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
@@ -451,7 +429,7 @@ const ResumeEditor: FC<ResumeEditorProps> = ({
                                   <div
                                     ref={provided.innerRef}
                                     {...provided.draggableProps}
-                                    className="mb-4 bg-white rounded-lg shadow-sm border border-neutral-200"
+                                    className="mb-4 rounded-lg shadow-sm"
                                   >
                                     <div className="flex items-center justify-between p-3 bg-neutral-50 rounded-t-lg border-b border-neutral-200">
                                       <div className="flex items-center gap-2">
@@ -477,7 +455,7 @@ const ResumeEditor: FC<ResumeEditorProps> = ({
                                       </Button>
                                     </div>
                                     {!collapsedSections[sectionId] && (
-                                      <div className="px-3 py-2">
+                                      <div>
                                         <SectionEditor
                                           section={sectionId}
                                           resumeData={resumeData}
