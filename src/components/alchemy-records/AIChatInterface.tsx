@@ -1,9 +1,9 @@
-
 import React, { useState, useRef } from 'react';
 import { useAIChat } from "@/hooks/use-ai-chat";
 import ChatHeader from "./chat/ChatHeader";
 import ChatMessageList from "./chat/ChatMessageList";
 import ChatInput from "./chat/ChatInput";
+import OozeAnimation from "@/components/OozeAnimation";
 
 interface AIChatInterfaceProps {
   resumeId: string;
@@ -49,6 +49,7 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
   return (
     <div className="relative rounded-xl bg-white shadow-apple h-full">
       <ChatHeader 
+        CustomAnimation={OozeAnimation}
         onOptimizeClick={() => {
           handleOptimizeCurrentSection();
           if (inputRef.current) {
