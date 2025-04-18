@@ -91,43 +91,23 @@ const ResumeEditor = ({
   const activeSectionRef = useRef<ResumeSection | null>(null);
 
   useEffect(() => {
-    if (sectionOrder.length > 0) {
-      const newSectionOrder = [...sectionOrder];
+    const initialSections = getAllSections();
+    const otherSections = initialSections.filter(
+      (section) => section !== "personalInfo"
+    );
+    const orderedSections = ["personalInfo", ...otherSections];
 
-      const personalInfoIndex = newSectionOrder.indexOf("personalInfo");
-      const expIndex = newSectionOrder.indexOf("professionalExperience");
+    setSectionOrder(orderedSections);
 
-      if (personalInfoIndex > -1) {
-        newSectionOrder.splice(personalInfoIndex, 1);
-      }
+    // Initially set all sections to collapsed except the first one (Personal Info)
+    const initialCollapsedState: Record<string, boolean> = {};
+    orderedSections.forEach((section, index) => {
+      initialCollapsedState[section] = index !== 0;
+    });
+    setCollapsedSections(initialCollapsedState);
 
-      if (expIndex > -1) {
-        newSectionOrder.splice(
-          expIndex > personalInfoIndex && personalInfoIndex > -1
-            ? expIndex - 1
-            : expIndex,
-          1
-        );
-      }
-
-      if (expIndex > -1) {
-        newSectionOrder.unshift("professionalExperience");
-      }
-
-      newSectionOrder.unshift("personalInfo");
-
-      setSectionOrder(newSectionOrder);
-
-      // Initially set all sections to collapsed except the first one
-      const initialCollapsedState: Record<string, boolean> = {};
-      newSectionOrder.forEach((section, index) => {
-        initialCollapsedState[section] = index !== 0;
-      });
-      setCollapsedSections(initialCollapsedState);
-
-      // Set the initial active section
-      activeSectionRef.current = newSectionOrder[0];
-    }
+    // Set the initial active section
+    activeSectionRef.current = orderedSections[0];
   }, []);
 
   useEffect(() => {
