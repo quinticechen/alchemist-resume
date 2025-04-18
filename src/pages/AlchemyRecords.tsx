@@ -68,7 +68,7 @@ const AlchemyRecords = () => {
           />
         </div>
       </div>
-      <SeekerDialog position="bottom" />
+      {/* <SeekerDialog position="bottom" /> */}
     </div>
   );
 };

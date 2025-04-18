@@ -316,7 +316,7 @@ const Pricing = () => {
           <div className="hidden" ref={stripeBuyButtonRef}></div>
         </div>
       </div>
-      <SeekerDialog position="bottom" />
+      {/* <SeekerDialog position="bottom" /> */}
     </div>
   );
 };
