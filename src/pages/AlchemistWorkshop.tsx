@@ -289,13 +289,13 @@ const AlchemistWorkshop = () => {
           Alchemist Workshop
         </h1>
 
-        <div className="relative">
+        {/* <div className="relative">
           <SeekerAnimation 
             width={120} 
             height={120} 
             className="absolute -top-28 right-0 opacity-80 z-10"
           />
-        </div>
+        </div> */}
 
         {!selectedFile ? (
           <Tabs defaultValue="upload" value={activeTab} onValueChange={setActiveTab} className="w-full">
