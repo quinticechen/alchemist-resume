@@ -48,7 +48,7 @@ const SeekerButton: React.FC<SeekerButtonProps> = ({
         className="hover:bg-transparent p-0 h-auto w-auto relative group"
       >
         <div className="absolute -top-10 right-0 opacity-0 group-hover:opacity-100 transition-opacity bg-background text-xs p-2 rounded shadow whitespace-nowrap">
-          {simpleTipMode ? "View Resume Tip" : "Chat with Alchemy Ooze"}
+          {simpleTipMode ? "View Resume Tip" : "Chat with Seeker"} {/* Changed from "Chat with Alchemy Ooze" to match the character */}
         </div>
         <SeekerAnimation 
           width={100} 

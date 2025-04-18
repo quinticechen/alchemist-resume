@@ -38,7 +38,7 @@ const SeekerTipDialog: React.FC<SeekerTipDialogProps> = ({
           </Button>
           {showChatButton && onOpenChat && (
             <Button onClick={onOpenChat}>
-              Chat with Alchemy Ooze
+              Chat with Seeker {/* Changed from "Chat with Alchemy Ooze" to match the character */}
             </Button>
           )}
         </div>

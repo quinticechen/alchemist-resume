@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -54,7 +55,7 @@ const SeekerChatSheet: React.FC<SeekerChatSheetProps> = ({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <SeekerAnimation width={50} height={50} />
-            <SheetTitle>Chat with Alchemy Ooze</SheetTitle>
+            <SheetTitle>Chat with Seeker</SheetTitle> {/* Changed from "Chat with Alchemy Ooze" to match the character */}
           </div>
         </div>
       </SheetHeader>

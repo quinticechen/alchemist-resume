@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Dialog } from "@/components/ui/dialog";
 import { Sheet } from "@/components/ui/sheet";
@@ -77,7 +78,7 @@ const SeekerDialog: React.FC<SeekerDialogProps> = ({
         onClick={handleOpenDialog} 
         position={position} 
         className={className}
-        simpleTipMode={simpleTipMode} 
+        simpleTipMode={simpleTipMode}
       />
 
       {/* Tip Dialog */}
