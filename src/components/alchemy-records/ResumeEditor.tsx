@@ -1,8 +1,9 @@
+
 import React, { useState, useEffect, useCallback, FC } from 'react';
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { CheckCircle, Save, AlertTriangle, Eye, FileJson, ChevronDown, ChevronUp, GripVertical } from 'lucide-react';
+import { CheckCircle, Save, AlertTriangle, Eye, FileJson, ChevronDown, ChevronUp, GripVertical, Lock } from 'lucide-react';
 import SectionSelector from './SectionSelector';
 import SectionEditor from './sections/SectionEditor';
 import JobDescriptionViewer from './JobDescriptionViewer';
@@ -39,22 +40,25 @@ const ResumeEditor: FC<ResumeEditorProps> = ({
   onSectionChange: parentSectionChangeHandler
 }) => {
   const [resumeData, setResumeData] = useState<ResumeData>({
-    personalInfo: {
-      fullName: '',
-      email: '',
-      phone: '',
-      location: '',
-      linkedIn: '',
-      portfolio: ''
+    resume: {
+      personalInfo: {
+        firstName: '',
+        lastName: '',
+        email: '',
+        phone: '',
+        location: '',
+        linkedIn: ''
+      },
+      professionalSummary: '',
+      professionalExperience: [],
+      education: [],
+      skills: { technical: [], soft: [] },
+      projects: [],
+      volunteer: [],
+      certifications: [],
+      guidanceForOptimization: []
     },
-    professionalSummary: '',
-    professionalExperience: [],
-    education: [],
-    skills: [],
-    projects: [],
-    volunteer: [],
-    certifications: [],
-    guidanceForOptimization: []
+    sectionOrder: getAllSections()
   });
   const [jobData, setJobData] = useState<JobData | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -215,9 +219,21 @@ const ResumeEditor: FC<ResumeEditorProps> = ({
   const handleSectionsReorder = async (result: DropResult) => {
     if (!result.destination) return;
 
+    // Prevent dragging the personalInfo section
+    if (result.draggableId === 'personalInfo') {
+      return;
+    }
+
     const items = Array.from(sectionOrder);
     const [reorderedItem] = items.splice(result.source.index, 1);
     items.splice(result.destination.index, 0, reorderedItem);
+
+    // Ensure personalInfo is always at index 0
+    const personalInfoIndex = items.indexOf('personalInfo');
+    if (personalInfoIndex > 0) {
+      items.splice(personalInfoIndex, 1);
+      items.unshift('personalInfo');
+    }
 
     setSectionOrder(items);
     setHasUnsavedChanges(true);
@@ -306,20 +322,20 @@ const ResumeEditor: FC<ResumeEditorProps> = ({
   const handleDragEnd = (result: DropResult) => {
     if (!result.destination) return;
     
-    const items = Array.from(sectionOrder);
-    
-    if (items[result.source.index] === 'personalInfo') {
+    // Prevent dragging personalInfo section
+    if (result.draggableId === 'personalInfo') {
       return;
     }
     
+    const items = Array.from(sectionOrder);
     const [reorderedItem] = items.splice(result.source.index, 1);
-    
     items.splice(result.destination.index, 0, reorderedItem);
     
+    // Ensure personalInfo is always at index 0
     const personalInfoIndex = items.indexOf('personalInfo');
     if (personalInfoIndex > 0) {
-      const [personalInfo] = items.splice(personalInfoIndex, 1);
-      items.unshift(personalInfo);
+      items.splice(personalInfoIndex, 1);
+      items.unshift('personalInfo');
     }
     
     handleSectionsReorder(result);
@@ -378,19 +394,27 @@ const ResumeEditor: FC<ResumeEditorProps> = ({
                             className="space-y-4"
                           >
                             {sectionOrder.map((sectionId, index) => (
-                              <Draggable key={sectionId} draggableId={sectionId} index={index}>
+                              <Draggable 
+                                key={sectionId} 
+                                draggableId={sectionId} 
+                                index={index}
+                                isDragDisabled={sectionId === 'personalInfo'}
+                              >
                                 {(provided) => (
                                   <div
                                     ref={provided.innerRef}
                                     {...provided.draggableProps}
-                                    {...provided.dragHandleProps}
                                     className="mb-8 bg-white rounded-lg shadow-sm border border-neutral-200"
                                   >
                                     <div className="flex items-center justify-between p-4 bg-neutral-50 rounded-t-lg border-b border-neutral-200">
                                       <div className="flex items-center gap-2">
-                                        <div {...provided.dragHandleProps}>
-                                          <GripVertical className="h-5 w-5 text-neutral-400" />
-                                        </div>
+                                        {sectionId === 'personalInfo' ? (
+                                          <Lock className="h-5 w-5 text-neutral-400" />
+                                        ) : (
+                                          <div {...provided.dragHandleProps}>
+                                            <GripVertical className="h-5 w-5 text-neutral-400" />
+                                          </div>
+                                        )}
                                         <h2 className="text-lg font-semibold">{sectionId}</h2>
                                       </div>
                                       <Button
@@ -413,7 +437,7 @@ const ResumeEditor: FC<ResumeEditorProps> = ({
                                           onChange={(updatedData: ResumeData) => setResumeData(updatedData)}
                                           isCollapsed={collapsedSections[sectionId]}
                                           onToggleCollapse={handleSectionToggle}
-                                          isDraggable={true}
+                                          isDraggable={sectionId !== 'personalInfo'}
                                         />
                                       </div>
                                     )}

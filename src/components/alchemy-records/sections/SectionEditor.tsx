@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { ResumeSection, getSectionDisplayName } from '@/utils/resumeUtils';
 import PersonalInfoSection from './PersonalInfoSection';
@@ -37,6 +38,7 @@ const SectionEditor = ({
     }
   };
 
+  // Remove the section title since it's already displayed in the parent component
   const renderSectionContent = () => {
     if (isCollapsed) {
       return null;
@@ -68,28 +70,7 @@ const SectionEditor = ({
 
   return (
     <div className="border rounded-lg p-4 bg-white">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          {isDraggable ? (
-            <GripVertical className="h-4 w-4 text-gray-400 cursor-grab" />
-          ) : isPersonalInfo ? (
-            <Lock className="h-4 w-4 text-gray-400" />
-          ) : null}
-          <h3 className="font-semibold text-lg">{getSectionDisplayName(section)}</h3>
-        </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleToggleCollapse}
-          className="p-0 h-8 w-8 hover:bg-gray-100"
-        >
-          {isCollapsed ? (
-            <ChevronDown className="h-4 w-4" />
-          ) : (
-            <ChevronUp className="h-4 w-4" />
-          )}
-        </Button>
-      </div>
+      {/* Remove the separate title and collapsible controls as they're redundant */}
       {renderSectionContent()}
     </div>
   );

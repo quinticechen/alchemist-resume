@@ -92,19 +92,15 @@ const DEFAULT_SECTION_ORDER: ResumeSection[] = [
   'certifications'
 ];
 
-// Process resume data format
 const prepareResumeData = (content: unknown): ResumeData => {
   try {
     console.log('Processing raw data:', content);
     
-    // If content is a string, try to parse as JSON
     const parsedContent = typeof content === 'string' ? JSON.parse(content) : content;
     
-    // Use getFormattedResume to format the data
     const formattedContent = getFormattedResume(parsedContent);
     console.log('Formatted data:', formattedContent);
     
-    // Ensure data has the correct structure
     const result: ResumeData = {
       resume: {
         personalInfo: formattedContent.resume?.personalInfo || {
@@ -132,7 +128,6 @@ const prepareResumeData = (content: unknown): ResumeData => {
     return result;
   } catch (error) {
     console.error('Error preparing resume data:', error);
-    // Return a default data structure
     return {
       resume: {
         personalInfo: {
@@ -218,7 +213,6 @@ const ResumePreview = () => {
 
       setLoading(true);
       try {
-        // Get editor content
         const { data: editorData, error: editorError } = await supabase
           .from('resume_editors')
           .select('content')
@@ -235,7 +229,6 @@ const ResumePreview = () => {
           return;
         }
 
-        // Get analysis data and job title
         const { data: analysisData, error: analysisError } = await supabase
           .from('resume_analyses')
           .select(`
@@ -251,16 +244,13 @@ const ResumePreview = () => {
           throw analysisError;
         }
 
-        // Set job title
         if (analysisData?.job?.job_title) {
           setJobTitle(analysisData.job.job_title);
         }
 
-        // Process data
         const content = editorData.content;
         console.log('From Supabase retrieved raw content data:', content);
         
-        // Convert data format
         const preparedData = prepareResumeData(content);
         console.log('Processed resume data:', preparedData);
         setResumeData(preparedData);
@@ -415,7 +405,6 @@ const ResumePreview = () => {
     return <div className="container mx-auto px-4 py-8">No resume data available</div>;
   }
 
-  // Debug log
   console.log('Final rendered resumeData:', resumeData);
   console.log('personalInfo:', resumeData.resume?.personalInfo);
   console.log('professionalExperience:', resumeData.resume?.professionalExperience);
@@ -811,7 +800,6 @@ const ResumePreview = () => {
         </div>
       </div>
 
-      {/* Seeker Animation Button */}
       <div 
         className="fixed bottom-6 right-6 cursor-pointer transition-transform hover:scale-110"
         onClick={() => setIsChatOpen(true)}
