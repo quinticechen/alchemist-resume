@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, FC } from 'react';
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { CheckCircle, Save, AlertTriangle, Eye, FileJson } from 'lucide-react';
+import { CheckCircle, Save, AlertTriangle, Eye, FileJson, ChevronDown, ChevronUp, GripVertical } from 'lucide-react';
 import SectionSelector from './SectionSelector';
 import SectionEditor from './sections/SectionEditor';
 import JobDescriptionViewer from './JobDescriptionViewer';
@@ -15,13 +15,13 @@ import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautif
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ResumeData } from '@/types/resume';
 
-export interface ResumeEditorProps {
-  resumeId: string;
-  goldenResume: string | null;
-  analysisId: string;
-  setHasUnsavedChanges: React.Dispatch<React.SetStateAction<boolean>>;
-  activeSection?: ResumeSection;
-  onSectionChange?: (section: ResumeSection) => void;
+interface ResumeEditorProps {
+  resumeId?: string;
+  goldenResume?: ResumeData;
+  analysisId?: string;
+  setHasUnsavedChanges?: (value: boolean) => void;
+  activeSection?: string;
+  onSectionChange?: (section: string) => void;
 }
 
 interface JobData {
@@ -30,15 +30,32 @@ interface JobData {
   job_description?: string;
 }
 
-const ResumeEditor = ({ 
+const ResumeEditor: FC<ResumeEditorProps> = ({ 
   resumeId, 
   goldenResume, 
   analysisId, 
   setHasUnsavedChanges,
   activeSection: initialActiveSection,
   onSectionChange: parentSectionChangeHandler
-}: ResumeEditorProps) => {
-  const [resumeData, setResumeData] = useState<ResumeData | null>(null);
+}) => {
+  const [resumeData, setResumeData] = useState<ResumeData>({
+    personalInfo: {
+      fullName: '',
+      email: '',
+      phone: '',
+      location: '',
+      linkedIn: '',
+      portfolio: ''
+    },
+    professionalSummary: '',
+    professionalExperience: [],
+    education: [],
+    skills: [],
+    projects: [],
+    volunteer: [],
+    certifications: [],
+    guidanceForOptimization: []
+  });
   const [jobData, setJobData] = useState<JobData | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isSaving, setIsSaving] = useState<boolean>(false);
@@ -47,13 +64,7 @@ const ResumeEditor = ({
   const [editorId, setEditorId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'visual' | 'json'>('visual');
   const [sectionOrder, setSectionOrder] = useState<ResumeSection[]>(getAllSections());
-  const [collapsedSections, setCollapsedSections] = useState<Record<ResumeSection, boolean>>(() => {
-    const initialState: Record<ResumeSection, boolean> = {};
-    getAllSections().forEach((section) => {
-      initialState[section] = true;
-    });
-    return initialState;
-  });
+  const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -189,110 +200,87 @@ const ResumeEditor = ({
     setHasUnsavedChanges(contentChanged);
   }, [resumeData, savedData, setHasUnsavedChanges]);
 
-  const handleSectionToggle = (section: ResumeSection) => {
-    setCollapsedSections(prev => ({
-      ...prev,
-      [section]: !prev[section]
-    }));
-  };
-
-  const handleSectionsReorder = (sections: ResumeSection[]) => {
-    setSectionOrder(sections);
-    
-    setResumeData((prevData) => {
-      if (!prevData) return null;
-      
-      const updatedData: ResumeData = {
-        ...prevData,
-        sectionOrder: sections
-      };
-      
-      if (editorId) {
-        supabase
-          .from('resume_editors')
-          .update({
-            content: updatedData
-          })
-          .eq('id', editorId)
-          .then(({ error }) => {
-            if (error) {
-              console.error('Error saving section order:', error);
-            }
-          });
+  const handleSectionToggle = (sectionId: string) => {
+    setCollapsedSections(prev => {
+      const newSet = { ...prev };
+      if (newSet[sectionId]) {
+        delete newSet[sectionId];
+      } else {
+        newSet[sectionId] = true;
       }
-      
-      return updatedData;
+      return newSet;
     });
   };
 
-  const handleResumeDataChange = useCallback((updatedData: any) => {
-    setResumeData(updatedData);
-  }, []);
+  const handleSectionsReorder = async (result: DropResult) => {
+    if (!result.destination) return;
 
-  const validateResumeData = (data: any): boolean => {
+    const items = Array.from(sectionOrder);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
+
+    setSectionOrder(items);
+    setHasUnsavedChanges(true);
+
     try {
-      if (typeof data !== 'object' || data === null) {
-        return false;
-      }
-      return true;
-    } catch (e) {
-      return false;
+      const { data: editorData, error: fetchError } = await supabase
+        .from('resume_editors')
+        .select('content')
+        .eq('analysis_id', analysisId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      const content = editorData?.content as ResumeData || {};
+      const updatedContent = {
+        ...content,
+        sectionOrder: items
+      };
+
+      const { error: updateError } = await supabase
+        .from('resume_editors')
+        .update({ content: updatedContent })
+        .eq('analysis_id', analysisId);
+
+      if (updateError) throw updateError;
+    } catch (error) {
+      console.error('Error saving section order:', error);
     }
   };
 
-  const handleSaveContent = async () => {
-    if (!resumeData || JSON.stringify(resumeData) === savedData || !editorId) {
-      toast({
-        title: "No changes to save",
-        description: "You haven't made any changes to your resume.",
-      });
-      return;
-    }
+  const handleDataChange = (newData: ResumeData) => {
+    setResumeData(newData);
+    setLocalHasUnsavedChanges(true);
+    setHasUnsavedChanges(true);
+  };
 
-    if (!validateResumeData(resumeData)) {
-      toast({
-        title: "Invalid resume format",
-        description: "Please ensure your resume is properly formatted before saving.",
-        variant: "destructive"
-      });
-      return;
-    }
+  const handleSectionOrderChange = (newOrder: string[]) => {
+    setResumeData(prevData => ({
+      ...prevData,
+      sectionOrder: newOrder
+    }));
+    setHasUnsavedChanges(true);
+  };
 
-    setIsSaving(true);
+  const handleSave = async () => {
     try {
-      const dataToSave = {
-        ...resumeData,
-        sectionOrder: sectionOrder
-      };
-      
-      const { error } = await supabase
-        .from('resume_editors')
-        .update({ 
-          content: dataToSave,
-          last_saved: new Date().toISOString()
-        })
-        .eq('id', editorId);
+      const response = await fetch(`/api/resumes/${resumeId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(resumeData),
+      });
 
-      if (error) {
-        throw error;
+      if (!response.ok) {
+        throw new Error('Failed to save resume');
       }
 
-      toast({
-        title: "Success",
-        description: "Resume saved successfully!",
-        duration: 3000,
-      });
-      setSavedData(JSON.stringify(dataToSave));
-      setLocalHasUnsavedChanges(false);
       setHasUnsavedChanges(false);
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to save resume. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSaving(false);
+      showToast('Resume saved successfully');
+    } catch (error) {
+      console.error('Error saving resume:', error);
+      showToast('Failed to save resume', 'error');
     }
   };
 
@@ -334,7 +322,15 @@ const ResumeEditor = ({
       items.unshift(personalInfo);
     }
     
-    handleSectionsReorder(items);
+    handleSectionsReorder(result);
+  };
+
+  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+    toast({
+      title: type === 'success' ? 'Success' : 'Error',
+      description: message,
+      variant: type === 'error' ? 'destructive' : 'default',
+    });
   };
 
   if (isLoading) {
@@ -373,47 +369,58 @@ const ResumeEditor = ({
                       />
                     </div>
                     
-                    <SectionEditor 
-                      key="personalInfo"
-                      section="personalInfo" 
-                      resumeData={resumeData} 
-                      onChange={handleResumeDataChange}
-                      isCollapsed={collapsedSections['personalInfo']}
-                      onToggleCollapse={handleSectionToggle}
-                      isDraggable={false}
-                    />
-                    
                     <DragDropContext onDragEnd={handleDragEnd}>
-                      <Droppable droppableId="droppable-sections">
+                      <Droppable droppableId="resume-sections">
                         {(provided) => (
                           <div
                             {...provided.droppableProps}
                             ref={provided.innerRef}
                             className="space-y-4"
                           >
-                            {sectionOrder
-                              .filter(section => section !== 'personalInfo')
-                              .map((section, index) => (
-                                <Draggable key={section} draggableId={section} index={index}>
-                                  {(provided) => (
-                                    <div
-                                      ref={provided.innerRef}
-                                      {...provided.draggableProps}
-                                      {...provided.dragHandleProps}
-                                    >
-                                      <SectionEditor 
-                                        key={section}
-                                        section={section} 
-                                        resumeData={resumeData} 
-                                        onChange={handleResumeDataChange}
-                                        isCollapsed={collapsedSections[section]}
-                                        onToggleCollapse={handleSectionToggle}
-                                        isDraggable={true}
-                                      />
+                            {sectionOrder.map((sectionId, index) => (
+                              <Draggable key={sectionId} draggableId={sectionId} index={index}>
+                                {(provided) => (
+                                  <div
+                                    ref={provided.innerRef}
+                                    {...provided.draggableProps}
+                                    {...provided.dragHandleProps}
+                                    className="mb-8 bg-white rounded-lg shadow-sm border border-neutral-200"
+                                  >
+                                    <div className="flex items-center justify-between p-4 bg-neutral-50 rounded-t-lg border-b border-neutral-200">
+                                      <div className="flex items-center gap-2">
+                                        <div {...provided.dragHandleProps}>
+                                          <GripVertical className="h-5 w-5 text-neutral-400" />
+                                        </div>
+                                        <h2 className="text-lg font-semibold">{sectionId}</h2>
+                                      </div>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => handleSectionToggle(sectionId)}
+                                      >
+                                        {collapsedSections[sectionId] ? (
+                                          <ChevronDown className="h-5 w-5" />
+                                        ) : (
+                                          <ChevronUp className="h-5 w-5" />
+                                        )}
+                                      </Button>
                                     </div>
-                                  )}
-                                </Draggable>
-                              ))}
+                                    {!collapsedSections[sectionId] && (
+                                      <div className="p-4">
+                                        <SectionEditor
+                                          section={sectionId}
+                                          resumeData={resumeData}
+                                          onChange={(updatedData: ResumeData) => setResumeData(updatedData)}
+                                          isCollapsed={collapsedSections[sectionId]}
+                                          onToggleCollapse={handleSectionToggle}
+                                          isDraggable={true}
+                                        />
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                              </Draggable>
+                            ))}
                             {provided.placeholder}
                           </div>
                         )}
@@ -474,7 +481,7 @@ const ResumeEditor = ({
                 Preview
               </Button>
               <Button
-                onClick={handleSaveContent}
+                onClick={handleSave}
                 disabled={isSaving || !hasUnsavedChanges}
                 className={isSaving ? "cursor-not-allowed" : ""}
               >
