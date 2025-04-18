@@ -19,34 +19,39 @@ const SectionSelector = ({
 }: SectionSelectorProps) => {
   
   const handleDragEnd = (result: DropResult) => {
-    if (!result.destination) return;
+    // If there's no destination or the destination is the same as source, do nothing
+    if (!result.destination || result.destination.index === result.source.index) return;
     
-    // Get all sections including personalInfo
-    const items = Array.from(sections);
+    // Create a copy of the sections array to avoid mutating the prop
+    const itemsCopy = Array.from(sections);
     
     // Get the source index from the result
     const sourceIndex = result.source.index;
     
     // Don't allow dragging personalInfo
-    if (items[sourceIndex] === 'personalInfo') {
+    if (itemsCopy[sourceIndex] === 'personalInfo') {
       return;
     }
     
-    // Get the dragged item
-    const [reorderedItem] = items.splice(sourceIndex, 1);
+    // Remove the dragged item from the array
+    const [reorderedItem] = itemsCopy.splice(sourceIndex, 1);
     
     // Insert at the destination index
-    items.splice(result.destination.index, 0, reorderedItem);
+    itemsCopy.splice(result.destination.index, 0, reorderedItem);
     
-    // Ensure personalInfo stays at the top
-    const personalInfoIndex = items.indexOf('personalInfo');
-    if (personalInfoIndex > 0) {
-      const [personalInfo] = items.splice(personalInfoIndex, 1);
-      items.unshift(personalInfo);
+    // Fix: Always ensure personalInfo stays at the top
+    // First, check if personalInfo exists in the array
+    const personalInfoIndex = itemsCopy.indexOf('personalInfo');
+    if (personalInfoIndex > -1) {
+      // If it's not at the top, move it to the top
+      if (personalInfoIndex > 0) {
+        const [personalInfo] = itemsCopy.splice(personalInfoIndex, 1);
+        itemsCopy.unshift(personalInfo);
+      }
     }
     
     // Update the parent component with the new order
-    onSectionsReorder(items);
+    onSectionsReorder(itemsCopy);
   };
   
   return (
@@ -94,13 +99,11 @@ const SectionSelector = ({
                     <div
                       ref={provided.innerRef}
                       {...provided.draggableProps}
-                      {...provided.dragHandleProps}
+                      style={provided.draggableProps.style}
                       className="flex items-center bg-white hover:bg-gray-50 rounded-md border p-2"
-                      style={{
-                        ...provided.draggableProps.style,
-                      }}
                     >
                       <div 
+                        {...provided.dragHandleProps}
                         className="p-1 cursor-grab"
                       >
                         <GripVertical className="h-4 w-4 text-gray-400" />
