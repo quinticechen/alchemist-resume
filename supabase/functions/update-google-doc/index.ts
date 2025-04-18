@@ -17,12 +17,8 @@ Deno.serve(async (req) => {
     let requestBody;
     try {
       const text = await req.text();
-      // console.log("Raw request body:", text);
-      
-      // Parse the JSON directly without modifications
       requestBody = JSON.parse(text);
     } catch (parseError) {
-      // console.error("JSON parsing error:", parseError.message);
       return new Response(
         JSON.stringify({ error: `Invalid JSON: ${parseError.message}` }),
         {
@@ -34,12 +30,8 @@ Deno.serve(async (req) => {
 
     // Early return if there's an error in the request
     if (requestBody.error) {
-      // console.log("Error received in request:", requestBody.error);
-      
-      // Check if analysisId looks like a valid UUID
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       if (!requestBody.analysisId || !uuidRegex.test(requestBody.analysisId)) {
-        // console.error("Invalid analysisId format:", requestBody.analysisId);
         return new Response(
           JSON.stringify({ 
             success: false, 
@@ -52,23 +44,20 @@ Deno.serve(async (req) => {
         );
       }
       
-      // Initialize Supabase client
       const supabaseClient = createClient(
         Deno.env.get('SUPABASE_URL') ?? '',
         Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
       );
       
-      // Update the resume analysis with the error message
       const { error: updateError } = await supabaseClient
         .from('resume_analyses')
         .update({ 
           error: requestBody.error,
-          status: 'error' // Using the new enumerated type value
+          status: 'error'
         })
         .eq('id', requestBody.analysisId);
         
       if (updateError) {
-        // console.error("Error updating analysis with error message:", updateError);
         return new Response(
           JSON.stringify({ 
             success: false, 
@@ -79,8 +68,6 @@ Deno.serve(async (req) => {
             status: 500,
           }
         );
-      } else {
-        // console.log("Successfully updated analysis with error status for ID:", requestBody.analysisId);
       }
       
       return new Response(
@@ -95,12 +82,10 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Validate required fields
     if (!requestBody.analysisId) {
       throw new Error('Analysis ID is required');
     }
     
-    // Validate analysisId is a proper UUID format
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!uuidRegex.test(requestBody.analysisId)) {
       throw new Error(`Invalid analysisId format: ${requestBody.analysisId}`);
@@ -115,14 +100,11 @@ Deno.serve(async (req) => {
       matchScore,
     } = requestBody;
 
-    // Initialize Supabase client
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // First, get the analysis to find the job_id and resume_id
-    // Use maybeSingle() instead of single() to handle the case when no record is found
     const { data: analysis, error: analysisError } = await supabaseClient
       .from('resume_analyses')
       .select('job_id, resume_id')
@@ -133,7 +115,6 @@ Deno.serve(async (req) => {
       throw analysisError;
     }
 
-    // If no analysis record found, return an error
     if (!analysis) {
       return new Response(
         JSON.stringify({ 
@@ -147,9 +128,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Update the jobs table with job information 
     if (analysis.job_id && jobDescription) {
-      // Extract company and job information from jobDescription
       const companyName = jobDescription?.company?.name || null;
       const companyUrl = jobDescription?.company?.url || null;
       const jobTitle = jobDescription?.job?.title || null;
@@ -162,7 +141,7 @@ Deno.serve(async (req) => {
           company_url: companyUrl,
           job_title: jobTitle,
           language: jobLanguage,
-          job_description: jobDescription, // Store the entire jobDescription as JSONB
+          job_description: jobDescription,
         })
         .eq('id', analysis.job_id);
 
@@ -171,13 +150,11 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Update the resume with original resume content
-    // Now storing formatted resume data in the resumes table
     if (analysis.resume_id && originalResume) {
       const { error: resumeUpdateError } = await supabaseClient
         .from('resumes')
         .update({
-          formatted_resume: originalResume // Use the new column name
+          formatted_resume: originalResume
         })
         .eq('id', analysis.resume_id);
 
@@ -186,11 +163,9 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Update the analysis with Google Doc URL and match score
-    // No longer storing golden_resume or formatted_original_resume in resume_analyses
     const updateData: any = {
       google_doc_url: googleDocUrl,
-      status: 'success', // Using the new enumerated type value
+      status: 'success',
     };
     
     if (matchScore) {
@@ -206,9 +181,7 @@ Deno.serve(async (req) => {
       throw analysisUpdateError;
     }
 
-    // If we have a golden resume, store it in the resume_editors table
     if (goldenResume && analysis.resume_id) {
-      // Check if a resume editor record exists
       const { data: editorData, error: editorCheckError } = await supabaseClient
         .from('resume_editors')
         .select('id')
@@ -219,12 +192,21 @@ Deno.serve(async (req) => {
         throw editorCheckError;
       }
 
+      const resumeData = {
+        resume: {
+          ...goldenResume,
+          professionalExperience: goldenResume.professionalExperience?.map((exp: any) => ({
+            ...exp,
+            companyIntroduction: exp.companyIntroduction || ''
+          })) || []
+        }
+      };
+
       if (editorData) {
-        // Update existing editor record
         const { error: editorUpdateError } = await supabaseClient
           .from('resume_editors')
           .update({
-            content: goldenResume,
+            content: resumeData,
             last_saved: new Date().toISOString()
           })
           .eq('id', editorData.id);
@@ -233,12 +215,11 @@ Deno.serve(async (req) => {
           throw editorUpdateError;
         }
       } else {
-        // Create new editor record
         const { error: editorInsertError } = await supabaseClient
           .from('resume_editors')
           .insert({
             analysis_id: analysisId,
-            content: goldenResume,
+            content: resumeData,
             last_saved: new Date().toISOString()
           });
 
@@ -247,8 +228,6 @@ Deno.serve(async (req) => {
         }
       }
     }
-
-    // console.log('Successfully updated records for analysis ID:', analysisId);
 
     return new Response(
       JSON.stringify({ 
