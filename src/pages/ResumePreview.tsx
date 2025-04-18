@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { useAuth } from "@/contexts/AuthContext";
@@ -31,30 +32,33 @@ interface JobData {
   job_url?: string | null;
 }
 
+// Improved interface for the resume data structure
 interface EditorContent {
-  resume?: {
-    personalInfo?: any;
-    summary?: string;
-    professionalSummary?: string;
-    professionalExperience?: Array<{
-      companyName?: string;
-      companyIntroduction?: string;
-      location?: string;
-      jobTitle?: string;
-      startDate?: string;
-      endDate?: string;
-      achievements?: string[];
-    }>;
-    education?: any;
-    skills?: any;
-    projects?: any[];
-    volunteer?: any[];
-    certifications?: any[];
-    guidanceForOptimization?: Array<{
-      guidance: string[];
-    }>;
-  };
+  resume?: ResumeContent;
   sectionOrder?: ResumeSection[];
+}
+
+interface ResumeContent {
+  personalInfo?: any;
+  summary?: string;
+  professionalSummary?: string;
+  professionalExperience?: Array<{
+    companyName?: string;
+    companyIntroduction?: string;
+    location?: string;
+    jobTitle?: string;
+    startDate?: string;
+    endDate?: string;
+    achievements?: string[];
+  }>;
+  education?: any;
+  skills?: any;
+  projects?: any[];
+  volunteer?: any[];
+  certifications?: any[];
+  guidanceForOptimization?: Array<{
+    guidance: string[];
+  }>;
 }
 
 const LOCAL_STORAGE_STYLE_KEY = 'resumePreviewStyle';
@@ -102,6 +106,35 @@ const DEFAULT_SECTION_ORDER: ResumeSection[] = [
   'volunteer',
   'certifications'
 ];
+
+// Helper function to normalize resume data structure
+const normalizeResumeData = (data: any): EditorContent => {
+  if (!data) return { resume: {} };
+  
+  console.log("Normalizing resume data:", data);
+  
+  let result: EditorContent = { resume: {} };
+  
+  // Handle different data structure scenarios
+  if (data.resume) {
+    if (data.resume.resume) {
+      // Double nested structure: { resume: { resume: {...} } }
+      result = {
+        resume: data.resume.resume,
+        sectionOrder: data.sectionOrder || DEFAULT_SECTION_ORDER
+      };
+    } else {
+      // Regular structure: { resume: {...} }
+      result = data;
+    }
+  } else if (Object.keys(data).includes('personalInfo') || 
+            Object.keys(data).includes('professionalExperience')) {
+    // Direct data structure without resume wrapper
+    result = { resume: data };
+  }
+  
+  return result;
+};
 
 const ResumePreview = () => {
   const { session, isLoading } = useAuth();
@@ -163,6 +196,10 @@ const ResumePreview = () => {
         
         console.log("Found editor content:", editorData.content);
         
+        // Normalize the data structure
+        const normalizedContent = normalizeResumeData(editorData.content);
+        console.log("Normalized content:", normalizedContent);
+        
         const { data: analysisData, error: analysisError } = await supabase
           .from('resume_analyses')
           .select(`
@@ -223,24 +260,15 @@ const ResumePreview = () => {
           }
         }
 
-        let content: EditorContent = editorData.content as EditorContent;
-        
-        if (!content.resume && typeof content === 'object') {
-          const keys = Object.keys(content);
-          if (keys.includes('personalInfo') || keys.includes('professionalExperience')) {
-            content = { resume: content as any };
-          }
-        }
-        
-        console.log("Preparing resume data with content:", content);
-
-        const sectionOrder = content.sectionOrder && Array.isArray(content.sectionOrder) && content.sectionOrder.length > 0 
-          ? content.sectionOrder 
+        const sectionOrder = normalizedContent.sectionOrder && 
+                            Array.isArray(normalizedContent.sectionOrder) && 
+                            normalizedContent.sectionOrder.length > 0 
+          ? normalizedContent.sectionOrder 
           : DEFAULT_SECTION_ORDER;
 
         setResumeData({
           ...analysisData,
-          resume: content.resume || {},
+          resume: normalizedContent.resume || {},
           sectionOrder: sectionOrder,
           jobTitle,
           fileName,

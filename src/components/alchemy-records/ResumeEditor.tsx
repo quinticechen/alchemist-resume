@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -138,8 +139,19 @@ const ResumeEditor = ({
           console.log("Found editor content:", editorData.content);
           
           let processedContent: ResumeData;
+          // Normalize the data structure - handle different formats
           if (editorData.content.resume) {
-            processedContent = editorData.content as ResumeData;
+            if (editorData.content.resume.resume) {
+              // Handle double nested resume structure
+              processedContent = {
+                resume: editorData.content.resume.resume
+              };
+              console.log("Found doubly nested resume structure, normalizing...");
+            } else {
+              // Standard resume.* structure
+              processedContent = editorData.content as ResumeData;
+              console.log("Using standard resume structure");
+            }
             
             if (processedContent.resume && processedContent.resume.professionalExperience) {
               processedContent.resume.professionalExperience = processedContent.resume.professionalExperience.map((exp: any) => ({
@@ -147,8 +159,15 @@ const ResumeEditor = ({
                 companyIntroduction: exp.companyIntroduction || ''
               }));
             }
-          } else {
+          } else if (Object.keys(editorData.content).includes('personalInfo') || 
+                     Object.keys(editorData.content).includes('professionalExperience')) {
+            // Direct data structure without resume wrapper
             processedContent = { resume: editorData.content as any };
+            console.log("Found direct data structure, adding resume wrapper");
+          } else {
+            // Unknown structure, try to use as is
+            processedContent = editorData.content as ResumeData;
+            console.log("Using editor content as is (unrecognized format)");
           }
           
           if (processedContent.sectionOrder && Array.isArray(processedContent.sectionOrder)) {
@@ -173,11 +192,29 @@ const ResumeEditor = ({
               let parsedContent = typeof goldenResume === 'string' 
                 ? JSON.parse(goldenResume) 
                 : goldenResume;
-                
+              
+              // Handle different data structures
               if (parsedContent.resume) {
-                initialContent = parsedContent;
-              } else {
+                if (parsedContent.resume.resume) {
+                  // Double nested case: { resume: { resume: {...} } }
+                  initialContent = {
+                    resume: parsedContent.resume.resume
+                  };
+                  console.log("Parsed golden resume with double nesting");
+                } else {
+                  // Regular case: { resume: {...} }
+                  initialContent = parsedContent;
+                  console.log("Parsed golden resume with single nesting");
+                }
+              } else if (Object.keys(parsedContent).includes('personalInfo') || 
+                         Object.keys(parsedContent).includes('professionalExperience')) {
+                // Direct data: { personalInfo: {...}, ... }
                 initialContent = { resume: parsedContent };
+                console.log("Parsed golden resume with direct data structure");
+              } else {
+                // Use as is
+                initialContent = parsedContent;
+                console.log("Using parsed golden resume as is");
               }
               
               if (initialContent.resume && initialContent.resume.professionalExperience) {

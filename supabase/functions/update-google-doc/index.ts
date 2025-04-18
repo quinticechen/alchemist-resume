@@ -183,17 +183,64 @@ Deno.serve(async (req) => {
 
     // Ensure professionalExperience entries have companyIntroduction
     if (goldenResume && analysis.resume_id) {
-      // Make sure goldenResume has the correct structure with professionalExperience
-      if (goldenResume.professionalExperience) {
-        goldenResume.professionalExperience = goldenResume.professionalExperience.map((exp: any) => ({
-          ...exp,
-          companyIntroduction: exp.companyIntroduction || '' // Ensure companyIntroduction exists
-        }));
+      // Log the incoming golden resume format for debugging
+      console.log("Received goldenResume format:", typeof goldenResume, JSON.stringify(goldenResume).substring(0, 200) + "...");
+      
+      // Normalize the goldenResume structure
+      let normalizedResume;
+      
+      // Handle deeply nested resume structure with double "resume" key
+      if (typeof goldenResume === 'object' && goldenResume !== null) {
+        if (goldenResume.resume && goldenResume.resume.resume) {
+          // Case: { resume: { resume: { actual data } } }
+          normalizedResume = {
+            resume: goldenResume.resume.resume
+          };
+          console.log("Detected doubly nested resume structure, normalizing...");
+        } else if (goldenResume.resume) {
+          // Case: { resume: { actual data } }
+          normalizedResume = goldenResume;
+          console.log("Detected singly nested resume structure, keeping as is...");
+        } else if (Object.keys(goldenResume).includes('personalInfo') || 
+                  Object.keys(goldenResume).includes('professionalExperience')) {
+          // Case: { actual data } (no resume wrapper)
+          normalizedResume = {
+            resume: goldenResume
+          };
+          console.log("Detected non-nested resume data, adding resume wrapper...");
+        } else {
+          // Default - use as is
+          normalizedResume = goldenResume;
+          console.log("Using resume data as is (unrecognized format)");
+        }
+      } else {
+        // If it's a string or other type, try to parse it if string, otherwise use as is
+        try {
+          if (typeof goldenResume === 'string') {
+            const parsed = JSON.parse(goldenResume);
+            normalizedResume = parsed;
+            console.log("Parsed string resume data");
+          } else {
+            normalizedResume = goldenResume;
+            console.log("Using non-object resume data as is");
+          }
+        } catch (e) {
+          console.error("Error parsing resume string:", e);
+          normalizedResume = goldenResume;
+        }
+      }
+      
+      // Ensure the structure has necessary fields and format
+      if (normalizedResume && normalizedResume.resume) {
+        if (normalizedResume.resume.professionalExperience) {
+          normalizedResume.resume.professionalExperience = normalizedResume.resume.professionalExperience.map((exp: any) => ({
+            ...exp,
+            companyIntroduction: exp.companyIntroduction || '' // Ensure companyIntroduction exists
+          }));
+        }
       }
 
-      const resumeData = {
-        resume: goldenResume
-      };
+      console.log("Normalized resume format:", JSON.stringify(normalizedResume).substring(0, 200) + "...");
 
       const { data: editorData, error: editorCheckError } = await supabaseClient
         .from('resume_editors')
@@ -206,10 +253,11 @@ Deno.serve(async (req) => {
       }
 
       if (editorData) {
+        console.log("Updating existing editor record");
         const { error: editorUpdateError } = await supabaseClient
           .from('resume_editors')
           .update({
-            content: resumeData,
+            content: normalizedResume,
             last_saved: new Date().toISOString()
           })
           .eq('id', editorData.id);
@@ -218,11 +266,12 @@ Deno.serve(async (req) => {
           throw editorUpdateError;
         }
       } else {
+        console.log("Creating new editor record");
         const { error: editorInsertError } = await supabaseClient
           .from('resume_editors')
           .insert({
             analysis_id: analysisId,
-            content: resumeData,
+            content: normalizedResume,
             last_saved: new Date().toISOString()
           });
 
