@@ -212,7 +212,15 @@ const ResumePreview = () => {
           }
         }
 
-        const content = editorData.content as EditorContent;
+        let content = editorData.content as EditorContent;
+        
+        if (!content.resume && typeof content === 'object') {
+          const keys = Object.keys(content);
+          if (keys.includes('personalInfo') || keys.includes('professionalExperience')) {
+            content = { resume: content };
+          }
+        }
+        
         console.log("Preparing resume data with content:", content);
 
         const sectionOrder = content.sectionOrder && Array.isArray(content.sectionOrder) && content.sectionOrder.length > 0 

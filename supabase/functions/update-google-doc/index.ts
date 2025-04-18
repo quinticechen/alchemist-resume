@@ -181,7 +181,20 @@ Deno.serve(async (req) => {
       throw analysisUpdateError;
     }
 
+    // Ensure professionalExperience entries have companyIntroduction
     if (goldenResume && analysis.resume_id) {
+      // Make sure goldenResume has the correct structure with professionalExperience
+      if (goldenResume.professionalExperience) {
+        goldenResume.professionalExperience = goldenResume.professionalExperience.map((exp: any) => ({
+          ...exp,
+          companyIntroduction: exp.companyIntroduction || '' // Ensure companyIntroduction exists
+        }));
+      }
+
+      const resumeData = {
+        resume: goldenResume
+      };
+
       const { data: editorData, error: editorCheckError } = await supabaseClient
         .from('resume_editors')
         .select('id')
@@ -191,16 +204,6 @@ Deno.serve(async (req) => {
       if (editorCheckError && editorCheckError.code !== 'PGRST116') {
         throw editorCheckError;
       }
-
-      const resumeData = {
-        resume: {
-          ...goldenResume,
-          professionalExperience: goldenResume.professionalExperience?.map((exp: any) => ({
-            ...exp,
-            companyIntroduction: exp.companyIntroduction || ''
-          })) || []
-        }
-      };
 
       if (editorData) {
         const { error: editorUpdateError } = await supabaseClient

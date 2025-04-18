@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useCallback } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from "@/contexts/AuthContext";
@@ -85,10 +84,14 @@ const ResumeRefine = () => {
               
             if (editorError) throw editorError;
             
+            console.log("Editor data:", editorData);
+            
             // Get the formatted resume content
             let resumeContent = null;
             if (editorData?.content) {
+              // Ensure the data has the expected format
               resumeContent = JSON.stringify(editorData.content, null, 2);
+              console.log("Formatted content:", resumeContent);
             }
             
             // Extract job title safely, handling all possible data shapes from Supabase

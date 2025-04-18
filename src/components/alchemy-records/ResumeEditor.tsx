@@ -108,33 +108,67 @@ const ResumeEditor = ({
           throw editorError;
         }
 
-        if (editorData) {
-          const content = editorData.content;
+        if (editorData && editorData.content) {
+          console.log("Found editor content:", editorData.content);
           
-          if (content.sectionOrder && Array.isArray(content.sectionOrder)) {
-            setSectionOrder(content.sectionOrder);
+          // Handle different content structures
+          let processedContent;
+          if (editorData.content.resume) {
+            // New format: content = { resume: {...} }
+            processedContent = editorData.content;
+            
+            // Ensure professionalExperience has companyIntroduction
+            if (processedContent.resume.professionalExperience) {
+              processedContent.resume.professionalExperience = processedContent.resume.professionalExperience.map((exp: any) => ({
+                ...exp,
+                companyIntroduction: exp.companyIntroduction || ''
+              }));
+            }
+          } else {
+            // Old format or direct resume data
+            processedContent = { resume: editorData.content };
+          }
+          
+          if (processedContent.sectionOrder && Array.isArray(processedContent.sectionOrder)) {
+            setSectionOrder(processedContent.sectionOrder);
             
             const initialCollapsedState: Record<string, boolean> = {};
-            content.sectionOrder.forEach((section: string, index: number) => {
+            processedContent.sectionOrder.forEach((section: string, index: number) => {
               initialCollapsedState[section] = (index !== 0 && section !== 'professionalExperience');
             });
             setCollapsedSections(initialCollapsedState);
           }
           
-          setResumeData(content);
-          setSavedData(JSON.stringify(content));
+          setResumeData(processedContent);
+          setSavedData(JSON.stringify(processedContent));
           setEditorId(editorData.id);
+          console.log("Set resume data:", processedContent);
         } else {
-          let initialContent = {};
+          let initialContent = { resume: {} };
           
           if (goldenResume) {
             try {
-              initialContent = typeof goldenResume === 'string' 
+              let parsedContent = typeof goldenResume === 'string' 
                 ? JSON.parse(goldenResume) 
                 : goldenResume;
+                
+              // Check if the parsed content already has the resume wrapper
+              if (parsedContent.resume) {
+                initialContent = parsedContent;
+              } else {
+                initialContent = { resume: parsedContent };
+              }
+              
+              // Ensure professionalExperience has companyIntroduction
+              if (initialContent.resume.professionalExperience) {
+                initialContent.resume.professionalExperience = initialContent.resume.professionalExperience.map((exp: any) => ({
+                  ...exp,
+                  companyIntroduction: exp.companyIntroduction || ''
+                }));
+              }
             } catch (e) {
               console.error("Failed to parse golden resume:", e);
-              initialContent = {};
+              initialContent = { resume: {} };
             }
           }
           
@@ -152,6 +186,7 @@ const ResumeEditor = ({
           setResumeData(initialContent);
           setSavedData(JSON.stringify(initialContent));
           setEditorId(newEditor.id);
+          console.log("Created new resume data:", initialContent);
         }
       } catch (error: any) {
         console.error('Error fetching or creating editor content:', error);
@@ -203,8 +238,18 @@ const ResumeEditor = ({
       if (typeof data !== 'object' || data === null) {
         return false;
       }
+      
+      // Check if data has the expected resume structure
+      if (!data.resume || typeof data.resume !== 'object') {
+        console.error("Invalid resume data format: missing resume object");
+        return false;
+      }
+      
+      // Additional validation can be added here if needed
+      
       return true;
     } catch (e) {
+      console.error("Resume validation error:", e);
       return false;
     }
   };
@@ -218,6 +263,8 @@ const ResumeEditor = ({
       return;
     }
 
+    console.log("About to save resume data:", resumeData);
+    
     if (!validateResumeData(resumeData)) {
       toast({
         title: "Invalid resume format",
@@ -233,6 +280,16 @@ const ResumeEditor = ({
         ...resumeData,
         sectionOrder: sectionOrder
       };
+      
+      // Ensure professionalExperience has companyIntroduction
+      if (dataToSave.resume?.professionalExperience) {
+        dataToSave.resume.professionalExperience = dataToSave.resume.professionalExperience.map((exp: any) => ({
+          ...exp,
+          companyIntroduction: exp.companyIntroduction || ''
+        }));
+      }
+      
+      console.log("Saving data:", dataToSave);
       
       const { error } = await supabase
         .from('resume_editors')
@@ -255,6 +312,7 @@ const ResumeEditor = ({
       setLocalHasUnsavedChanges(false);
       setHasUnsavedChanges(false);
     } catch (error: any) {
+      console.error("Save error:", error);
       toast({
         title: "Error",
         description: error.message || "Failed to save resume. Please try again.",
