@@ -95,18 +95,16 @@ const ResumeEditor = ({
     const otherSections = initialSections.filter(
       (section) => section !== "personalInfo"
     );
-    const orderedSections = ["personalInfo", ...otherSections];
+    const orderedSections: ResumeSection[] = ["personalInfo" as ResumeSection, ...otherSections];
 
     setSectionOrder(orderedSections);
 
-    // Initially set all sections to collapsed except the first one (Personal Info)
     const initialCollapsedState: Record<string, boolean> = {};
     orderedSections.forEach((section, index) => {
       initialCollapsedState[section] = index !== 0;
     });
     setCollapsedSections(initialCollapsedState);
 
-    // Set the initial active section
     activeSectionRef.current = orderedSections[0];
   }, []);
 
@@ -147,10 +145,8 @@ const ResumeEditor = ({
           console.log("Found editor content:", editorData.content);
 
           let processedContent: ResumeData;
-          // Normalize the data structure - handle different formats
           if (editorData.content.resume) {
             if (editorData.content.resume.resume) {
-              // Handle double nested resume structure
               processedContent = {
                 resume: editorData.content.resume.resume,
               };
@@ -158,7 +154,6 @@ const ResumeEditor = ({
                 "Found doubly nested resume structure, normalizing..."
               );
             } else {
-              // Standard resume.* structure
               processedContent = editorData.content as ResumeData;
               console.log("Using standard resume structure");
             }
@@ -179,11 +174,9 @@ const ResumeEditor = ({
             Object.keys(editorData.content).includes("personalInfo") ||
             Object.keys(editorData.content).includes("professionalExperience")
           ) {
-            // Direct data structure without resume wrapper
             processedContent = { resume: editorData.content as any };
             console.log("Found direct data structure, adding resume wrapper");
           } else {
-            // Unknown structure, try to use as is
             processedContent = editorData.content as ResumeData;
             console.log("Using editor content as is (unrecognized format)");
           }
@@ -194,7 +187,6 @@ const ResumeEditor = ({
           ) {
             setSectionOrder(processedContent.sectionOrder);
 
-            // Only expand the first section initially
             const initialCollapsedState: Record<string, boolean> = {};
             processedContent.sectionOrder.forEach(
               (section: string, index: number) => {
@@ -218,16 +210,13 @@ const ResumeEditor = ({
                   ? JSON.parse(goldenResume)
                   : goldenResume;
 
-              // Handle different data structures
               if (parsedContent.resume) {
                 if (parsedContent.resume.resume) {
-                  // Double nested case: { resume: { resume: {...} } }
                   initialContent = {
                     resume: parsedContent.resume.resume,
                   };
                   console.log("Parsed golden resume with double nesting");
                 } else {
-                  // Regular case: { resume: {...} }
                   initialContent = parsedContent;
                   console.log("Parsed golden resume with single nesting");
                 }
@@ -235,11 +224,9 @@ const ResumeEditor = ({
                 Object.keys(parsedContent).includes("personalInfo") ||
                 Object.keys(parsedContent).includes("professionalExperience")
               ) {
-                // Direct data: { personalInfo: {...}, ... }
                 initialContent = { resume: parsedContent };
                 console.log("Parsed golden resume with direct data structure");
               } else {
-                // Use as is
                 initialContent = parsedContent;
                 console.log("Using parsed golden resume as is");
               }
@@ -302,16 +289,13 @@ const ResumeEditor = ({
     setHasUnsavedChanges(contentChanged);
   }, [resumeData, savedData, setHasUnsavedChanges]);
 
-  // Function to handle section toggling and ensure only one section is expanded at a time
   const handleSectionToggle = useCallback((section: ResumeSection) => {
     console.log("Toggle section:", section);
 
-    // If section is collapsed and being expanded, collapse all other sections
     setCollapsedSections((prev) => {
       const wasPreviouslyCollapsed = prev[section];
 
       if (wasPreviouslyCollapsed) {
-        // This section is being expanded, so collapse all others
         const newState: Record<string, boolean> = {};
         Object.keys(prev).forEach((key) => {
           newState[key as ResumeSection] = key !== section;
@@ -319,7 +303,6 @@ const ResumeEditor = ({
         activeSectionRef.current = section;
         return newState;
       } else {
-        // This section is being collapsed
         return { ...prev, [section]: true };
       }
     });
@@ -337,13 +320,11 @@ const ResumeEditor = ({
       };
     });
 
-    // Trigger auto-save after reordering
     scheduleAutoSave();
   }, []);
 
   const handleResumeDataChange = useCallback((updatedData: any) => {
     setResumeData(updatedData);
-    // Data has changed, schedule auto-save
     scheduleAutoSave();
   }, []);
 
@@ -365,7 +346,6 @@ const ResumeEditor = ({
     }
   };
 
-  // Schedule auto-save after changes, debounced to avoid too many requests
   const scheduleAutoSave = useCallback(() => {
     if (autoSaveTimerRef.current) {
       clearTimeout(autoSaveTimerRef.current);
@@ -373,10 +353,9 @@ const ResumeEditor = ({
 
     autoSaveTimerRef.current = setTimeout(() => {
       handleSaveContent(true);
-    }, 2000); // Wait 2 seconds of inactivity before saving
+    }, 2000);
   }, []);
 
-  // Save content to Supabase
   const handleSaveContent = async (isAutoSave = false) => {
     if (!resumeData || JSON.stringify(resumeData) === savedData || !editorId) {
       if (!isAutoSave) {
@@ -459,7 +438,6 @@ const ResumeEditor = ({
     }
   };
 
-  // Cleanup auto-save timer on unmount
   useEffect(() => {
     return () => {
       if (autoSaveTimerRef.current) {
@@ -491,13 +469,12 @@ const ResumeEditor = ({
   const handleDragEnd = (result: DropResult) => {
     if (!result.destination) return;
 
-    const items = sectionOrder.filter((section) => section !== "personalInfo"); // Exclude personalInfo from the draggable items
+    const items = sectionOrder.filter((section) => section !== "personalInfo");
     const [reorderedItem] = items.splice(result.source.index, 1);
     items.splice(result.destination.index, 0, reorderedItem);
 
-    // Ensure personalInfo is always at the beginning when updating the state
-    handleSectionsReorder(["personalInfo", ...items]);
-  }; // This is the correct closing brace for handleDragEnd
+    handleSectionsReorder(["personalInfo" as ResumeSection, ...items]);
+  };
 
   if (isLoading) {
     return <div className="text-center py-4">Loading editor...</div>;
@@ -542,7 +519,6 @@ const ResumeEditor = ({
                       />
                     </div>
 
-                    {/* Render Personal Info separately and non-draggable */}
                     <SectionEditor
                       key="personalInfo"
                       section="personalInfo"
@@ -562,7 +538,6 @@ const ResumeEditor = ({
                             ref={provided.innerRef}
                             className="space-y-4"
                           >
-                            {/* Render other sections as draggable */}
                             {sectionOrder
                               .filter((section) => section !== "personalInfo")
                               .map((section, index) => (
