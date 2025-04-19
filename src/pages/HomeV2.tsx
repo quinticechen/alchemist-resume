@@ -1,15 +1,85 @@
-
-
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { Session } from "@supabase/supabase-js";
+import { useToast } from "@/hooks/use-toast";
 import WebsitesSection from "@/components/WebsitesSection";
+
+// Import components once they're created
+import { HeroSection } from "@/components/home/HeroSection";
+import { CoreFeatures } from "@/components/home/CoreFeatures";
+import { ValueProposition } from "@/components/home/ValueProposition";
+import { CallToAction } from "@/components/home/CallToAction";
 
 const Home = () => {
   const navigate = useNavigate();
+  const [session, setSession] = useState<Session | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
 
+  useEffect(() => {
+    const initializeSession = async () => {
+      try {
+        const {
+          data: { session: initialSession },
+          error: sessionError,
+        } = await supabase.auth.getSession();
+
+        if (sessionError) {
+          console.error("Session error:", sessionError);
+          throw sessionError;
+        }
+
+        setSession(initialSession);
+
+        const {
+          data: { subscription },
+        } = supabase.auth.onAuthStateChange((event, currentSession) => {
+          setSession(currentSession);
+
+          if (event === "SIGNED_IN" && currentSession) {
+            toast({
+              title: "Successfully signed in",
+              description: "Redirecting to workshop...",
+            });
+            navigate("/alchemist-workshop");
+          }
+        });
+
+        return () => {
+          subscription.unsubscribe();
+        };
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "There was a problem checking your login status. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    initializeSession();
+  }, [navigate, toast]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="mb-4 text-xl font-semibold text-primary">
+            Loading...
+          </div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+        </div>
+      </div>
+    );
+  }
+
+  // For now, we'll use a placeholder return until the component files are created
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100">
       <div className="relative isolate z-0 overflow-hidden bg-gradient-to-b from-neutral-50 to-white">
         {/* Hero Section */}
         <div className="absolute inset-0 -z-10 bg-[radial-gradient(45rem_50rem_at_top,theme(colors.neutral-100),white)] opacity-20"/>
@@ -317,9 +387,6 @@ const Home = () => {
           </div>
         </div>
         
-        {/* Alchemist Section */}
-        {/* <AlchemistSection /> */}
-        
         {/* FAQ Section (existing) */}
         <div className="bg-white py-24 sm:py-32">
           <div className="mx-auto max-w-7xl px-6 lg:px-8">
@@ -360,10 +427,8 @@ const Home = () => {
           </div>
         </div>
         
-        {/* New Websites Section */}
+        {/* Websites Section */}
         <WebsitesSection />
-        
-        {/* Keep existing end content */}
       </div>
     </div>
   );
