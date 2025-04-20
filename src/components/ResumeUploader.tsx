@@ -5,7 +5,7 @@ import UploadZone from "./upload/UploadZone";
 import { useResumeUpload } from "./upload/useResumeUpload";
 import ResumeSelector from "./ResumeSelector";
 import { Button } from "@/components/ui/button";
-import { FileText, Trash } from "lucide-react";
+import { FileText, Trash, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
@@ -26,10 +26,12 @@ const ResumeUploader = ({
 }: ResumeUploaderProps) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [resumePath, setResumePath] = useState<string>("");
+  const [resumeUrl, setResumeUrl] = useState<string>("");
   const [activeTab, setActiveTab] = useState<string>(externalActiveTab || "upload");
   const { isUploading, uploadFile } = useResumeUpload((file, path, url, id) => {
     setSelectedFile(file);
     setResumePath(path);
+    setResumeUrl(url);
     if (onUploadSuccess) onUploadSuccess(file, path, url, id);
     if (onFileUpload) onFileUpload(file, path, url, id);
   });
@@ -42,7 +44,9 @@ const ResumeUploader = ({
   };
 
   const previewResume = () => {
-    if (resumePath) {
+    if (resumeUrl) {
+      window.open(resumeUrl, '_blank');
+    } else if (resumePath) {
       const { data } = supabase.storage
         .from('resumes')
         .getPublicUrl(resumePath);
@@ -53,6 +57,7 @@ const ResumeUploader = ({
   const removeResume = () => {
     setSelectedFile(null);
     setResumePath("");
+    setResumeUrl("");
     if (onRemove) {
       onRemove();
     }
@@ -86,7 +91,7 @@ const ResumeUploader = ({
                 onClick={previewResume}
                 className="text-primary border-primary/20 hover:bg-primary/5 flex items-center gap-2"
               >
-                <FileText className="h-4 w-4" />
+                <Eye className="h-4 w-4" />
                 Preview Resume
               </Button>
               <Button
@@ -126,6 +131,8 @@ const ResumeUploader = ({
                 const { data } = supabase.storage
                   .from('resumes')
                   .getPublicUrl(filePath);
+                
+                setResumeUrl(data.publicUrl);
                 
                 if (onUploadSuccess) {
                   onUploadSuccess(fakeFile, filePath, data.publicUrl, resumeId);

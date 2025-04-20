@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import ResumeUploader from "@/components/ResumeUploader";
@@ -8,9 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscriptionCheck } from "@/hooks/useSubscriptionCheck";
 import { getEnvironment } from "@/integrations/supabase/client";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Trash } from "lucide-react";
 
 const AlchemistWorkshop = () => {
   const { session, isLoading } = useAuth();
@@ -29,8 +28,6 @@ const AlchemistWorkshop = () => {
   const [isGenerationComplete, setIsGenerationComplete] = useState(false);
   const hasCheckedSubscription = useRef(false);
   const [activeTab, setActiveTab] = useState<string>("upload");
-  const [useSelectedResume, setUseSelectedResume] = useState(false);
-  const [selectedResumeName, setSelectedResumeName] = useState<string>("");
 
   useEffect(() => {
     if (analysisId === "") {
@@ -69,7 +66,6 @@ const AlchemistWorkshop = () => {
     setIsProcessing(false);
     setIsTimeout(false);
     setIsGenerationComplete(false);
-    setUseSelectedResume(false);
     
     toast({
       title: "Resume ready",
@@ -82,8 +78,6 @@ const AlchemistWorkshop = () => {
     setFilePath("");
     setPublicUrl("");
     setResumeId("");
-    setUseSelectedResume(false);
-    setSelectedResumeName("");
   };
 
   const handleUrlSubmit = async (url: string) => {
@@ -244,20 +238,12 @@ const AlchemistWorkshop = () => {
           Alchemist Workshop
         </h1>
 
-        {!selectedFile ? (
-          <ResumeUploader 
-            onUploadSuccess={handleFileUploadSuccess} 
-            activeTab={activeTab}
-            onTabChange={(tab) => setActiveTab(tab)}
-          />
-        ) : (
-          <div className="space-y-4">
-            <ResumeUploader 
-              onUploadSuccess={handleFileUploadSuccess} 
-              onRemove={handleResetResume}
-            />
-          </div>
-        )}
+        <ResumeUploader 
+          onUploadSuccess={handleFileUploadSuccess} 
+          activeTab={activeTab}
+          onTabChange={(tab) => setActiveTab(tab)}
+          onRemove={handleResetResume}
+        />
 
         {selectedFile && (
           <JobUrlInput
