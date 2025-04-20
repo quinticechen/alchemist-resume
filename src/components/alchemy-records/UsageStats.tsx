@@ -1,6 +1,5 @@
 
-import React from 'react';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { FileText } from "lucide-react";
 
@@ -21,7 +20,7 @@ const UsageStats = ({ usageCount }: UsageStatsProps) => {
       // Get user profile
       const { data: profile } = await supabase
         .from('profiles')
-        .select('subscription_status, monthly_usage_count')
+        .select('subscription_status, monthly_usage_count, free_trial_limit, usage_count')
         .eq('id', session.user.id)
         .single();
 
@@ -34,7 +33,8 @@ const UsageStats = ({ usageCount }: UsageStatsProps) => {
         } else if (profile.subscription_status === 'alchemist') {
           setRemainingUses(Math.max(0, 30 - (profile.monthly_usage_count || 0)));
         } else {
-          setRemainingUses(Math.max(0, 3 - usageCount));
+          // For apprentice, use free_trial_limit - usage_count
+          setRemainingUses(Math.max(0, (profile.free_trial_limit || 3) - (profile.usage_count || 0)));
         }
       }
       

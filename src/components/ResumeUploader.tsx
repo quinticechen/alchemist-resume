@@ -3,10 +3,11 @@ import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import UploadZone from "./upload/UploadZone";
 import { useResumeUpload } from "./upload/useResumeUpload";
-import { useResumeAnalysis } from "./upload/useResumeAnalysis";
+import ResumeSelector from "./ResumeSelector";
 import { Button } from "@/components/ui/button";
 import { FileText, Trash } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 interface ResumeUploaderProps {
   onUploadSuccess: (file: File, path: string, url: string, id: string) => void;
@@ -16,13 +17,13 @@ interface ResumeUploaderProps {
 const ResumeUploader = ({ onUploadSuccess, onFileUpload }: ResumeUploaderProps) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [resumePath, setResumePath] = useState<string>("");
+  const [activeTab, setActiveTab] = useState<string>("upload");
   const { isUploading, uploadFile } = useResumeUpload((file, path, url, id) => {
     setSelectedFile(file);
     setResumePath(path);
     if (onUploadSuccess) onUploadSuccess(file, path, url, id);
     if (onFileUpload) onFileUpload(file, path, url, id);
   });
-  useResumeAnalysis();
 
   const previewResume = () => {
     if (resumePath) {
@@ -80,10 +81,42 @@ const ResumeUploader = ({ onUploadSuccess, onFileUpload }: ResumeUploaderProps) 
             </div>
           </div>
         ) : (
-          <UploadZone 
-            isUploading={isUploading}
-            onFileSelect={handleFileSelect}
-          />
+          <Tabs defaultValue={activeTab} value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="upload">Upload New Resume</TabsTrigger>
+              <TabsTrigger value="select">Select Previous Resume</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="upload" className="mt-4">
+              <UploadZone 
+                isUploading={isUploading}
+                onFileSelect={handleFileSelect}
+              />
+            </TabsContent>
+            
+            <TabsContent value="select" className="mt-4">
+              <ResumeSelector onSelect={(resumeId, fileName, filePath) => {
+                // Create a fake File object for consistency
+                const fakeFile = new File([], fileName, {
+                  type: "application/pdf",
+                });
+                setSelectedFile(fakeFile);
+                setResumePath(filePath);
+                
+                // Get public URL for the resume
+                const { data } = supabase.storage
+                  .from('resumes')
+                  .getPublicUrl(filePath);
+                
+                if (onUploadSuccess) {
+                  onUploadSuccess(fakeFile, filePath, data.publicUrl, resumeId);
+                }
+                if (onFileUpload) {
+                  onFileUpload(fakeFile, filePath, data.publicUrl, resumeId);
+                }
+              }} />
+            </TabsContent>
+          </Tabs>
         )}
       </CardContent>
     </Card>
