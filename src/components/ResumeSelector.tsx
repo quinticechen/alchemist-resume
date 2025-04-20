@@ -109,7 +109,7 @@ const ResumeSelector: React.FC<ResumeSelectorProps> = ({
   };
 
   return (
-    <div className="p-6 space-y-4">
+    <div>
       {isLoading ? (
         <div className="text-center py-4">Loading your resumes...</div>
       ) : resumes.length === 0 ? (

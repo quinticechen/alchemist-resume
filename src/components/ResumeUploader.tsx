@@ -78,7 +78,7 @@ const ResumeUploader = ({
   };
 
   return (
-    <div className="w-full border-neutral-200 shadow-apple hover:shadow-apple-lg transition-shadow duration-300">
+    <div>
       {selectedFile ? (
         <div className="space-y-4">
           <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
