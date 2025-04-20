@@ -1,8 +1,13 @@
-
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { FileText, Upload, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -12,8 +17,18 @@ interface ResumeSelectorProps {
   className?: string;
 }
 
-const ResumeSelector: React.FC<ResumeSelectorProps> = ({ onSelect, className = "" }) => {
-  const [resumes, setResumes] = useState<Array<{ id: string; file_name: string; file_path: string; created_at: string }>>([]);
+const ResumeSelector: React.FC<ResumeSelectorProps> = ({
+  onSelect,
+  className = "",
+}) => {
+  const [resumes, setResumes] = useState<
+    Array<{
+      id: string;
+      file_name: string;
+      file_path: string;
+      created_at: string;
+    }>
+  >([]);
   const [selectedResumeId, setSelectedResumeId] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
@@ -54,9 +69,15 @@ const ResumeSelector: React.FC<ResumeSelectorProps> = ({ onSelect, className = "
       return;
     }
 
-    const selectedResume = resumes.find(resume => resume.id === selectedResumeId);
+    const selectedResume = resumes.find(
+      (resume) => resume.id === selectedResumeId
+    );
     if (selectedResume) {
-      onSelect(selectedResume.id, selectedResume.file_name, selectedResume.file_path);
+      onSelect(
+        selectedResume.id,
+        selectedResume.file_name,
+        selectedResume.file_path
+      );
     }
   };
 
@@ -70,13 +91,15 @@ const ResumeSelector: React.FC<ResumeSelectorProps> = ({ onSelect, className = "
       return;
     }
 
-    const selectedResume = resumes.find(resume => resume.id === selectedResumeId);
+    const selectedResume = resumes.find(
+      (resume) => resume.id === selectedResumeId
+    );
     if (selectedResume) {
       const { data } = supabase.storage
-        .from('resumes')
+        .from("resumes")
         .getPublicUrl(selectedResume.file_path);
-      
-      window.open(data.publicUrl, '_blank');
+
+      window.open(data.publicUrl, "_blank");
     }
   };
 
@@ -86,58 +109,57 @@ const ResumeSelector: React.FC<ResumeSelectorProps> = ({ onSelect, className = "
   };
 
   return (
-    <Card className={`w-full shadow-apple hover:shadow-apple-lg transition-shadow duration-300 ${className}`}>
-      {/* <CardHeader className="border-b border-neutral-200 bg-neutral-50">
-        <CardTitle className="text-xl font-semibold text-neutral-800">Select Previous Resume</CardTitle>
-      </CardHeader> */}
-      <CardContent className="p-6 space-y-4">
-        {isLoading ? (
-          <div className="text-center py-4">Loading your resumes...</div>
-        ) : resumes.length === 0 ? (
-          <div className="text-center py-4 text-neutral-600">
-            <FileText className="h-12 w-12 mx-auto text-neutral-400 mb-2" />
-            <p>You haven't uploaded any resumes yet.</p>
-          </div>
-        ) : (
-          <>
-            <Select value={selectedResumeId} onValueChange={setSelectedResumeId}>
-              <SelectTrigger className="w-full bg-white">
-                <SelectValue placeholder="Select a resume" />
-              </SelectTrigger>
-              <SelectContent className="bg-white">
-                {resumes.map((resume) => (
-                  <SelectItem key={resume.id} value={resume.id} className="cursor-pointer">
-                    {resume.file_name} - {formatDate(resume.created_at)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
-              {selectedResumeId && (
-                <Button 
-                  onClick={previewSelectedResume} 
-                  variant="outline"
-                  className="flex items-center justify-center gap-2"
+    <div className="p-6 space-y-4">
+      {isLoading ? (
+        <div className="text-center py-4">Loading your resumes...</div>
+      ) : resumes.length === 0 ? (
+        <div className="text-center py-4 text-neutral-600">
+          <FileText className="h-12 w-12 mx-auto text-neutral-400 mb-2" />
+          <p>You haven't uploaded any resumes yet.</p>
+        </div>
+      ) : (
+        <>
+          <Select value={selectedResumeId} onValueChange={setSelectedResumeId}>
+            <SelectTrigger className="w-full bg-white">
+              <SelectValue placeholder="Select a resume" />
+            </SelectTrigger>
+            <SelectContent className="bg-white">
+              {resumes.map((resume) => (
+                <SelectItem
+                  key={resume.id}
+                  value={resume.id}
+                  className="cursor-pointer"
                 >
-                  <Eye className="h-4 w-4" />
-                  Preview Resume
-                </Button>
-              )}
-              
-              <Button 
-                onClick={handleSelect} 
-                className="w-full bg-primary hover:bg-primary-dark flex items-center justify-center gap-2"
-                disabled={!selectedResumeId}
+                  {resume.file_name} - {formatDate(resume.created_at)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+            {selectedResumeId && (
+              <Button
+                onClick={previewSelectedResume}
+                variant="outline"
+                className="flex items-center justify-center gap-2"
               >
-                <FileText className="h-4 w-4" />
-                Use Selected Resume
+                <Eye className="h-4 w-4" />
+                Preview Resume
               </Button>
-            </div>
-          </>
-        )}
-      </CardContent>
-    </Card>
+            )}
+
+            <Button
+              onClick={handleSelect}
+              className="w-full bg-primary hover:bg-primary-dark flex items-center justify-center gap-2"
+              disabled={!selectedResumeId}
+            >
+              <FileText className="h-4 w-4" />
+              Use Selected Resume
+            </Button>
+          </div>
+        </>
+      )}
+    </div>
   );
 };
 
