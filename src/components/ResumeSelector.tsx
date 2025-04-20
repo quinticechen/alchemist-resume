@@ -87,9 +87,9 @@ const ResumeSelector: React.FC<ResumeSelectorProps> = ({ onSelect, className = "
 
   return (
     <Card className={`w-full shadow-apple hover:shadow-apple-lg transition-shadow duration-300 ${className}`}>
-      <CardHeader className="border-b border-neutral-200 bg-neutral-50">
+      {/* <CardHeader className="border-b border-neutral-200 bg-neutral-50">
         <CardTitle className="text-xl font-semibold text-neutral-800">Select Previous Resume</CardTitle>
-      </CardHeader>
+      </CardHeader> */}
       <CardContent className="p-6 space-y-4">
         {isLoading ? (
           <div className="text-center py-4">Loading your resumes...</div>

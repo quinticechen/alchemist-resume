@@ -73,9 +73,9 @@ const ResumeUploader = ({
 
   return (
     <Card className="w-full border-neutral-200 shadow-apple hover:shadow-apple-lg transition-shadow duration-300">
-      <CardHeader className="border-b border-neutral-200 bg-neutral-50">
-        <CardTitle className="text-xl font-semibold text-neutral-800">Upload Your Resume</CardTitle>
-      </CardHeader>
+      {/* <CardHeader className="border-b border-neutral-200 bg-neutral-50"> */}
+        {/* <CardTitle className="text-xl font-semibold text-neutral-800">Upload Your Resume</CardTitle> */}
+      {/* </CardHeader> */}
       <CardContent className="p-6">
         {selectedFile ? (
           <div className="space-y-4">
