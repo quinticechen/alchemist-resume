@@ -12,18 +12,34 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 interface ResumeUploaderProps {
   onUploadSuccess: (file: File, path: string, url: string, id: string) => void;
   onFileUpload?: (file: File, filePath: string, publicUrl: string, id: string) => void;
+  activeTab?: string;
+  onTabChange?: (tab: string) => void;
+  onRemove?: () => void;
 }
 
-const ResumeUploader = ({ onUploadSuccess, onFileUpload }: ResumeUploaderProps) => {
+const ResumeUploader = ({ 
+  onUploadSuccess, 
+  onFileUpload, 
+  activeTab: externalActiveTab, 
+  onTabChange,
+  onRemove 
+}: ResumeUploaderProps) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [resumePath, setResumePath] = useState<string>("");
-  const [activeTab, setActiveTab] = useState<string>("upload");
+  const [activeTab, setActiveTab] = useState<string>(externalActiveTab || "upload");
   const { isUploading, uploadFile } = useResumeUpload((file, path, url, id) => {
     setSelectedFile(file);
     setResumePath(path);
     if (onUploadSuccess) onUploadSuccess(file, path, url, id);
     if (onFileUpload) onFileUpload(file, path, url, id);
   });
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    if (onTabChange) {
+      onTabChange(value);
+    }
+  };
 
   const previewResume = () => {
     if (resumePath) {
@@ -37,6 +53,9 @@ const ResumeUploader = ({ onUploadSuccess, onFileUpload }: ResumeUploaderProps) 
   const removeResume = () => {
     setSelectedFile(null);
     setResumePath("");
+    if (onRemove) {
+      onRemove();
+    }
   };
 
   const handleFileSelect = (file: File) => {
@@ -81,7 +100,7 @@ const ResumeUploader = ({ onUploadSuccess, onFileUpload }: ResumeUploaderProps) 
             </div>
           </div>
         ) : (
-          <Tabs defaultValue={activeTab} value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <Tabs defaultValue={activeTab} value={activeTab} onValueChange={handleTabChange} className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="upload">Upload New Resume</TabsTrigger>
               <TabsTrigger value="select">Select Previous Resume</TabsTrigger>
