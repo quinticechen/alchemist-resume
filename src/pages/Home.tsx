@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -14,7 +15,6 @@ import { Session } from "@supabase/supabase-js";
 import { useToast } from "@/hooks/use-toast";
 import Lottie from "react-lottie";
 import animationData from "@/animations/OOze.chat.json";
-import Lottie from "react-lottie";
 import Loading from "@/animations/Loading.json";
 
 const companies = ["Google", "Amazon", "Microsoft", "Apple", "Meta"];
