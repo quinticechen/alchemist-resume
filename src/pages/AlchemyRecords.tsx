@@ -24,7 +24,7 @@ const AlchemyRecords = () => {
     handleSaveTitle,
     handleFeedback,
   } = useAlchemyRecords();
-  
+
   const loadingOptions = {
     loop: true,
     autoplay: true,
@@ -41,7 +41,11 @@ const AlchemyRecords = () => {
   }, [session, isLoading, navigate]);
 
   if (isLoading || loading) {
-    return <Lottie options={loadingOptions} />;
+    return (
+      <div className="w-64 h-64 mx-auto">
+        <Lottie options={loadingOptions} />
+      </div>
+    );
   }
 
   if (!session) {

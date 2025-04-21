@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import ResumeUploader from "@/components/ResumeUploader";
@@ -9,6 +8,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscriptionCheck } from "@/hooks/useSubscriptionCheck";
 import { getEnvironment } from "@/integrations/supabase/client";
+import Lottie from "react-lottie";
+import Loading from "@/animations/Loading.json";
 import { Button } from "@/components/ui/button";
 
 const AlchemistWorkshop = () => {
@@ -29,6 +30,15 @@ const AlchemistWorkshop = () => {
   const hasCheckedSubscription = useRef(false);
   const [activeTab, setActiveTab] = useState<string>("upload");
 
+  const loadingOptions = {
+    loop: true,
+    autoplay: true,
+    animationData: Loading,
+    rendererSettings: {
+      preserveAspectRatio: "xMidYMid slice",
+    },
+  };
+  
   useEffect(() => {
     if (analysisId === "") {
       setIsProcessing(false);
@@ -66,7 +76,7 @@ const AlchemistWorkshop = () => {
     setIsProcessing(false);
     setIsTimeout(false);
     setIsGenerationComplete(false);
-    
+
     toast({
       title: "Resume ready",
       description: "Your resume has been uploaded successfully.",
@@ -224,7 +234,11 @@ const AlchemistWorkshop = () => {
   }, []);
 
   if (isLoading) {
-    return <div className="container mx-auto px-4 py-8">Loading...</div>;
+    return (
+      <div className="w-64 h-64 mx-auto">
+        <Lottie options={loadingOptions} />
+      </div>
+    );
   }
 
   if (!session) {
@@ -238,8 +252,8 @@ const AlchemistWorkshop = () => {
           Alchemist Workshop
         </h1>
 
-        <ResumeUploader 
-          onUploadSuccess={handleFileUploadSuccess} 
+        <ResumeUploader
+          onUploadSuccess={handleFileUploadSuccess}
           activeTab={activeTab}
           onTabChange={(tab) => setActiveTab(tab)}
           onRemove={handleResetResume}
