@@ -26,6 +26,8 @@ import {
   DropResult,
 } from "react-beautiful-dnd";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import Lottie from "react-lottie";
+import Loading from "@/animations/Loading.json";
 
 interface ResumeData {
   resume?: {
@@ -89,13 +91,24 @@ const ResumeEditor = ({
   const navigate = useNavigate();
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
   const activeSectionRef = useRef<ResumeSection | null>(null);
+  const loadingOptions = {
+    loop: true,
+    autoplay: true,
+    animationData: Loading,
+    rendererSettings: {
+      preserveAspectRatio: "xMidYMid slice",
+    },
+  };
 
   useEffect(() => {
     const initialSections = getAllSections();
     const otherSections = initialSections.filter(
       (section) => section !== "personalInfo"
     );
-    const orderedSections: ResumeSection[] = ["personalInfo" as ResumeSection, ...otherSections];
+    const orderedSections: ResumeSection[] = [
+      "personalInfo" as ResumeSection,
+      ...otherSections,
+    ];
 
     setSectionOrder(orderedSections);
 
@@ -477,7 +490,11 @@ const ResumeEditor = ({
   };
 
   if (isLoading) {
-    return <div className="text-center py-4">Loading editor...</div>;
+    return (
+      <div className="w-64 h-64 mx-auto">
+        <Lottie options={loadingOptions} />
+      </div>
+    );
   }
 
   return (

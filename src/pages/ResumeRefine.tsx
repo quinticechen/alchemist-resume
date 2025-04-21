@@ -253,7 +253,9 @@ const ResumeRefine = () => {
 
   if (!resumeData && analysisId) {
     return (
-      <div className="container mx-auto px-4 py-8">Loading resume data...</div>
+      <div className="w-64 h-64 mx-auto">
+        <Lottie options={loadingOptions} />
+      </div>
     );
   }
 
