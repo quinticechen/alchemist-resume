@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -12,8 +11,18 @@ import { HeroSection } from "@/components/home/HeroSection";
 import { CoreFeatures } from "@/components/home/CoreFeatures";
 import { ValueProposition } from "@/components/home/ValueProposition";
 import { CallToAction } from "@/components/home/CallToAction";
+import Lottie from "react-lottie";
+import Loading from "@/animations/Loading.json";
 
 const Home = () => {
+  const loadingOptions = {
+    loop: true,
+    autoplay: true,
+    animationData: Loading,
+    rendererSettings: {
+      preserveAspectRatio: "xMidYMid slice",
+    },
+  };
   const navigate = useNavigate();
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -54,7 +63,8 @@ const Home = () => {
       } catch (error) {
         toast({
           title: "Error",
-          description: "There was a problem checking your login status. Please try again.",
+          description:
+            "There was a problem checking your login status. Please try again.",
           variant: "destructive",
         });
       } finally {
@@ -69,8 +79,8 @@ const Home = () => {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center space-y-4">
-          <div className="mb-4 text-xl font-semibold text-primary">
-            Loading...
+          <div className="w-64 h-64 mx-auto">
+            <Lottie options={loadingOptions} />
           </div>
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
         </div>

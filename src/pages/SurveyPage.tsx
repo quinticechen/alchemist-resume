@@ -4,8 +4,18 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import Lottie from "react-lottie";
+import Loading from "@/animations/Loading.json";
 
 const SurveyPage = () => {
+  const loadingOptions = {
+    loop: true,
+    autoplay: true,
+    animationData: Loading,
+    rendererSettings: {
+      preserveAspectRatio: "xMidYMid slice",
+    },
+  };
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
@@ -165,7 +175,7 @@ const SurveyPage = () => {
     //     description: "Please select a plan before proceeding.",
     //     variant: "destructive",
     //   });
-      navigate("/pricing"); // 如果沒有選擇計劃，導航到定價頁面
+    navigate("/pricing"); // 如果沒有選擇計劃，導航到定價頁面
     // }
   };
 
@@ -174,7 +184,11 @@ const SurveyPage = () => {
     : googleFormUrl;
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="w-64 h-64 mx-auto">
+        <Lottie options={loadingOptions} />
+      </div>
+    );
   }
 
   return (
@@ -224,7 +238,9 @@ const SurveyPage = () => {
                 className="border-0"
                 title="Feedback Survey"
               >
-                Loading...
+                <div className="w-64 h-64 mx-auto">
+                  <Lottie options={loadingOptions} />
+                </div>
               </iframe>
             </div>
           </div>
