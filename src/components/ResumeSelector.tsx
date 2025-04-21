@@ -119,7 +119,7 @@ const ResumeSelector: React.FC<ResumeSelectorProps> = ({
         </div>
       ) : (
         <>
-          <Select value={selectedResumeId} onValueChange={setSelectedResumeId} className="mb-4">
+          <Select className="mb-4" value={selectedResumeId} onValueChange={setSelectedResumeId}>
             <SelectTrigger className="w-full bg-white">
               <SelectValue placeholder="Select a resume" />
             </SelectTrigger>
