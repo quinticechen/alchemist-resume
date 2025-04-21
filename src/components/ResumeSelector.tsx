@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -119,7 +120,7 @@ const ResumeSelector: React.FC<ResumeSelectorProps> = ({
         </div>
       ) : (
         <>
-          <Select className="w-full bg-white" value={selectedResumeId} onValueChange={setSelectedResumeId}>
+          <Select value={selectedResumeId} onValueChange={setSelectedResumeId}>
             <SelectTrigger className="w-full bg-white">
               <SelectValue placeholder="Select a resume" />
             </SelectTrigger>
