@@ -119,7 +119,7 @@ const ResumeSelector: React.FC<ResumeSelectorProps> = ({
         </div>
       ) : (
         <>
-          <Select className="mb-4" value={selectedResumeId} onValueChange={setSelectedResumeId}>
+          <Select className="w-full bg-white" value={selectedResumeId} onValueChange={setSelectedResumeId}>
             <SelectTrigger className="w-full bg-white">
               <SelectValue placeholder="Select a resume" />
             </SelectTrigger>
@@ -136,7 +136,7 @@ const ResumeSelector: React.FC<ResumeSelectorProps> = ({
             </SelectContent>
           </Select>
 
-          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 mt-4">
             {selectedResumeId && (
               <Button
                 onClick={previewSelectedResume}
