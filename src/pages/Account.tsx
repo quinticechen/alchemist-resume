@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -161,6 +160,15 @@ const Account = () => {
     navigate("/pricing");
   };
 
+  // Updated free uses calculation using up-to-date profile data
+  const getFreeUsesRemaining = () => {
+    if (!profile) return 0;
+    // Ensure we use the "free_trial_limit" and "usage_count" values directly from the profile
+    const freeTrialLimit = typeof profile.free_trial_limit === "number" ? profile.free_trial_limit : 3;
+    const used = typeof profile.usage_count === "number" ? profile.usage_count : 0;
+    return Math.max(0, freeTrialLimit - used);
+  };
+
   if (authLoading || isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -222,30 +230,32 @@ const Account = () => {
               <div className="space-y-2">
                 <h3 className="text-sm font-medium text-neutral-500">Usage</h3>
                 <p className="text-lg">
-                  {profile?.subscription_status === 'alchemist' ? (
+                  {profile?.subscription_status === 'apprentice' && (
+                    <>
+                      {profile.usage_count || 0} resumes customized
+                      <span className="text-sm text-neutral-500 ml-2">
+                        ({getFreeUsesRemaining()} free uses remaining)
+                      </span>
+                    </>
+                  )}
+                  {profile?.subscription_status === 'alchemist' && (
                     <>
                       {profile.monthly_usage_count || 0} resumes this month
                       <span className="text-sm text-neutral-500 ml-2">
-                        ({getRemainingUses()} uses remaining this month)
+                        ({Math.max(0, 30 - (profile.monthly_usage_count || 0))} uses remaining this month)
                       </span>
                     </>
-                  ) : profile?.subscription_status === 'grandmaster' ? (
+                  )}
+                  {profile?.subscription_status === 'grandmaster' && (
                     <>
                       {profile.usage_count || 0} resumes customized
                       <span className="text-sm text-neutral-500 ml-2">
                         (Unlimited uses)
                       </span>
                     </>
-                  ) : (
-                    <>
-                      {profile?.usage_count || 0} resumes customized
-                      <span className="text-sm text-neutral-500 ml-2">
-                        ({getRemainingUses()} free uses remaining)
-                      </span>
-                    </>
                   )}
                 </p>
-                {profile?.subscription_status === 'apprentice' && profile?.usage_count && profile.usage_count >= 3 && (
+                {profile?.subscription_status === 'apprentice' && getFreeUsesRemaining() === 0 && (
                   <p className="text-sm text-red-500">
                     You've reached the free trial limit. Subscribe to continue using the service.
                   </p>
