@@ -6,12 +6,22 @@ import ResumeEditor from '@/components/alchemy-records/ResumeEditor';
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import Lottie from "react-lottie";
+import Loading from "@/animations/Loading.json";
 
 interface JobData {
   job_title?: string;
 }
 
 const ResumeRefine = () => {
+  const loadingOptions = {
+    loop: true,
+    autoplay: true,
+    animationData: Loading,
+    rendererSettings: {
+      preserveAspectRatio: "xMidYMid slice",
+    },
+  };
   const { session, isLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -197,7 +207,7 @@ const ResumeRefine = () => {
   }, [toast]);
 
   if (isLoading) {
-    return <div className="container mx-auto px-4 py-8">Loading...</div>;
+    return <Lottie options={loadingOptions} />;
   }
 
   if (!session || !analysisId) {

@@ -38,7 +38,7 @@ const SeekerOptimizationSection = ({ optimizationData, analysisId }: SeekerOptim
         {
           id: crypto.randomUUID(),
           role: 'assistant',
-          content: 'Watch this! Behold the secrets of alchemy! Bang! A dazzling resume has just come out of the oven! Are you shocked to see your own transformation?',
+          content: 'Hello! I can help optimize your resume. What would you like help with?',
           timestamp: new Date()
         }
       ]);
@@ -234,8 +234,8 @@ const SeekerOptimizationSection = ({ optimizationData, analysisId }: SeekerOptim
     <Card className="h-full overflow-hidden flex flex-col">
       <CardHeader>
         <CardTitle className="text-lg flex items-center gap-2">
-          <OozeAnimation width={18} height={18} /> {/* Changed to OozeAnimation */}
-          Resume Optimization Assistant {/* Changed from "Seeker Optimization Assistant" to match the character */}
+          <OozeAnimation width={18} height={18} />
+          Ooze Optimization
           {initializationStatus === 'error' && (
             <Button
               variant="ghost"
@@ -257,7 +257,7 @@ const SeekerOptimizationSection = ({ optimizationData, analysisId }: SeekerOptim
           </div>
         ) : initializationStatus === 'loading' ? (
           <div className="flex flex-col items-center justify-center h-full">
-            <OozeAnimation width={120} height={120} /> {/* Changed to OozeAnimation */}
+            <OozeAnimation width={120} height={120} />
             <p className="text-sm text-muted-foreground mt-4">Loading assistant...</p>
           </div>
         ) : initializationStatus === 'error' ? (

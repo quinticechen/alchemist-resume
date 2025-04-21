@@ -9,7 +9,18 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { ResumeSection } from '@/utils/resumeUtils';
+import Lottie from "react-lottie";
+import Loading from "@/animations/Loading.json";
 import OozeDialog from "@/components/OozeDialog";
+
+const loadingOptions = {
+  loop: true,
+  autoplay: true,
+  animationData: Loading,
+  rendererSettings: {
+    preserveAspectRatio: "xMidYMid slice",
+  },
+};
 
 const RESUME_STYLES = [
   { id: 'classic', name: 'Classic', color: 'bg-white' },
@@ -406,7 +417,7 @@ const ResumePreview = () => {
   };
 
   if (isLoading || loading) {
-    return <div className="container mx-auto px-4 py-8">Loading...</div>;
+    return <Lottie options={loadingOptions} />;
   }
 
   if (!resumeData) {

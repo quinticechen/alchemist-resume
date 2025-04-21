@@ -5,6 +5,8 @@ import { useAlchemyRecords } from "@/hooks/use-alchemy-records";
 import UsageStats from "@/components/alchemy-records/UsageStats";
 import AnalysisCard from "@/components/alchemy-records/AnalysisCard";
 import RecordsPagination from "@/components/alchemy-records/RecordsPagination";
+import Lottie from "react-lottie";
+import Loading from "@/animations/Loading.json";
 import SeekerDialog from "@/components/SeekerDialog";
 
 const AlchemyRecords = () => {
@@ -20,17 +22,26 @@ const AlchemyRecords = () => {
     setCurrentPage,
     setEditingId,
     handleSaveTitle,
-    handleFeedback
+    handleFeedback,
   } = useAlchemyRecords();
+  
+  const loadingOptions = {
+    loop: true,
+    autoplay: true,
+    animationData: Loading,
+    rendererSettings: {
+      preserveAspectRatio: "xMidYMid slice",
+    },
+  };
 
   useEffect(() => {
     if (!isLoading && !session) {
-      navigate('/login', { state: { from: '/alchemy-records' } });
+      navigate("/login", { state: { from: "/alchemy-records" } });
     }
   }, [session, isLoading, navigate]);
 
   if (isLoading || loading) {
-    return <div className="container mx-auto px-4 py-8">Loading...</div>;
+    return <Lottie options={loadingOptions} />;
   }
 
   if (!session) {
@@ -61,7 +72,7 @@ const AlchemyRecords = () => {
             ))}
           </div>
 
-          <RecordsPagination 
+          <RecordsPagination
             currentPage={currentPage}
             totalPages={totalPages}
             onPageChange={setCurrentPage}
