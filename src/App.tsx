@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -21,6 +20,7 @@ import HomeV2 from "@/pages/HomeV2";
 import UserOnboard from "@/pages/UserOnboard";
 import ScrollToTop from './components/ScrollToTop';
 import ProtectedRoute from './components/ProtectedRoute';
+import JobWebsites from "@/pages/JobWebsites";
 
 const App = () => {
   return (
@@ -105,6 +105,7 @@ const App = () => {
                 }
               />
               <Route path="/homev2" element={<HomeV2 />} />
+              <Route path="/job-websites" element={<JobWebsites />} />
             </Routes>
           </main>
           <Footer />

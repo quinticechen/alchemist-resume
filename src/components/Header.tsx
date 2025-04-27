@@ -1,69 +1,80 @@
-
-import { Button } from "@/components/ui/button";
-import { LogIn } from "lucide-react";
-import { useNavigate, useLocation } from "react-router-dom";
-import Logo from "./header/Logo";
-import Navigation from "./header/Navigation";
-import UserMenu from "./header/UserMenu";
+import React from "react";
+import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTranslation } from 'react-i18next';
+import LanguageSwitcher from "./LanguageSwitcher";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Button } from "@/components/ui/button";
+import { useSubscriptionCheck } from "@/hooks/useSubscriptionCheck";
+
+const navigation = [
+  { name: 'Workshop', href: '/alchemist-workshop' },
+  { name: 'Records', href: '/alchemy-records' },
+  { name: 'Pricing', href: '/pricing' },
+  { name: 'FAQ', href: '/faq' },
+  { name: 'Job Websites', href: '/job-websites' },
+];
 
 const Header = () => {
-  const { session, isLoading, signOut } = useAuth();
-  const navigate = useNavigate();
-  const location = useLocation();
+  const { session, signOut } = useAuth();
+  const { t } = useTranslation();
+  const { checkSubscriptionAndRedirect } = useSubscriptionCheck();
 
-  const isHome = location.pathname === "/";
-  const isLogin = location.pathname === "/login";
-
-  const scrollToSupportedWebsites = () => {
-    const element = document.getElementById('supported-websites');
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    } else if (!isHome) {
-      navigate('/#supported-websites');
-    }
-  };
-
-  const handleAuthClick = () => {
-    if (session) {
-      navigate("/alchemist-workshop");
-    } else {
-      navigate("/login");
-    }
+  const handleSignOut = async () => {
+    await signOut();
   };
 
   return (
-    <header className="bg-white/80 backdrop-blur-md border-b border-neutral-200 sticky top-0 z-50">
-      <div className="container mx-auto px-4 py-4">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-6">
-            <Logo />
-            <Navigation 
-              session={session} 
-              onSupportedWebsitesClick={scrollToSupportedWebsites}
-              isHome={isHome}
-            />
-          </div>
-          <div className="flex items-center gap-6">
-            {!isLoading && (
-              session ? (
-                <UserMenu 
-                  session={session}
-                  onLogout={signOut}
-                />
-              ) : !isLogin && (
-                <Button
-                  onClick={handleAuthClick}
-                  size="sm"
-                  className="flex items-center gap-2 bg-gradient-primary hover:opacity-90 transition-opacity"
-                >
-                  <LogIn className="h-4 w-4" />
-                  <span className="hidden sm:inline">{isHome ? "Start Free Trial" : "Sign In"}</span>
-                  
+    <header className="bg-background border-b">
+      <div className="container flex h-16 items-center justify-between">
+        <Link to="/" className="font-bold text-2xl">
+          Resume Alchemist
+        </Link>
+        <nav className="hidden md:flex items-center space-x-6">
+          {navigation.map((item) => (
+            <Link key={item.name} to={item.href} className="text-sm font-medium transition-colors hover:text-primary">
+              {t(`common.${item.name.toLowerCase().replace(' ', '')}`)}
+            </Link>
+          ))}
+        </nav>
+        <div className="flex items-center space-x-4">
+          <LanguageSwitcher />
+          {session ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={session?.user?.user_metadata?.avatar_url as string} alt={session?.user?.user_metadata?.full_name as string} />
+                    <AvatarFallback>{session?.user?.user_metadata?.full_name?.charAt(0) as string}</AvatarFallback>
+                  </Avatar>
                 </Button>
-              )
-            )}
-          </div>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" align="end" forceMount>
+                <DropdownMenuLabel>
+                  {session?.user?.user_metadata?.full_name as string}
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link to="/account">Account</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleSignOut}>
+                  {t('common.signOut')}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Link to="/login">
+              <Button variant="ghost">{t('common.signIn')}</Button>
+            </Link>
+          )}
         </div>
       </div>
     </header>
