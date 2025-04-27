@@ -136,12 +136,12 @@ export type Database = {
         }
         Relationships: []
       }
-      Platform: {
+      platform: {
         Row: {
           archived: boolean | null
           attrs: Json | null
           created_time: string | null
-          id: string | null
+          id: string
           last_edited_time: string | null
           url: string | null
         }
@@ -149,7 +149,7 @@ export type Database = {
           archived?: boolean | null
           attrs?: Json | null
           created_time?: string | null
-          id?: string | null
+          id: string
           last_edited_time?: string | null
           url?: string | null
         }
@@ -157,7 +157,7 @@ export type Database = {
           archived?: boolean | null
           attrs?: Json | null
           created_time?: string | null
-          id?: string | null
+          id?: string
           last_edited_time?: string | null
           url?: string | null
         }
