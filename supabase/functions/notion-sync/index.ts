@@ -1,3 +1,4 @@
+
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.47.12'
 
 // Define CORS headers
@@ -32,6 +33,34 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey)
     const notionApiKey = Deno.env.get('NOTION_API_KEY') || ''
     const databaseId = Deno.env.get('NOTION_DATABASE_ID') || ''
+    
+    // Parse request body if it exists
+    let requestBody = {};
+    try {
+      if (req.bodyUsed === false && req.body) {
+        const bodyText = await req.text();
+        if (bodyText) {
+          requestBody = JSON.parse(bodyText);
+        }
+      }
+    } catch (e) {
+      console.log('Error parsing request body:', e);
+      // Continue even if body parsing fails
+    }
+
+    // Check if this is a status check request
+    if (requestBody && requestBody.action === 'check-status') {
+      return new Response(
+        JSON.stringify({
+          hasNotionApiKey: !!notionApiKey,
+          hasNotionDatabaseId: !!databaseId,
+          message: notionApiKey && databaseId ? 
+            "Configuration complete" : 
+            "Missing required configuration"
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     if (!notionApiKey || !databaseId) {
       console.error('Missing Notion API key or database ID')
@@ -48,6 +77,7 @@ Deno.serve(async (req) => {
     }
 
     console.log('Fetching data from Notion database:', databaseId)
+    console.log('API Key exists:', !!notionApiKey)
 
     // Query the Notion database with detailed pagination handling
     let allPages: NotionPage[] = [];
@@ -63,6 +93,8 @@ Deno.serve(async (req) => {
         queryBody.start_cursor = nextCursor;
       }
       
+      console.log(`Querying Notion database with cursor: ${nextCursor || 'initial request'}`)
+      
       const response = await fetch(`https://api.notion.com/v1/databases/${databaseId}/query`, {
         method: 'POST',
         headers: {
@@ -76,6 +108,11 @@ Deno.serve(async (req) => {
       if (!response.ok) {
         const errorText = await response.text()
         console.error('Notion API error:', errorText)
+        
+        // Add more detailed error logging
+        console.error('Response status:', response.status)
+        console.error('Response headers:', Object.fromEntries(response.headers.entries()))
+        
         return new Response(
           JSON.stringify({ 
             error: `Notion API error: ${response.status}`, 
@@ -86,6 +123,19 @@ Deno.serve(async (req) => {
       }
 
       const data = await response.json();
+      
+      if (!data.results) {
+        console.error('Unexpected API response format:', data);
+        return new Response(
+          JSON.stringify({ 
+            error: 'Unexpected API response format', 
+            details: data
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+        );
+      }
+      
+      console.log(`Retrieved ${data.results.length} pages from Notion`)
       allPages = allPages.concat(data.results as NotionPage[]);
       
       hasMore = data.has_more;
@@ -97,17 +147,16 @@ Deno.serve(async (req) => {
     console.log(`Found ${pages.length} pages in Notion database`)
 
     // First, let's clear all the existing platforms to avoid duplicates
-    // This is optional and can be removed if you want to keep old records
     const { error: deleteError } = await supabase
-      .from('Platform')
+      .from('platform')
       .delete()
       .not('id', 'is', null); // Safety check to avoid deleting everything if there's an issue
       
     if (deleteError) {
-      console.error('Error clearing Platform table:', deleteError);
+      console.error('Error clearing platform table:', deleteError);
       // Continue with the process even if clearing fails
     } else {
-      console.log('Successfully cleared Platform table');
+      console.log('Successfully cleared platform table');
     }
     
     // Process each page from Notion and sync to Supabase
@@ -184,9 +233,11 @@ Deno.serve(async (req) => {
           }
         };
 
-        // Upsert to Platform table in Supabase
+        console.log(`Inserting platform data for ${title}`);
+
+        // Upsert to platform table in Supabase
         const { data: upsertedData, error } = await supabase
-          .from('Platform')
+          .from('platform')
           .upsert(platformData, { 
             onConflict: 'id', 
             returning: 'minimal' 

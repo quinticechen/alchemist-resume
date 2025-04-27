@@ -6,11 +6,18 @@ import { Button } from "@/components/ui/button";
 import { Loader2, RefreshCcw } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import ErrorMessage from "@/components/seeker/ErrorMessage";
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 
 interface Platform {
   id: string;
   url: string;
   attrs: any;
+}
+
+interface SyncStatus {
+  hasNotionApiKey: boolean;
+  hasNotionDatabaseId: boolean;
+  message: string;
 }
 
 const JobWebsites = () => {
@@ -19,6 +26,7 @@ const JobWebsites = () => {
   const [isSyncing, setIsSyncing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isRetrying, setIsRetrying] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<SyncStatus | null>(null);
   const { toast } = useToast();
 
   const fetchPlatforms = async () => {
@@ -27,14 +35,14 @@ const JobWebsites = () => {
       setError(null);
       
       const { data, error } = await supabase
-        .from('Platform')
+        .from('platform')
         .select('*')
         .order('created_time', { ascending: false });
 
       if (error) throw error;
       
       if (data) {
-        console.log(`Fetched ${data.length} platforms`, data.slice(0, 2));
+        console.log(`Fetched ${data.length} platforms:`, data.slice(0, 2));
         setPlatforms(data || []);
       }
     } catch (error) {
@@ -48,6 +56,26 @@ const JobWebsites = () => {
     } finally {
       setIsLoading(false);
       setIsRetrying(false);
+    }
+  };
+
+  const checkSyncStatus = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('notion-sync', {
+        body: { action: 'check-status' }
+      });
+      
+      if (error) throw error;
+      
+      setSyncStatus(data);
+      
+      if (!data.hasNotionApiKey || !data.hasNotionDatabaseId) {
+        setError("Notion API key or Database ID is missing. Please configure them in Supabase Edge Function secrets.");
+      }
+      
+    } catch (error) {
+      console.error('Error checking sync status:', error);
+      setError("Failed to check Notion sync configuration.");
     }
   };
 
@@ -67,6 +95,7 @@ const JobWebsites = () => {
       
       // Refresh platforms after sync
       fetchPlatforms();
+      checkSyncStatus();
     } catch (error) {
       console.error('Error syncing platforms:', error);
       setError("Failed to synchronize with Notion. Please check your connection and try again.");
@@ -82,6 +111,7 @@ const JobWebsites = () => {
 
   useEffect(() => {
     fetchPlatforms();
+    checkSyncStatus();
   }, []);
 
   return (
@@ -106,6 +136,19 @@ const JobWebsites = () => {
           )}
         </Button>
       </div>
+      
+      {syncStatus && (syncStatus.hasNotionApiKey === false || syncStatus.hasNotionDatabaseId === false) && (
+        <div className="bg-amber-50 border border-amber-200 text-amber-800 p-4 mb-6 rounded-lg">
+          <h3 className="font-medium mb-2">Configuration Status</h3>
+          <ul className="list-disc pl-5 space-y-1">
+            <li>Notion API Key: {syncStatus.hasNotionApiKey ? "✅ Configured" : "❌ Missing"}</li>
+            <li>Notion Database ID: {syncStatus.hasNotionDatabaseId ? "✅ Configured" : "❌ Missing"}</li>
+          </ul>
+          <p className="text-sm mt-2">
+            Please make sure to configure these secrets in the Supabase Edge Function secrets.
+          </p>
+        </div>
+      )}
       
       {error && (
         <ErrorMessage 
@@ -134,9 +177,38 @@ const JobWebsites = () => {
           ))}
         </div>
       ) : (
-        <div className="text-center py-12">
-          <p className="text-muted-foreground text-lg mb-4">No job websites found.</p>
-          <Button onClick={triggerSync}>Sync from Notion</Button>
+        <div className="text-center py-12 space-y-6">
+          <div className="bg-gray-50 p-6 rounded-lg mx-auto max-w-md border border-gray-200">
+            <p className="text-muted-foreground text-lg mb-4">No job websites found.</p>
+            <p className="text-sm text-gray-500 mb-6">
+              This could be because:
+            </p>
+            <ul className="text-sm text-left list-disc pl-5 mb-6 space-y-2">
+              <li>The Notion sync has not been run yet</li>
+              <li>The Notion API key or Database ID is not properly configured</li>
+              <li>The Notion database is empty</li>
+              <li>There was an error during the sync process</li>
+            </ul>
+            <Button onClick={triggerSync} className="w-full">
+              {isSyncing ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Syncing...
+                </>
+              ) : (
+                <>
+                  <RefreshCcw className="h-4 w-4 mr-2" />
+                  Sync from Notion
+                </>
+              )}
+            </Button>
+          </div>
+          
+          {syncStatus?.message && (
+            <div className="text-sm text-gray-500">
+              Last sync message: {syncStatus.message}
+            </div>
+          )}
         </div>
       )}
     </div>
