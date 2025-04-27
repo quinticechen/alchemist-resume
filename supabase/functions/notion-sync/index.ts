@@ -35,15 +35,22 @@ Deno.serve(async (req) => {
     const databaseId = Deno.env.get('NOTION_DATABASE_ID') || ''
 
     if (!notionApiKey || !databaseId) {
+      console.error('Missing Notion API key or database ID')
       return new Response(
-        JSON.stringify({ error: 'Notion API key or database ID not configured' }),
+        JSON.stringify({ 
+          error: 'Notion API key or database ID not configured', 
+          details: {
+            hasApiKey: !!notionApiKey,
+            hasDatabaseId: !!databaseId
+          } 
+        }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
       )
     }
 
     console.log('Fetching data from Notion database:', databaseId)
 
-    // Query the Notion database
+    // Query the Notion database with more comprehensive error handling
     const response = await fetch(`https://api.notion.com/v1/databases/${databaseId}/query`, {
       method: 'POST',
       headers: {
@@ -60,7 +67,10 @@ Deno.serve(async (req) => {
       const errorText = await response.text()
       console.error('Notion API error:', errorText)
       return new Response(
-        JSON.stringify({ error: `Notion API error: ${response.status}`, details: errorText }),
+        JSON.stringify({ 
+          error: `Notion API error: ${response.status}`, 
+          details: errorText 
+        }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: response.status }
       )
     }
@@ -73,22 +83,28 @@ Deno.serve(async (req) => {
     // Process each page from Notion and sync to Supabase
     const syncResults = await Promise.all(pages.map(async (page) => {
       try {
-        // Extract platform name/title
-        const title = page.properties.Platform?.title?.[0]?.plain_text || 
-                      page.properties.Name?.title?.[0]?.plain_text || 
-                      'Untitled'
+        // More robust title extraction
+        const title = 
+          page.properties.Platform?.title?.[0]?.plain_text || 
+          page.properties.Name?.title?.[0]?.plain_text || 
+          page.properties.URL?.title?.[0]?.plain_text ||
+          'Untitled'
         
-        // Extract URL
-        const url = page.properties.URL?.url || 
-                   page.properties.url?.url || 
-                   page.properties.URL?.rich_text?.[0]?.plain_text || 
-                   ''
+        // More comprehensive URL extraction
+        const url = 
+          page.properties.URL?.url || 
+          page.properties.Link?.url || 
+          page.properties.Website?.url || 
+          page.url || 
+          ''
         
-        // Extract description/notes
-        const description = page.properties.Description?.rich_text?.[0]?.plain_text || 
-                          ''
+        // More robust description extraction
+        const description = 
+          page.properties.Description?.rich_text?.[0]?.plain_text || 
+          page.properties.Notes?.rich_text?.[0]?.plain_text || 
+          ''
 
-        // Prepare data for Supabase
+        // Prepare data for Supabase with comprehensive attribute mapping
         const platformData = {
           id: page.id,
           created_time: page.created_time,
@@ -97,14 +113,29 @@ Deno.serve(async (req) => {
           attrs: {
             title: title,
             description: description,
-            notionUrl: page.url
+            notionUrl: page.url,
+            ...Object.fromEntries(
+              Object.entries(page.properties)
+                .filter(([_, value]) => value && value.type !== 'title')
+                .map(([key, value]) => [
+                  key.toLowerCase().replace(/\s+/g, '_'), 
+                  value.rich_text?.[0]?.plain_text || 
+                  value.url || 
+                  value.select?.name || 
+                  value.multi_select?.map(item => item.name).join(', ') || 
+                  ''
+                ])
+            )
           }
         }
 
         // Upsert to Platform table in Supabase
-        const { data, error } = await supabase
+        const { data: upsertedData, error } = await supabase
           .from('Platform')
-          .upsert(platformData, { onConflict: 'id' })
+          .upsert(platformData, { 
+            onConflict: 'id', 
+            returning: 'minimal' 
+          })
 
         if (error) {
           console.error('Error syncing page to Supabase:', error)
@@ -131,7 +162,7 @@ Deno.serve(async (req) => {
       }
     }))
     
-    // Return the sync results
+    // Return the sync results with more detailed information
     return new Response(
       JSON.stringify({ 
         success: true, 
@@ -147,9 +178,11 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: error.message 
+        error: error.message,
+        details: error.stack 
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     )
   }
 })
+
