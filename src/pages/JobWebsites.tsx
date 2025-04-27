@@ -5,6 +5,7 @@ import { PlatformCard } from "@/components/platform/PlatformCard";
 import { Button } from "@/components/ui/button";
 import { Loader2, RefreshCcw } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import ErrorMessage from "@/components/seeker/ErrorMessage";
 
 interface Platform {
   id: string;
@@ -16,20 +17,29 @@ const JobWebsites = () => {
   const [platforms, setPlatforms] = useState<Platform[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isRetrying, setIsRetrying] = useState(false);
   const { toast } = useToast();
 
   const fetchPlatforms = async () => {
     try {
       setIsLoading(true);
+      setError(null);
+      
       const { data, error } = await supabase
         .from('Platform')
         .select('*')
         .order('created_time', { ascending: false });
 
       if (error) throw error;
-      setPlatforms(data || []);
+      
+      if (data) {
+        console.log(`Fetched ${data.length} platforms`, data.slice(0, 2));
+        setPlatforms(data || []);
+      }
     } catch (error) {
       console.error('Error fetching platforms:', error);
+      setError("Failed to load job websites. Please try again later.");
       toast({
         title: "Error fetching job websites",
         description: "There was a problem fetching the job websites data.",
@@ -37,12 +47,14 @@ const JobWebsites = () => {
       });
     } finally {
       setIsLoading(false);
+      setIsRetrying(false);
     }
   };
 
   const triggerSync = async () => {
     try {
       setIsSyncing(true);
+      setError(null);
       
       const { data, error } = await supabase.functions.invoke('notion-sync');
       
@@ -50,16 +62,17 @@ const JobWebsites = () => {
       
       toast({
         title: "Sync Complete",
-        description: data.message || "Job websites have been synchronized from Notion.",
+        description: data?.message || "Job websites have been synchronized from Notion.",
       });
       
       // Refresh platforms after sync
       fetchPlatforms();
     } catch (error) {
       console.error('Error syncing platforms:', error);
+      setError("Failed to synchronize with Notion. Please check your connection and try again.");
       toast({
         title: "Sync Failed",
-        description: "There was a problem syncing with Notion. Please try again.",
+        description: "There was a problem syncing with Notion. Please check your API keys and database configuration.",
         variant: "destructive",
       });
     } finally {
@@ -93,6 +106,14 @@ const JobWebsites = () => {
           )}
         </Button>
       </div>
+      
+      {error && (
+        <ErrorMessage 
+          message={error} 
+          onRetry={isLoading ? fetchPlatforms : triggerSync}
+          isRetrying={isRetrying}
+        />
+      )}
       
       {isLoading ? (
         <div className="animate-pulse space-y-4">
