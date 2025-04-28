@@ -12,7 +12,7 @@ interface Platform {
     title: string;
     description: string;
     content: string;
-    url?: string; // Make url optional in the content object
+    url?: string;
   };
 }
 

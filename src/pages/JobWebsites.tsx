@@ -52,8 +52,7 @@ const JobWebsites = () => {
             content,
             url
           )
-        `)
-        .order('created_time', { ascending: false });
+        `);
 
       if (platformError) throw platformError;
       
@@ -66,11 +65,17 @@ const JobWebsites = () => {
         
         // If no platforms found, check sync status silently
         if (platforms.length === 0) {
-          const isConfigured = await checkSyncStatus(false);
-          
-          // Only show prompt if configuration is valid but no data
-          if (isConfigured) {
-            setError("No job websites found. Please sync with Notion to load job websites.");
+          try {
+            const { data } = await supabase.functions.invoke('notion-sync', {
+              body: { action: 'check-status' },
+            });
+            
+            // Only show prompt if configuration is valid but no data
+            if (data?.hasNotionApiKey && data?.hasNotionDatabaseId) {
+              setError("No job websites found. Please sync with Notion to load job websites.");
+            }
+          } catch (error) {
+            console.error('Error checking sync status:', error);
           }
         }
       }
@@ -124,12 +129,14 @@ const JobWebsites = () => {
       setIsSyncing(true);
       setError(null);
       
+      // Check if configuration is valid before proceeding
       const isConfigured = await checkSyncStatus();
       if (!isConfigured) {
         setIsSyncing(false);
         return;
       }
       
+      // Invoke the Notion sync function
       const { data, error } = await supabase.functions.invoke('notion-sync');
       
       if (error) {
@@ -142,7 +149,8 @@ const JobWebsites = () => {
         description: data?.message || "Job websites have been synchronized from Notion.",
       });
       
-      fetchPlatforms();
+      // Fetch the updated platforms
+      await fetchPlatforms();
     } catch (error) {
       console.error('Error syncing platforms:', error);
       setError("Failed to synchronize with Notion. Please check your connection and try again.");

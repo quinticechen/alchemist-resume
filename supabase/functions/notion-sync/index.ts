@@ -8,14 +8,17 @@ const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
 
 // Handle CORS and check secrets
 Deno.serve(async (req) => {
+  // CORS preflight request handling
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
 
   try {
+    // Get Notion credentials from environment variables
     const notionApiKey = Deno.env.get('NOTION_API_KEY')
     const databaseId = Deno.env.get('NOTION_DATABASE_ID')
 
+    // Check if credentials exist
     if (!notionApiKey || !databaseId) {
       console.error('Missing Notion credentials')
       return new Response(
@@ -29,7 +32,7 @@ Deno.serve(async (req) => {
       )
     }
 
-    // Initialize clients with proper error handling
+    // Initialize clients
     const notion = new Client({ auth: notionApiKey })
     const supabase = createClient(supabaseUrl, supabaseKey)
 
@@ -49,13 +52,14 @@ Deno.serve(async (req) => {
 
     console.log('Fetching pages from Notion database...')
     
+    // Fetch all pages from the Notion database
+    let pages = []
+    let hasMore = true
+    let startCursor = undefined
+
     try {
-      // Fetch database pages with proper error handling
-      const pages = []
-      let hasMore = true
-      let startCursor = undefined
-      
       while (hasMore) {
+        // Use database.query to fetch pages from Notion
         const response = await notion.databases.query({
           database_id: databaseId,
           start_cursor: startCursor,
@@ -66,7 +70,7 @@ Deno.serve(async (req) => {
           throw new Error('Invalid response from Notion API')
         }
         
-        pages.push(...response.results)
+        pages = [...pages, ...response.results]
         hasMore = response.has_more || false
         startCursor = response.next_cursor || undefined
       }
@@ -83,7 +87,7 @@ Deno.serve(async (req) => {
         throw new Error(`Error clearing platform table: ${deleteError.message}`)
       }
       
-      // Also clear platform_content
+      // Clear platform_content table
       const { error: deleteContentError } = await supabase
         .from('platform_content')
         .delete()
@@ -93,8 +97,8 @@ Deno.serve(async (req) => {
         throw new Error(`Error clearing platform_content table: ${deleteContentError.message}`)
       }
       
-      // Process pages and sync to Supabase
-      const results = await Promise.all(pages.map(async (page: any) => {
+      // Process each page and save to Supabase
+      const results = await Promise.all(pages.map(async (page) => {
         try {
           // Extract basic page info
           const pageId = page.id
@@ -103,22 +107,22 @@ Deno.serve(async (req) => {
           const url = page.properties.URL?.url || ''
           const description = page.properties.Description?.rich_text?.[0]?.plain_text || ''
           
-          // Fetch page content and format as markdown
+          // Fetch page content
           let content = ''
           try {
             const blocks = await notion.blocks.children.list({ block_id: pageId })
             content = blocks.results
-              .map((block: any) => {
+              .map((block) => {
                 if (block.type === 'paragraph') {
-                  return block.paragraph.rich_text.map((t: any) => t.plain_text).join('')
+                  return block.paragraph.rich_text.map((t) => t.plain_text).join('')
                 } else if (block.type === 'heading_1') {
-                  return `# ${block.heading_1.rich_text.map((t: any) => t.plain_text).join('')}`
+                  return `# ${block.heading_1.rich_text.map((t) => t.plain_text).join('')}`
                 } else if (block.type === 'heading_2') {
-                  return `## ${block.heading_2.rich_text.map((t: any) => t.plain_text).join('')}`
+                  return `## ${block.heading_2.rich_text.map((t) => t.plain_text).join('')}`
                 } else if (block.type === 'heading_3') {
-                  return `### ${block.heading_3.rich_text.map((t: any) => t.plain_text).join('')}`
+                  return `### ${block.heading_3.rich_text.map((t) => t.plain_text).join('')}`
                 } else if (block.type === 'bulleted_list_item') {
-                  return `• ${block.bulleted_list_item.rich_text.map((t: any) => t.plain_text).join('')}`
+                  return `• ${block.bulleted_list_item.rich_text.map((t) => t.plain_text).join('')}`
                 }
                 return ''
               })
@@ -139,7 +143,6 @@ Deno.serve(async (req) => {
               attrs: { title, description, notionUrl }
             })
             .select()
-            .single()
           
           if (platformError) throw platformError
           
