@@ -2,14 +2,18 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { ExternalLink } from "lucide-react";
 
 interface Platform {
   id: string;
-  url: string | null;
-  title: string;
-  description: string | null;
-  content: string | null;
-  notion_url: string | null;
+  url: string;
+  attrs: any;
+  content?: {
+    title: string;
+    description: string;
+    content: string;
+    url?: string;
+  };
 }
 
 interface PlatformCardProps {
@@ -18,7 +22,10 @@ interface PlatformCardProps {
 }
 
 export const PlatformCard = ({ platform, onViewContent }: PlatformCardProps) => {
-  const url = platform.url || platform.notion_url;
+  const title = platform.content?.title || platform.attrs?.title || 'Untitled';
+  const description = platform.content?.description || platform.attrs?.description;
+  // Use platform.url as fallback if content.url is not available
+  const url = platform.content?.url || platform.url;
 
   const handleCardClick = () => {
     if (url) {
@@ -26,32 +33,28 @@ export const PlatformCard = ({ platform, onViewContent }: PlatformCardProps) => 
     }
   };
 
-  const handleViewDetails = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (platform.content) {
-      onViewContent(platform.content);
-    }
-  };
-
   return (
-    <Card
+    <Card 
       className="hover:shadow-lg transition-shadow cursor-pointer overflow-hidden"
       onClick={handleCardClick}
     >
       <CardHeader className="pb-3">
-        <CardTitle className="text-xl">{platform.title}</CardTitle>
+        <CardTitle className="text-xl">{title}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {platform.description && (
-          <p className="text-sm text-muted-foreground">{platform.description}</p>
+        {description && (
+          <p className="text-sm text-muted-foreground">{description}</p>
         )}
-
-        {platform.content && (
+        
+        {platform.content?.content && (
           <Button
             variant="outline"
             size="sm"
             className="w-full"
-            onClick={handleViewDetails}
+            onClick={(e) => {
+              e.stopPropagation();
+              onViewContent(platform.content?.content || '');
+            }}
           >
             View Details
           </Button>

@@ -37,16 +37,7 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey)
 
     // Handle status check request
-    let reqData = null
-    try {
-      reqData = await req.json().catch(() => ({ action: null }))
-    } catch (e) {
-      console.log('Failed to parse request body, assuming default action')
-      reqData = { action: null }
-    }
-    
-    const action = reqData?.action
-    
+    const { action } = await req.json().catch(() => ({ action: null }))
     if (action === 'check-status') {
       console.log('Status check request received')
       return new Response(
@@ -68,7 +59,6 @@ Deno.serve(async (req) => {
 
     try {
       while (hasMore) {
-        console.log(`Querying database ${databaseId} with cursor ${startCursor || 'initial'}`)
         // Use database.query to fetch pages from Notion
         const response = await notion.databases.query({
           database_id: databaseId,
@@ -87,6 +77,16 @@ Deno.serve(async (req) => {
       
       console.log(`Found ${pages.length} pages in database`)
       
+      // Clear existing data
+      const { error: deleteError } = await supabase
+        .from('platform')
+        .delete()
+        .not('id', 'is', null)
+      
+      if (deleteError) {
+        throw new Error(`Error clearing platform table: ${deleteError.message}`)
+      }
+      
       // Clear platform_content table
       const { error: deleteContentError } = await supabase
         .from('platform_content')
@@ -103,28 +103,9 @@ Deno.serve(async (req) => {
           // Extract basic page info
           const pageId = page.id
           const notionUrl = page.url || ''
-          
-          // Extract page properties with proper error handling
-          let title = 'Untitled'
-          let url = ''
-          let description = ''
-          
-          try {
-            if (page.properties?.Platform?.title && page.properties.Platform.title.length > 0) {
-              title = page.properties.Platform.title[0].plain_text || 'Untitled'
-            }
-            
-            if (page.properties?.URL) {
-              url = page.properties.URL.url || ''
-            }
-            
-            if (page.properties?.Description?.rich_text && 
-                page.properties.Description.rich_text.length > 0) {
-              description = page.properties.Description.rich_text[0].plain_text || ''
-            }
-          } catch (propError) {
-            console.error(`Error extracting properties from page ${pageId}: ${propError.message}`)
-          }
+          const title = page.properties.Platform?.title?.[0]?.plain_text || 'Untitled'
+          const url = page.properties.URL?.url || ''
+          const description = page.properties.Description?.rich_text?.[0]?.plain_text || ''
           
           // Fetch page content
           let content = ''
@@ -132,20 +113,15 @@ Deno.serve(async (req) => {
             const blocks = await notion.blocks.children.list({ block_id: pageId })
             content = blocks.results
               .map((block) => {
-                // Get block type
-                const blockType = block.type
-                if (!blockType || !block[blockType]) return ''
-                
-                // Handle different block types
-                if (blockType === 'paragraph') {
+                if (block.type === 'paragraph') {
                   return block.paragraph.rich_text.map((t) => t.plain_text).join('')
-                } else if (blockType === 'heading_1') {
+                } else if (block.type === 'heading_1') {
                   return `# ${block.heading_1.rich_text.map((t) => t.plain_text).join('')}`
-                } else if (blockType === 'heading_2') {
+                } else if (block.type === 'heading_2') {
                   return `## ${block.heading_2.rich_text.map((t) => t.plain_text).join('')}`
-                } else if (blockType === 'heading_3') {
+                } else if (block.type === 'heading_3') {
                   return `### ${block.heading_3.rich_text.map((t) => t.plain_text).join('')}`
-                } else if (blockType === 'bulleted_list_item') {
+                } else if (block.type === 'bulleted_list_item') {
                   return `• ${block.bulleted_list_item.rich_text.map((t) => t.plain_text).join('')}`
                 }
                 return ''
@@ -155,6 +131,20 @@ Deno.serve(async (req) => {
           } catch (error) {
             console.error(`Error fetching content for page ${pageId}: ${error.message}`)
           }
+          
+          // Insert platform record
+          const { data: platformData, error: platformError } = await supabase
+            .from('platform')
+            .insert({
+              id: pageId,
+              url: url,
+              created_time: page.created_time,
+              last_edited_time: page.last_edited_time,
+              attrs: { title, description, notionUrl }
+            })
+            .select()
+          
+          if (platformError) throw platformError
           
           // Insert platform_content record
           const { error: contentError } = await supabase
