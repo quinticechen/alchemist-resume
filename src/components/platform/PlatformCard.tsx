@@ -33,6 +33,13 @@ export const PlatformCard = ({ platform, onViewContent }: PlatformCardProps) => 
     }
   };
 
+  const handleViewDetails = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (platform.content?.content) {
+      onViewContent(platform.content.content);
+    }
+  };
+
   return (
     <Card 
       className="hover:shadow-lg transition-shadow cursor-pointer overflow-hidden"
@@ -51,10 +58,7 @@ export const PlatformCard = ({ platform, onViewContent }: PlatformCardProps) => 
             variant="outline"
             size="sm"
             className="w-full"
-            onClick={(e) => {
-              e.stopPropagation();
-              onViewContent(platform.content?.content || '');
-            }}
+            onClick={handleViewDetails}
           >
             View Details
           </Button>

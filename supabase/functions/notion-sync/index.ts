@@ -37,7 +37,9 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey)
 
     // Handle status check request
-    const { action } = await req.json().catch(() => ({ action: null }))
+    const reqData = await req.json().catch(() => ({ action: null }))
+    const action = reqData?.action
+    
     if (action === 'check-status') {
       console.log('Status check request received')
       return new Response(
@@ -103,9 +105,9 @@ Deno.serve(async (req) => {
           // Extract basic page info
           const pageId = page.id
           const notionUrl = page.url || ''
-          const title = page.properties.Platform?.title?.[0]?.plain_text || 'Untitled'
-          const url = page.properties.URL?.url || ''
-          const description = page.properties.Description?.rich_text?.[0]?.plain_text || ''
+          const title = page.properties?.Platform?.title?.[0]?.plain_text || 'Untitled'
+          const url = page.properties?.URL?.url || ''
+          const description = page.properties?.Description?.rich_text?.[0]?.plain_text || ''
           
           // Fetch page content
           let content = ''
@@ -113,15 +115,19 @@ Deno.serve(async (req) => {
             const blocks = await notion.blocks.children.list({ block_id: pageId })
             content = blocks.results
               .map((block) => {
-                if (block.type === 'paragraph') {
+                // Handle different block types
+                const blockType = block.type
+                if (!blockType || !block[blockType]) return ''
+                
+                if (blockType === 'paragraph') {
                   return block.paragraph.rich_text.map((t) => t.plain_text).join('')
-                } else if (block.type === 'heading_1') {
+                } else if (blockType === 'heading_1') {
                   return `# ${block.heading_1.rich_text.map((t) => t.plain_text).join('')}`
-                } else if (block.type === 'heading_2') {
+                } else if (blockType === 'heading_2') {
                   return `## ${block.heading_2.rich_text.map((t) => t.plain_text).join('')}`
-                } else if (block.type === 'heading_3') {
+                } else if (blockType === 'heading_3') {
                   return `### ${block.heading_3.rich_text.map((t) => t.plain_text).join('')}`
-                } else if (block.type === 'bulleted_list_item') {
+                } else if (blockType === 'bulleted_list_item') {
                   return `• ${block.bulleted_list_item.rich_text.map((t) => t.plain_text).join('')}`
                 }
                 return ''

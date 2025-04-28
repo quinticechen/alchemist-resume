@@ -40,6 +40,7 @@ const JobWebsites = () => {
       setIsLoading(true);
       setError(null);
       
+      console.log("Fetching platforms from Supabase...");
       const { data: platformData, error: platformError } = await supabase
         .from('platform')
         .select(`
@@ -54,9 +55,13 @@ const JobWebsites = () => {
           )
         `);
 
-      if (platformError) throw platformError;
+      if (platformError) {
+        console.error("Error fetching platforms:", platformError);
+        throw platformError;
+      }
       
       if (platformData) {
+        console.log("Received platform data:", platformData.length);
         const platforms = platformData.map(p => ({
           ...p,
           content: p.platform_content?.[0] || null
@@ -66,16 +71,26 @@ const JobWebsites = () => {
         // If no platforms found, check sync status silently
         if (platforms.length === 0) {
           try {
-            const { data } = await supabase.functions.invoke('notion-sync', {
+            console.log("No platforms found, checking sync status...");
+            const { data, error } = await supabase.functions.invoke('notion-sync', {
               body: { action: 'check-status' },
             });
+            
+            if (error) {
+              console.error("Error checking sync status:", error);
+              setError("Unable to check Notion sync status. Please ensure the Edge Function is properly deployed.");
+              return;
+            }
             
             // Only show prompt if configuration is valid but no data
             if (data?.hasNotionApiKey && data?.hasNotionDatabaseId) {
               setError("No job websites found. Please sync with Notion to load job websites.");
+            } else {
+              setError("Notion API key or Database ID is missing. Please configure them in Supabase Edge Function secrets.");
             }
           } catch (error) {
             console.error('Error checking sync status:', error);
+            setError("Failed to check Notion sync configuration. Please try again later.");
           }
         }
       }
@@ -136,14 +151,18 @@ const JobWebsites = () => {
         return;
       }
       
+      console.log("Triggering Notion sync...");
       // Invoke the Notion sync function
-      const { data, error } = await supabase.functions.invoke('notion-sync');
+      const { data, error } = await supabase.functions.invoke('notion-sync', {
+        body: { action: 'sync' }
+      });
       
       if (error) {
         console.error('Sync error:', error);
         throw new Error(`Sync failed: ${error.message || 'Unknown error'}`);
       }
       
+      console.log("Sync completed:", data);
       toast({
         title: "Sync Complete",
         description: data?.message || "Job websites have been synchronized from Notion.",
