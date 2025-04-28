@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PlatformCard } from "@/components/platform/PlatformCard";
@@ -39,67 +38,45 @@ const JobWebsites = () => {
     try {
       setIsLoading(true);
       setError(null);
-      
-      console.log("Fetching platforms from Supabase...");
-      const { data: platformData, error: platformError } = await supabase
-        .from('platform')
+
+      console.log("Fetching platforms from Supabase (platform_content)...");
+      const { data: platformContentData, error: platformContentError } = await supabase
+        .from('platform_content')
         .select(`
-          id,
+          id: platform_id,
           url,
-          attrs,
-          platform_content (
-            title,
-            description,
-            content,
-            url
-          )
+          title,
+          description,
+          content,
+          notion_url
         `);
 
-      if (platformError) {
-        console.error("Error fetching platforms:", platformError);
-        throw platformError;
+      if (platformContentError) {
+        console.error("Error fetching job websites:", platformContentError);
+        throw platformContentError;
       }
-      
-      if (platformData) {
-        console.log("Received platform data:", platformData.length);
-        const platforms = platformData.map(p => ({
-          ...p,
-          content: p.platform_content?.[0] || null
+
+      if (platformContentData) {
+        const fetchedPlatforms = platformContentData.map(p => ({
+          id: p.id, // 使用 platform_id 作为平台的 id (已在 select 中 alias 为 id)
+          url: p.url || '#',
+          content: {
+            title: p.title || '',
+            description: p.description || '',
+            content: p.content || '',
+            url: p.url,
+          },
+          notion_url: p.notion_url || '',
+          attrs: {}, // 你不再需要 attrs，可以设置为空对象
         }));
-        setPlatforms(platforms);
-        
-        // If no platforms found, check sync status silently
-        if (platforms.length === 0) {
-          try {
-            console.log("No platforms found, checking sync status...");
-            const { data, error } = await supabase.functions.invoke('notion-sync', {
-              body: { action: 'check-status' },
-            });
-            
-            if (error) {
-              console.error("Error checking sync status:", error);
-              setError("Unable to check Notion sync status. Please ensure the Edge Function is properly deployed.");
-              return;
-            }
-            
-            // Only show prompt if configuration is valid but no data
-            if (data?.hasNotionApiKey && data?.hasNotionDatabaseId) {
-              setError("No job websites found. Please sync with Notion to load job websites.");
-            } else {
-              setError("Notion API key or Database ID is missing. Please configure them in Supabase Edge Function secrets.");
-            }
-          } catch (error) {
-            console.error('Error checking sync status:', error);
-            setError("Failed to check Notion sync configuration. Please try again later.");
-          }
-        }
+        setPlatforms(fetchedPlatforms);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching platforms:', error);
       setError("Failed to load job websites. Please try again later.");
       toast({
         title: "Error fetching job websites",
-        description: "There was a problem fetching the job websites data.",
+        description: error.message || "There was a problem fetching the job websites data.",
         variant: "destructive",
       });
     } finally {
@@ -107,75 +84,25 @@ const JobWebsites = () => {
     }
   };
 
-  const checkSyncStatus = async (showErrors = true) => {
-    try {
-      console.log('Checking Notion sync status...');
-      const { data, error } = await supabase.functions.invoke('notion-sync', {
-        body: { action: 'check-status' },
-      });
-      
-      if (error) {
-        console.error('Error checking sync status:', error);
-        if (showErrors) {
-          setError("Failed to check Notion sync configuration. Please ensure the Edge Function is properly deployed.");
-        }
-        return false;
-      }
-      
-      if (!data?.hasNotionApiKey || !data?.hasNotionDatabaseId) {
-        if (showErrors) {
-          setError("Notion API key or Database ID is missing. Please configure them in Supabase Edge Function secrets.");
-        }
-        return false;
-      }
-      
-      return true;
-    } catch (error) {
-      console.error('Error checking sync status:', error);
-      if (showErrors) {
-        setError("Failed to check Notion sync configuration. Please try again later.");
-      }
-      return false;
-    }
-  };
-
   const triggerSync = async () => {
+    setIsSyncing(true);
+    setError(null);
     try {
-      setIsSyncing(true);
-      setError(null);
-      
-      // Check if configuration is valid before proceeding
-      const isConfigured = await checkSyncStatus();
-      if (!isConfigured) {
-        setIsSyncing(false);
-        return;
+      const { error: syncError } = await supabase.functions.invoke('notion-sync');
+      if (syncError) {
+        throw syncError;
       }
-      
-      console.log("Triggering Notion sync...");
-      // Invoke the Notion sync function
-      const { data, error } = await supabase.functions.invoke('notion-sync', {
-        body: { action: 'sync' }
-      });
-      
-      if (error) {
-        console.error('Sync error:', error);
-        throw new Error(`Sync failed: ${error.message || 'Unknown error'}`);
-      }
-      
-      console.log("Sync completed:", data);
       toast({
-        title: "Sync Complete",
-        description: data?.message || "Job websites have been synchronized from Notion.",
+        title: "Sync successful!",
+        description: "Job websites data has been updated.",
       });
-      
-      // Fetch the updated platforms
-      await fetchPlatforms();
-    } catch (error) {
-      console.error('Error syncing platforms:', error);
+      fetchPlatforms();
+    } catch (error: any) {
+      console.error('Error syncing:', error);
       setError("Failed to synchronize with Notion. Please check your connection and try again.");
       toast({
-        title: "Sync Failed",
-        description: "There was a problem syncing with Notion.",
+        title: "Sync failed",
+        description: error.message || "There was an error during synchronization.",
         variant: "destructive",
       });
     } finally {
@@ -185,7 +112,8 @@ const JobWebsites = () => {
 
   const handleRetry = () => {
     setIsRetrying(true);
-    triggerSync().finally(() => setIsRetrying(false));
+    fetchPlatforms();
+    setTimeout(() => setIsRetrying(false), 2000); // Simulate retry delay
   };
 
   useEffect(() => {
@@ -193,44 +121,37 @@ const JobWebsites = () => {
   }, []);
 
   return (
-    <div className="container mx-auto p-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold bg-gradient-primary text-transparent bg-clip-text">
-          Job Websites
-        </h1>
-        <Button 
-          onClick={triggerSync} 
-          disabled={isSyncing}
-          className="flex items-center gap-2"
-        >
+    <div>
+      <div className="flex justify-end mb-4">
+        <Button onClick={triggerSync} disabled={isSyncing}>
           {isSyncing ? (
             <>
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               Syncing...
             </>
           ) : (
             <>
-              <RefreshCcw className="h-4 w-4" />
+              <RefreshCcw className="mr-2 h-4 w-4" />
               Sync from Notion
             </>
           )}
         </Button>
       </div>
-      
+
       {error && (
         <div className="mb-6">
-          <ErrorMessage 
-            message={error} 
-            onRetry={handleRetry} 
-            isRetrying={isRetrying} 
+          <ErrorMessage
+            message={error}
+            onRetry={handleRetry}
+            isRetrying={isRetrying}
           />
         </div>
       )}
-      
+
       {isLoading ? (
         <div className="animate-pulse space-y-4">
           {[1, 2, 3].map((n) => (
-            <div key={n} className="h-32 bg-gray-200 rounded-lg"/>
+            <div key={n} className="h-32 bg-gray-200 rounded-lg" />
           ))}
         </div>
       ) : platforms.length > 0 ? (

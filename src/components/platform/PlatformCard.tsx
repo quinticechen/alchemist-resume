@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,13 +6,13 @@ import { ExternalLink } from "lucide-react";
 interface Platform {
   id: string;
   url: string;
-  attrs: any;
   content?: {
     title: string;
     description: string;
     content: string;
     url?: string;
   };
+  notion_url?: string;
 }
 
 interface PlatformCardProps {
@@ -22,9 +21,8 @@ interface PlatformCardProps {
 }
 
 export const PlatformCard = ({ platform, onViewContent }: PlatformCardProps) => {
-  const title = platform.content?.title || platform.attrs?.title || 'Untitled';
-  const description = platform.content?.description || platform.attrs?.description;
-  // Use platform.url as fallback if content.url is not available
+  const title = platform.content?.title || 'Untitled';
+  const description = platform.content?.description;
   const url = platform.content?.url || platform.url;
 
   const handleCardClick = () => {
@@ -41,7 +39,7 @@ export const PlatformCard = ({ platform, onViewContent }: PlatformCardProps) => 
   };
 
   return (
-    <Card 
+    <Card
       className="hover:shadow-lg transition-shadow cursor-pointer overflow-hidden"
       onClick={handleCardClick}
     >
@@ -52,7 +50,7 @@ export const PlatformCard = ({ platform, onViewContent }: PlatformCardProps) => 
         {description && (
           <p className="text-sm text-muted-foreground">{description}</p>
         )}
-        
+
         {platform.content?.content && (
           <Button
             variant="outline"

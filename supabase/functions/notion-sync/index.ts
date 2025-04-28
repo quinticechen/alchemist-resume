@@ -79,16 +79,6 @@ Deno.serve(async (req) => {
       
       console.log(`Found ${pages.length} pages in database`)
       
-      // Clear existing data
-      const { error: deleteError } = await supabase
-        .from('platform')
-        .delete()
-        .not('id', 'is', null)
-      
-      if (deleteError) {
-        throw new Error(`Error clearing platform table: ${deleteError.message}`)
-      }
-      
       // Clear platform_content table
       const { error: deleteContentError } = await supabase
         .from('platform_content')
@@ -138,20 +128,6 @@ Deno.serve(async (req) => {
             console.error(`Error fetching content for page ${pageId}: ${error.message}`)
           }
           
-          // Insert platform record
-          const { data: platformData, error: platformError } = await supabase
-            .from('platform')
-            .insert({
-              id: pageId,
-              url: url,
-              created_time: page.created_time,
-              last_edited_time: page.last_edited_time,
-              attrs: { title, description, notionUrl }
-            })
-            .select()
-          
-          if (platformError) throw platformError
-          
           // Insert platform_content record
           const { error: contentError } = await supabase
             .from('platform_content')
@@ -160,8 +136,8 @@ Deno.serve(async (req) => {
               title,
               description,
               content,
-              notion_url: notionUrl,
-              url
+              notion_url: notionUrl, // 你可能也想在這裡儲存 notion_url
+              url 
             })
           
           if (contentError) throw contentError
