@@ -1,32 +1,29 @@
+
 import React from "react";
-import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from 'react-i18next';
+import Logo from "./header/Logo";
+import Navigation from "./header/Navigation";
 import LanguageSwitcher from "./LanguageSwitcher";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import UserMenu from "./header/UserMenu";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { useSubscriptionCheck } from "@/hooks/useSubscriptionCheck";
-
-const navigation = [
-  { name: 'Workshop', href: '/alchemist-workshop' },
-  { name: 'Records', href: '/alchemy-records' },
-  { name: 'Pricing', href: '/pricing' },
-  { name: 'FAQ', href: '/faq' },
-  { name: 'Job Websites', href: '/job-websites' },
-];
 
 const Header = () => {
   const { session, signOut } = useAuth();
   const { t } = useTranslation();
-  const { checkSubscriptionAndRedirect } = useSubscriptionCheck();
+  const isHome = window.location.pathname === '/';
+
+  const handleSupportedWebsitesClick = () => {
+    // Scroll to websites section or navigate to it
+    const websitesSection = document.getElementById('supported-websites');
+    if (websitesSection) {
+      websitesSection.scrollIntoView({ behavior: 'smooth' });
+    } else {
+      // If not on home page, navigate to home with anchor
+      window.location.href = '/#supported-websites';
+    }
+  };
 
   const handleSignOut = async () => {
     await signOut();
@@ -34,45 +31,28 @@ const Header = () => {
 
   return (
     <header className="bg-background border-b">
-      <div className="container flex h-16 items-center justify-between">
-        <Link to="/" className="font-bold text-2xl">
-          Resume Alchemist
-        </Link>
-        <nav className="hidden md:flex items-center space-x-6">
-          {navigation.map((item) => (
-            <Link key={item.name} to={item.href} className="text-sm font-medium transition-colors hover:text-primary">
-              {t(`common.${item.name.toLowerCase().replace(' ', '')}`)}
-            </Link>
-          ))}
-        </nav>
-        <div className="flex items-center space-x-4">
+      <div className="container mx-auto flex h-16 items-center justify-between px-4">
+        <Logo />
+        
+        <Navigation 
+          session={session} 
+          onSupportedWebsitesClick={handleSupportedWebsitesClick} 
+          isHome={isHome}
+        />
+        
+        <div className="flex items-center gap-3">
           <LanguageSwitcher />
+          
           {session ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={session?.user?.user_metadata?.avatar_url as string} alt={session?.user?.user_metadata?.full_name as string} />
-                    <AvatarFallback>{session?.user?.user_metadata?.full_name?.charAt(0) as string}</AvatarFallback>
-                  </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="end" forceMount>
-                <DropdownMenuLabel>
-                  {session?.user?.user_metadata?.full_name as string}
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link to="/account">Account</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleSignOut}>
-                  {t('common.signOut')}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <UserMenu 
+              session={session} 
+              onLogout={handleSignOut}
+            />
           ) : (
             <Link to="/login">
-              <Button variant="ghost">{t('common.signIn')}</Button>
+              <Button variant="outline" size="sm">
+                {t('common.signIn')}
+              </Button>
             </Link>
           )}
         </div>
