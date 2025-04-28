@@ -151,7 +151,9 @@ const JobWebsites = () => {
   return (
     <div className="container mx-auto p-8">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Job Websites</h1>
+        <h1 className="text-3xl font-bold bg-gradient-primary text-transparent bg-clip-text text-center">
+          Job Websites
+        </h1>
         <Button 
           onClick={triggerSync} 
           disabled={isSyncing}

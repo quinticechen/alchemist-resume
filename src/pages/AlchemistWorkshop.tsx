@@ -251,7 +251,6 @@ const AlchemistWorkshop = () => {
         <h1 className="text-3xl font-bold bg-gradient-primary text-transparent bg-clip-text text-center">
           Alchemist Workshop
         </h1>
-
         <ResumeUploader
           onUploadSuccess={handleFileUploadSuccess}
           activeTab={activeTab}
