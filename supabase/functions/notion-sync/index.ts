@@ -37,7 +37,14 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey)
 
     // Handle status check request
-    const reqData = await req.json().catch(() => ({ action: null }))
+    let reqData = null
+    try {
+      reqData = await req.json().catch(() => ({ action: null }))
+    } catch (e) {
+      console.log('Failed to parse request body, assuming default action')
+      reqData = { action: null }
+    }
+    
     const action = reqData?.action
     
     if (action === 'check-status') {
@@ -61,6 +68,7 @@ Deno.serve(async (req) => {
 
     try {
       while (hasMore) {
+        console.log(`Querying database ${databaseId} with cursor ${startCursor || 'initial'}`)
         // Use database.query to fetch pages from Notion
         const response = await notion.databases.query({
           database_id: databaseId,
@@ -95,9 +103,28 @@ Deno.serve(async (req) => {
           // Extract basic page info
           const pageId = page.id
           const notionUrl = page.url || ''
-          const title = page.properties?.Platform?.title?.[0]?.plain_text || 'Untitled'
-          const url = page.properties?.URL?.url || ''
-          const description = page.properties?.Description?.rich_text?.[0]?.plain_text || ''
+          
+          // Extract page properties with proper error handling
+          let title = 'Untitled'
+          let url = ''
+          let description = ''
+          
+          try {
+            if (page.properties?.Platform?.title && page.properties.Platform.title.length > 0) {
+              title = page.properties.Platform.title[0].plain_text || 'Untitled'
+            }
+            
+            if (page.properties?.URL) {
+              url = page.properties.URL.url || ''
+            }
+            
+            if (page.properties?.Description?.rich_text && 
+                page.properties.Description.rich_text.length > 0) {
+              description = page.properties.Description.rich_text[0].plain_text || ''
+            }
+          } catch (propError) {
+            console.error(`Error extracting properties from page ${pageId}: ${propError.message}`)
+          }
           
           // Fetch page content
           let content = ''
@@ -105,10 +132,11 @@ Deno.serve(async (req) => {
             const blocks = await notion.blocks.children.list({ block_id: pageId })
             content = blocks.results
               .map((block) => {
-                // Handle different block types
+                // Get block type
                 const blockType = block.type
                 if (!blockType || !block[blockType]) return ''
                 
+                // Handle different block types
                 if (blockType === 'paragraph') {
                   return block.paragraph.rich_text.map((t) => t.plain_text).join('')
                 } else if (blockType === 'heading_1') {
@@ -136,8 +164,8 @@ Deno.serve(async (req) => {
               title,
               description,
               content,
-              notion_url: notionUrl, // 你可能也想在這裡儲存 notion_url
-              url 
+              notion_url: notionUrl,
+              url
             })
           
           if (contentError) throw contentError
