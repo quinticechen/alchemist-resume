@@ -12,6 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import ErrorMessage from "@/components/seeker/ErrorMessage";
 
 interface Platform {
   id: string;
@@ -29,6 +30,7 @@ const JobWebsites = () => {
   const [platforms, setPlatforms] = useState<Platform[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isRetrying, setIsRetrying] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedContent, setSelectedContent] = useState<string | null>(null);
   const { toast } = useToast();
@@ -62,9 +64,14 @@ const JobWebsites = () => {
         }));
         setPlatforms(platforms);
         
-        // If no platforms found, trigger sync
+        // If no platforms found, check sync status silently
         if (platforms.length === 0) {
-          checkSyncStatus();
+          const isConfigured = await checkSyncStatus(false);
+          
+          // Only show prompt if configuration is valid but no data
+          if (isConfigured) {
+            setError("No job websites found. Please sync with Notion to load job websites.");
+          }
         }
       }
     } catch (error) {
@@ -80,7 +87,7 @@ const JobWebsites = () => {
     }
   };
 
-  const checkSyncStatus = async () => {
+  const checkSyncStatus = async (showErrors = true) => {
     try {
       console.log('Checking Notion sync status...');
       const { data, error } = await supabase.functions.invoke('notion-sync', {
@@ -89,19 +96,25 @@ const JobWebsites = () => {
       
       if (error) {
         console.error('Error checking sync status:', error);
-        setError("Failed to check Notion sync configuration.");
+        if (showErrors) {
+          setError("Failed to check Notion sync configuration. Please ensure the Edge Function is properly deployed.");
+        }
         return false;
       }
       
-      if (!data.hasNotionApiKey || !data.hasNotionDatabaseId) {
-        setError("Notion API key or Database ID is missing. Please configure them in Supabase Edge Function secrets.");
+      if (!data?.hasNotionApiKey || !data?.hasNotionDatabaseId) {
+        if (showErrors) {
+          setError("Notion API key or Database ID is missing. Please configure them in Supabase Edge Function secrets.");
+        }
         return false;
       }
       
       return true;
     } catch (error) {
       console.error('Error checking sync status:', error);
-      setError("Failed to check Notion sync configuration.");
+      if (showErrors) {
+        setError("Failed to check Notion sync configuration. Please try again later.");
+      }
       return false;
     }
   };
@@ -119,7 +132,10 @@ const JobWebsites = () => {
       
       const { data, error } = await supabase.functions.invoke('notion-sync');
       
-      if (error) throw error;
+      if (error) {
+        console.error('Sync error:', error);
+        throw new Error(`Sync failed: ${error.message || 'Unknown error'}`);
+      }
       
       toast({
         title: "Sync Complete",
@@ -138,6 +154,11 @@ const JobWebsites = () => {
     } finally {
       setIsSyncing(false);
     }
+  };
+
+  const handleRetry = () => {
+    setIsRetrying(true);
+    triggerSync().finally(() => setIsRetrying(false));
   };
 
   useEffect(() => {
@@ -170,10 +191,13 @@ const JobWebsites = () => {
       </div>
       
       {error && (
-        <Alert variant="destructive" className="mb-6">
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
+        <div className="mb-6">
+          <ErrorMessage 
+            message={error} 
+            onRetry={handleRetry} 
+            isRetrying={isRetrying} 
+          />
+        </div>
       )}
       
       {isLoading ? (
@@ -195,9 +219,11 @@ const JobWebsites = () => {
       ) : (
         <div className="text-center py-12">
           <p className="text-muted-foreground text-lg">No job websites found.</p>
-          <p className="text-sm text-gray-500 mt-2">
-            Attempting to sync with Notion...
-          </p>
+          {!error && (
+            <p className="text-sm text-gray-500 mt-2">
+              Click the "Sync from Notion" button to load job websites.
+            </p>
+          )}
         </div>
       )}
 
