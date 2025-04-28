@@ -21,6 +21,7 @@ interface Platform {
     title: string;
     description: string;
     content: string;
+    url?: string;
   };
 }
 
@@ -46,7 +47,8 @@ const JobWebsites = () => {
           platform_content (
             title,
             description,
-            content
+            content,
+            url
           )
         `)
         .order('created_time', { ascending: false });
@@ -62,7 +64,7 @@ const JobWebsites = () => {
         
         // If no platforms found, trigger sync
         if (platforms.length === 0) {
-          triggerSync();
+          checkSyncStatus();
         }
       }
     } catch (error) {
@@ -78,10 +80,42 @@ const JobWebsites = () => {
     }
   };
 
+  const checkSyncStatus = async () => {
+    try {
+      console.log('Checking Notion sync status...');
+      const { data, error } = await supabase.functions.invoke('notion-sync', {
+        body: { action: 'check-status' },
+      });
+      
+      if (error) {
+        console.error('Error checking sync status:', error);
+        setError("Failed to check Notion sync configuration.");
+        return false;
+      }
+      
+      if (!data.hasNotionApiKey || !data.hasNotionDatabaseId) {
+        setError("Notion API key or Database ID is missing. Please configure them in Supabase Edge Function secrets.");
+        return false;
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error checking sync status:', error);
+      setError("Failed to check Notion sync configuration.");
+      return false;
+    }
+  };
+
   const triggerSync = async () => {
     try {
       setIsSyncing(true);
       setError(null);
+      
+      const isConfigured = await checkSyncStatus();
+      if (!isConfigured) {
+        setIsSyncing(false);
+        return;
+      }
       
       const { data, error } = await supabase.functions.invoke('notion-sync');
       
@@ -173,7 +207,9 @@ const JobWebsites = () => {
             <DialogTitle>Content</DialogTitle>
           </DialogHeader>
           <div className="mt-4 prose max-w-none">
-            {selectedContent}
+            {selectedContent?.split('\n').map((paragraph, idx) => (
+              <p key={idx}>{paragraph}</p>
+            ))}
           </div>
         </DialogContent>
       </Dialog>

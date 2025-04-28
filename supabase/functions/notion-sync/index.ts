@@ -1,6 +1,6 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.47.12'
-import { Client } from 'https://deno.land/x/notion_sdk@v2.2.3/mod.ts';
+import { Client } from 'https://esm.sh/@notionhq/client@2.2.13';
 import { corsHeaders } from '../_shared/cors.ts';
 
 const supabaseUrl = 'https://vhofgqmmovjtcnakowlv.supabase.co'

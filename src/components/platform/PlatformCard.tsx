@@ -12,6 +12,7 @@ interface Platform {
     title: string;
     description: string;
     content: string;
+    url?: string; // Make url optional in the content object
   };
 }
 
@@ -23,6 +24,7 @@ interface PlatformCardProps {
 export const PlatformCard = ({ platform, onViewContent }: PlatformCardProps) => {
   const title = platform.content?.title || platform.attrs?.title || 'Untitled';
   const description = platform.content?.description || platform.attrs?.description;
+  // Use platform.url as fallback if content.url is not available
   const url = platform.content?.url || platform.url;
 
   const handleCardClick = () => {
