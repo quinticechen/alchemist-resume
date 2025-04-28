@@ -1,11 +1,6 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.47.12'
-
-// Define CORS headers
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+import { corsHeaders } from '../_shared/cors.ts';
 
 // Create Supabase client
 const supabaseUrl = 'https://vhofgqmmovjtcnakowlv.supabase.co'
@@ -29,7 +24,9 @@ Deno.serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     console.log('Handling CORS preflight request')
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { 
+      headers: corsHeaders 
+    });
   }
 
   try {

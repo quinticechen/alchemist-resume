@@ -73,7 +73,8 @@ const JobWebsites = () => {
       console.log('Checking Notion sync status...');
       
       const { data, error } = await supabase.functions.invoke('notion-sync', {
-        body: { action: 'check-status' }
+        body: { action: 'check-status' },
+        headers: { 'Content-Type': 'application/json' }
       });
       
       if (error) {
@@ -105,7 +106,9 @@ const JobWebsites = () => {
       
       console.log('Triggering Notion sync...');
       
-      const { data, error } = await supabase.functions.invoke('notion-sync');
+      const { data, error } = await supabase.functions.invoke('notion-sync', {
+        headers: { 'Content-Type': 'application/json' }
+      });
       
       if (error) {
         console.error('Error syncing platforms:', error);
