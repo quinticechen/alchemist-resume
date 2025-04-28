@@ -1,63 +1,74 @@
 
 import React from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ExternalLink } from "lucide-react";
-
-interface Platform {
-  id: string;
-  url: string;
-  attrs: any;
-  content?: {
-    title: string;
-    description: string;
-    content: string;
-    url?: string;
-  };
-}
+import { Button } from "@/components/ui/button";
 
 interface PlatformCardProps {
-  platform: Platform;
-  onViewContent: (content: string) => void;
+  name: string;
+  url: string;
+  description?: string;
+  attrs: any;
 }
 
-export const PlatformCard = ({ platform, onViewContent }: PlatformCardProps) => {
-  const title = platform.content?.title || platform.attrs?.title || 'Untitled';
-  const description = platform.content?.description || platform.attrs?.description;
-  // Use platform.url as fallback if content.url is not available
-  const url = platform.content?.url || platform.url;
-
-  const handleCardClick = () => {
-    if (url) {
-      window.open(url, '_blank');
-    }
-  };
+export const PlatformCard = ({ name, url, description, attrs }: PlatformCardProps) => {
+  // Filter out specific properties we don't want to display in the properties list
+  const filteredAttrs = { ...attrs };
+  const excludedProperties = ['title', 'description', 'notionUrl'];
+  excludedProperties.forEach(prop => {
+    delete filteredAttrs[prop];
+  });
 
   return (
-    <Card 
-      className="hover:shadow-lg transition-shadow cursor-pointer overflow-hidden"
-      onClick={handleCardClick}
-    >
+    <Card className="hover:shadow-lg transition-shadow overflow-hidden">
       <CardHeader className="pb-3">
-        <CardTitle className="text-xl">{title}</CardTitle>
+        <CardTitle className="flex items-center justify-between">
+          <span>{name}</span>
+          <Button variant="ghost" size="icon" asChild className="h-8 w-8">
+            <a href={url} target="_blank" rel="noopener noreferrer" aria-label={`Visit ${name}`}>
+              <ExternalLink className="h-4 w-4" />
+            </a>
+          </Button>
+        </CardTitle>
+        {url && (
+          <CardDescription className="truncate">
+            <a href={url} target="_blank" rel="noopener noreferrer" className="hover:underline">
+              {url}
+            </a>
+          </CardDescription>
+        )}
       </CardHeader>
       <CardContent className="space-y-4">
-        {description && (
-          <p className="text-sm text-muted-foreground">{description}</p>
+        {description && <p className="text-sm text-muted-foreground">{description}</p>}
+        
+        {Object.keys(filteredAttrs).length > 0 && (
+          <div>
+            <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">Details</h4>
+            <dl className="space-y-1">
+              {Object.entries(filteredAttrs).map(([key, value]) => (
+                value && typeof value !== 'object' && (
+                  <div key={key} className="grid grid-cols-3 text-sm">
+                    <dt className="font-medium text-gray-500 col-span-1">{key}:</dt>
+                    <dd className="col-span-2">{String(value)}</dd>
+                  </div>
+                )
+              ))}
+            </dl>
+          </div>
         )}
         
-        {platform.content?.content && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="w-full"
-            onClick={(e) => {
-              e.stopPropagation();
-              onViewContent(platform.content?.content || '');
-            }}
-          >
-            View Details
-          </Button>
+        {attrs?.notionUrl && (
+          <div className="pt-2 text-xs">
+            <a 
+              href={attrs.notionUrl} 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="text-blue-600 hover:underline flex items-center gap-1"
+            >
+              <span>View in Notion</span>
+              <ExternalLink className="h-3 w-3" />
+            </a>
+          </div>
         )}
       </CardContent>
     </Card>

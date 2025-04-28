@@ -3,36 +3,39 @@ import React, { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PlatformCard } from "@/components/platform/PlatformCard";
 import { Button } from "@/components/ui/button";
-import { Loader2, RefreshCcw } from "lucide-react";
+import { Loader2, RefreshCcw, AlertTriangle } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import ErrorMessage from "@/components/seeker/ErrorMessage";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface Platform {
   id: string;
   url: string;
   attrs: any;
-  content?: {
-    title: string;
-    description: string;
-    content: string;
-    url?: string;
-  };
+}
+
+interface SyncStatus {
+  hasNotionApiKey: boolean;
+  hasNotionDatabaseId: boolean;
+  message: string;
+}
+
+interface SyncResult {
+  id: string;
+  title?: string;
+  status: 'success' | 'error';
+  error?: string;
 }
 
 const JobWebsites = () => {
   const [platforms, setPlatforms] = useState<Platform[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
-  const [isRetrying, setIsRetrying] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedContent, setSelectedContent] = useState<string | null>(null);
+  const [isRetrying, setIsRetrying] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<SyncStatus | null>(null);
+  const [syncResults, setSyncResults] = useState<SyncResult[]>([]);
+  const [apiErrorDetails, setApiErrorDetails] = useState<string | null>(null);
   const { toast } = useToast();
 
   const fetchPlatforms = async () => {
@@ -40,44 +43,16 @@ const JobWebsites = () => {
       setIsLoading(true);
       setError(null);
       
-      const { data: platformData, error: platformError } = await supabase
+      const { data, error } = await supabase
         .from('platform')
-        .select(`
-          id,
-          url,
-          attrs,
-          platform_content (
-            title,
-            description,
-            content,
-            url
-          )
-        `);
+        .select('*')
+        .order('created_time', { ascending: false });
 
-      if (platformError) throw platformError;
+      if (error) throw error;
       
-      if (platformData) {
-        const platforms = platformData.map(p => ({
-          ...p,
-          content: p.platform_content?.[0] || null
-        }));
-        setPlatforms(platforms);
-        
-        // If no platforms found, check sync status silently
-        if (platforms.length === 0) {
-          try {
-            const { data } = await supabase.functions.invoke('notion-sync', {
-              body: { action: 'check-status' },
-            });
-            
-            // Only show prompt if configuration is valid but no data
-            if (data?.hasNotionApiKey && data?.hasNotionDatabaseId) {
-              setError("No job websites found. Please sync with Notion to load job websites.");
-            }
-          } catch (error) {
-            console.error('Error checking sync status:', error);
-          }
-        }
+      if (data) {
+        console.log(`Fetched ${data.length} platforms:`, data.slice(0, 2));
+        setPlatforms(data || []);
       }
     } catch (error) {
       console.error('Error fetching platforms:', error);
@@ -89,38 +64,36 @@ const JobWebsites = () => {
       });
     } finally {
       setIsLoading(false);
+      setIsRetrying(false);
     }
   };
 
-  const checkSyncStatus = async (showErrors = true) => {
+  const checkSyncStatus = async () => {
     try {
       console.log('Checking Notion sync status...');
+      
       const { data, error } = await supabase.functions.invoke('notion-sync', {
         body: { action: 'check-status' },
+        headers: { 'Content-Type': 'application/json' }
       });
       
       if (error) {
         console.error('Error checking sync status:', error);
-        if (showErrors) {
-          setError("Failed to check Notion sync configuration. Please ensure the Edge Function is properly deployed.");
-        }
-        return false;
+        setApiErrorDetails(`Error type: ${error.name}, Message: ${error.message}, Additional details: ${JSON.stringify(error)}`);
+        throw error;
       }
       
-      if (!data?.hasNotionApiKey || !data?.hasNotionDatabaseId) {
-        if (showErrors) {
-          setError("Notion API key or Database ID is missing. Please configure them in Supabase Edge Function secrets.");
-        }
-        return false;
+      console.log('Sync status response:', data);
+      setSyncStatus(data);
+      
+      if (!data.hasNotionApiKey || !data.hasNotionDatabaseId) {
+        setError("Notion API key or Database ID is missing. Please configure them in Supabase Edge Function secrets.");
       }
       
-      return true;
     } catch (error) {
       console.error('Error checking sync status:', error);
-      if (showErrors) {
-        setError("Failed to check Notion sync configuration. Please try again later.");
-      }
-      return false;
+      setError("Failed to check Notion sync configuration.");
+      setApiErrorDetails(`Error checking sync status: ${error.toString()}`);
     }
   };
 
@@ -128,20 +101,25 @@ const JobWebsites = () => {
     try {
       setIsSyncing(true);
       setError(null);
+      setApiErrorDetails(null);
+      setSyncResults([]);
       
-      // Check if configuration is valid before proceeding
-      const isConfigured = await checkSyncStatus();
-      if (!isConfigured) {
-        setIsSyncing(false);
-        return;
-      }
+      console.log('Triggering Notion sync...');
       
-      // Invoke the Notion sync function
-      const { data, error } = await supabase.functions.invoke('notion-sync');
+      const { data, error } = await supabase.functions.invoke('notion-sync', {
+        headers: { 'Content-Type': 'application/json' }
+      });
       
       if (error) {
-        console.error('Sync error:', error);
-        throw new Error(`Sync failed: ${error.message || 'Unknown error'}`);
+        console.error('Error syncing platforms:', error);
+        setApiErrorDetails(`Error type: ${error.name}, Message: ${error.message}, Additional details: ${JSON.stringify(error)}`);
+        throw error;
+      }
+      
+      console.log('Sync response:', data);
+      
+      if (data.results) {
+        setSyncResults(data.results);
       }
       
       toast({
@@ -149,14 +127,15 @@ const JobWebsites = () => {
         description: data?.message || "Job websites have been synchronized from Notion.",
       });
       
-      // Fetch the updated platforms
-      await fetchPlatforms();
+      // Refresh platforms after sync
+      fetchPlatforms();
+      checkSyncStatus();
     } catch (error) {
       console.error('Error syncing platforms:', error);
       setError("Failed to synchronize with Notion. Please check your connection and try again.");
       toast({
         title: "Sync Failed",
-        description: "There was a problem syncing with Notion.",
+        description: "There was a problem syncing with Notion. Please check your API keys and database configuration.",
         variant: "destructive",
       });
     } finally {
@@ -164,21 +143,15 @@ const JobWebsites = () => {
     }
   };
 
-  const handleRetry = () => {
-    setIsRetrying(true);
-    triggerSync().finally(() => setIsRetrying(false));
-  };
-
   useEffect(() => {
     fetchPlatforms();
+    checkSyncStatus();
   }, []);
 
   return (
     <div className="container mx-auto p-8">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold bg-gradient-primary text-transparent bg-clip-text">
-          Job Websites
-        </h1>
+        <h1 className="text-3xl font-bold">Job Websites</h1>
         <Button 
           onClick={triggerSync} 
           disabled={isSyncing}
@@ -198,13 +171,64 @@ const JobWebsites = () => {
         </Button>
       </div>
       
+      {syncStatus && (syncStatus.hasNotionApiKey === false || syncStatus.hasNotionDatabaseId === false) && (
+        <div className="bg-amber-50 border border-amber-200 text-amber-800 p-4 mb-6 rounded-lg">
+          <h3 className="font-medium mb-2">Configuration Status</h3>
+          <ul className="list-disc pl-5 space-y-1">
+            <li>Notion API Key: {syncStatus.hasNotionApiKey ? "✅ Configured" : "❌ Missing"}</li>
+            <li>Notion Database ID: {syncStatus.hasNotionDatabaseId ? "✅ Configured" : "❌ Missing"}</li>
+          </ul>
+          <p className="text-sm mt-2">
+            Please make sure to configure these secrets in the Supabase Edge Function secrets.
+          </p>
+        </div>
+      )}
+      
+      {apiErrorDetails && (
+        <Alert variant="destructive" className="mb-6">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>API Error Details</AlertTitle>
+          <AlertDescription className="text-xs font-mono whitespace-pre-wrap">
+            {apiErrorDetails}
+          </AlertDescription>
+        </Alert>
+      )}
+      
       {error && (
-        <div className="mb-6">
-          <ErrorMessage 
-            message={error} 
-            onRetry={handleRetry} 
-            isRetrying={isRetrying} 
-          />
+        <ErrorMessage 
+          message={error} 
+          onRetry={isLoading ? fetchPlatforms : triggerSync}
+          isRetrying={isRetrying}
+        />
+      )}
+      
+      {syncResults.length > 0 && (
+        <div className="mb-6 bg-gray-50 p-4 rounded-lg border border-gray-200">
+          <h3 className="font-medium mb-2">Sync Results</h3>
+          <div className="text-sm">
+            <div className="flex justify-between mb-2">
+              <span>Success: {syncResults.filter(r => r.status === 'success').length}</span>
+              <span>Failed: {syncResults.filter(r => r.status === 'error').length}</span>
+            </div>
+            {syncResults.filter(r => r.status === 'error').length > 0 && (
+              <div className="mt-2 text-red-600">
+                <h4 className="font-medium">Errors:</h4>
+                <ul className="list-disc pl-5 mt-1">
+                  {syncResults
+                    .filter(r => r.status === 'error')
+                    .slice(0, 3)
+                    .map((result, idx) => (
+                      <li key={idx}>
+                        {result.title || result.id}: {result.error}
+                      </li>
+                    ))}
+                  {syncResults.filter(r => r.status === 'error').length > 3 && (
+                    <li>...and {syncResults.filter(r => r.status === 'error').length - 3} more errors</li>
+                  )}
+                </ul>
+              </div>
+            )}
+          </div>
         </div>
       )}
       
@@ -219,34 +243,48 @@ const JobWebsites = () => {
           {platforms.map((platform) => (
             <PlatformCard
               key={platform.id}
-              platform={platform}
-              onViewContent={(content) => setSelectedContent(content)}
+              name={platform.attrs?.title || 'Untitled'}
+              url={platform.url || '#'}
+              description={platform.attrs?.description}
+              attrs={platform.attrs}
             />
           ))}
         </div>
       ) : (
-        <div className="text-center py-12">
-          <p className="text-muted-foreground text-lg">No job websites found.</p>
-          {!error && (
-            <p className="text-sm text-gray-500 mt-2">
-              Click the "Sync from Notion" button to load job websites.
+        <div className="text-center py-12 space-y-6">
+          <div className="bg-gray-50 p-6 rounded-lg mx-auto max-w-md border border-gray-200">
+            <p className="text-muted-foreground text-lg mb-4">No job websites found.</p>
+            <p className="text-sm text-gray-500 mb-6">
+              This could be because:
             </p>
+            <ul className="text-sm text-left list-disc pl-5 mb-6 space-y-2">
+              <li>The Notion sync has not been run yet</li>
+              <li>The Notion API key or Database ID is not properly configured</li>
+              <li>The Notion database is empty</li>
+              <li>There was an error during the sync process</li>
+            </ul>
+            <Button onClick={triggerSync} className="w-full">
+              {isSyncing ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Syncing...
+                </>
+              ) : (
+                <>
+                  <RefreshCcw className="h-4 w-4 mr-2" />
+                  Sync from Notion
+                </>
+              )}
+            </Button>
+          </div>
+          
+          {syncStatus?.message && (
+            <div className="text-sm text-gray-500">
+              Last sync message: {syncStatus.message}
+            </div>
           )}
         </div>
       )}
-
-      <Dialog open={!!selectedContent} onOpenChange={() => setSelectedContent(null)}>
-        <DialogContent className="max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>Content</DialogTitle>
-          </DialogHeader>
-          <div className="mt-4 prose max-w-none">
-            {selectedContent?.split('\n').map((paragraph, idx) => (
-              <p key={idx}>{paragraph}</p>
-            ))}
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
