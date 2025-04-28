@@ -140,25 +140,37 @@ export type Database = {
         Row: {
           archived: boolean | null
           attrs: Json | null
+          content: Json | null
           created_time: string | null
+          description: string | null
           id: string
           last_edited_time: string | null
+          notion_url: string | null
+          title: string | null
           url: string | null
         }
         Insert: {
           archived?: boolean | null
           attrs?: Json | null
+          content?: Json | null
           created_time?: string | null
+          description?: string | null
           id: string
           last_edited_time?: string | null
+          notion_url?: string | null
+          title?: string | null
           url?: string | null
         }
         Update: {
           archived?: boolean | null
           attrs?: Json | null
+          content?: Json | null
           created_time?: string | null
+          description?: string | null
           id?: string
           last_edited_time?: string | null
+          notion_url?: string | null
+          title?: string | null
           url?: string | null
         }
         Relationships: []
