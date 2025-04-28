@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PlatformCard } from "@/components/platform/PlatformCard";
@@ -257,10 +256,10 @@ const JobWebsites = () => {
           {platforms.map((platform) => (
             <PlatformCard
               key={platform.id}
-              name={platform.attrs?.title || 'Untitled'}
+              name={platform.title || 'Untitled'}
               url={platform.url || '#'}
-              description={platform.attrs?.description}
-              attrs={platform.attrs}
+              description={platform.description}
+              content={platform.content}
             />
           ))}
         </div>
