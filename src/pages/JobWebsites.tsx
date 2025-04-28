@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PlatformCard } from "@/components/platform/PlatformCard";
@@ -9,7 +10,12 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface Platform {
   id: string;
-  url: string;
+  url: string | null;
+  title: string | null;
+  description: string | null;
+  content: Array<{ type: string; text: string }> | null;
+  notion_url: string | null;
+  created_time: string | null;
   attrs: any;
 }
 
@@ -258,8 +264,8 @@ const JobWebsites = () => {
               key={platform.id}
               name={platform.title || 'Untitled'}
               url={platform.url || '#'}
-              description={platform.description}
-              content={platform.content}
+              description={platform.description || ''}
+              content={platform.content || []}
             />
           ))}
         </div>
