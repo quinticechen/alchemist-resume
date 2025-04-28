@@ -3,10 +3,10 @@ import React, { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PlatformCard } from "@/components/platform/PlatformCard";
 import { Button } from "@/components/ui/button";
-import { Loader2, RefreshCcw } from "lucide-react";
+import { Loader2, RefreshCcw, AlertTriangle } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import ErrorMessage from "@/components/seeker/ErrorMessage";
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface Platform {
   id: string;
@@ -20,6 +20,13 @@ interface SyncStatus {
   message: string;
 }
 
+interface SyncResult {
+  id: string;
+  title?: string;
+  status: 'success' | 'error';
+  error?: string;
+}
+
 const JobWebsites = () => {
   const [platforms, setPlatforms] = useState<Platform[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -27,6 +34,8 @@ const JobWebsites = () => {
   const [error, setError] = useState<string | null>(null);
   const [isRetrying, setIsRetrying] = useState(false);
   const [syncStatus, setSyncStatus] = useState<SyncStatus | null>(null);
+  const [syncResults, setSyncResults] = useState<SyncResult[]>([]);
+  const [apiErrorDetails, setApiErrorDetails] = useState<string | null>(null);
   const { toast } = useToast();
 
   const fetchPlatforms = async () => {
@@ -61,12 +70,19 @@ const JobWebsites = () => {
 
   const checkSyncStatus = async () => {
     try {
+      console.log('Checking Notion sync status...');
+      
       const { data, error } = await supabase.functions.invoke('notion-sync', {
         body: { action: 'check-status' }
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error checking sync status:', error);
+        setApiErrorDetails(`Error type: ${error.name}, Message: ${error.message}, Additional details: ${JSON.stringify(error)}`);
+        throw error;
+      }
       
+      console.log('Sync status response:', data);
       setSyncStatus(data);
       
       if (!data.hasNotionApiKey || !data.hasNotionDatabaseId) {
@@ -76,6 +92,7 @@ const JobWebsites = () => {
     } catch (error) {
       console.error('Error checking sync status:', error);
       setError("Failed to check Notion sync configuration.");
+      setApiErrorDetails(`Error checking sync status: ${error.toString()}`);
     }
   };
 
@@ -83,10 +100,24 @@ const JobWebsites = () => {
     try {
       setIsSyncing(true);
       setError(null);
+      setApiErrorDetails(null);
+      setSyncResults([]);
+      
+      console.log('Triggering Notion sync...');
       
       const { data, error } = await supabase.functions.invoke('notion-sync');
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error syncing platforms:', error);
+        setApiErrorDetails(`Error type: ${error.name}, Message: ${error.message}, Additional details: ${JSON.stringify(error)}`);
+        throw error;
+      }
+      
+      console.log('Sync response:', data);
+      
+      if (data.results) {
+        setSyncResults(data.results);
+      }
       
       toast({
         title: "Sync Complete",
@@ -150,12 +181,52 @@ const JobWebsites = () => {
         </div>
       )}
       
+      {apiErrorDetails && (
+        <Alert variant="destructive" className="mb-6">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>API Error Details</AlertTitle>
+          <AlertDescription className="text-xs font-mono whitespace-pre-wrap">
+            {apiErrorDetails}
+          </AlertDescription>
+        </Alert>
+      )}
+      
       {error && (
         <ErrorMessage 
           message={error} 
           onRetry={isLoading ? fetchPlatforms : triggerSync}
           isRetrying={isRetrying}
         />
+      )}
+      
+      {syncResults.length > 0 && (
+        <div className="mb-6 bg-gray-50 p-4 rounded-lg border border-gray-200">
+          <h3 className="font-medium mb-2">Sync Results</h3>
+          <div className="text-sm">
+            <div className="flex justify-between mb-2">
+              <span>Success: {syncResults.filter(r => r.status === 'success').length}</span>
+              <span>Failed: {syncResults.filter(r => r.status === 'error').length}</span>
+            </div>
+            {syncResults.filter(r => r.status === 'error').length > 0 && (
+              <div className="mt-2 text-red-600">
+                <h4 className="font-medium">Errors:</h4>
+                <ul className="list-disc pl-5 mt-1">
+                  {syncResults
+                    .filter(r => r.status === 'error')
+                    .slice(0, 3)
+                    .map((result, idx) => (
+                      <li key={idx}>
+                        {result.title || result.id}: {result.error}
+                      </li>
+                    ))}
+                  {syncResults.filter(r => r.status === 'error').length > 3 && (
+                    <li>...and {syncResults.filter(r => r.status === 'error').length - 3} more errors</li>
+                  )}
+                </ul>
+              </div>
+            )}
+          </div>
+        </div>
       )}
       
       {isLoading ? (
