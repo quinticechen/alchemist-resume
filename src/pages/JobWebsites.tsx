@@ -53,6 +53,11 @@ const JobWebsites = () => {
       if (data) {
         console.log(`Fetched ${data.length} platforms:`, data.slice(0, 2));
         setPlatforms(data || []);
+        
+        // Clear the configuration error if we successfully got data
+        if (data.length > 0) {
+          setError(null);
+        }
       }
     } catch (error) {
       console.error('Error fetching platforms:', error);
@@ -86,14 +91,23 @@ const JobWebsites = () => {
       console.log('Sync status response:', data);
       setSyncStatus(data);
       
-      if (!data.hasNotionApiKey || !data.hasNotionDatabaseId) {
+      // Only set error if we have no platforms AND the configuration is missing
+      const hasMissingConfig = !data.hasNotionApiKey || !data.hasNotionDatabaseId;
+      if (hasMissingConfig && platforms.length === 0) {
         setError("Notion API key or Database ID is missing. Please configure them in Supabase Edge Function secrets.");
+      } else {
+        // Clear the error if we have platforms or the configuration is complete
+        setError(null);
       }
       
     } catch (error) {
       console.error('Error checking sync status:', error);
-      setError("Failed to check Notion sync configuration.");
-      setApiErrorDetails(`Error checking sync status: ${error.toString()}`);
+      
+      // Don't set error if we already have platforms
+      if (platforms.length === 0) {
+        setError("Failed to check Notion sync configuration.");
+        setApiErrorDetails(`Error checking sync status: ${error.toString()}`);
+      }
     }
   };
 
@@ -194,7 +208,7 @@ const JobWebsites = () => {
         </Alert>
       )}
       
-      {error && (
+      {error && platforms.length === 0 && (
         <ErrorMessage 
           message={error} 
           onRetry={isLoading ? fetchPlatforms : triggerSync}
