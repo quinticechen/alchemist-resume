@@ -1,10 +1,10 @@
+
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PlatformCard } from "@/components/platform/PlatformCard";
 import { Button } from "@/components/ui/button";
 import { Loader2, RefreshCcw } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Dialog,
   DialogContent,
@@ -15,14 +15,11 @@ import ErrorMessage from "@/components/seeker/ErrorMessage";
 
 interface Platform {
   id: string;
-  url: string;
-  attrs: any;
-  content?: {
-    title: string;
-    description: string;
-    content: string;
-    url?: string;
-  };
+  url: string | null;
+  title: string;
+  description: string | null;
+  content: string | null;
+  notion_url: string | null;
 }
 
 const JobWebsites = () => {
@@ -42,14 +39,7 @@ const JobWebsites = () => {
       console.log("Fetching platforms from Supabase (platform_content)...");
       const { data: platformContentData, error: platformContentError } = await supabase
         .from('platform_content')
-        .select(`
-          id: platform_id,
-          url,
-          title,
-          description,
-          content,
-          notion_url
-        `);
+        .select('*');
 
       if (platformContentError) {
         console.error("Error fetching job websites:", platformContentError);
@@ -57,19 +47,7 @@ const JobWebsites = () => {
       }
 
       if (platformContentData) {
-        const fetchedPlatforms = platformContentData.map(p => ({
-          id: p.id, // 使用 platform_id 作为平台的 id (已在 select 中 alias 为 id)
-          url: p.url || '#',
-          content: {
-            title: p.title || '',
-            description: p.description || '',
-            content: p.content || '',
-            url: p.url,
-          },
-          notion_url: p.notion_url || '',
-          attrs: {}, // 你不再需要 attrs，可以设置为空对象
-        }));
-        setPlatforms(fetchedPlatforms);
+        setPlatforms(platformContentData);
       }
     } catch (error: any) {
       console.error('Error fetching platforms:', error);
@@ -98,7 +76,7 @@ const JobWebsites = () => {
       });
       fetchPlatforms();
     } catch (error: any) {
-      console.error('Error syncing:', error);
+      console.error('Error syncing platforms:', error);
       setError("Failed to synchronize with Notion. Please check your connection and try again.");
       toast({
         title: "Sync failed",
@@ -113,7 +91,7 @@ const JobWebsites = () => {
   const handleRetry = () => {
     setIsRetrying(true);
     fetchPlatforms();
-    setTimeout(() => setIsRetrying(false), 2000); // Simulate retry delay
+    setTimeout(() => setIsRetrying(false), 2000);
   };
 
   useEffect(() => {
