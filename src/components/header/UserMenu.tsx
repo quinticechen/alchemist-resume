@@ -36,18 +36,19 @@ const UserMenu = ({ session, onLogout }: UserMenuProps) => {
         </Avatar>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuLabel>My Account</DropdownMenuLabel>
+        {/* <DropdownMenuLabel>My Account</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
           <a href="/alchemist-workshop">Workshop</a>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <a href="/alchemy-records">Records</a>
-        </DropdownMenuItem>
+        </DropdownMenuItem> */}
+        
         <DropdownMenuItem asChild>
-          <a href="/account">Settings</a>
+          <a href="/account">My Account</a>
         </DropdownMenuItem>
-        <DropdownMenuSeparator />
+        {/* <DropdownMenuSeparator /> */}
         <DropdownMenuItem onClick={onLogout}>
           Logout
         </DropdownMenuItem>
