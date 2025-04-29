@@ -11,7 +11,7 @@ if (!openaiApiKey) {
   console.error("OPENAI_API_KEY environment variable is not set");
 }
 
-// Initialize OpenAI client
+// Initialize OpenAI client with explicit v2 header
 const openai = new OpenAI({
   apiKey: openaiApiKey || "",
   defaultHeaders: {
@@ -252,6 +252,7 @@ async function getOrCreateThread(analysisId: string) {
 
     // Create new thread if one doesn't exist
     console.log(`Creating new OpenAI thread for analysis ${analysisId}`);
+    // Important: We're using the openai client which already has the v2 header
     const thread = await openai.beta.threads.create();
     console.log(`Created new thread with ID: ${thread.id}`);
     
@@ -335,11 +336,12 @@ async function saveThreadMetadata(analysisId: string, threadId: string, assistan
 async function addContextToThread(threadId: string, systemPrompt: string) {
   try {
     console.log(`Adding initial context to thread ${threadId}`);
+    // Using the openai client that already has the v2 header
     await openai.beta.threads.messages.create(
       threadId,
       {
         role: "user",
-        content: `[CONTEXT]: ${systemPrompt}`,
+        content: `[CONTEXT]: ${systemPrompt}`
       }
     );
     console.log(`Added initial context to thread ${threadId}`);
@@ -355,6 +357,7 @@ async function addContextToThread(threadId: string, systemPrompt: string) {
 async function addMessageToThread(threadId: string, message: string) {
   try {
     console.log(`Adding user message to thread ${threadId}`);
+    // Using the openai client that already has the v2 header
     const response = await openai.beta.threads.messages.create(
       threadId,
       {
@@ -376,6 +379,7 @@ async function addMessageToThread(threadId: string, message: string) {
 async function runAssistant(threadId: string, assistantId: string) {
   try {
     console.log(`Running assistant ${assistantId} on thread ${threadId}`);
+    // Using the openai client that already has the v2 header
     const run = await openai.beta.threads.runs.create(
       threadId,
       { assistant_id: assistantId }
@@ -396,6 +400,7 @@ async function waitForRunCompletion(threadId: string, runId: string, timeout = 6
   const startTime = Date.now();
   
   while (Date.now() - startTime < timeout) {
+    // Using the openai client that already has the v2 header
     const run = await openai.beta.threads.runs.retrieve(threadId, runId);
     console.log(`Run ${runId} status: ${run.status}`);
     
@@ -420,6 +425,7 @@ async function waitForRunCompletion(threadId: string, runId: string, timeout = 6
 async function getLatestAssistantMessage(threadId: string) {
   try {
     console.log(`Getting latest assistant message from thread ${threadId}`);
+    // Using the openai client that already has the v2 header
     const messages = await openai.beta.threads.messages.list(threadId, {
       limit: 1,
       order: 'desc'
@@ -470,6 +476,7 @@ async function handleRequest(req: Request) {
     
     console.log(`Request received for analysis ID: ${analysisId}, section: ${currentSection || 'none'}, threadId: ${providedThreadId || 'none'}`);
     console.log(`OpenAI API Key exists: ${!!openaiApiKey}`);
+    console.log(`OpenAI header: "OpenAI-Beta: assistants=v2"`);
     console.log(`Resume content provided: ${!!providedResumeContent}`);
     
     if (!openaiApiKey) {

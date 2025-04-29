@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import OozeAnimation from "@/components/OozeAnimation";
@@ -163,7 +164,7 @@ const OozeOptimizationSection = ({ optimizationData, analysisId }: OozeOptimizat
       console.log('Request payload:', JSON.stringify(requestPayload));
       
       const { data, error } = await supabase.functions.invoke('resume-ai-assistant', {
-        body: requestPayload,
+        body: requestPayload
       });
 
       const endTime = new Date().getTime();
@@ -275,7 +276,7 @@ const OozeOptimizationSection = ({ optimizationData, analysisId }: OozeOptimizat
         ) : (
           <>
             <div className="flex justify-center mb-4">
-              <OozeAnimation width={120} height={120} /> {/* Changed to OozeAnimation */}
+              <OozeAnimation width={120} height={120} />
             </div>
             
             <ScrollArea className="flex-1 pr-4">
