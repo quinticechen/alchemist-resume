@@ -1,11 +1,11 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import SeekerAnimation from "@/components/SeekerAnimation"; 
+import OozeAnimation from "@/components/OozeAnimation";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { AlertCircle, Send, User, Loader2, RefreshCw } from "lucide-react";
+import { Lightbulb, AlertCircle, Send, User, Loader2, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -16,12 +16,12 @@ interface ChatMessage {
   timestamp: Date;
 }
 
-interface SeekerOptimizationSectionProps {
+interface OozeOptimizationSectionProps {
   optimizationData: any;
   analysisId?: string;
 }
 
-const SeekerOptimizationSection = ({ optimizationData, analysisId }: SeekerOptimizationSectionProps) => {
+const OozeOptimizationSection = ({ optimizationData, analysisId }: OozeOptimizationSectionProps) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -153,14 +153,22 @@ const SeekerOptimizationSection = ({ optimizationData, analysisId }: SeekerOptim
     try {
       console.log(`Sending message to edge function with analysisId: ${analysisId}, threadId: ${threadId || 'new'}`);
       
-      // Call OpenAI Assistants-enabled edge function
+      // Enhanced edge function call with more detailed request logging
+      const startTime = new Date().getTime();
+      const requestPayload = { 
+        message: input, 
+        analysisId: analysisId,
+        threadId: threadId
+      };
+      
+      console.log('Request payload:', JSON.stringify(requestPayload));
+      
       const { data, error } = await supabase.functions.invoke('resume-ai-assistant', {
-        body: { 
-          message: input, 
-          analysisId: analysisId,
-          threadId: threadId
-        }
+        body: requestPayload
       });
+
+      const endTime = new Date().getTime();
+      console.log(`Edge function response time: ${endTime - startTime}ms`);
 
       if (error) {
         console.error('Edge function error:', error);
@@ -226,8 +234,8 @@ const SeekerOptimizationSection = ({ optimizationData, analysisId }: SeekerOptim
     <Card className="h-full overflow-hidden flex flex-col">
       <CardHeader>
         <CardTitle className="text-lg flex items-center gap-2">
-          <SeekerAnimation width={18} height={18} />
-          Seeker Optimization
+          <OozeAnimation width={18} height={18} />
+          Ooze Optimization
           {initializationStatus === 'error' && (
             <Button
               variant="ghost"
@@ -249,7 +257,7 @@ const SeekerOptimizationSection = ({ optimizationData, analysisId }: SeekerOptim
           </div>
         ) : initializationStatus === 'loading' ? (
           <div className="flex flex-col items-center justify-center h-full">
-            <SeekerAnimation width={120} height={120} />
+            <OozeAnimation width={120} height={120} />
             <p className="text-sm text-muted-foreground mt-4">Loading assistant...</p>
           </div>
         ) : initializationStatus === 'error' ? (
@@ -268,7 +276,7 @@ const SeekerOptimizationSection = ({ optimizationData, analysisId }: SeekerOptim
         ) : (
           <>
             <div className="flex justify-center mb-4">
-              <SeekerAnimation width={120} height={120} />
+              <OozeAnimation width={120} height={120} /> {/* Changed to OozeAnimation */}
             </div>
             
             <ScrollArea className="flex-1 pr-4">
@@ -334,4 +342,4 @@ const SeekerOptimizationSection = ({ optimizationData, analysisId }: SeekerOptim
   );
 };
 
-export default SeekerOptimizationSection;
+export default OozeOptimizationSection;
