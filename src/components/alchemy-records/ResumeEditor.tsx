@@ -6,7 +6,7 @@ import { CheckCircle, Save, AlertTriangle, Eye, FileJson } from "lucide-react";
 import SectionSelector from "./SectionSelector";
 import SectionEditor from "./sections/SectionEditor";
 import JobDescriptionViewer from "./JobDescriptionViewer";
-import OozeOptimizationSection from "./OozeOptimizationSection";
+import SeekerOptimizationSection from "./SeekerOptimizationSection";
 import {
   ResumeSection,
   getFormattedResume,
@@ -601,7 +601,7 @@ const ResumeEditor = ({
               <ResizablePanel defaultSize={25} minSize={15}>
                 <ScrollArea className="h-full">
                   <div className="p-2">
-                    <OozeOptimizationSection
+                    <SeekerOptimizationSection
                       optimizationData={resumeData}
                       analysisId={analysisId}
                     />
