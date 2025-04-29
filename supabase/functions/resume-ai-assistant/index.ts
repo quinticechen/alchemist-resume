@@ -48,6 +48,7 @@ async function handleDebugRequest(analysisId: string) {
         supabaseServiceKeyExists: !!supabaseServiceKey,
       },
       openai: null as any,
+      openaiAssistants: null as any,
       analysisData: null as any,
       metadataData: null as any,
     };
@@ -65,6 +66,26 @@ async function handleDebugRequest(analysisId: string) {
       };
     } catch (error) {
       debugData.openai = {
+        status: "error",
+        message: error.message,
+        name: error.name
+      };
+    }
+    
+    // Test OpenAI Assistants API
+    try {
+      const assistantsList = await openai.beta.assistants.list({ 
+        limit: 1,
+        headers: {
+          "OpenAI-Beta": "assistants=v2"
+        }
+      });
+      debugData.openaiAssistants = {
+        status: "connected",
+        response: assistantsList.data
+      };
+    } catch (error) {
+      debugData.openaiAssistants = {
         status: "error",
         message: error.message,
         name: error.name
@@ -252,8 +273,11 @@ async function getOrCreateThread(analysisId: string) {
 
     // Create new thread if one doesn't exist
     console.log(`Creating new OpenAI thread for analysis ${analysisId}`);
-    // Important: We're using the openai client which already has the v2 header
-    const thread = await openai.beta.threads.create();
+    const thread = await openai.beta.threads.create({
+      headers: {
+        "OpenAI-Beta": "assistants=v2"
+      }
+    });
     console.log(`Created new thread with ID: ${thread.id}`);
     
     return {
@@ -336,12 +360,14 @@ async function saveThreadMetadata(analysisId: string, threadId: string, assistan
 async function addContextToThread(threadId: string, systemPrompt: string) {
   try {
     console.log(`Adding initial context to thread ${threadId}`);
-    // Using the openai client that already has the v2 header
     await openai.beta.threads.messages.create(
       threadId,
       {
         role: "user",
-        content: `[CONTEXT]: ${systemPrompt}`
+        content: `[CONTEXT]: ${systemPrompt}`,
+        headers: {
+          "OpenAI-Beta": "assistants=v2"
+        }
       }
     );
     console.log(`Added initial context to thread ${threadId}`);
@@ -357,12 +383,14 @@ async function addContextToThread(threadId: string, systemPrompt: string) {
 async function addMessageToThread(threadId: string, message: string) {
   try {
     console.log(`Adding user message to thread ${threadId}`);
-    // Using the openai client that already has the v2 header
     const response = await openai.beta.threads.messages.create(
       threadId,
       {
         role: "user",
-        content: message
+        content: message,
+        headers: {
+          "OpenAI-Beta": "assistants=v2"
+        }
       }
     );
     console.log(`Added message to thread ${threadId}, message ID: ${response.id}`);
@@ -379,10 +407,14 @@ async function addMessageToThread(threadId: string, message: string) {
 async function runAssistant(threadId: string, assistantId: string) {
   try {
     console.log(`Running assistant ${assistantId} on thread ${threadId}`);
-    // Using the openai client that already has the v2 header
     const run = await openai.beta.threads.runs.create(
       threadId,
-      { assistant_id: assistantId }
+      { 
+        assistant_id: assistantId,
+        headers: {
+          "OpenAI-Beta": "assistants=v2"
+        }
+      }
     );
     console.log(`Started run ${run.id} for thread ${threadId}`);
     return run;
@@ -400,8 +432,15 @@ async function waitForRunCompletion(threadId: string, runId: string, timeout = 6
   const startTime = Date.now();
   
   while (Date.now() - startTime < timeout) {
-    // Using the openai client that already has the v2 header
-    const run = await openai.beta.threads.runs.retrieve(threadId, runId);
+    const run = await openai.beta.threads.runs.retrieve(
+      threadId, 
+      runId,
+      {
+        headers: {
+          "OpenAI-Beta": "assistants=v2"
+        }
+      }
+    );
     console.log(`Run ${runId} status: ${run.status}`);
     
     if (run.status === 'completed') {
@@ -425,11 +464,16 @@ async function waitForRunCompletion(threadId: string, runId: string, timeout = 6
 async function getLatestAssistantMessage(threadId: string) {
   try {
     console.log(`Getting latest assistant message from thread ${threadId}`);
-    // Using the openai client that already has the v2 header
-    const messages = await openai.beta.threads.messages.list(threadId, {
-      limit: 1,
-      order: 'desc'
-    });
+    const messages = await openai.beta.threads.messages.list(
+      threadId, 
+      {
+        limit: 1,
+        order: 'desc',
+        headers: {
+          "OpenAI-Beta": "assistants=v2"
+        }
+      }
+    );
     
     const message = messages.data.find(msg => msg.role === 'assistant');
     if (!message) {
