@@ -1,4 +1,3 @@
-
 // Resume AI Assistant Edge Function
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import OpenAI from "https://esm.sh/openai@4.24.1";
@@ -350,18 +349,8 @@ async function saveThreadMetadata(analysisId: string, threadId: string, systemPr
       }
     }
     
-    // Store system message only if it doesn't exist yet
-    const { data: existingSystemMessage } = await supabaseAdmin
-      .from("ai_chat_messages")
-      .select("id")
-      .eq("analysis_id", analysisId)
-      .eq("thread_id", threadId)
-      .eq("role", "system")
-      .maybeSingle();
-      
-    if (!existingSystemMessage) {
-      await saveMessage(analysisId, "system", systemPrompt, threadId);
-    }
+    // Store system message - always save it for record-keeping
+    await saveMessage(analysisId, "system", systemPrompt, threadId);
   } catch (error) {
     console.error(`Error storing metadata: ${error.message}`);
   }
@@ -376,6 +365,7 @@ async function getPreviousMessages(analysisId: string, threadId: string | null, 
       .from("ai_chat_messages")
       .select("*")
       .eq("analysis_id", analysisId)
+      .neq("role", "system") // Skip system messages when retrieving for context
       .order("timestamp", { ascending: false })
       .limit(limit);
       
@@ -397,6 +387,19 @@ async function getPreviousMessages(analysisId: string, threadId: string | null, 
     console.error(`Error fetching previous messages: ${error.message}`);
     return [];
   }
+}
+
+/**
+ * Get Ooze's introduction message randomly
+ */
+function getRandomIntroduction() {
+  const introductions = [
+    "Hey there! Your resume is glowing now, but shall we explore what else we can enhance? I've got some magical tricks up my tentacles!",
+    "Curious about how I transformed your resume? Let's chat about my secrets and see if we've missed any important points!",
+    "My tentacles sense there's still some hidden potential in your resume! Want to explore together?"
+  ];
+  
+  return introductions[Math.floor(Math.random() * introductions.length)];
 }
 
 /**
@@ -437,6 +440,7 @@ async function handleRequest(req: Request) {
     // Variables for content
     let resumeContent = "";
     let jobContext = "";
+    let guidanceForOptimization = "";
     let newThreadId = threadId || crypto.randomUUID();
     
     // Get resume and job data
@@ -471,6 +475,12 @@ async function handleRequest(req: Request) {
         if (editorData?.content?.resume && currentSection) {
           console.log(`Found editor content for analysis: ${analysisId}`);
           resumeContent = extractEditorSectionContent(editorData, currentSection);
+        }
+        
+        // Get optimization guidance if available
+        if (editorData?.content?.guidanceForOptimization) {
+          guidanceForOptimization = editorData.content.guidanceForOptimization;
+          console.log(`Found guidance for optimization: ${guidanceForOptimization.substring(0, 50)}...`);
         }
       } catch (error) {
         console.log("Error fetching editor data, continuing with empty resumeContent");
@@ -517,7 +527,7 @@ async function handleRequest(req: Request) {
     // Save assistant message to database
     await saveMessage(analysisId, "assistant", aiResponse, newThreadId);
     
-    // Save thread metadata - IMPORTANT FIX: We always save metadata regardless if it's a new thread or existing
+    // Save thread metadata - IMPORTANT: We always save metadata and now also save the system prompt
     await saveThreadMetadata(analysisId, newThreadId, systemPrompt);
     
     console.log("Successfully completed request, returning response");
@@ -528,7 +538,8 @@ async function handleRequest(req: Request) {
         message: aiResponse,
         suggestion,
         threadId: newThreadId,
-        systemPrompt
+        systemPrompt,
+        guidanceForOptimization
       }),
       {
         headers: {

@@ -34,11 +34,13 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
     currentThreadId,
     threadMetadata,
     messagesEndRef,
+    guidanceForOptimization,
     setInput,
     handleSendMessage,
     handleKeyDown,
     handleApplySuggestion,
-    handleOptimizeCurrentSection
+    handleOptimizeCurrentSection,
+    handlePromptSelect
   } = useAIChat(
     resumeId,
     analysisId,
@@ -72,6 +74,7 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
             messagesEndRef={messagesEndRef}
             onApplySuggestion={handleApplySuggestion}
             dialogDescriptionId={dialogDescriptionId}
+            guidanceForOptimization={guidanceForOptimization}
           />
           
           <ChatInput
@@ -85,6 +88,7 @@ const AIChatInterface: React.FC<AIChatInterfaceProps> = ({
             dialogDescriptionId={dialogDescriptionId}
             threadMetadata={threadMetadata}
             analysisId={effectiveAnalysisId}
+            onPromptSelect={handlePromptSelect}
           />
         </>
       )}

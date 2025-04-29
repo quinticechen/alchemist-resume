@@ -5,7 +5,7 @@ import OozeAnimation from "@/components/OozeAnimation";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Lightbulb, AlertCircle, Send, User, Loader2, RefreshCw } from "lucide-react";
+import { Lightbulb, AlertCircle, Send, User, Loader2, RefreshCw, Search, MessageSquare, HelpCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -28,22 +28,34 @@ const OozeOptimizationSection = ({ optimizationData, analysisId }: OozeOptimizat
   const [threadId, setThreadId] = useState<string | null>(null);
   const [debugInfo, setDebugInfo] = useState<string | null>(null);
   const [initializationStatus, setInitializationStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [guidanceForOptimization, setGuidanceForOptimization] = useState<string>("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
-  useEffect(() => {
-    // Add initial welcome message when component mounts
-    if (messages.length === 0) {
-      setMessages([
-        {
-          id: crypto.randomUUID(),
-          role: 'assistant',
-          content: 'Hello! I can help optimize your resume. What would you like help with?',
-          timestamp: new Date()
-        }
-      ]);
+  const resumeAlchemistMessages = [
+    "Hey there! Your resume is glowing now, but shall we explore what else we can enhance? I've got some magical tricks up my tentacles!",
+    "Curious about how I transformed your resume? Let's chat about my secrets and see if we've missed any important points!",
+    "My tentacles sense there's still some hidden potential in your resume! Want to explore together!"
+  ];
+
+  const promptGuides = [
+    { 
+      text: "What are the most attractive highlights in this resume?",
+      icon: <Lightbulb className="h-4 w-4" />
+    },
+    { 
+      text: "Which keywords could we strengthen?",
+      icon: <Search className="h-4 w-4" />
+    },
+    { 
+      text: "How can we make your experience more compelling?", 
+      icon: <MessageSquare className="h-4 w-4" />
+    },
+    { 
+      text: "What questions might interviewers ask?", 
+      icon: <HelpCircle className="h-4 w-4" />
     }
-  }, [messages.length]);
+  ];
 
   useEffect(() => {
     // Load existing chat history if we have an analysis ID
@@ -75,14 +87,25 @@ const OozeOptimizationSection = ({ optimizationData, analysisId }: OozeOptimizat
           .from('ai_chat_messages')
           .select('*')
           .eq('analysis_id', analysisId)
+          .neq('role', 'system')
           .order('timestamp', { ascending: true });
           
         if (error) throw error;
         
+        // Get editor content for optimization guidance
+        const { data: editorData } = await supabase
+          .from('resume_editors')
+          .select('content')
+          .eq('analysis_id', analysisId)
+          .single();
+          
+        if (editorData?.content?.guidanceForOptimization) {
+          setGuidanceForOptimization(editorData.content.guidanceForOptimization);
+        }
+        
         if (chatData && chatData.length > 0) {
           // Filter out system messages for display
           const displayMessages = chatData
-            .filter(msg => msg.role !== 'system')
             .map(msg => ({
               id: msg.id,
               role: msg.role as 'user' | 'assistant' | 'system',
@@ -92,6 +115,18 @@ const OozeOptimizationSection = ({ optimizationData, analysisId }: OozeOptimizat
           
           setMessages(displayMessages);
           console.log(`Loaded ${displayMessages.length} messages for analysis: ${analysisId}`);
+        } else {
+          // Add welcome message if no messages exist
+          const randomIndex = Math.floor(Math.random() * resumeAlchemistMessages.length);
+          const welcomeMessage = {
+            id: crypto.randomUUID(),
+            role: 'assistant' as const,
+            content: resumeAlchemistMessages[randomIndex],
+            timestamp: new Date()
+          };
+          
+          setMessages([welcomeMessage]);
+          await saveChatMessage(welcomeMessage);
         }
         
         setInitializationStatus('success');
@@ -185,6 +220,10 @@ const OozeOptimizationSection = ({ optimizationData, analysisId }: OozeOptimizat
         setThreadId(data.threadId);
         console.log(`Setting thread ID from response: ${data.threadId}`);
       }
+      
+      if (data?.guidanceForOptimization) {
+        setGuidanceForOptimization(data.guidanceForOptimization);
+      }
 
       const aiMessage: ChatMessage = {
         id: crypto.randomUUID(),
@@ -228,6 +267,10 @@ const OozeOptimizationSection = ({ optimizationData, analysisId }: OozeOptimizat
   const handleRetryInitialization = () => {
     setInitializationStatus('idle');
     // This will trigger the useEffect to reload chat history
+  };
+  
+  const handlePromptSelect = (promptText: string) => {
+    setInput(promptText);
   };
 
   return (
@@ -276,7 +319,7 @@ const OozeOptimizationSection = ({ optimizationData, analysisId }: OozeOptimizat
         ) : (
           <>
             <div className="flex justify-center mb-4">
-              <OozeAnimation width={120} height={120} /> {/* Changed to OozeAnimation */}
+              <OozeAnimation width={120} height={120} />
             </div>
             
             <ScrollArea className="flex-1 pr-4">
@@ -315,6 +358,23 @@ const OozeOptimizationSection = ({ optimizationData, analysisId }: OozeOptimizat
         )}
         
         <div className="mt-4 pt-4 border-t">
+          {/* Prompt guide buttons */}
+          <div className="mb-3 flex flex-wrap gap-2">
+            {promptGuides.map((prompt, index) => (
+              <Button
+                key={index}
+                variant="outline"
+                size="sm"
+                className="text-xs"
+                onClick={() => handlePromptSelect(prompt.text)}
+                disabled={isLoading || !analysisId || initializationStatus !== 'success'}
+              >
+                {prompt.icon}
+                <span className="ml-1 hidden sm:inline">{prompt.text}</span>
+              </Button>
+            ))}
+          </div>
+          
           <div className="flex gap-2">
             <Textarea
               value={input}

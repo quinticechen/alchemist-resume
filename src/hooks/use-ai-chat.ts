@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -20,9 +21,9 @@ interface ThreadMetadata {
 }
 
 const resumeAlchemistMessages = [
-  "Watch this! Behold the secrets of alchemy! Bang! A dazzling resume has just come out of the oven! Are you shocked to see your own transformation?",
-  "Hey! Your resume has completed its first transformation! Shall we discuss what areas we can enhance further?",
-  "Yoo-hoo~ Your resume has transformed perfectly! Any other parts you'd like to modify?"
+  "Hey there! Your resume is glowing now, but shall we explore what else we can enhance? I've got some magical tricks up my tentacles!",
+  "Curious about how I transformed your resume? Let's chat about my secrets and see if we've missed any important points!",
+  "My tentacles sense there's still some hidden potential in your resume! Want to explore together?"
 ];
 
 export const useAIChat = (
@@ -38,6 +39,7 @@ export const useAIChat = (
   const [currentThreadId, setCurrentThreadId] = useState<string | null>(null);
   const [threadMetadata, setThreadMetadata] = useState<ThreadMetadata | null>(null);
   const [apiError, setApiError] = useState<string | null>(null);
+  const [guidanceForOptimization, setGuidanceForOptimization] = useState<string>("");
   const { toast } = useToast();
   const location = useLocation();
   const params = useParams();
@@ -124,19 +126,45 @@ export const useAIChat = (
           console.log(`No existing metadata found for analysis ${effectiveAnalysisId}`);
         }
         
+        // Get editor content for guidance
+        const { data: editorData, error: editorError } = await supabase
+          .from('resume_editors')
+          .select('content')
+          .eq('analysis_id', effectiveAnalysisId)
+          .single();
+          
+        if (!editorError && editorData?.content?.guidanceForOptimization) {
+          setGuidanceForOptimization(editorData.content.guidanceForOptimization);
+          console.log("Loaded guidance for optimization");
+        }
+        
+        // Get chat messages
         const { data, error } = await supabase
           .from('ai_chat_messages')
           .select('*')
           .eq('analysis_id', effectiveAnalysisId)
+          .eq('role', 'assistant') // Only get assistant messages or user messages
+          .order('timestamp', { ascending: true });
+          
+        const { data: userMessagesData, error: userMessagesError } = await supabase
+          .from('ai_chat_messages')
+          .select('*')
+          .eq('analysis_id', effectiveAnalysisId)
+          .eq('role', 'user')
           .order('timestamp', { ascending: true });
 
         if (error) throw error;
+        if (userMessagesError) throw userMessagesError;
         
-        if (data && data.length > 0) {
+        const allMessages = [...(data || []), ...(userMessagesData || [])].sort(
+          (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+        );
+        
+        if (allMessages && allMessages.length > 0) {
           const uniqueMessages: ChatMessage[] = [];
           const seenContent = new Map<string, Date>();
           
-          data.forEach(msg => {
+          allMessages.forEach(msg => {
             if (msg.role === 'system') return; // Skip system messages for display
             
             const msgDate = new Date(msg.timestamp);
@@ -155,7 +183,7 @@ export const useAIChat = (
           });
           
           setMessages(uniqueMessages);
-          console.log(`Loaded ${uniqueMessages.length} unique messages from ${data.length} total for analysis: ${effectiveAnalysisId}`);
+          console.log(`Loaded ${uniqueMessages.length} unique messages from ${allMessages.length} total for analysis: ${effectiveAnalysisId}`);
           
           if (!threadId && uniqueMessages.length > 0 && uniqueMessages[0].thread_id) {
             threadId = uniqueMessages[0].thread_id;
@@ -163,10 +191,11 @@ export const useAIChat = (
             console.log(`Extracted thread ID from message: ${threadId}`);
           }
         } else {
+          const randomIndex = Math.floor(Math.random() * resumeAlchemistMessages.length);
           const welcomeMessage: ChatMessage = {
             id: crypto.randomUUID(),
             role: 'assistant',
-            content: 'Hello! I can help you improve your resume. What section would you like assistance with?',
+            content: resumeAlchemistMessages[randomIndex],
             timestamp: new Date(),
           };
           
@@ -308,6 +337,11 @@ export const useAIChat = (
       let content = data.message;
       let threadId = data.threadId;
       
+      // Update guidance for optimization if available
+      if (data.guidanceForOptimization) {
+        setGuidanceForOptimization(data.guidanceForOptimization);
+      }
+      
       if (threadId) {
         setCurrentThreadId(threadId);
         console.log(`Using thread ID from response: ${threadId}`);
@@ -417,6 +451,16 @@ export const useAIChat = (
     const optimizePrompt = `Please optimize this resume section to make it more professional and impactful: "${currentSectionContent}"`;
     setInput(optimizePrompt);
   };
+  
+  const handlePromptSelect = (promptText: string) => {
+    setInput(promptText);
+    // Optional: Focus the input field after selecting a prompt
+    setTimeout(() => {
+      if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
+      }
+    }, 0);
+  };
 
   const initializeChat = async () => {
     if (!effectiveAnalysisId) {
@@ -448,6 +492,10 @@ export const useAIChat = (
         await saveChatMessage(initialMessage);
       }
 
+      if (editorData?.content?.guidanceForOptimization) {
+        setGuidanceForOptimization(editorData.content.guidanceForOptimization);
+      }
+
     } catch (error) {
       console.error('Error initializing chat:', error);
       toast({
@@ -473,10 +521,12 @@ export const useAIChat = (
     currentThreadId,
     threadMetadata,
     messagesEndRef,
+    guidanceForOptimization,
     setInput,
     handleSendMessage,
     handleKeyDown,
     handleApplySuggestion,
-    handleOptimizeCurrentSection
+    handleOptimizeCurrentSection,
+    handlePromptSelect
   };
 };

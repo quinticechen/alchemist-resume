@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Send } from "lucide-react";
+import { Send, Lightbulb, Search, MessageSquare, HelpCircle } from "lucide-react";
 
 interface ChatInputProps {
   value: string;
@@ -15,7 +15,27 @@ interface ChatInputProps {
   dialogDescriptionId: string;
   threadMetadata?: { thread_id: string } | null;
   analysisId?: string | null;
+  onPromptSelect?: (prompt: string) => void;
 }
+
+const promptGuides = [
+  { 
+    text: "What are the most attractive highlights in this resume?",
+    icon: <Lightbulb className="h-4 w-4" />
+  },
+  { 
+    text: "Which keywords could we strengthen?",
+    icon: <Search className="h-4 w-4" />
+  },
+  { 
+    text: "How can we make your experience more compelling?", 
+    icon: <MessageSquare className="h-4 w-4" />
+  },
+  { 
+    text: "What questions might interviewers ask?", 
+    icon: <HelpCircle className="h-4 w-4" />
+  }
+];
 
 const ChatInput: React.FC<ChatInputProps> = ({ 
   value, 
@@ -27,10 +47,28 @@ const ChatInput: React.FC<ChatInputProps> = ({
   inputRef,
   dialogDescriptionId,
   threadMetadata,
-  analysisId
+  analysisId,
+  onPromptSelect = () => {}
 }) => {
   return (
     <div className="p-4 border-t">
+      {/* Prompt guide buttons */}
+      <div className="mb-3 flex flex-wrap gap-2">
+        {promptGuides.map((prompt, index) => (
+          <Button
+            key={index}
+            variant="outline"
+            size="sm"
+            className="text-xs"
+            onClick={() => onPromptSelect(prompt.text)}
+            disabled={isLoading || disabled}
+          >
+            {prompt.icon}
+            <span className="ml-1">{prompt.text}</span>
+          </Button>
+        ))}
+      </div>
+
       <div className="flex gap-2">
         <Textarea
           ref={inputRef}
