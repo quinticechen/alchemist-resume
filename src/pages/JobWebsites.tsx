@@ -42,6 +42,7 @@ const JobWebsites = () => {
   const [syncResults, setSyncResults] = useState<SyncResult[]>([]);
   const [apiErrorDetails, setApiErrorDetails] = useState<string | null>(null);
   const { toast } = useToast();
+  const currentEnv = getEnvironment();
 
   const fetchPlatforms = async () => {
     try {
@@ -282,19 +283,21 @@ const JobWebsites = () => {
               <li>The Notion database is empty</li>
               <li>There was an error during the sync process</li>
             </ul>
-            <Button onClick={triggerSync} className="w-full">
-              {isSyncing ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Syncing...
-                </>
-              ) : (
-                <>
-                  <RefreshCcw className="h-4 w-4 mr-2" />
-                  Sync from Notion
-                </>
-              )}
-            </Button>
+            {currentEnv === 'staging' && (
+              <Button onClick={triggerSync} className="w-full">
+                  {isSyncing ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Syncing...
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCcw className="h-4 w-4 mr-2" />
+                      Sync from Notion
+                    </>
+                  )}
+                </Button>
+            )}
           </div>
           
           {syncStatus?.message && (
