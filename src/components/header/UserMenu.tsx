@@ -2,71 +2,57 @@
 import { Button } from "@/components/ui/button";
 import { LogIn } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
-import Logo from "./header/Logo";
-import Navigation from "./header/Navigation";
-import UserMenu from "./header/UserMenu";
+import Logo from "../Logo";
+import Navigation from "./Navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuLabel, 
+  DropdownMenuSeparator, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
+import { Session } from "@supabase/supabase-js";
 
-const UserMenu = () => {
-  const { session, isLoading, signOut } = useAuth();
-  const navigate = useNavigate();
-  const location = useLocation();
+interface UserMenuProps {
+  session: Session;
+  onLogout: () => void;
+}
 
-  const isHome = location.pathname === "/";
-  const isLogin = location.pathname === "/login";
-
-  const scrollToSupportedWebsites = () => {
-    const element = document.getElementById('supported-websites');
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    } else if (!isHome) {
-      navigate('/#supported-websites');
-    }
-  };
-
-  const handleAuthClick = () => {
-    if (session) {
-      navigate("/alchemist-workshop");
-    } else {
-      navigate("/login");
-    }
-  };
+const UserMenu = ({ session, onLogout }: UserMenuProps) => {
+  const userEmail = session?.user?.email;
+  const initials = userEmail ? userEmail.substring(0, 2).toUpperCase() : "??";
 
   return (
-    <header className="bg-white/80 backdrop-blur-md border-b border-neutral-200 sticky top-0 z-50">
-      <div className="container mx-auto px-4 py-4">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-6">
-            <Logo />
-            <Navigation 
-              session={session} 
-              onSupportedWebsitesClick={scrollToSupportedWebsites}
-              isHome={isHome}
-            />
-          </div>
-          <div className="flex items-center gap-6">
-            {!isLoading && (
-              session ? (
-                <UserMenu 
-                  session={session}
-                  onLogout={signOut}
-                />
-              ) : !isLogin && (
-                <Button
-                  onClick={handleAuthClick}
-                  size="sm"
-                  className="flex items-center gap-2 bg-gradient-primary hover:opacity-90 transition-opacity"
-                >
-                  <LogIn className="h-4 w-4" />
-                  <span className="hidden sm:inline">{isHome ? "Start Free Trial" : "Sign In"}</span>
-                  
-                </Button>
-              )
-            )}
-          </div>
-        </div>
-      </div>
-    </header>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Avatar className="h-8 w-8 cursor-pointer">
+          <AvatarImage src={session?.user?.user_metadata?.avatar_url || ""} />
+          <AvatarFallback className="bg-primary text-primary-foreground">
+            {initials}
+          </AvatarFallback>
+        </Avatar>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuLabel>My Account</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <a href="/alchemist-workshop">Workshop</a>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <a href="/alchemy-records">Records</a>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <a href="/account">Settings</a>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={onLogout}>
+          Logout
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 };
 

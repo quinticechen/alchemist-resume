@@ -175,50 +175,6 @@ export type Database = {
         }
         Relationships: []
       }
-      platform_content: {
-        Row: {
-          content: string | null
-          created_at: string | null
-          description: string | null
-          id: string
-          notion_url: string | null
-          platform_id: string
-          title: string
-          updated_at: string | null
-          url: string | null
-        }
-        Insert: {
-          content?: string | null
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          notion_url?: string | null
-          platform_id: string
-          title: string
-          updated_at?: string | null
-          url?: string | null
-        }
-        Update: {
-          content?: string | null
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          notion_url?: string | null
-          platform_id?: string
-          title?: string
-          updated_at?: string | null
-          url?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "platform_content_platform_id_fkey"
-            columns: ["platform_id"]
-            isOneToOne: false
-            referencedRelation: "platform"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       profiles: {
         Row: {
           avatar_url: string | null
