@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import OozeAnimation from "@/components/OozeAnimation";
@@ -165,8 +164,6 @@ const OozeOptimizationSection = ({ optimizationData, analysisId }: OozeOptimizat
       
       const { data, error } = await supabase.functions.invoke('resume-ai-assistant', {
         body: requestPayload,
-        // Add a longer timeout to allow more time for the OpenAI API to respond
-        timeout: 15000
       });
 
       const endTime = new Date().getTime();
