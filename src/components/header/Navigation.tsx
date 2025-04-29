@@ -103,6 +103,15 @@ const Navigation = ({ session, onSupportedWebsitesClick, isHome }: NavigationPro
             </li>
             <li>
               <Link
+                to="/job-websites"
+                className="text-sm font-medium text-neutral-600 hover:text-primary transition-colors flex items-center gap-2"
+              >
+                <Globe className="h-5 w-5" />
+                <span className="hidden sm:inline">Supported Websites</span>
+              </Link>
+            </li>
+            <li>
+              <Link
                 to="/pricing"
                 className="text-sm font-medium text-neutral-600 hover:text-primary transition-colors flex items-center gap-2"
               >
