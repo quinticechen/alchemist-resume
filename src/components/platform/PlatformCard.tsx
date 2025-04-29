@@ -25,7 +25,6 @@ export const PlatformCard = ({ name, url, description, content = [] }: PlatformC
           <CardTitle className="flex items-center justify-between">
             <a 
               href={processedUrl}
-              // href="104.com.tw"
               target="_blank"
               rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}

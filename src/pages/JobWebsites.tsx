@@ -1,6 +1,7 @@
 
 import React, { useEffect, useState } from "react";
-import { supabase, getEnvironment } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/client";
+import { getEnvironment } from "@/integrations/supabase/client";
 import { PlatformCard } from "@/components/platform/PlatformCard";
 import { Button } from "@/components/ui/button";
 import { Loader2, RefreshCcw, AlertTriangle } from "lucide-react";
