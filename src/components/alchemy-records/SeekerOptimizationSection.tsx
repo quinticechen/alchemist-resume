@@ -1,11 +1,11 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import OozeAnimation from "@/components/OozeAnimation"; // Changed from SeekerAnimation to OozeAnimation
+import OozeAnimation from "@/components/OozeAnimation"; 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Lightbulb, AlertCircle, Send, User, Loader2, RefreshCw } from "lucide-react";
+import { AlertCircle, Send, User, Loader2, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -153,22 +153,14 @@ const SeekerOptimizationSection = ({ optimizationData, analysisId }: SeekerOptim
     try {
       console.log(`Sending message to edge function with analysisId: ${analysisId}, threadId: ${threadId || 'new'}`);
       
-      // Enhanced edge function call with more detailed request logging
-      const startTime = new Date().getTime();
-      const requestPayload = { 
-        message: input, 
-        analysisId: analysisId,
-        threadId: threadId
-      };
-      
-      console.log('Request payload:', JSON.stringify(requestPayload));
-      
+      // Call OpenAI Assistants-enabled edge function
       const { data, error } = await supabase.functions.invoke('resume-ai-assistant', {
-        body: requestPayload
+        body: { 
+          message: input, 
+          analysisId: analysisId,
+          threadId: threadId
+        }
       });
-
-      const endTime = new Date().getTime();
-      console.log(`Edge function response time: ${endTime - startTime}ms`);
 
       if (error) {
         console.error('Edge function error:', error);
@@ -276,7 +268,7 @@ const SeekerOptimizationSection = ({ optimizationData, analysisId }: SeekerOptim
         ) : (
           <>
             <div className="flex justify-center mb-4">
-              <OozeAnimation width={120} height={120} /> {/* Changed to OozeAnimation */}
+              <OozeAnimation width={120} height={120} />
             </div>
             
             <ScrollArea className="flex-1 pr-4">

@@ -16,6 +16,9 @@ const openai = new OpenAI({
   apiKey: openaiApiKey || ""
 });
 
+// Default Assistant ID (can be overridden in request)
+const DEFAULT_ASSISTANT_ID = "asst_kSRCmsWHioSMYH5W0G04dLU0";
+
 // Initialize Supabase admin client
 const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
@@ -172,64 +175,6 @@ async function fetchEditorContent(analysisId: string) {
 }
 
 /**
- * Extract section content from resume data
- */
-function extractSectionContent(resumeData: any, currentSection: string) {
-  if (!resumeData) return "";
-  
-  switch (currentSection) {
-    case "skills":
-      return resumeData.skills ? JSON.stringify(resumeData.skills) : "";
-    case "professionalExperience":
-      return resumeData.experience ? JSON.stringify(resumeData.experience) : "";
-    case "education":
-      return resumeData.education ? JSON.stringify(resumeData.education) : "";
-    case "projects":
-      return resumeData.projects ? JSON.stringify(resumeData.projects) : "";
-    case "personalInfo":
-      return resumeData.personalInfo ? JSON.stringify(resumeData.personalInfo) : "";
-    case "professionalSummary":
-      return resumeData.professionalSummary ? JSON.stringify(resumeData.professionalSummary) : "";
-    case "certifications":
-      return resumeData.certifications ? JSON.stringify(resumeData.certifications) : "";
-    case "volunteer":
-      return resumeData.volunteer ? JSON.stringify(resumeData.volunteer) : "";
-    default:
-      return "";
-  }
-}
-
-/**
- * Extract section content from editor data
- */
-function extractEditorSectionContent(editorData: any, currentSection: string) {
-  if (!editorData?.content?.resume) return "";
-  
-  const resumeData = editorData.content.resume;
-  
-  switch (currentSection) {
-    case "skills":
-      return resumeData.skills ? JSON.stringify(resumeData.skills) : "";
-    case "professionalExperience":
-      return resumeData.professionalExperience ? JSON.stringify(resumeData.professionalExperience) : "";
-    case "education":
-      return resumeData.education ? JSON.stringify(resumeData.education) : "";
-    case "projects":
-      return resumeData.projects ? JSON.stringify(resumeData.projects) : "";
-    case "personalInfo":
-      return resumeData.personalInfo ? JSON.stringify(resumeData.personalInfo) : "";
-    case "professionalSummary":
-      return resumeData.professionalSummary ? JSON.stringify(resumeData.professionalSummary) : "";
-    case "certifications":
-      return resumeData.certifications ? JSON.stringify(resumeData.certifications) : "";
-    case "volunteer":
-      return resumeData.volunteer ? JSON.stringify(resumeData.volunteer) : "";
-    default:
-      return "";
-  }
-}
-
-/**
  * Create system prompt based on job context and resume content
  */
 function createSystemPrompt(jobContext: string, resumeContent: string, providedResumeContent?: string) {
@@ -281,17 +226,55 @@ async function saveMessage(analysisId: string, role: string, content: string, th
 }
 
 /**
+ * Get or create OpenAI thread
+ */
+async function getOrCreateThread(analysisId: string) {
+  try {
+    // Check for existing thread in metadata
+    const { data: metadataData, error } = await supabaseAdmin
+      .from('ai_chat_metadata')
+      .select('*')
+      .eq('analysis_id', analysisId)
+      .order('created_at', { ascending: false })
+      .limit(1);
+
+    if (!error && metadataData && metadataData.length > 0) {
+      console.log(`Found existing thread for analysis ${analysisId}: ${metadataData[0].thread_id}`);
+      return {
+        threadId: metadataData[0].thread_id,
+        assistantId: metadataData[0].assistant_id,
+        isNew: false
+      };
+    }
+
+    // Create new thread if one doesn't exist
+    console.log(`Creating new OpenAI thread for analysis ${analysisId}`);
+    const thread = await openai.beta.threads.create();
+    console.log(`Created new thread with ID: ${thread.id}`);
+    
+    return {
+      threadId: thread.id,
+      assistantId: DEFAULT_ASSISTANT_ID,
+      isNew: true
+    };
+  } catch (error) {
+    console.error(`Error getting/creating thread: ${error.message}`);
+    throw error;
+  }
+}
+
+/**
  * Save thread metadata
  */
-async function saveThreadMetadata(analysisId: string, threadId: string, systemPrompt: string) {
+async function saveThreadMetadata(analysisId: string, threadId: string, assistantId: string, runId: string) {
   try {
     console.log(`Saving thread metadata for analysis ${analysisId}, thread ${threadId}`);
     
     const metadataRecord = {
       analysis_id: analysisId,
       thread_id: threadId,
-      run_id: "", // We're not using assistants API, so this is empty
-      assistant_id: "", // We're not using assistants API, so this is empty
+      run_id: runId,
+      assistant_id: assistantId,
       section: "",
       updated_at: new Date().toISOString(),
       created_at: new Date().toISOString()
@@ -315,7 +298,8 @@ async function saveThreadMetadata(analysisId: string, threadId: string, systemPr
         .from("ai_chat_metadata")
         .update({
           ...metadataRecord,
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
+          run_id: runId
         })
         .eq("analysis_id", analysisId)
         .eq("thread_id", threadId);
@@ -337,53 +321,123 @@ async function saveThreadMetadata(analysisId: string, threadId: string, systemPr
         console.log(`Inserted new thread metadata for ${threadId}`);
       }
     }
-    
-    // Store system message only if it doesn't exist yet
-    const { data: existingSystemMessage } = await supabaseAdmin
-      .from("ai_chat_messages")
-      .select("id")
-      .eq("analysis_id", analysisId)
-      .eq("thread_id", threadId)
-      .eq("role", "system")
-      .maybeSingle();
-      
-    if (!existingSystemMessage) {
-      await saveMessage(analysisId, "system", systemPrompt, threadId);
-    }
   } catch (error) {
     console.error(`Error storing metadata: ${error.message}`);
   }
 }
 
 /**
- * Get previous messages for context
+ * Add initial context to thread
  */
-async function getPreviousMessages(analysisId: string, threadId: string | null, limit = 10) {
+async function addContextToThread(threadId: string, systemPrompt: string) {
   try {
-    let query = supabaseAdmin
-      .from("ai_chat_messages")
-      .select("*")
-      .eq("analysis_id", analysisId)
-      .order("timestamp", { ascending: false })
-      .limit(limit);
-      
-    if (threadId) {
-      query = query.eq("thread_id", threadId);
+    console.log(`Adding initial context to thread ${threadId}`);
+    await openai.beta.threads.messages.create(
+      threadId,
+      {
+        role: "user",
+        content: `[CONTEXT]: ${systemPrompt}`,
+      }
+    );
+    console.log(`Added initial context to thread ${threadId}`);
+  } catch (error) {
+    console.error(`Error adding context to thread: ${error.message}`);
+    throw error;
+  }
+}
+
+/**
+ * Add user message to OpenAI thread
+ */
+async function addMessageToThread(threadId: string, message: string) {
+  try {
+    console.log(`Adding user message to thread ${threadId}`);
+    const response = await openai.beta.threads.messages.create(
+      threadId,
+      {
+        role: "user",
+        content: message
+      }
+    );
+    console.log(`Added message to thread ${threadId}, message ID: ${response.id}`);
+    return response;
+  } catch (error) {
+    console.error(`Error adding message to thread: ${error.message}`);
+    throw error;
+  }
+}
+
+/**
+ * Run assistant on thread
+ */
+async function runAssistant(threadId: string, assistantId: string) {
+  try {
+    console.log(`Running assistant ${assistantId} on thread ${threadId}`);
+    const run = await openai.beta.threads.runs.create(
+      threadId,
+      { assistant_id: assistantId }
+    );
+    console.log(`Started run ${run.id} for thread ${threadId}`);
+    return run;
+  } catch (error) {
+    console.error(`Error running assistant: ${error.message}`);
+    throw error;
+  }
+}
+
+/**
+ * Wait for run to complete
+ */
+async function waitForRunCompletion(threadId: string, runId: string, timeout = 30000) {
+  console.log(`Waiting for completion of run ${runId}`);
+  const startTime = Date.now();
+  
+  while (Date.now() - startTime < timeout) {
+    const run = await openai.beta.threads.runs.retrieve(threadId, runId);
+    console.log(`Run ${runId} status: ${run.status}`);
+    
+    if (run.status === 'completed') {
+      return run;
     }
     
-    const { data, error } = await query;
+    if (['failed', 'cancelled', 'expired'].includes(run.status)) {
+      throw new Error(`Run ${runId} ended with status: ${run.status}`);
+    }
     
-    if (error) throw error;
+    // Wait a bit before checking again
+    await new Promise(resolve => setTimeout(resolve, 1000));
+  }
+  
+  throw new Error(`Run ${runId} timed out after ${timeout}ms`);
+}
+
+/**
+ * Get latest assistant message from thread
+ */
+async function getLatestAssistantMessage(threadId: string) {
+  try {
+    console.log(`Getting latest assistant message from thread ${threadId}`);
+    const messages = await openai.beta.threads.messages.list(threadId, {
+      limit: 1,
+      order: 'desc'
+    });
     
-    return data
-      .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
-      .map(msg => ({
-        role: msg.role,
-        content: msg.content
-      }));
+    const message = messages.data.find(msg => msg.role === 'assistant');
+    if (!message) {
+      throw new Error("No assistant message found");
+    }
+    
+    // Extract text content
+    const content = message.content
+      .filter(item => item.type === 'text')
+      .map(item => item.text.value)
+      .join('\n');
+    
+    console.log(`Retrieved latest assistant message from thread ${threadId}`);
+    return content;
   } catch (error) {
-    console.error(`Error fetching previous messages: ${error.message}`);
-    return [];
+    console.error(`Error getting latest assistant message: ${error.message}`);
+    throw error;
   }
 }
 
@@ -400,7 +454,7 @@ async function handleRequest(req: Request) {
       message, 
       analysisId, 
       currentSection, 
-      threadId, 
+      threadId: providedThreadId, 
       debug, 
       resumeContent: providedResumeContent 
     } = requestBody;
@@ -411,7 +465,7 @@ async function handleRequest(req: Request) {
       return handleDebugRequest(analysisId);
     }
     
-    console.log(`Request received for analysis ID: ${analysisId}, section: ${currentSection || 'none'}, threadId: ${threadId || 'none'}`);
+    console.log(`Request received for analysis ID: ${analysisId}, section: ${currentSection || 'none'}, threadId: ${providedThreadId || 'none'}`);
     console.log(`OpenAI API Key exists: ${!!openaiApiKey}`);
     console.log(`Resume content provided: ${!!providedResumeContent}`);
     
@@ -425,7 +479,7 @@ async function handleRequest(req: Request) {
     // Variables for content
     let resumeContent = "";
     let jobContext = "";
-    let newThreadId = threadId || crypto.randomUUID();
+    let systemPrompt = "";
     
     // Get resume and job data
     const analysisData = await fetchAnalysisData(analysisId);
@@ -443,57 +497,42 @@ async function handleRequest(req: Request) {
           jobContext = `The user is applying for "${jobTitle}" at "${companyName}". The job description is: ${JSON.stringify(analysisData.job.job_description)}`;
         }
       }
-      
-      // Get section content if available
-      if (currentSection && analysisData.resume?.formatted_resume) {
-        const resumeData = analysisData.resume.formatted_resume;
-        resumeContent = extractSectionContent(resumeData, currentSection);
-      }
     } else {
       // If analysis data not found, try to get editor content
       console.log(`Analysis data not found, checking editor content`);
-      
-      try {
-        const editorData = await fetchEditorContent(analysisId);
-          
-        if (editorData?.content?.resume && currentSection) {
-          console.log(`Found editor content for analysis: ${analysisId}`);
-          resumeContent = extractEditorSectionContent(editorData, currentSection);
-        }
-      } catch (error) {
-        console.log("Error fetching editor data, continuing with empty resumeContent");
-      }
+      await fetchEditorContent(analysisId);
     }
 
     // Create system prompt
-    const systemPrompt = createSystemPrompt(jobContext, resumeContent, providedResumeContent);
+    systemPrompt = createSystemPrompt(jobContext, resumeContent, providedResumeContent);
     console.log(`Created system prompt for analysis: ${analysisId}`);
     
     // Save user message to database
-    await saveMessage(analysisId, "user", message, newThreadId);
+    await saveMessage(analysisId, "user", message, providedThreadId);
     
-    // Retrieve previous messages for context
-    const previousMessages = await getPreviousMessages(analysisId, newThreadId);
+    // Get or create OpenAI thread
+    const { threadId, assistantId, isNew } = await getOrCreateThread(analysisId);
+    console.log(`Using ${isNew ? 'new' : 'existing'} thread ${threadId} for analysis ${analysisId}`);
     
-    // Prepare messages for OpenAI
-    const messages = [
-      { role: "system", content: systemPrompt },
-      ...previousMessages,
-      { role: "user", content: message }
-    ];
+    // If it's a new thread, add initial context
+    if (isNew && (jobContext || providedResumeContent)) {
+      await addContextToThread(threadId, systemPrompt);
+    }
     
-    console.log(`Sending ${messages.length} messages to OpenAI`);
+    // Add user message to thread
+    await addMessageToThread(threadId, message);
     
-    // Call OpenAI Chat API directly
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini", // or any other model you prefer
-      messages: messages,
-      temperature: 0.7,
-      max_tokens: 1500
-    });
+    // Run assistant
+    const run = await runAssistant(threadId, assistantId);
     
-    const aiResponse = completion.choices[0].message.content || "I'm sorry, I couldn't generate a response.";
-    console.log(`Received response from OpenAI`);
+    // Wait for run to complete
+    await waitForRunCompletion(threadId, run.id);
+    
+    // Get latest assistant message
+    const aiResponse = await getLatestAssistantMessage(threadId);
+    
+    // Update thread metadata
+    await saveThreadMetadata(analysisId, threadId, assistantId, run.id);
     
     // Extract suggestion if enclosed in triple backticks
     let suggestion = null;
@@ -503,10 +542,7 @@ async function handleRequest(req: Request) {
     }
     
     // Save assistant message to database
-    await saveMessage(analysisId, "assistant", aiResponse, newThreadId);
-    
-    // Save thread metadata - IMPORTANT FIX: We always save metadata regardless if it's a new thread or existing
-    await saveThreadMetadata(analysisId, newThreadId, systemPrompt);
+    await saveMessage(analysisId, "assistant", aiResponse, threadId);
     
     console.log("Successfully completed request, returning response");
     
@@ -515,8 +551,7 @@ async function handleRequest(req: Request) {
       JSON.stringify({
         message: aiResponse,
         suggestion,
-        threadId: newThreadId,
-        systemPrompt
+        threadId: threadId
       }),
       {
         headers: {
