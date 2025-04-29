@@ -153,7 +153,7 @@ const OozeOptimizationSection = ({ optimizationData, analysisId }: OozeOptimizat
     try {
       console.log(`Sending message to edge function with analysisId: ${analysisId}, threadId: ${threadId || 'new'}`);
       
-      // Enhanced edge function call with more detailed request logging
+      // Enhanced edge function call with more detailed request logging and error handling
       const startTime = new Date().getTime();
       const requestPayload = { 
         message: input, 
@@ -164,7 +164,9 @@ const OozeOptimizationSection = ({ optimizationData, analysisId }: OozeOptimizat
       console.log('Request payload:', JSON.stringify(requestPayload));
       
       const { data, error } = await supabase.functions.invoke('resume-ai-assistant', {
-        body: requestPayload
+        body: requestPayload,
+        // Add a longer timeout to allow more time for the OpenAI API to respond
+        timeout: 15000
       });
 
       const endTime = new Date().getTime();
@@ -175,12 +177,12 @@ const OozeOptimizationSection = ({ optimizationData, analysisId }: OozeOptimizat
         throw error;
       }
 
-      console.log('Edge function response:', data);
-      
       if (!data) {
         throw new Error("Empty response from edge function");
       }
 
+      console.log('Edge function response:', data);
+      
       if (data?.threadId) {
         setThreadId(data.threadId);
         console.log(`Setting thread ID from response: ${data.threadId}`);
@@ -201,7 +203,7 @@ const OozeOptimizationSection = ({ optimizationData, analysisId }: OozeOptimizat
       const errorMessage: ChatMessage = {
         id: crypto.randomUUID(),
         role: 'assistant',
-        content: 'Sorry, I encountered an error. Please try again.',
+        content: 'Sorry, I encountered an error connecting to the AI assistant. This could be due to a temporary issue with our services. Please try again in a few moments.',
         timestamp: new Date()
       };
       
@@ -209,8 +211,8 @@ const OozeOptimizationSection = ({ optimizationData, analysisId }: OozeOptimizat
       await saveChatMessage(errorMessage);
       
       toast({
-        title: "Error",
-        description: `Failed to get AI response: ${error.message}`,
+        title: "Connection Error",
+        description: `Couldn't connect to the AI assistant: ${error.message}`,
         variant: "destructive"
       });
     } finally {

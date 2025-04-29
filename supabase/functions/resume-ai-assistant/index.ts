@@ -11,13 +11,18 @@ if (!openaiApiKey) {
   console.error("OPENAI_API_KEY environment variable is not set");
 }
 
-// Initialize OpenAI client with Assistant v2 beta header
+// Initialize OpenAI client and explicitly set the beta header
 const openai = new OpenAI({
-  apiKey: openaiApiKey || "",
-  defaultHeaders: {
+  apiKey: openaiApiKey || ""
+});
+
+// Add the beta header at the instance level to make sure it's applied to all API calls
+// This is a more reliable method than using defaultHeaders
+openai.baseOptions = {
+  headers: {
     "OpenAI-Beta": "assistants=v2"
   }
-});
+};
 
 // Default Assistant ID (can be overridden in request)
 const DEFAULT_ASSISTANT_ID = "asst_kSRCmsWHioSMYH5W0G04dLU0";
