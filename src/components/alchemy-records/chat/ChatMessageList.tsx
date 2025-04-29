@@ -4,6 +4,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import ChatMessage from "./ChatMessage";
 import { AlertCircle, Loader2 } from "lucide-react";
 import OozeAnimation from "@/components/OozeAnimation";
+import type { ChatMessage as ChatMessageType } from "@/hooks/use-ai-chat";
 
 interface ChatMessageListProps {
   messages: Array<{
@@ -60,7 +61,10 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
             {messages.map((message) => (
               <ChatMessage
                 key={message.id}
-                message={message}
+                message={{
+                  ...message,
+                  role: message.role as "user" | "assistant" | "system"
+                }}
                 onApplySuggestion={onApplySuggestion}
               />
             ))}
