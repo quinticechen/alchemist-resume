@@ -1,7 +1,6 @@
-
 // Resume AI Assistant Edge Function
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
-import OpenAI from "https://esm.sh/openai@4.24.1";
+import OpenAI from "https://deno.land/x/openai@v4.16.1/mod.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders } from "../_shared/cors.ts";
 
@@ -11,18 +10,13 @@ if (!openaiApiKey) {
   console.error("OPENAI_API_KEY environment variable is not set");
 }
 
-// Initialize OpenAI client and explicitly set the beta header
+// Initialize OpenAI client
 const openai = new OpenAI({
-  apiKey: openaiApiKey || ""
-});
-
-// Add the beta header at the instance level to make sure it's applied to all API calls
-// This is a more reliable method than using defaultHeaders
-openai.baseOptions = {
-  headers: {
+  apiKey: openaiApiKey || "",
+  defaultHeaders: {
     "OpenAI-Beta": "assistants=v2"
   }
-};
+});
 
 // Default Assistant ID (can be overridden in request)
 const DEFAULT_ASSISTANT_ID = "asst_kSRCmsWHioSMYH5W0G04dLU0";
