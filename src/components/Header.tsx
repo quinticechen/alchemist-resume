@@ -41,18 +41,18 @@ const Header = () => {
         />
         
         <div className="flex items-center gap-3">
-          <LanguageSwitcher />
+          {/* <LanguageSwitcher /> */}
           
           {session ? (
+            
             <UserMenu 
               session={session} 
               onLogout={handleSignOut}
             />
+      
           ) : (
             <Link to="/login">
-              <Button variant="outline" size="sm">
-                {t('common.signIn')}
-              </Button>
+              <Button variant="ghost">{t('common.signIn')}</Button>
             </Link>
           )}
         </div>

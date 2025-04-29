@@ -1,35 +1,72 @@
 
-import { Session } from "@supabase/supabase-js";
-import { Link } from "react-router-dom";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { LogIn } from "lucide-react";
+import { useNavigate, useLocation } from "react-router-dom";
+import Logo from "./header/Logo";
+import Navigation from "./header/Navigation";
+import UserMenu from "./header/UserMenu";
+import { useAuth } from "@/contexts/AuthContext";
 
-interface UserMenuProps {
-  session: Session;
-  usageCount?: number;
-  onLogout: () => Promise<void>;
-}
+const UserMenu = () => {
+  const { session, isLoading, signOut } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
 
-const UserMenu = ({ session, onLogout }: UserMenuProps) => {
-  // Get the first letter of email for avatar fallback
-  const emailInitial = session.user.email ? session.user.email[0].toUpperCase() : 'U';
-  
+  const isHome = location.pathname === "/";
+  const isLogin = location.pathname === "/login";
+
+  const scrollToSupportedWebsites = () => {
+    const element = document.getElementById('supported-websites');
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    } else if (!isHome) {
+      navigate('/#supported-websites');
+    }
+  };
+
+  const handleAuthClick = () => {
+    if (session) {
+      navigate("/alchemist-workshop");
+    } else {
+      navigate("/login");
+    }
+  };
+
   return (
-    <div className="flex items-center gap-3">
-      <Link to="/account" className="flex items-center gap-2">
-        <Avatar className="h-8 w-8 border border-neutral-200">
-          <AvatarFallback>{emailInitial}</AvatarFallback>
-        </Avatar>
-      </Link>
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={onLogout}
-        className="border-neutral-200"
-      >
-        Sign Out
-      </Button>
-    </div>
+    <header className="bg-white/80 backdrop-blur-md border-b border-neutral-200 sticky top-0 z-50">
+      <div className="container mx-auto px-4 py-4">
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-6">
+            <Logo />
+            <Navigation 
+              session={session} 
+              onSupportedWebsitesClick={scrollToSupportedWebsites}
+              isHome={isHome}
+            />
+          </div>
+          <div className="flex items-center gap-6">
+            {!isLoading && (
+              session ? (
+                <UserMenu 
+                  session={session}
+                  onLogout={signOut}
+                />
+              ) : !isLogin && (
+                <Button
+                  onClick={handleAuthClick}
+                  size="sm"
+                  className="flex items-center gap-2 bg-gradient-primary hover:opacity-90 transition-opacity"
+                >
+                  <LogIn className="h-4 w-4" />
+                  <span className="hidden sm:inline">{isHome ? "Start Free Trial" : "Sign In"}</span>
+                  
+                </Button>
+              )
+            )}
+          </div>
+        </div>
+      </div>
+    </header>
   );
 };
 
