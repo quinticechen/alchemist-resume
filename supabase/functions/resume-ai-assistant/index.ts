@@ -1,3 +1,4 @@
+
 // Resume AI Assistant Edge Function
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import OpenAI from "https://deno.land/x/openai@v4.16.1/mod.ts";
@@ -390,7 +391,7 @@ async function runAssistant(threadId: string, assistantId: string) {
 /**
  * Wait for run to complete
  */
-async function waitForRunCompletion(threadId: string, runId: string, timeout = 30000) {
+async function waitForRunCompletion(threadId: string, runId: string, timeout = 60000) {
   console.log(`Waiting for completion of run ${runId}`);
   const startTime = Date.now();
   
@@ -403,7 +404,7 @@ async function waitForRunCompletion(threadId: string, runId: string, timeout = 3
     }
     
     if (['failed', 'cancelled', 'expired'].includes(run.status)) {
-      throw new Error(`Run ${runId} ended with status: ${run.status}`);
+      throw new Error(`Run ${runId} ended with status: ${run.status}, error: ${JSON.stringify(run.last_error || {})}`);
     }
     
     // Wait a bit before checking again
