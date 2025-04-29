@@ -13,6 +13,8 @@ interface PlatformCardProps {
 export const PlatformCard = ({ name, url, description, content = [] }: PlatformCardProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  const processedUrl = url.startsWith("http://") || url.startsWith("https://") ? url : `https://${url}`;
+
   return (
     <>
       <Card 
@@ -22,7 +24,7 @@ export const PlatformCard = ({ name, url, description, content = [] }: PlatformC
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center justify-between">
             <a 
-              href={url}
+              href={processedUrl}
               target="_blank"
               rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}
@@ -44,7 +46,7 @@ export const PlatformCard = ({ name, url, description, content = [] }: PlatformC
         onClose={() => setIsModalOpen(false)}
         title={name}
         content={content}
-        url={url}
+        url={processedUrl}
       />
     </>
   );
