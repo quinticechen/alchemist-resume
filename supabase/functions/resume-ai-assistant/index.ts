@@ -1,6 +1,6 @@
 
 // Resume AI Assistant Edge Function
-import { serve } from "https://deno.land/std@0.177.0/http/.ts";
+import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import OpenAI from "https://esm.sh/openai@4.24.1";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders } from "../_shared/cors.ts";
