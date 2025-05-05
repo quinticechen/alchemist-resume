@@ -1,3 +1,4 @@
+
 // Resume AI Assistant Edge Function
 import { serve } from "https://deno.land/std@0.177.0/http/.ts";
 import OpenAI from "https://esm.sh/openai@4.24.1";
@@ -272,6 +273,7 @@ Always be respectful, professional, and encouraging.`;
 async function saveMessage(analysisId: string, role: string, content: string, threadId: string | null) {
   try {
     const messageId = crypto.randomUUID();
+    
     await supabaseAdmin
       .from("ai_chat_messages")
       .insert({
@@ -283,7 +285,7 @@ async function saveMessage(analysisId: string, role: string, content: string, th
         thread_id: threadId
       });
 
-    console.log(`Message saved to database with ID: ${messageId}`);
+    console.log(`Message saved to database with ID: ${messageId}, role: ${role}`);
     return messageId;
   } catch (error) {
     console.error(`Error saving message: ${error.message}`);
@@ -351,6 +353,7 @@ async function saveThreadMetadata(analysisId: string, threadId: string, systemPr
 
     // Store system message - always save it for record-keeping
     await saveMessage(analysisId, "system", systemPrompt, threadId);
+    console.log("Saved system message to database");
   } catch (error) {
     console.error(`Error storing metadata: ${error.message}`);
   }
@@ -417,7 +420,8 @@ async function handleRequest(req: Request) {
       currentSection,
       threadId,
       debug,
-      resumeContent: providedResumeContent
+      resumeContent: providedResumeContent,
+      clientMessageId
     } = requestBody;
 
     // Handle debug requests
@@ -429,6 +433,7 @@ async function handleRequest(req: Request) {
     console.log(`Request received for analysis ID: ${analysisId}, section: ${currentSection || 'none'}, threadId: ${threadId || 'none'}`);
     console.log(`OpenAI API Key exists: ${!!openaiApiKey}`);
     console.log(`Resume content provided: ${!!providedResumeContent}`);
+    console.log(`Client message ID: ${clientMessageId || 'none'}`);
 
     if (!openaiApiKey) {
       throw new Error("OpenAI API key is not configured");
@@ -456,7 +461,7 @@ async function handleRequest(req: Request) {
         const companyName = analysisData.job.company_name || "Unknown company";
 
         if (analysisData.job.job_description) {
-          jobContext = `The user is applying for "<span class="math-inline">\{jobTitle\}" at "</span>{companyName}". The job description is: ${JSON.stringify(analysisData.job.job_description)}`;
+          jobContext = `The user is applying for "${jobTitle}" at "${companyName}". The job description is: ${JSON.stringify(analysisData.job.job_description)}`;
         }
       }
 
@@ -506,8 +511,30 @@ async function handleRequest(req: Request) {
     // Log the messages being sent (for debugging purposes)
     console.log("Messages sent to OpenAI:", JSON.stringify(messages, null, 2));
 
-    // Save user message to database
-    await saveMessage(analysisId, "user", message, newThreadId);
+    // If clientMessageId is provided, check if it already exists
+    if (clientMessageId) {
+      const { data: existingMessages } = await supabaseAdmin
+        .from("ai_chat_messages")
+        .select("id")
+        .eq("analysis_id", analysisId)
+        .eq("thread_id", newThreadId)
+        .eq("role", "user")
+        .ilike("content", `%${clientMessageId}%`)
+        .limit(1);
+      
+      if (existingMessages && existingMessages.length > 0) {
+        console.log(`Client provided message ID ${clientMessageId} already exists, skipping server-side user message save`);
+      } else {
+        // Save user message to database
+        await saveMessage(analysisId, "user", message, newThreadId);
+      }
+    } else {
+      // Save user message to database if no clientMessageId provided
+      await saveMessage(analysisId, "user", message, newThreadId);
+    }
+
+    // Save system prompt
+    await saveThreadMetadata(analysisId, newThreadId, systemPrompt);
 
     // Call OpenAI Chat API directly
     const completion = await openai.chat.completions.create({
@@ -533,9 +560,6 @@ async function handleRequest(req: Request) {
 
     // Save assistant message to database
     await saveMessage(analysisId, "assistant", aiResponse, newThreadId);
-
-    // Save thread metadata
-    await saveThreadMetadata(analysisId, newThreadId, systemPrompt);
 
     console.log("Successfully completed request, returning response");
 
