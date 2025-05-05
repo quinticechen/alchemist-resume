@@ -1,8 +1,9 @@
 
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Lottie from "react-lottie";
 import OozeAnimationData from "@/animations/OOze.chat.json";
 import { useIsMobile } from "@/hooks/use-mobile";
+import gsap from "gsap";
 
 interface OozeAnimationProps {
   width?: number;
@@ -15,6 +16,8 @@ interface OozeAnimationProps {
   mobileWidth?: number;
   mobileHeight?: number;
   showShadow?: boolean;
+  followCursor?: boolean;
+  enlargeOnHover?: boolean;
 }
 
 const OozeAnimation: React.FC<OozeAnimationProps> = ({ 
@@ -27,9 +30,16 @@ const OozeAnimation: React.FC<OozeAnimationProps> = ({
   autoplay = true,
   isPaused = false,
   isStopped = false,
-  showShadow = false
+  showShadow = false,
+  followCursor = false,
+  enlargeOnHover = false
 }) => {
   const isMobile = useIsMobile();
+  const oozeRef = useRef<HTMLDivElement>(null);
+  const mouse = useRef({ x: 0, y: 0 });
+  const delayedMouse = useRef({ x: 0, y: 0 });
+  const rafId = useRef<number>();
+  const [isHovering, setIsHovering] = useState(false);
   
   const defaultOptions = {
     loop,
@@ -42,24 +52,125 @@ const OozeAnimation: React.FC<OozeAnimationProps> = ({
 
   const finalWidth = isMobile ? mobileWidth : width;
   const finalHeight = isMobile ? mobileHeight : height;
+  
+  // Linear interpolation function for smooth movement
+  const lerp = (x: number, y: number, a: number) => x * (1 - a) + y * a;
+  
+  // Handle mouse movement
+  const handleMouseMove = (e: MouseEvent) => {
+    const { clientX, clientY } = e;
+    
+    mouse.current = {
+      x: clientX,
+      y: clientY
+    };
+  };
+  
+  // Animate the Ooze to follow the cursor
+  const animate = () => {
+    if (!oozeRef.current || !followCursor) return;
+    
+    const { x, y } = delayedMouse.current;
+    
+    delayedMouse.current = {
+      x: lerp(x, mouse.current.x, 0.075),
+      y: lerp(y, mouse.current.y, 0.075)
+    };
+    
+    const { x: delayedX, y: delayedY } = delayedMouse.current;
+    
+    gsap.set(oozeRef.current, {
+      x: delayedX,
+      y: delayedY,
+      xPercent: -50,
+      yPercent: -50
+    });
+    
+    rafId.current = window.requestAnimationFrame(animate);
+  };
+  
+  // Set up mouse tracking and animation
+  useEffect(() => {
+    if (!followCursor) return;
+    
+    // Initialize the delayed mouse position
+    delayedMouse.current = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+    
+    // Start the animation loop
+    animate();
+    
+    // Add event listener for mouse movement
+    window.addEventListener("mousemove", handleMouseMove);
+    
+    // Clean up
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      if (rafId.current) {
+        window.cancelAnimationFrame(rafId.current);
+      }
+    };
+  }, [followCursor]);
+
+  // Set up hover detection for hero section elements
+  useEffect(() => {
+    if (!enlargeOnHover) return;
+    
+    const heroHeadings = document.querySelectorAll('h1, h2, h3, .hero-element, button, a');
+    
+    const handleMouseEnter = () => {
+      setIsHovering(true);
+    };
+    
+    const handleMouseLeave = () => {
+      setIsHovering(false);
+    };
+    
+    heroHeadings.forEach(heading => {
+      heading.addEventListener('mouseenter', handleMouseEnter);
+      heading.addEventListener('mouseleave', handleMouseLeave);
+    });
+    
+    return () => {
+      heroHeadings.forEach(heading => {
+        heading.removeEventListener('mouseenter', handleMouseEnter);
+        heading.removeEventListener('mouseleave', handleMouseLeave);
+      });
+    };
+  }, [enlargeOnHover]);
+
+  // Calculate the final size based on hover state
+  const displayWidth = isHovering ? finalWidth * 1.5 : finalWidth;
+  const displayHeight = isHovering ? finalHeight * 1.5 : finalHeight;
 
   return (
-    <div className={`relative ${className}`}>
+    <div 
+      ref={oozeRef}
+      className={`${followCursor ? 'fixed top-0 left-0 pointer-events-none z-50' : 'relative'} ${className}`}
+    >
       {showShadow && (
         <div 
           className="absolute bottom-0 left-1/2 -translate-x-1/2 bg-black/10 h-3 w-3/4 rounded-full blur-md"
           style={{
-            width: `${finalWidth * 0.6}px`,
+            width: `${displayWidth * 0.6}px`,
+            transition: "width 0.3s ease-out"
           }}
         />
       )}
-      <Lottie
-        options={defaultOptions}
-        height={finalHeight}
-        width={finalWidth}
-        isPaused={isPaused}
-        isStopped={isStopped}
-      />
+      <div
+        style={{
+          transition: followCursor ? "width 0.3s ease-out, height 0.3s ease-out" : "none",
+          width: `${displayWidth}px`,
+          height: `${displayHeight}px`
+        }}
+      >
+        <Lottie
+          options={defaultOptions}
+          height={displayHeight}
+          width={displayWidth}
+          isPaused={isPaused}
+          isStopped={isStopped}
+        />
+      </div>
     </div>
   );
 };

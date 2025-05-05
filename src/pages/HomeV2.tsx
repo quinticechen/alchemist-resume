@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,9 @@ import { ValueProposition } from "@/components/home/ValueProposition";
 import { CallToAction } from "@/components/home/CallToAction";
 import Lottie from "react-lottie";
 import Loading from "@/animations/Loading.json";
+
+// Import GSAP for animations
+import gsap from "gsap";
 
 const Home = () => {
   const loadingOptions = {
