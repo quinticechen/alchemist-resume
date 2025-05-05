@@ -32,8 +32,8 @@ const App = () => {
           <Header />
           <main className="flex-grow">
             <Routes>
-              <Route path="/" element={<HomeV2 />} />
-              <Route path="/home-classic" element={<Home />} />
+              <Route path="/" element={<Home />} />
+              <Route path="/homev2" element={<HomeV2 />} />
               <Route 
                 path="/alchemist-workshop" 
                 element={
@@ -106,7 +106,6 @@ const App = () => {
                   </ProtectedRoute>
                 }
               />
-              <Route path="/homev2" element={<HomeV2 />} />
               <Route path="/job-websites" element={<JobWebsites />} />
             </Routes>
           </main>

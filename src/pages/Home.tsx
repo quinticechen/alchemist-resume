@@ -16,6 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import Lottie from "react-lottie";
 import animationData from "@/animations/OOze.chat.json";
 import Loading from "@/animations/Loading.json";
+import OozeAnimation from "@/components/OozeAnimation";
 
 const companies = ["Google", "Amazon", "Microsoft", "Apple", "Meta"];
 
@@ -182,16 +183,25 @@ const Home = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100">
+    <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100 relative">
+      {/* Cursor-following Ooze animation */}
+      <OozeAnimation 
+        followCursor={true}
+        enlargeOnHover={true}
+        width={100}
+        height={100}
+        showShadow={true}
+      />
+      
       <section className="bg-gradient-primary py-20 px-4">
         <div className="max-w-6xl mx-auto justify-center text-center">
-          <h1 className="text-6xl font-bold bg-white text-transparent bg-clip-text mb-6">
+          <h1 className="text-6xl font-bold bg-white text-transparent bg-clip-text mb-6 hero-element">
             Transform Your Resume with AI Alchemy
           </h1>
           <div className="w-full mx-auto flex items-center md:w-2/4 lg:w-1/3 xl:w-1/2">
             <Lottie options={defaultOptions} height={"100%"} width={"100%"} />
           </div>
-          <p className="text-xl text-white mb-8 max-w-3xl mx-auto">
+          <p className="text-xl text-white mb-8 max-w-3xl mx-auto hero-element">
             Turn your ordinary resume into the perfect match for your dream job
             using our AI-powered optimization technology.
           </p>
@@ -202,14 +212,14 @@ const Home = () => {
                 featuresSection?.scrollIntoView({ behavior: "smooth" });
               }}
               size="lg"
-              className="bg-gradient-primary-light hover:opacity-90 transition-opacity"
+              className="bg-gradient-primary-light hover:opacity-90 transition-opacity hero-element"
             >
               Learn More
             </Button>
             <Button
               onClick={handleStartTrial}
               size="lg"
-              className="text-primary bg-white hover:bg-neutral-300"
+              className="text-primary bg-white hover:bg-neutral-300 hero-element"
             >
               {session ? "Go to Workshop" : "Start Free Trial"}
             </Button>
@@ -219,12 +229,12 @@ const Home = () => {
 
       <section id="features" className="py-20 bg-white">
         <div className="max-w-6xl mx-auto px-4">
-          <h2 className="text-4xl font-bold text-center mb-12">How It Works</h2>
+          <h2 className="text-4xl font-bold text-center mb-12 hero-element">How It Works</h2>
           <div className="grid md:grid-cols-3 gap-8">
             {features.map((feature, index) => (
               <div
                 key={index}
-                className="p-6 rounded-xl border border-neutral-200 bg-white shadow-apple hover:shadow-apple-lg transition-shadow"
+                className="p-6 rounded-xl border border-neutral-200 bg-white shadow-apple hover:shadow-apple-lg transition-shadow hero-element"
               >
                 <feature.icon className="w-12 h-12 text-primary mb-4" />
                 <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
@@ -237,14 +247,14 @@ const Home = () => {
 
       <section className="py-16 bg-neutral-50">
         <div className="max-w-6xl mx-auto px-4 text-center">
-          <h2 className="text-2xl font-semibold text-neutral-600 mb-8">
+          <h2 className="text-2xl font-semibold text-neutral-600 mb-8 hero-element">
             Optimize Your Resume for Top Companies
           </h2>
           <div className="flex flex-wrap justify-center gap-8 items-center">
             {companies.map((company) => (
               <span
                 key={company}
-                className="text-2xl font-bold bg-gradient-primary text-transparent bg-clip-text"
+                className="text-2xl font-bold bg-gradient-primary text-transparent bg-clip-text hero-element"
               >
                 {company}
               </span>
@@ -255,15 +265,15 @@ const Home = () => {
 
       <section className="py-20 bg-gradient-primary text-white">
         <div className="max-w-4xl mx-auto px-4 text-center">
-          <h2 className="text-4xl font-bold mb-6">Start with 3 Free Uses</h2>
-          <p className="text-xl mb-8 opacity-90">
+          <h2 className="text-4xl font-bold mb-6 hero-element">Start with 3 Free Uses</h2>
+          <p className="text-xl mb-8 opacity-90 hero-element">
             Try our AI-powered resume optimization with no commitment.
           </p>
           <Button
             onClick={handleStartTrial}
             size="lg"
             variant="secondary"
-            className="bg-secondary hover:bg-secondary/90 text-primary"
+            className="bg-secondary hover:bg-secondary/90 text-primary hero-element"
           >
             {session ? "Go to Workshop" : "Start Free Trial"}
           </Button>
@@ -272,7 +282,7 @@ const Home = () => {
 
       <section id="supported-websites" className="py-20 bg-white">
         <div className="max-w-6xl mx-auto px-4">
-          <h2 className="text-4xl font-bold text-center mb-12">
+          <h2 className="text-4xl font-bold text-center mb-12 hero-element">
             Supported Job Platforms
           </h2>
 
@@ -280,11 +290,11 @@ const Home = () => {
             <div className="space-y-6">
               <div className="flex items-center gap-3 mb-6">
                 <Globe className="h-6 w-6 text-primary" />
-                <h3 className="text-2xl font-semibold">Global Platforms</h3>
+                <h3 className="text-2xl font-semibold hero-element">Global Platforms</h3>
               </div>
               <ul className="space-y-4">
                 {globalPlatforms.map((platform) => (
-                  <li key={platform.url} className="flex items-center gap-2">
+                  <li key={platform.url} className="flex items-center gap-2 hero-element">
                     <CheckCircle className="h-5 w-5 text-success" />
                     <span className="font-medium">{platform.name}</span>
                     <span className="text-neutral-500">({platform.url})</span>
@@ -296,13 +306,13 @@ const Home = () => {
             <div className="space-y-6">
               <div className="flex items-center gap-3 mb-6">
                 <MapPin className="h-6 w-6 text-primary" />
-                <h3 className="text-2xl font-semibold">
+                <h3 className="text-2xl font-semibold hero-element">
                   Asian Regional Platforms
                 </h3>
               </div>
               <ul className="space-y-4">
                 {asianPlatforms.map((platform) => (
-                  <li key={platform.url} className="flex items-center gap-2">
+                  <li key={platform.url} className="flex items-center gap-2 hero-element">
                     <CheckCircle className="h-5 w-5 text-success" />
                     <span className="font-medium">{platform.name}</span>
                     <span className="text-neutral-500">({platform.url})</span>
@@ -316,14 +326,14 @@ const Home = () => {
 
       <section className="py-20 bg-neutral-50">
         <div className="max-w-4xl mx-auto px-4">
-          <h2 className="text-4xl font-bold text-center mb-12">
+          <h2 className="text-4xl font-bold text-center mb-12 hero-element">
             Frequently Asked Questions
           </h2>
           <div className="space-y-6">
             {faqs.map((faq, index) => (
               <div
                 key={index}
-                className="p-6 rounded-xl border border-neutral-200 bg-white"
+                className="p-6 rounded-xl border border-neutral-200 bg-white hero-element"
               >
                 <h3 className="text-xl font-semibold mb-2">{faq.question}</h3>
                 <p className="text-neutral-600">{faq.answer}</p>
@@ -334,7 +344,7 @@ const Home = () => {
                 onClick={() => navigate("/faq")}
                 size="lg"
                 variant="outline"
-                className="bg-secondary hover:bg-secondary/90 text-primary"
+                className="bg-secondary hover:bg-secondary/90 text-primary hero-element"
               >
                 More
               </Button>
