@@ -369,9 +369,6 @@ async function saveThreadMetadata(analysisId: string, threadId: string, systemPr
         console.log(`Inserted new thread metadata for ${threadId}`);
       }
     }
-    
-    // Store system message - always save it for record-keeping
-    await saveMessage(analysisId, "system", systemPrompt, threadId);
   } catch (error) {
     console.error(`Error storing metadata: ${error.message}`);
   }
@@ -523,10 +520,6 @@ async function handleRequest(req: Request) {
       console.log(`Client provided message ID ${clientMessageId}, skipping server-side user message save`);
     }
     
-    // Always save the system prompt for record-keeping
-    const systemMessageId = await saveMessage(analysisId, "system", systemPrompt, newThreadId);
-    console.log(`Saved system prompt with ID: ${systemMessageId}`);
-    
     // Retrieve previous messages for context
     const previousMessages = await getPreviousMessages(analysisId, newThreadId);
     
@@ -538,6 +531,10 @@ async function handleRequest(req: Request) {
     ];
     
     console.log(`Sending ${messages.length} messages to OpenAI`);
+    
+    // Save system message to database
+    await saveMessage(analysisId, "system", systemPrompt, newThreadId);
+    console.log(`Saved system message to database`);
     
     // Call OpenAI Chat API directly
     const completion = await openai.chat.completions.create({
@@ -562,9 +559,6 @@ async function handleRequest(req: Request) {
     
     // Save assistant message to database
     await saveMessage(analysisId, "assistant", aiResponse, newThreadId);
-    
-    // Save thread metadata and system prompt
-    await saveThreadMetadata(analysisId, newThreadId, systemPrompt);
     
     console.log("Successfully completed request, returning response");
     

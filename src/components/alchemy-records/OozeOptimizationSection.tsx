@@ -87,7 +87,7 @@ const OozeOptimizationSection = ({ optimizationData, analysisId }: OozeOptimizat
           .from('ai_chat_messages')
           .select('*')
           .eq('analysis_id', analysisId)
-          .neq('role', 'system') // Exclude system messages from display
+          .neq('role', 'system') // Explicitly exclude system messages from display
           .order('timestamp', { ascending: true });
           
         if (error) throw error;
@@ -104,8 +104,9 @@ const OozeOptimizationSection = ({ optimizationData, analysisId }: OozeOptimizat
         }
         
         if (chatData && chatData.length > 0) {
-          // Filter out system messages for display
+          // Process messages for display (excluding system messages)
           const displayMessages = chatData
+            .filter(msg => msg.role !== 'system') // Double-check to filter out system messages
             .map(msg => ({
               id: msg.id,
               role: msg.role as 'user' | 'assistant' | 'system',
@@ -114,7 +115,7 @@ const OozeOptimizationSection = ({ optimizationData, analysisId }: OozeOptimizat
             }));
           
           setMessages(displayMessages);
-          console.log(`Loaded ${displayMessages.length} messages for analysis: ${analysisId}`);
+          console.log(`Loaded ${displayMessages.length} messages for display from ${chatData.length} total messages for analysis: ${analysisId}`);
         } else {
           // Add welcome message if no messages exist
           const randomIndex = Math.floor(Math.random() * resumeAlchemistMessages.length);
@@ -193,7 +194,8 @@ const OozeOptimizationSection = ({ optimizationData, analysisId }: OozeOptimizat
       const requestPayload = { 
         message: input, 
         analysisId: analysisId,
-        threadId: threadId
+        threadId: threadId,
+        clientMessageId: userMessage.id // Send client message ID to prevent duplicate storage
       };
       
       console.log('Request payload:', JSON.stringify(requestPayload));
@@ -225,15 +227,18 @@ const OozeOptimizationSection = ({ optimizationData, analysisId }: OozeOptimizat
         setGuidanceForOptimization(data.guidanceForOptimization);
       }
 
+      // Use the server-provided message ID if available, otherwise generate a new one
+      const aiMessageId = data?.messageId || crypto.randomUUID();
+      
       const aiMessage: ChatMessage = {
-        id: crypto.randomUUID(),
+        id: aiMessageId,
         role: 'assistant',
         content: data?.message || "Sorry, I couldn't generate a response.",
         timestamp: new Date()
       };
 
+      // Add to UI but don't save to database - the server already did that
       setMessages(prev => [...prev, aiMessage]);
-      await saveChatMessage(aiMessage);
     } catch (error: any) {
       console.error('Error getting AI response:', error);
       
@@ -324,7 +329,7 @@ const OozeOptimizationSection = ({ optimizationData, analysisId }: OozeOptimizat
             
             <ScrollArea className="flex-1 pr-4">
               <div className="space-y-4">
-                {messages.map((message) => (
+                {messages.filter(msg => msg.role !== 'system').map((message) => (
                   <div 
                     key={message.id} 
                     className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
