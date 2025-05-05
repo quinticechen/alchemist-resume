@@ -526,16 +526,14 @@ async function handleRequest(req: Request) {
 
     console.log(`Sending ${messagesForGPT.length} messages to OpenAI`);
     
-    // 1. Save the user message first
-    if (clientMessageId) {
-      console.log(`Client provided message ID: ${clientMessageId}, skipping user message storage`);
+    // Always save the user message, regardless of clientMessageId
+    // This ensures we have the message stored in our database
+    const userMessageId = await saveMessage(analysisId, "user", message, newThreadId);
+    if (userMessageId) {
+      console.log(`User message saved to database with ID: ${userMessageId}`);
     } else {
-      const userMessageId = await saveMessage(analysisId, "user", message, newThreadId);
-      if (userMessageId) {
-        console.log(`User message saved to database with ID: ${userMessageId}`);
-      } else {
-        console.error("Failed to save user message to database");
-      }
+      console.error("Failed to save user message to database");
+      // If saving fails, we should at least log it but continue with the process
     }
 
     // 2. Save the system prompt
