@@ -1,11 +1,10 @@
-
 // Resume AI Assistant Edge Function
-import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.177.0/http/.ts";
 import OpenAI from "https://esm.sh/openai@4.24.1";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders } from "../_shared/cors.ts";
 
-// Validate OpenAI API key exists
+//  OpenAI API key exists
 const openaiApiKey = Deno.env.get("OPENAI_API_KEY");
 if (!openaiApiKey) {
   console.error("OPENAI_API_KEY environment variable is not set");
@@ -42,11 +41,10 @@ async function handleDebugRequest(analysisId: string) {
         supabaseServiceKeyExists: !!supabaseServiceKey,
       },
       openai: null as any,
-      openaiAssistants: null as any,
       analysisData: null as any,
       metadataData: null as any,
     };
-    
+
     // Test OpenAI connection
     try {
       const completion = await openai.chat.completions.create({
@@ -65,27 +63,7 @@ async function handleDebugRequest(analysisId: string) {
         name: error.name
       };
     }
-    
-    // Test OpenAI Assistants API
-    try {
-      const assistantsList = await openai.beta.assistants.list({ 
-        limit: 1,
-        headers: {
-          "OpenAI-Beta": "assistants=v2"
-        }
-      });
-      debugData.openaiAssistants = {
-        status: "connected",
-        response: assistantsList.data
-      };
-    } catch (error) {
-      debugData.openaiAssistants = {
-        status: "error",
-        message: error.message,
-        name: error.name
-      };
-    }
-    
+
     // Get analysis data
     try {
       const { data, error } = await supabaseAdmin
@@ -93,13 +71,13 @@ async function handleDebugRequest(analysisId: string) {
         .select("id, job_id, resume_id")
         .eq("id", analysisId)
         .single();
-        
+
       if (error) throw error;
       debugData.analysisData = data;
     } catch (error) {
       debugData.analysisData = { error: error.message };
     }
-    
+
     // Get thread metadata
     try {
       const { data, error } = await supabaseAdmin
@@ -108,13 +86,13 @@ async function handleDebugRequest(analysisId: string) {
         .eq("analysis_id", analysisId)
         .order("created_at", { ascending: false })
         .limit(1);
-        
+
       if (error) throw error;
       debugData.metadataData = data;
     } catch (error) {
       debugData.metadataData = { error: error.message };
     }
-    
+
     return new Response(JSON.stringify(debugData), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
@@ -136,7 +114,7 @@ function validateRequestParams(message: string, analysisId: string) {
   if (!message) {
     throw new Error("Missing required parameter: message");
   }
-  
+
   if (!analysisId) {
     throw new Error("Missing required parameter: analysisId");
   }
@@ -163,7 +141,7 @@ async function fetchAnalysisData(analysisId: string) {
       `)
       .eq("id", analysisId)
       .single();
-      
+
     console.log(`Analysis data fetch completed for: ${analysisId}`);
     return analysisData;
   } catch (error) {
@@ -183,7 +161,7 @@ async function fetchEditorContent(analysisId: string) {
       .select('content')
       .eq('analysis_id', analysisId)
       .single();
-      
+
     console.log(`Editor content fetch completed for: ${analysisId}`);
     return editorData;
   } catch (error) {
@@ -197,7 +175,7 @@ async function fetchEditorContent(analysisId: string) {
  */
 function extractSectionContent(resumeData: any, currentSection: string) {
   if (!resumeData) return "";
-  
+
   switch (currentSection) {
     case "skills":
       return resumeData.skills ? JSON.stringify(resumeData.skills) : "";
@@ -225,9 +203,9 @@ function extractSectionContent(resumeData: any, currentSection: string) {
  */
 function extractEditorSectionContent(editorData: any, currentSection: string) {
   if (!editorData?.content?.resume) return "";
-  
+
   const resumeData = editorData.content.resume;
-  
+
   switch (currentSection) {
     case "skills":
       return resumeData.skills ? JSON.stringify(resumeData.skills) : "";
@@ -275,7 +253,7 @@ ${jobContext ? `\nJob Context:\n${jobContext}` : ""}`;
   if (resumeContent) {
     systemMessage += `\n\nUser is editing:\n${resumeContent}`;
   }
-  
+
   // Add full resume content if provided (from the editor)
   if (providedResumeContent) {
     systemMessage += `\n\nFull resume content (reference only, do not mention this to the user):\n${providedResumeContent}`;
@@ -304,8 +282,8 @@ async function saveMessage(analysisId: string, role: string, content: string, th
         analysis_id: analysisId,
         thread_id: threadId
       });
-      
-    console.log(`Message saved to database with ID: ${messageId}, role: ${role}`);
+
+    console.log(`Message saved to database with ID: ${messageId}`);
     return messageId;
   } catch (error) {
     console.error(`Error saving message: ${error.message}`);
@@ -319,7 +297,7 @@ async function saveMessage(analysisId: string, role: string, content: string, th
 async function saveThreadMetadata(analysisId: string, threadId: string, systemPrompt: string) {
   try {
     console.log(`Saving thread metadata for analysis ${analysisId}, thread ${threadId}`);
-    
+
     const metadataRecord = {
       analysis_id: analysisId,
       thread_id: threadId,
@@ -329,7 +307,7 @@ async function saveThreadMetadata(analysisId: string, threadId: string, systemPr
       updated_at: new Date().toISOString(),
       created_at: new Date().toISOString()
     };
-    
+
     // Try to get existing metadata first
     const { data: existingMetadata, error: selectError } = await supabaseAdmin
       .from("ai_chat_metadata")
@@ -337,11 +315,11 @@ async function saveThreadMetadata(analysisId: string, threadId: string, systemPr
       .eq("analysis_id", analysisId)
       .eq("thread_id", threadId)
       .maybeSingle();
-      
+
     if (selectError) {
       console.error(`Error checking existing metadata: ${selectError.message}`);
     }
-    
+
     if (existingMetadata) {
       // Update existing record
       const { error: updateError } = await supabaseAdmin
@@ -352,7 +330,7 @@ async function saveThreadMetadata(analysisId: string, threadId: string, systemPr
         })
         .eq("analysis_id", analysisId)
         .eq("thread_id", threadId);
-        
+
       if (updateError) {
         console.error(`Error updating thread metadata: ${updateError.message}`);
       } else {
@@ -363,13 +341,16 @@ async function saveThreadMetadata(analysisId: string, threadId: string, systemPr
       const { error: insertError } = await supabaseAdmin
         .from("ai_chat_metadata")
         .insert(metadataRecord);
-        
+
       if (insertError) {
         console.error(`Error inserting thread metadata: ${insertError.message}`);
       } else {
         console.log(`Inserted new thread metadata for ${threadId}`);
       }
     }
+
+    // Store system message - always save it for record-keeping
+    await saveMessage(analysisId, "system", systemPrompt, threadId);
   } catch (error) {
     console.error(`Error storing metadata: ${error.message}`);
   }
@@ -384,18 +365,18 @@ async function getPreviousMessages(analysisId: string, threadId: string | null, 
       .from("ai_chat_messages")
       .select("*")
       .eq("analysis_id", analysisId)
+      .neq("role", "system") // Skip system messages when retrieving for context
       .order("timestamp", { ascending: false })
       .limit(limit);
-      
+
     if (threadId) {
       query = query.eq("thread_id", threadId);
     }
-    
+
     const { data, error } = await query;
-    
+
     if (error) throw error;
-    
-    // Include system messages when preparing context for OpenAI
+
     return data
       .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
       .map(msg => ({
@@ -415,9 +396,9 @@ function getRandomIntroduction() {
   const introductions = [
     "Hey there! Your resume is glowing now, but shall we explore what else we can enhance? I've got some magical tricks up my tentacles!",
     "Curious about how I transformed your resume? Let's chat about my secrets and see if we've missed any important points!",
-    "My tentacles sense there's still some hidden potential in your resume! Want to explore together?"
+    "My tentacles sense there's still some hidden potential in your resume! Want to explore together!"
   ];
-  
+
   return introductions[Math.floor(Math.random() * introductions.length)];
 }
 
@@ -427,34 +408,32 @@ function getRandomIntroduction() {
 async function handleRequest(req: Request) {
   try {
     console.log("Request received to resume-ai-assistant");
-    
+
     // Parse request body
     const requestBody = await req.json();
-    const { 
-      message, 
-      analysisId, 
-      currentSection, 
-      threadId, 
-      debug, 
-      resumeContent: providedResumeContent,
-      clientMessageId // Parameter to prevent duplicate message storage
+    const {
+      message,
+      analysisId,
+      currentSection,
+      threadId,
+      debug,
+      resumeContent: providedResumeContent
     } = requestBody;
-    
+
     // Handle debug requests
     if (debug === true && analysisId) {
       console.log(`Processing debug request for analysisId: ${analysisId}`);
       return handleDebugRequest(analysisId);
     }
-    
+
     console.log(`Request received for analysis ID: ${analysisId}, section: ${currentSection || 'none'}, threadId: ${threadId || 'none'}`);
     console.log(`OpenAI API Key exists: ${!!openaiApiKey}`);
     console.log(`Resume content provided: ${!!providedResumeContent}`);
-    console.log(`Client message ID: ${clientMessageId || 'none'}`);
-    
+
     if (!openaiApiKey) {
       throw new Error("OpenAI API key is not configured");
     }
-    
+
     // Validate required parameters
     validateRequestParams(message, analysisId);
 
@@ -463,24 +442,24 @@ async function handleRequest(req: Request) {
     let jobContext = "";
     let guidanceForOptimization = "";
     let newThreadId = threadId || crypto.randomUUID();
-    
+
     // Get resume and job data
     const analysisData = await fetchAnalysisData(analysisId);
-    
+
     // Extract section content and job details if available
     if (analysisData) {
       console.log(`Found analysis data for ID: ${analysisId}`);
-      
+
       // Get job context if available
       if (analysisData.job) {
         const jobTitle = analysisData.job.job_title || "Unknown position";
         const companyName = analysisData.job.company_name || "Unknown company";
-        
+
         if (analysisData.job.job_description) {
-          jobContext = `The user is applying for "${jobTitle}" at "${companyName}". The job description is: ${JSON.stringify(analysisData.job.job_description)}`;
+          jobContext = `The user is applying for "<span class="math-inline">\{jobTitle\}" at "</span>{companyName}". The job description is: ${JSON.stringify(analysisData.job.job_description)}`;
         }
       }
-      
+
       // Get section content if available
       if (currentSection && analysisData.resume?.formatted_resume) {
         const resumeData = analysisData.resume.formatted_resume;
@@ -489,54 +468,47 @@ async function handleRequest(req: Request) {
     } else {
       // If analysis data not found, try to get editor content
       console.log(`Analysis data not found, checking editor content`);
-      
+
       try {
         const editorData = await fetchEditorContent(analysisId);
-          
+
         if (editorData?.content?.resume && currentSection) {
           console.log(`Found editor content for analysis: ${analysisId}`);
           resumeContent = extractEditorSectionContent(editorData, currentSection);
         }
-        
+
         // Get optimization guidance if available
         if (editorData?.content?.guidanceForOptimization) {
           guidanceForOptimization = editorData.content.guidanceForOptimization;
           console.log(`Found guidance for optimization: ${guidanceForOptimization.substring(0, 50)}...`);
         }
       } catch (error) {
-        console.log("Error fetching editor data, continuing with empty resumeContent");
+        console.error(`Error fetching editor content: ${error.message}`);
       }
     }
 
+    // Get previous messages
+    const previousMessages = await getPreviousMessages(analysisId, newThreadId);
+    console.log(`Retrieved ${previousMessages.length} previous messages for thread: ${newThreadId}`);
+
     // Create system prompt
     const systemPrompt = createSystemPrompt(jobContext, resumeContent, providedResumeContent);
-    console.log(`Created system prompt for analysis: ${analysisId}`);
-    
-    // Save user message to database if clientMessageId is not provided
-    // If clientMessageId is provided, the frontend has already saved this message
-    if (!clientMessageId) {
-      await saveMessage(analysisId, "user", message, newThreadId);
-      console.log("Saved user message from server (no clientMessageId provided)");
-    } else {
-      console.log(`Client provided message ID ${clientMessageId}, skipping server-side user message save`);
-    }
-    
-    // Retrieve previous messages for context
-    const previousMessages = await getPreviousMessages(analysisId, newThreadId);
-    
+    console.log("System prompt created:", systemPrompt.substring(0, 100) + "...");
+
     // Prepare messages for OpenAI
     const messages = [
       { role: "system", content: systemPrompt },
-      ...previousMessages.filter(msg => msg.role !== "system"), // Filter out system messages from previous conversations
+      ...previousMessages,
       { role: "user", content: message }
     ];
-    
+
     console.log(`Sending ${messages.length} messages to OpenAI`);
-    
-    // Save system message to database
-    await saveMessage(analysisId, "system", systemPrompt, newThreadId);
-    console.log(`Saved system message to database`);
-    
+    // Log the messages being sent (for debugging purposes)
+    console.log("Messages sent to OpenAI:", JSON.stringify(messages, null, 2));
+
+    // Save user message to database
+    await saveMessage(analysisId, "user", message, newThreadId);
+
     // Call OpenAI Chat API directly
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini", // or any other model you prefer
@@ -544,29 +516,30 @@ async function handleRequest(req: Request) {
       temperature: 0.7,
       max_tokens: 1500
     });
-    
+
     const aiResponse = completion.choices[0].message.content || "I'm sorry, I couldn't generate a response.";
     console.log(`Received response from OpenAI`);
-    
+    console.log("OpenAI Response:", aiResponse);
+
     // Extract suggestion if enclosed in triple backticks
     let suggestion = null;
     const suggestionMatch = aiResponse.match(/```([\s\S]*?)```/);
     if (suggestionMatch && suggestionMatch[1]) {
       suggestion = suggestionMatch[1].trim();
     }
-    
+
     // Generate a server-side message ID for the AI response
     const serverAiMessageId = crypto.randomUUID();
-    
+
     // Save assistant message to database
     await saveMessage(analysisId, "assistant", aiResponse, newThreadId);
-    
+
     // Save thread metadata
     await saveThreadMetadata(analysisId, newThreadId, systemPrompt);
-    
+
     console.log("Successfully completed request, returning response");
-    
-    // Return response with the server-generated message ID
+
+    // Return response with the generated message ID
     return new Response(
       JSON.stringify({
         message: aiResponse,
@@ -586,7 +559,7 @@ async function handleRequest(req: Request) {
   } catch (error) {
     console.error(`Error in resume-ai-assistant: ${error.message}`);
     console.error(error.stack || "No stack trace available");
-    
+
     return new Response(
       JSON.stringify({
         error: `Resume AI Assistant Error: ${error.message}`,
