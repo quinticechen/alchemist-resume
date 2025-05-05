@@ -281,6 +281,9 @@ async function saveMessage(analysisId: string, role: string, content: string, th
       return null;
     }
     
+    console.log(`Saving message with role: ${dbRole}, thread: ${threadId || 'none'}, analysis: ${analysisId}`);
+    console.log(`Content preview: ${content.substring(0, 50)}...`);
+    
     const messageId = crypto.randomUUID();
     const { data, error } = await supabaseAdmin
       .from("ai_chat_messages")
@@ -295,13 +298,15 @@ async function saveMessage(analysisId: string, role: string, content: string, th
 
     if (error) {
       console.error(`Error saving message: ${error.message}`);
+      console.error(`Error details: ${JSON.stringify(error)}`);
       return null;
     }
 
     console.log(`Message saved to database with ID: ${messageId}, Role: ${dbRole}`);
     return messageId;
   } catch (error) {
-    console.error(`Error saving message: ${error.message}`);
+    console.error(`Error in saveMessage function: ${error.message}`);
+    console.error(`Stack trace: ${error.stack || 'No stack trace available'}`);
     return null;
   }
 }
@@ -445,6 +450,7 @@ async function handleRequest(req: Request) {
     console.log(`OpenAI API Key exists: ${!!openaiApiKey}`);
     console.log(`Resume content provided: ${!!providedResumeContent}`);
     console.log(`Client message ID: ${clientMessageId || 'none'}`);
+    console.log(`User message: ${message.substring(0, 50)}...`);
 
     if (!openaiApiKey) {
       throw new Error("OpenAI API key is not configured");
@@ -524,17 +530,29 @@ async function handleRequest(req: Request) {
     if (clientMessageId) {
       console.log(`Client provided message ID: ${clientMessageId}, skipping user message storage`);
     } else {
-      await saveMessage(analysisId, "user", message, newThreadId);
-      console.log("User message saved to database");
+      const userMessageId = await saveMessage(analysisId, "user", message, newThreadId);
+      if (userMessageId) {
+        console.log(`User message saved to database with ID: ${userMessageId}`);
+      } else {
+        console.error("Failed to save user message to database");
+      }
     }
 
     // 2. Save the system prompt
-    await saveMessage(analysisId, "system", systemPrompt, newThreadId);
-    console.log("System prompt saved to database");
+    const systemMessageId = await saveMessage(analysisId, "system", systemPrompt, newThreadId);
+    if (systemMessageId) {
+      console.log(`System prompt saved to database with ID: ${systemMessageId}`);
+    } else {
+      console.error("Failed to save system prompt to database");
+    }
 
     // 3. Save the full conversation context sent to OpenAI
-    await saveMessage(analysisId, "system", JSON.stringify(messagesForGPT), newThreadId);
-    console.log("Full conversation context saved to database");
+    const contextMessageId = await saveMessage(analysisId, "system", JSON.stringify(messagesForGPT), newThreadId);
+    if (contextMessageId) {
+      console.log(`Full conversation context saved to database with ID: ${contextMessageId}`);
+    } else {
+      console.error("Failed to save conversation context to database");
+    }
 
     // Call OpenAI Chat API directly
     console.log("Calling OpenAI API...");
@@ -547,6 +565,7 @@ async function handleRequest(req: Request) {
 
     const aiResponse = completion.choices[0].message.content || "I'm sorry, I couldn't generate a response.";
     console.log(`Received response from OpenAI`);
+    console.log(`OpenAI response preview: ${aiResponse.substring(0, 50)}...`);
 
     // Extract suggestion if enclosed in triple backticks
     let suggestion = null;
@@ -559,8 +578,12 @@ async function handleRequest(req: Request) {
     const serverAiMessageId = crypto.randomUUID();
 
     // 4. Save the assistant response
-    await saveMessage(analysisId, "assistant", aiResponse, newThreadId);
-    console.log("Assistant response saved to database");
+    const assistantMessageId = await saveMessage(analysisId, "assistant", aiResponse, newThreadId);
+    if (assistantMessageId) {
+      console.log(`Assistant response saved to database with ID: ${assistantMessageId}`);
+    } else {
+      console.error("Failed to save assistant response to database");
+    }
 
     // Save thread metadata
     await saveThreadMetadata(analysisId, newThreadId, systemPrompt);
