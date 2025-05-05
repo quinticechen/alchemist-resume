@@ -1,3 +1,4 @@
+
 // Resume AI Assistant Edge Function
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import OpenAI from "https://esm.sh/openai@4.24.1";
@@ -41,6 +42,7 @@ async function handleDebugRequest(analysisId: string) {
         supabaseServiceKeyExists: !!supabaseServiceKey,
       },
       openai: null as any,
+      openaiAssistants: null as any,
       analysisData: null as any,
       metadataData: null as any,
     };
@@ -58,6 +60,26 @@ async function handleDebugRequest(analysisId: string) {
       };
     } catch (error) {
       debugData.openai = {
+        status: "error",
+        message: error.message,
+        name: error.name
+      };
+    }
+    
+    // Test OpenAI Assistants API
+    try {
+      const assistantsList = await openai.beta.assistants.list({ 
+        limit: 1,
+        headers: {
+          "OpenAI-Beta": "assistants=v2"
+        }
+      });
+      debugData.openaiAssistants = {
+        status: "connected",
+        response: assistantsList.data
+      };
+    } catch (error) {
+      debugData.openaiAssistants = {
         status: "error",
         message: error.message,
         name: error.name
@@ -417,7 +439,8 @@ async function handleRequest(req: Request) {
       currentSection, 
       threadId, 
       debug, 
-      resumeContent: providedResumeContent 
+      resumeContent: providedResumeContent,
+      clientMessageId // New parameter to prevent duplicate message storage
     } = requestBody;
     
     // Handle debug requests
@@ -429,6 +452,7 @@ async function handleRequest(req: Request) {
     console.log(`Request received for analysis ID: ${analysisId}, section: ${currentSection || 'none'}, threadId: ${threadId || 'none'}`);
     console.log(`OpenAI API Key exists: ${!!openaiApiKey}`);
     console.log(`Resume content provided: ${!!providedResumeContent}`);
+    console.log(`Client message ID: ${clientMessageId || 'none'}`);
     
     if (!openaiApiKey) {
       throw new Error("OpenAI API key is not configured");
@@ -491,8 +515,14 @@ async function handleRequest(req: Request) {
     const systemPrompt = createSystemPrompt(jobContext, resumeContent, providedResumeContent);
     console.log(`Created system prompt for analysis: ${analysisId}`);
     
-    // Save user message to database
-    await saveMessage(analysisId, "user", message, newThreadId);
+    // Save user message to database if clientMessageId is not provided
+    // If clientMessageId is provided, the frontend has already saved this message
+    if (!clientMessageId) {
+      await saveMessage(analysisId, "user", message, newThreadId);
+      console.log("Saved user message from server (no clientMessageId provided)");
+    } else {
+      console.log(`Client provided message ID ${clientMessageId}, skipping server-side user message save`);
+    }
     
     // Retrieve previous messages for context
     const previousMessages = await getPreviousMessages(analysisId, newThreadId);
@@ -524,18 +554,22 @@ async function handleRequest(req: Request) {
       suggestion = suggestionMatch[1].trim();
     }
     
+    // Generate a server-side message ID for the AI response
+    const serverAiMessageId = crypto.randomUUID();
+    
     // Save assistant message to database
     await saveMessage(analysisId, "assistant", aiResponse, newThreadId);
     
-    // Save thread metadata - IMPORTANT: We always save metadata and now also save the system prompt
+    // Save thread metadata and system prompt
     await saveThreadMetadata(analysisId, newThreadId, systemPrompt);
     
     console.log("Successfully completed request, returning response");
     
-    // Return response
+    // Return response with the server-generated message ID
     return new Response(
       JSON.stringify({
         message: aiResponse,
+        messageId: serverAiMessageId,
         suggestion,
         threadId: newThreadId,
         systemPrompt,

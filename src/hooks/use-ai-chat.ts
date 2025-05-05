@@ -138,41 +138,28 @@ export const useAIChat = (
           console.log("Loaded guidance for optimization");
         }
         
-        // Get chat messages
+        // Get chat messages - filtering out system messages for display
         const { data, error } = await supabase
           .from('ai_chat_messages')
           .select('*')
           .eq('analysis_id', effectiveAnalysisId)
-          .eq('role', 'assistant') // Only get assistant messages or user messages
+          .neq('role', 'system') // Don't display system messages
           .order('timestamp', { ascending: true });
           
-        const { data: userMessagesData, error: userMessagesError } = await supabase
-          .from('ai_chat_messages')
-          .select('*')
-          .eq('analysis_id', effectiveAnalysisId)
-          .eq('role', 'user')
-          .order('timestamp', { ascending: true });
-
         if (error) throw error;
-        if (userMessagesError) throw userMessagesError;
         
-        const allMessages = [...(data || []), ...(userMessagesData || [])].sort(
-          (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-        );
-        
-        if (allMessages && allMessages.length > 0) {
+        if (data && data.length > 0) {
           const uniqueMessages: ChatMessage[] = [];
           const seenContent = new Map<string, Date>();
           
-          allMessages.forEach(msg => {
-            if (msg.role === 'system') return; // Skip system messages for display
-            
+          data.forEach(msg => {
             const msgDate = new Date(msg.timestamp);
             const existingDate = seenContent.get(msg.content);
             
             if (!existingDate || Math.abs(msgDate.getTime() - existingDate.getTime()) > 5000) {
               uniqueMessages.push({
                 ...msg,
+                role: msg.role as 'user' | 'assistant' | 'system',
                 timestamp: msgDate
               });
               seenContent.set(msg.content, msgDate);
@@ -183,7 +170,7 @@ export const useAIChat = (
           });
           
           setMessages(uniqueMessages);
-          console.log(`Loaded ${uniqueMessages.length} unique messages from ${allMessages.length} total for analysis: ${effectiveAnalysisId}`);
+          console.log(`Loaded ${uniqueMessages.length} unique messages for analysis: ${effectiveAnalysisId}`);
           
           if (!threadId && uniqueMessages.length > 0 && uniqueMessages[0].thread_id) {
             threadId = uniqueMessages[0].thread_id;
@@ -286,8 +273,11 @@ export const useAIChat = (
     
     setApiError(null);
     
+    // Create client-side message ID to prevent duplicate storage
+    const clientMessageId = crypto.randomUUID();
+    
     const userMessage: ChatMessage = {
-      id: crypto.randomUUID(),
+      id: clientMessageId,
       role: 'user',
       content: input,
       timestamp: new Date(),
@@ -295,10 +285,12 @@ export const useAIChat = (
       thread_id: currentThreadId || undefined
     };
 
+    // Update UI immediately
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setIsLoading(true);
 
+    // Save the message on the client side
     await saveChatMessage(userMessage);
 
     try {
@@ -312,13 +304,14 @@ export const useAIChat = (
         console.log("Sending resume content with first message");
       }
       
+      // Pass the clientMessageId to prevent duplicate storage on server
       const { data, error } = await supabase.functions.invoke('resume-ai-assistant', {
         body: { 
           message: input, 
           analysisId: effectiveAnalysisId, 
           resumeId,
           currentSection: currentSectionId,
-          history: messages.map(msg => ({ role: msg.role, content: msg.content })),
+          clientMessageId, // Send client message ID to prevent duplicate storage
           threadId: currentThreadId,
           resumeContent: resumeContent
         }
@@ -378,7 +371,8 @@ export const useAIChat = (
         content += "\n\nI've created a suggestion for your resume. You can apply it by clicking the 'Apply' button.";
       }
 
-      const aiMessageId = crypto.randomUUID();
+      // Use server-provided message ID if available, otherwise generate a new one
+      const aiMessageId = data.messageId || crypto.randomUUID();
       
       const aiMessage: ChatMessage = {
         id: aiMessageId,
@@ -390,10 +384,11 @@ export const useAIChat = (
         thread_id: threadId
       };
 
+      // Skip saving to database as it's now handled by the server
+      processedMessageIds.add(aiMessageId); // Mark as processed to prevent duplicate saves
+      
       setMessages(prev => [...prev, aiMessage]);
       console.log("Added AI response to chat");
-      
-      await saveChatMessage(aiMessage);
       
       setApiError(null);
     } catch (error) {
