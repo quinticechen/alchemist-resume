@@ -1,3 +1,4 @@
+
 // Resume AI Assistant Edge Function
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import OpenAI from "https://esm.sh/openai@4.24.1";
@@ -436,7 +437,7 @@ async function handleRequest(req: Request) {
       threadId, 
       debug, 
       resumeContent: providedResumeContent,
-      clientMessageId // New parameter to prevent duplicate message storage
+      clientMessageId // Parameter to prevent duplicate message storage
     } = requestBody;
     
     // Handle debug requests
@@ -559,6 +560,9 @@ async function handleRequest(req: Request) {
     
     // Save assistant message to database
     await saveMessage(analysisId, "assistant", aiResponse, newThreadId);
+    
+    // Save thread metadata
+    await saveThreadMetadata(analysisId, newThreadId, systemPrompt);
     
     console.log("Successfully completed request, returning response");
     
