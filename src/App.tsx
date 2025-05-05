@@ -1,7 +1,9 @@
+
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Home from "@/pages/Home";
+import HomeV2 from "@/pages/HomeV2";
 import AlchemistWorkshop from "@/pages/AlchemistWorkshop";
 import AlchemyRecords from "@/pages/AlchemyRecords";
 import ResumeRefine from "@/pages/ResumeRefine";
@@ -16,7 +18,6 @@ import SurveyPage from "@/pages/SurveyPage";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import PaymentSuccess from "@/pages/PaymentSuccess";
-import HomeV2 from "@/pages/HomeV2";
 import UserOnboard from "@/pages/UserOnboard";
 import ScrollToTop from './components/ScrollToTop';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -31,7 +32,8 @@ const App = () => {
           <Header />
           <main className="flex-grow">
             <Routes>
-              <Route path="/" element={<Home />} />
+              <Route path="/" element={<HomeV2 />} />
+              <Route path="/home-classic" element={<Home />} />
               <Route 
                 path="/alchemist-workshop" 
                 element={
