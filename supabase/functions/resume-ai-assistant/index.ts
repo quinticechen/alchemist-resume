@@ -1,3 +1,4 @@
+
 // Resume AI Assistant Edge Function
 import { serve } from "https://deno.land/std@0.177.0/http/.ts";
 import OpenAI from "https://esm.sh/openai@4.24.1";
@@ -349,8 +350,6 @@ async function saveThreadMetadata(analysisId: string, threadId: string, systemPr
       }
     }
 
-    // Store system message - always save it for record-keeping
-    await saveMessage(analysisId, "system", systemPrompt, threadId);
     console.log("Saved system message to database");
   } catch (error) {
     console.error(`Error storing metadata: ${error.message}`);
@@ -418,6 +417,7 @@ async function handleRequest(req: Request) {
       currentSection,
       threadId,
       debug,
+      clientMessageId,
       resumeContent: providedResumeContent
     } = requestBody;
 
@@ -430,6 +430,7 @@ async function handleRequest(req: Request) {
     console.log(`Request received for analysis ID: ${analysisId}, section: ${currentSection || 'none'}, threadId: ${threadId || 'none'}`);
     console.log(`OpenAI API Key exists: ${!!openaiApiKey}`);
     console.log(`Resume content provided: ${!!providedResumeContent}`);
+    console.log(`Client message ID: ${clientMessageId || 'none'}`);
 
     if (!openaiApiKey) {
       throw new Error("OpenAI API key is not configured");
@@ -504,15 +505,25 @@ async function handleRequest(req: Request) {
     ];
 
     console.log(`Sending ${messagesForGPT.length} messages to OpenAI`);
-    console.log("Messages sent to OpenAI:", JSON.stringify(messagesForGPT, null, 2));
+    
+    // 1. Save the user message first
+    if (clientMessageId) {
+      console.log(`Client provided message ID: ${clientMessageId}, skipping user message storage`);
+    } else {
+      await saveMessage(analysisId, "user", message, newThreadId);
+      console.log("User message saved to database");
+    }
 
-    // 1. 儲存用戶的 prompt
-    await saveMessage(analysisId, "user", message, newThreadId);
+    // 2. Save the system prompt
+    await saveMessage(analysisId, "system", systemPrompt, newThreadId);
+    console.log("System prompt saved to database");
 
-    // 2. 儲存傳送給 GPT 的完整 prompt
+    // 3. Save the full conversation context sent to OpenAI
     await saveMessage(analysisId, "system", JSON.stringify(messagesForGPT), newThreadId);
+    console.log("Full conversation context saved to database");
 
     // Call OpenAI Chat API directly
+    console.log("Calling OpenAI API...");
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini", // or any other model you prefer
       messages: messagesForGPT,
@@ -522,7 +533,6 @@ async function handleRequest(req: Request) {
 
     const aiResponse = completion.choices[0].message.content || "I'm sorry, I couldn't generate a response.";
     console.log(`Received response from OpenAI`);
-    console.log("OpenAI Response:", aiResponse);
 
     // Extract suggestion if enclosed in triple backticks
     let suggestion = null;
@@ -534,8 +544,9 @@ async function handleRequest(req: Request) {
     // Generate a server-side message ID for the AI response
     const serverAiMessageId = crypto.randomUUID();
 
-    // 3. 儲存 GPT 回覆，role 為 "GPT"
-    await saveMessage(analysisId, "GPT", aiResponse, newThreadId);
+    // 4. Save the assistant response
+    await saveMessage(analysisId, "assistant", aiResponse, newThreadId);
+    console.log("Assistant response saved to database");
 
     // Save thread metadata
     await saveThreadMetadata(analysisId, newThreadId, systemPrompt);
