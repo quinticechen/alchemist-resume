@@ -272,19 +272,33 @@ Always be respectful, professional, and encouraging.`;
  */
 async function saveMessage(analysisId: string, role: string, content: string, threadId: string | null) {
   try {
+    // Convert "GPT" role to "assistant" to match database constraints
+    const dbRole = role === "GPT" ? "assistant" : role;
+    
+    // Ensure role is one of the allowed values
+    if (!["user", "assistant", "system"].includes(dbRole)) {
+      console.error(`Invalid role: ${dbRole}. Must be one of: user, assistant, system`);
+      return null;
+    }
+    
     const messageId = crypto.randomUUID();
-    await supabaseAdmin
+    const { data, error } = await supabaseAdmin
       .from("ai_chat_messages")
       .insert({
         id: messageId,
-        role: role,
+        role: dbRole,
         content: content,
         timestamp: new Date().toISOString(),
         analysis_id: analysisId,
         thread_id: threadId
       });
 
-    console.log(`Message saved to database with ID: ${messageId}, Role: ${role}`);
+    if (error) {
+      console.error(`Error saving message: ${error.message}`);
+      return null;
+    }
+
+    console.log(`Message saved to database with ID: ${messageId}, Role: ${dbRole}`);
     return messageId;
   } catch (error) {
     console.error(`Error saving message: ${error.message}`);
