@@ -1,4 +1,3 @@
-
 // Resume AI Assistant Edge Function
 import { serve } from "https://deno.land/std@0.177.0/http/.ts";
 import OpenAI from "https://esm.sh/openai@4.24.1";
@@ -273,7 +272,6 @@ Always be respectful, professional, and encouraging.`;
 async function saveMessage(analysisId: string, role: string, content: string, threadId: string | null) {
   try {
     const messageId = crypto.randomUUID();
-    
     await supabaseAdmin
       .from("ai_chat_messages")
       .insert({
@@ -285,7 +283,7 @@ async function saveMessage(analysisId: string, role: string, content: string, th
         thread_id: threadId
       });
 
-    console.log(`Message saved to database with ID: ${messageId}, role: ${role}`);
+    console.log(`Message saved to database with ID: ${messageId}, Role: ${role}`);
     return messageId;
   } catch (error) {
     console.error(`Error saving message: ${error.message}`);
@@ -420,8 +418,7 @@ async function handleRequest(req: Request) {
       currentSection,
       threadId,
       debug,
-      resumeContent: providedResumeContent,
-      clientMessageId
+      resumeContent: providedResumeContent
     } = requestBody;
 
     // Handle debug requests
@@ -433,7 +430,6 @@ async function handleRequest(req: Request) {
     console.log(`Request received for analysis ID: ${analysisId}, section: ${currentSection || 'none'}, threadId: ${threadId || 'none'}`);
     console.log(`OpenAI API Key exists: ${!!openaiApiKey}`);
     console.log(`Resume content provided: ${!!providedResumeContent}`);
-    console.log(`Client message ID: ${clientMessageId || 'none'}`);
 
     if (!openaiApiKey) {
       throw new Error("OpenAI API key is not configured");
@@ -501,45 +497,25 @@ async function handleRequest(req: Request) {
     console.log("System prompt created:", systemPrompt.substring(0, 100) + "...");
 
     // Prepare messages for OpenAI
-    const messages = [
+    const messagesForGPT = [
       { role: "system", content: systemPrompt },
       ...previousMessages,
       { role: "user", content: message }
     ];
 
-    console.log(`Sending ${messages.length} messages to OpenAI`);
-    // Log the messages being sent (for debugging purposes)
-    console.log("Messages sent to OpenAI:", JSON.stringify(messages, null, 2));
+    console.log(`Sending ${messagesForGPT.length} messages to OpenAI`);
+    console.log("Messages sent to OpenAI:", JSON.stringify(messagesForGPT, null, 2));
 
-    // If clientMessageId is provided, check if it already exists
-    if (clientMessageId) {
-      const { data: existingMessages } = await supabaseAdmin
-        .from("ai_chat_messages")
-        .select("id")
-        .eq("analysis_id", analysisId)
-        .eq("thread_id", newThreadId)
-        .eq("role", "user")
-        .ilike("content", `%${clientMessageId}%`)
-        .limit(1);
-      
-      if (existingMessages && existingMessages.length > 0) {
-        console.log(`Client provided message ID ${clientMessageId} already exists, skipping server-side user message save`);
-      } else {
-        // Save user message to database
-        await saveMessage(analysisId, "user", message, newThreadId);
-      }
-    } else {
-      // Save user message to database if no clientMessageId provided
-      await saveMessage(analysisId, "user", message, newThreadId);
-    }
+    // 1. 儲存用戶的 prompt
+    await saveMessage(analysisId, "user", message, newThreadId);
 
-    // Save system prompt
-    await saveThreadMetadata(analysisId, newThreadId, systemPrompt);
+    // 2. 儲存傳送給 GPT 的完整 prompt
+    await saveMessage(analysisId, "system", JSON.stringify(messagesForGPT), newThreadId);
 
     // Call OpenAI Chat API directly
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini", // or any other model you prefer
-      messages: messages,
+      messages: messagesForGPT,
       temperature: 0.7,
       max_tokens: 1500
     });
@@ -558,12 +534,15 @@ async function handleRequest(req: Request) {
     // Generate a server-side message ID for the AI response
     const serverAiMessageId = crypto.randomUUID();
 
-    // Save assistant message to database
-    await saveMessage(analysisId, "assistant", aiResponse, newThreadId);
+    // 3. 儲存 GPT 回覆，role 為 "GPT"
+    await saveMessage(analysisId, "GPT", aiResponse, newThreadId);
+
+    // Save thread metadata
+    await saveThreadMetadata(analysisId, newThreadId, systemPrompt);
 
     console.log("Successfully completed request, returning response");
 
-    // Return response with the generated message ID
+    // Return response with the generated message ID and GPT response
     return new Response(
       JSON.stringify({
         message: aiResponse,
