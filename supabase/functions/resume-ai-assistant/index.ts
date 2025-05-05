@@ -533,11 +533,16 @@ async function handleRequest(req: Request) {
     // Prepare messages for OpenAI
     const messages = [
       { role: "system", content: systemPrompt },
-      ...previousMessages.filter(msg => msg.role !== "system"), // Filter out system messages from previous conversations
+      ...previousMessages,
       { role: "user", content: message }
     ];
-    
+
     console.log(`Sending ${messages.length} messages to OpenAI`);
+
+    // Save all messages sent to OpenAI (including system prompt)
+    for (const msg of messages) {
+      await saveMessage(analysisId, msg.role, msg.content, newThreadId);
+    }
     
     // Call OpenAI Chat API directly
     const completion = await openai.chat.completions.create({
