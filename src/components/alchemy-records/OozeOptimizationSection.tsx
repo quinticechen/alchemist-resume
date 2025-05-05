@@ -82,12 +82,12 @@ const OozeOptimizationSection = ({ optimizationData, analysisId }: OozeOptimizat
           console.log(`Retrieved thread ID: ${metadataData[0].thread_id}`);
         }
         
-        // Get message history
+        // Get message history - filter out system messages for display
         const { data: chatData, error } = await supabase
           .from('ai_chat_messages')
           .select('*')
           .eq('analysis_id', analysisId)
-          .neq('role', 'system')
+          .neq('role', 'system') // Exclude system messages from display
           .order('timestamp', { ascending: true });
           
         if (error) throw error;

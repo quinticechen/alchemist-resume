@@ -1,4 +1,3 @@
-
 // Resume AI Assistant Edge Function
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import OpenAI from "https://esm.sh/openai@4.24.1";
@@ -305,7 +304,7 @@ async function saveMessage(analysisId: string, role: string, content: string, th
         thread_id: threadId
       });
       
-    console.log(`Message saved to database with ID: ${messageId}`);
+    console.log(`Message saved to database with ID: ${messageId}, role: ${role}`);
     return messageId;
   } catch (error) {
     console.error(`Error saving message: ${error.message}`);
@@ -387,7 +386,6 @@ async function getPreviousMessages(analysisId: string, threadId: string | null, 
       .from("ai_chat_messages")
       .select("*")
       .eq("analysis_id", analysisId)
-      .neq("role", "system") // Skip system messages when retrieving for context
       .order("timestamp", { ascending: false })
       .limit(limit);
       
@@ -399,6 +397,7 @@ async function getPreviousMessages(analysisId: string, threadId: string | null, 
     
     if (error) throw error;
     
+    // Include system messages when preparing context for OpenAI
     return data
       .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
       .map(msg => ({
@@ -524,13 +523,17 @@ async function handleRequest(req: Request) {
       console.log(`Client provided message ID ${clientMessageId}, skipping server-side user message save`);
     }
     
+    // Always save the system prompt for record-keeping
+    const systemMessageId = await saveMessage(analysisId, "system", systemPrompt, newThreadId);
+    console.log(`Saved system prompt with ID: ${systemMessageId}`);
+    
     // Retrieve previous messages for context
     const previousMessages = await getPreviousMessages(analysisId, newThreadId);
     
     // Prepare messages for OpenAI
     const messages = [
       { role: "system", content: systemPrompt },
-      ...previousMessages,
+      ...previousMessages.filter(msg => msg.role !== "system"), // Filter out system messages from previous conversations
       { role: "user", content: message }
     ];
     
