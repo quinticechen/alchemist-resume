@@ -34,9 +34,9 @@ const OozeOptimizationSection: React.FC<OptimizationProps> = ({ optimizationData
           <pre>{debugInfo}</pre>
         </div>
       ) : (
-        <div className="flex flex-col h-full">
+        <div className="flex flex-col h-full flex-grow justify-between">
           <div className="flex justify-center mb-2">
-            <OozeAnimation width={60} height={60} />
+            <OozeAnimation width={100} height={100} />
           </div>
           
           {initializationStatus === 'loading' || initializationStatus === 'error' ? (
@@ -50,11 +50,7 @@ const OozeOptimizationSection: React.FC<OptimizationProps> = ({ optimizationData
                 messages={messages} 
                 analysisId={analysisId} 
                 messagesEndRef={messagesEndRef}
-              />
-              
-              <PromptGuides
-                onPromptSelect={handlePromptSelect}
-                isDisabled={isLoading || !analysisId || initializationStatus !== 'success'}
+                className="flex-grow overflow-y-auto"
               />
               
               <ChatInputArea 
