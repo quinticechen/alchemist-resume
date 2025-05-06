@@ -44,7 +44,7 @@ const EditorToolbar: React.FC<EditorToolbarProps> = ({
           </span>
         )}
         <div className="flex gap-2">
-          <Button 
+          {/* <Button 
             variant="outline" 
             size="sm" 
             onClick={onPreview}
@@ -52,7 +52,7 @@ const EditorToolbar: React.FC<EditorToolbarProps> = ({
           >
             <Eye className="h-4 w-4" />
             Preview
-          </Button>
+          </Button> */}
           <Button
             onClick={onSave}
             disabled={isSaving || !hasUnsavedChanges}
@@ -84,7 +84,7 @@ const EditorToolbar: React.FC<EditorToolbarProps> = ({
             )}
           </Button>
           <Button
-            onClick={onFinish}
+            onClick={onPreview}
             variant="default"
             size="sm"
             className="flex items-center gap-1"
