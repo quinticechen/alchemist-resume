@@ -514,7 +514,7 @@ const ResumePreview = () => {
               <Button
                 variant="outline"
                 onClick={handleExportPDF}
-                className="flex items-center gap-2"
+                className="bg-gradient-primary-light text-white hover:opacity-90 transition-opacity"
               >
                 <Download className="h-4 w-4" />
                 Export PDF

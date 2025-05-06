@@ -281,7 +281,7 @@ const Pricing = () => {
               <div className="flex items-center justify-center gap-2 mb-8">
                 <Badge
                   variant="outline"
-                  className="bg-gradient-primary-light text-white hover:opacity-90 transition-opacity"
+                  className="text-primary border-primary"
                 >
                   Current Plan:{" "}
                   {usageInfo.subscription_status.charAt(0).toUpperCase() +
@@ -291,7 +291,7 @@ const Pricing = () => {
                 </Badge>
                 <Badge
                   variant="outline"
-                  className="bg-gradient-primary-light text-white hover:opacity-90 transition-opacity"
+                  className="text-primary border-primary"
                 >
                   Remaining Uses: {getRemainingUses()}
                 </Badge>

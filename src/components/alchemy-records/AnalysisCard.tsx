@@ -97,7 +97,8 @@ const AnalysisCard = ({
             variant="outline"
             size="sm"
             onClick={() => window.open(job.job_url, "_blank")}
-            className="text-info border-info/20 hover:bg-info/5"
+            className="flex items-center gap-2"
+            // className="text-info border-info/20 hover:bg-info/5"
           >
             <LinkIcon className="h-4 w-4 mr-2" />
             Job Post
@@ -118,7 +119,7 @@ const AnalysisCard = ({
               window.open(data.publicUrl, "_blank");
             }
           }}
-          className="text-info border-info/20 hover:bg-info/5"
+          className="flex items-center gap-2"
         >
           <FileText className="h-4 w-4 mr-2" />
           Original Resume
@@ -129,7 +130,7 @@ const AnalysisCard = ({
             variant="outline"
             size="sm"
             onClick={() => window.open(google_doc_url, "_blank")}
-            className="text-info border-info/20 hover:bg-info/5"
+            className="flex items-center gap-2"
           >
             <Pencil className="h-4 w-4 mr-2" />
             Edit with Google Doc
