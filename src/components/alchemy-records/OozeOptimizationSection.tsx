@@ -1,287 +1,30 @@
 
-import React, { useState, useRef, useEffect } from 'react';
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import OozeAnimation from "@/components/OozeAnimation";
+import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Lightbulb, AlertCircle, Send, User, Loader2, RefreshCw, Search, MessageSquare, HelpCircle } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { useOozeOptimization } from "@/hooks/use-ooze-optimization";
+import ChatInputArea from './chat/ChatInputArea';
+import MessageList from './chat/MessageList';
+import ChatStateDisplay from './chat/ChatStateDisplay';
+import { OptimizationProps } from './chat/types';
 
-interface ChatMessage {
-  id: string;
-  role: 'user' | 'assistant' | 'system';
-  content: string;
-  timestamp: Date;
-}
-
-interface OozeOptimizationSectionProps {
-  optimizationData: any;
-  analysisId?: string;
-}
-
-const OozeOptimizationSection = ({ optimizationData, analysisId }: OozeOptimizationSectionProps) => {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [input, setInput] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [threadId, setThreadId] = useState<string | null>(null);
-  const [debugInfo, setDebugInfo] = useState<string | null>(null);
-  const [initializationStatus, setInitializationStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
-  const [guidanceForOptimization, setGuidanceForOptimization] = useState<string>("");
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { toast } = useToast();
-
-  const resumeAlchemistMessages = [
-    "Hey there! Your resume is glowing now, but shall we explore what else we can enhance? I've got some magical tricks up my tentacles!",
-    "Curious about how I transformed your resume? Let's chat about my secrets and see if we've missed any important points!",
-    "My tentacles sense there's still some hidden potential in your resume! Want to explore together!"
-  ];
-
-  // Updated prompt guides with shorter text for mobile
-  const promptGuides = [
-    {
-      text: "What are the most attractive highlights in this resume?",
-      shortText: "Resume highlights?",
-      icon: <Lightbulb className="h-4 w-4" />
-    },
-    {
-      text: "Which keywords could we strengthen?",
-      shortText: "Keywords to strengthen?",
-      icon: <Search className="h-4 w-4" />
-    },
-    {
-      text: "How can we make your experience more compelling?",
-      shortText: "Improve experience?",
-      icon: <MessageSquare className="h-4 w-4" />
-    },
-    {
-      text: "What questions might interviewers ask?",
-      shortText: "Interview questions?",
-      icon: <HelpCircle className="h-4 w-4" />
-    }
-  ];
-
-  useEffect(() => {
-    // Load existing chat history if we have an analysis ID
-    const loadChatHistory = async () => {
-      if (!analysisId) {
-        setInitializationStatus('error');
-        return;
-      }
-      
-      try {
-        setInitializationStatus('loading');
-        console.log(`Loading chat history for analysis ID: ${analysisId}`);
-        
-        // Try to get thread ID first
-        const { data: metadataData } = await supabase
-          .from('ai_chat_metadata')
-          .select('thread_id')
-          .eq('analysis_id', analysisId)
-          .order('created_at', { ascending: false })
-          .limit(1);
-          
-        if (metadataData && metadataData.length > 0) {
-          setThreadId(metadataData[0].thread_id);
-          console.log(`Retrieved thread ID: ${metadataData[0].thread_id}`);
-        }
-        
-        // Get message history - filter out system messages for display
-        const { data: chatData, error } = await supabase
-          .from('ai_chat_messages')
-          .select('*')
-          .eq('analysis_id', analysisId)
-          .neq('role', 'system') // Explicitly exclude system messages from display
-          .order('timestamp', { ascending: true });
-          
-        if (error) throw error;
-        
-        // Get editor content for optimization guidance
-        const { data: editorData } = await supabase
-          .from('resume_editors')
-          .select('content')
-          .eq('analysis_id', analysisId)
-          .single();
-          
-        if (editorData?.content?.guidanceForOptimization) {
-          setGuidanceForOptimization(editorData.content.guidanceForOptimization);
-        }
-        
-        if (chatData && chatData.length > 0) {
-          // Process messages for display (excluding system messages)
-          const displayMessages = chatData
-            .filter(msg => msg.role !== 'system') // Double-check to filter out system messages
-            .map(msg => ({
-              id: msg.id,
-              role: msg.role as 'user' | 'assistant' | 'system',
-              content: msg.content,
-              timestamp: new Date(msg.timestamp)
-            }));
-          
-          setMessages(displayMessages);
-          console.log(`Loaded ${displayMessages.length} messages for display from ${chatData.length} total messages for analysis: ${analysisId}`);
-        } else {
-          // Add welcome message if no messages exist
-          const randomIndex = Math.floor(Math.random() * resumeAlchemistMessages.length);
-          const welcomeMessage = {
-            id: crypto.randomUUID(),
-            role: 'assistant' as const,
-            content: resumeAlchemistMessages[randomIndex],
-            timestamp: new Date()
-          };
-          
-          setMessages([welcomeMessage]);
-          await saveChatMessage(welcomeMessage);
-        }
-        
-        setInitializationStatus('success');
-      } catch (error) {
-        console.error('Error loading chat history:', error);
-        setInitializationStatus('error');
-        toast({
-          title: "Error",
-          description: "Failed to load chat history. Please try again.",
-          variant: "destructive"
-        });
-      }
-    };
-    
-    loadChatHistory();
-  }, [analysisId, toast]);
-
-  useEffect(() => {
-    // Auto-scroll to bottom when messages change
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
-
-  const saveChatMessage = async (message: ChatMessage) => {
-    if (!analysisId) return;
-    
-    try {
-      const { error } = await supabase
-        .from('ai_chat_messages')
-        .insert({
-          id: message.id,
-          role: message.role,
-          content: message.content,
-          timestamp: message.timestamp.toISOString(),
-          analysis_id: analysisId,
-          thread_id: threadId
-        });
-
-      if (error) throw error;
-    } catch (error) {
-      console.error('Error saving chat message:', error);
-    }
-  };
-
-  const handleSendMessage = async () => {
-    if (input.trim() === '' || !analysisId) return;
-    
-    const userMessage: ChatMessage = {
-      id: crypto.randomUUID(),
-      role: 'user',
-      content: input,
-      timestamp: new Date()
-    };
-
-    setMessages(prev => [...prev, userMessage]);
-    setInput('');
-    setIsLoading(true);
-    setDebugInfo(null);
-    
-    try {
-      console.log(`Sending message to edge function with analysisId: ${analysisId}, threadId: ${threadId || 'new'}`);
-      
-      // Enhanced edge function call with more detailed request logging
-      const startTime = new Date().getTime();
-      const requestPayload = { 
-        message: input, 
-        analysisId: analysisId,
-        threadId: threadId,
-        clientMessageId: userMessage.id // Send client message ID to prevent duplicate storage
-      };
-      
-      console.log('Request payload:', JSON.stringify(requestPayload));
-      
-      const { data, error } = await supabase.functions.invoke('resume-ai-assistant', {
-        body: requestPayload
-      });
-
-      const endTime = new Date().getTime();
-      console.log(`Edge function response time: ${endTime - startTime}ms`);
-
-      if (error) {
-        console.error('Edge function error:', error);
-        throw error;
-      }
-
-      console.log('Edge function response:', data);
-      
-      if (!data) {
-        throw new Error("Empty response from edge function");
-      }
-
-      if (data?.threadId) {
-        setThreadId(data.threadId);
-        console.log(`Setting thread ID from response: ${data.threadId}`);
-      }
-      
-      if (data?.guidanceForOptimization) {
-        setGuidanceForOptimization(data.guidanceForOptimization);
-      }
-
-      // Use the server-provided message ID if available, otherwise generate a new one
-      const aiMessageId = data?.messageId || crypto.randomUUID();
-      
-      const aiMessage: ChatMessage = {
-        id: aiMessageId,
-        role: 'assistant',
-        content: data?.message || "Sorry, I couldn't generate a response.",
-        timestamp: new Date()
-      };
-
-      // Add to UI but don't save to database - the server already did that
-      setMessages(prev => [...prev, aiMessage]);
-    } catch (error: any) {
-      console.error('Error getting AI response:', error);
-      
-      const errorMessage: ChatMessage = {
-        id: crypto.randomUUID(),
-        role: 'assistant',
-        content: 'Sorry, I encountered an error. Please try again.',
-        timestamp: new Date()
-      };
-      
-      setMessages(prev => [...prev, errorMessage]);
-      await saveChatMessage(errorMessage);
-      
-      toast({
-        title: "Error",
-        description: `Failed to get AI response: ${error.message}`,
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
-    }
-  };
-
-  const handleRetryInitialization = () => {
-    setInitializationStatus('idle');
-    // This will trigger the useEffect to reload chat history
-  };
-  
-  const handlePromptSelect = (promptText: string) => {
-    setInput(promptText);
-  };
+const OozeOptimizationSection: React.FC<OptimizationProps> = ({ optimizationData, analysisId }) => {
+  const {
+    messages,
+    input,
+    isLoading,
+    threadId,
+    debugInfo,
+    initializationStatus,
+    messagesEndRef,
+    setInput,
+    handleSendMessage,
+    handleKeyDown,
+    handleRetryInitialization,
+    handlePromptSelect
+  } = useOozeOptimization(analysisId);
 
   return (
     <Card className="h-full overflow-hidden flex flex-col">
@@ -308,105 +51,32 @@ const OozeOptimizationSection = ({ optimizationData, analysisId }: OozeOptimizat
           <div className="flex-1 overflow-auto bg-slate-100 p-4 rounded text-xs font-mono">
             <pre>{debugInfo}</pre>
           </div>
-        ) : initializationStatus === 'loading' ? (
-          <div className="flex flex-col items-center justify-center h-full">
-            <OozeAnimation width={120} height={120} />
-            <p className="text-sm text-muted-foreground mt-4">Loading assistant...</p>
-          </div>
-        ) : initializationStatus === 'error' ? (
-          <div className="flex flex-col items-center justify-center h-full">
-            <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
-            <h3 className="text-lg font-medium mb-2">Connection Error</h3>
-            <p className="text-center text-muted-foreground mb-4">
-              Could not connect to the AI assistant. 
-              Please check your connection and try again.
-            </p>
-            <Button onClick={handleRetryInitialization}>
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Retry Connection
-            </Button>
-          </div>
+        ) : initializationStatus === 'loading' || initializationStatus === 'error' ? (
+          <ChatStateDisplay 
+            state={initializationStatus} 
+            onRetry={handleRetryInitialization}
+          />
         ) : (
           <div className="flex flex-col h-full">
             <div className="flex justify-center mb-4">
               <OozeAnimation width={80} height={80} />
             </div>
             
-            <ScrollArea className="flex-1 pr-2">
-              <div className="space-y-4 mb-4">
-                {messages.filter(msg => msg.role !== 'system').map((message) => (
-                  <div 
-                    key={message.id} 
-                    className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                  >
-                    <div 
-                      className={`rounded-lg p-3 max-w-[85%] ${
-                        message.role === 'user' 
-                          ? 'bg-primary text-primary-foreground' 
-                          : 'bg-muted'
-                      }`}
-                    >
-                      <div className="flex gap-2 items-start">
-                        <p className="whitespace-pre-wrap text-sm">{message.content}</p>
-                        {message.role === 'user' && <User className="h-4 w-4 flex-shrink-0 mt-1" />}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-                
-                {!analysisId && (
-                  <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-800 flex items-center gap-2">
-                    <AlertCircle className="h-4 w-4" />
-                    <p className="text-sm">Analysis ID not found. Some features may be limited.</p>
-                  </div>
-                )}
-                
-                <div ref={messagesEndRef} />
-              </div>
-            </ScrollArea>
+            <MessageList 
+              messages={messages} 
+              analysisId={analysisId} 
+              messagesEndRef={messagesEndRef}
+            />
           
-            <div className="pt-3 border-t mt-auto">
-              {/* Prompt guide buttons - Using responsive text */}
-              <div className="mb-3 flex flex-wrap gap-2">
-                {promptGuides.map((prompt, index) => (
-                  <Button
-                    key={index}
-                    variant="outline"
-                    size="sm"
-                    className="text-xs flex-shrink-0"
-                    onClick={() => handlePromptSelect(prompt.text)}
-                    disabled={isLoading || !analysisId || initializationStatus !== 'success'}
-                  >
-                    {prompt.icon}
-                    <span className="ml-1 hidden sm:inline">{prompt.text}</span>
-                    <span className="ml-1 sm:hidden">{prompt.shortText}</span>
-                  </Button>
-                ))}
-              </div>
-              
-              <div className="flex gap-2">
-                <Textarea
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Ask for resume optimization suggestions..."
-                  className="resize-none text-sm"
-                  rows={2}
-                  disabled={isLoading || !analysisId || initializationStatus !== 'success'}
-                />
-                <Button 
-                  onClick={handleSendMessage} 
-                  disabled={isLoading || input.trim() === '' || !analysisId || initializationStatus !== 'success'}
-                  size="icon"
-                >
-                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                </Button>
-              </div>
-              {isLoading && <p className="text-xs text-muted-foreground mt-2">AI is thinking...</p>}
-              {threadId && (
-                <p className="text-xs text-muted-foreground mt-2">Thread ID: {threadId.substring(0, 8)}...</p>
-              )}
-            </div>
+            <ChatInputArea 
+              input={input}
+              setInput={setInput}
+              handleKeyDown={handleKeyDown}
+              handleSendMessage={handleSendMessage}
+              isLoading={isLoading}
+              threadId={threadId}
+              isDisabled={isLoading || !analysisId || initializationStatus !== 'success'}
+            />
           </div>
         )}
       </CardContent>
