@@ -23,7 +23,7 @@ const EditorToolbar: React.FC<EditorToolbarProps> = ({
   hasUnsavedChanges
 }) => {
   return (
-    <div className="flex items-center justify-between p-3 border-t bg-white shadow-sm">
+    <div className="flex items-center justify-between p-3 border-t bg-white shadow-sm sticky bottom-0">
       <div className="flex gap-2">
         <Button 
           variant="outline" 
@@ -35,46 +35,53 @@ const EditorToolbar: React.FC<EditorToolbarProps> = ({
           {viewMode === 'visual' ? 'JSON Editor' : 'Visual Editor'}
         </Button>
       </div>
-      <div className="flex gap-2">
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={onPreview}
-          className="flex items-center gap-1"
-        >
-          <Eye className="h-4 w-4" />
-          Preview
-        </Button>
-        <Button
-          onClick={onSave}
-          disabled={isSaving || !hasUnsavedChanges}
-          variant="default"
-          size="sm"
-          className="flex items-center gap-1"
-        >
-          {isSaving ? (
-            <span className="flex items-center gap-1">
-              <Lottie 
-                options={{
-                  loop: true,
-                  autoplay: true,
-                  animationData: Loading,
-                  rendererSettings: {
-                    preserveAspectRatio: "xMidYMid slice",
-                  }
-                }}
-                height={16}
-                width={16}
-              />
-              Saving...
-            </span>
-          ) : (
-            <>
-              <Save className="h-4 w-4" />
-              Save
-            </>
-          )}
-        </Button>
+      <div className="flex items-center">
+        {hasUnsavedChanges && (
+          <span className="mr-4 text-amber-600 text-sm">
+            You have unsaved changes
+          </span>
+        )}
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={onPreview}
+            className="flex items-center gap-1"
+          >
+            <Eye className="h-4 w-4" />
+            Preview
+          </Button>
+          <Button
+            onClick={onSave}
+            disabled={isSaving || !hasUnsavedChanges}
+            variant="default"
+            size="sm"
+            className="flex items-center gap-1"
+          >
+            {isSaving ? (
+              <span className="flex items-center gap-1">
+                <Lottie 
+                  options={{
+                    loop: true,
+                    autoplay: true,
+                    animationData: Loading,
+                    rendererSettings: {
+                      preserveAspectRatio: "xMidYMid slice",
+                    }
+                  }}
+                  height={16}
+                  width={16}
+                />
+                Saving...
+              </span>
+            ) : (
+              <>
+                <Save className="h-4 w-4" />
+                Save
+              </>
+            )}
+          </Button>
+        </div>
       </div>
     </div>
   );

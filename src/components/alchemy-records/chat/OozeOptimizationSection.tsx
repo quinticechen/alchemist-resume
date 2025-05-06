@@ -33,37 +33,41 @@ const OozeOptimizationSection: React.FC<OptimizationProps> = ({ optimizationData
         <div className="flex-1 overflow-auto bg-slate-100 p-4 rounded text-xs font-mono">
           <pre>{debugInfo}</pre>
         </div>
-      ) : initializationStatus === 'loading' || initializationStatus === 'error' ? (
-        <ChatStateDisplay 
-          state={initializationStatus} 
-          onRetry={handleRetryInitialization}
-        />
       ) : (
         <div className="flex flex-col h-full">
           <div className="flex justify-center mb-2">
             <OozeAnimation width={60} height={60} />
           </div>
           
-          <MessageList 
-            messages={messages} 
-            analysisId={analysisId} 
-            messagesEndRef={messagesEndRef}
-          />
-          
-          <PromptGuides
-            onPromptSelect={handlePromptSelect}
-            isDisabled={isLoading || !analysisId || initializationStatus !== 'success'}
-          />
-          
-          <ChatInputArea 
-            input={input}
-            setInput={setInput}
-            handleKeyDown={handleKeyDown}
-            handleSendMessage={handleSendMessage}
-            isLoading={isLoading}
-            threadId={threadId}
-            isDisabled={isLoading || !analysisId || initializationStatus !== 'success'}
-          />
+          {initializationStatus === 'loading' || initializationStatus === 'error' ? (
+            <ChatStateDisplay 
+              state={initializationStatus} 
+              onRetry={handleRetryInitialization}
+            />
+          ) : (
+            <>
+              <MessageList 
+                messages={messages} 
+                analysisId={analysisId} 
+                messagesEndRef={messagesEndRef}
+              />
+              
+              <PromptGuides
+                onPromptSelect={handlePromptSelect}
+                isDisabled={isLoading || !analysisId || initializationStatus !== 'success'}
+              />
+              
+              <ChatInputArea 
+                input={input}
+                setInput={setInput}
+                handleKeyDown={handleKeyDown}
+                handleSendMessage={handleSendMessage}
+                isLoading={isLoading}
+                threadId={threadId}
+                isDisabled={isLoading || !analysisId || initializationStatus !== 'success'}
+              />
+            </>
+          )}
           
           {initializationStatus === 'error' && (
             <div className="flex justify-end mt-2">

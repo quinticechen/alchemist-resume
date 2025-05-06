@@ -94,16 +94,14 @@ const ResumeEditor = ({
       </div>
       
       {/* Bottom section - Toolbar */}
-      <div className="flex-shrink-0 mt-auto">
-        <EditorToolbar
-          viewMode={viewMode}
-          onViewModeToggle={handleToggleViewMode}
-          onPreview={handlePreview}
-          onSave={() => handleSaveContent(false)}
-          isSaving={isSaving}
-          hasUnsavedChanges={localHasUnsavedChanges}
-        />
-      </div>
+      <EditorToolbar
+        viewMode={viewMode}
+        onViewModeToggle={handleToggleViewMode}
+        onPreview={handlePreview}
+        onSave={() => handleSaveContent(false)}
+        isSaving={isSaving}
+        hasUnsavedChanges={localHasUnsavedChanges}
+      />
 
       {/* Mobile Ooze Optimization Button - Keep for mobile */}
       {isMobile && (

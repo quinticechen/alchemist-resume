@@ -1,5 +1,5 @@
 
-import React, { useRef } from 'react';
+import React from 'react';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import SectionEditor from '../sections/SectionEditor';
 import SectionSelector from '../SectionSelector';
@@ -47,7 +47,6 @@ const VisualEditorView: React.FC<VisualEditorViewProps> = ({
       <div className="w-1/4 overflow-hidden bg-white border-r">
         <ScrollArea className="h-full">
           <div className="p-4 pt-2">
-            <h3 className="text-lg font-medium mb-2 sticky top-0 bg-white pb-2 border-b">Job Description</h3>
             <JobDescriptionViewer jobData={jobData} />
           </div>
         </ScrollArea>
@@ -57,8 +56,6 @@ const VisualEditorView: React.FC<VisualEditorViewProps> = ({
       <div className="w-2/4 overflow-hidden bg-white">
         <ScrollArea className="h-full">
           <div className="p-4 pt-2">
-            <h3 className="text-lg font-medium mb-2 sticky top-0 bg-white pb-2 border-b">Resume Sections</h3>
-
             <div className="lg:hidden mb-4">
               <SectionSelector
                 sections={sectionOrder}
@@ -132,7 +129,6 @@ const VisualEditorView: React.FC<VisualEditorViewProps> = ({
       <div className="w-1/4 overflow-hidden bg-white border-l">
         <ScrollArea className="h-full">
           <div className="p-4 pt-2">
-            <h3 className="text-lg font-medium mb-2 sticky top-0 bg-white pb-2 border-b">Ooze Optimization</h3>
             <OozeOptimizationSection
               optimizationData={resumeData}
               analysisId={analysisId}
