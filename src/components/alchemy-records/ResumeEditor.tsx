@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { Button } from "@//ui/button";
+import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { CheckCircle, Save, AlertTriangle, Eye, FileJson } from "lucide-react";
