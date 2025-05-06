@@ -102,6 +102,26 @@ const ResumeEditor = ({
     },
   };
   const isMobile = useIsMobile();
+  const contentHeight = useRef<number>(0);
+  
+  useEffect(() => {
+    // Calculate the available height for content
+    const calculateHeight = () => {
+      const viewportHeight = window.innerHeight;
+      // Approximate height of header (title) + footer (action buttons)
+      const headerFooterHeight = 120; 
+      contentHeight.current = viewportHeight - headerFooterHeight;
+      
+      const mainContentContainer = document.getElementById('main-content-container');
+      if (mainContentContainer) {
+        mainContentContainer.style.height = `${contentHeight.current}px`;
+      }
+    };
+    
+    calculateHeight();
+    window.addEventListener('resize', calculateHeight);
+    return () => window.removeEventListener('resize', calculateHeight);
+  }, []);
 
   useEffect(() => {
     const initialSections = getAllSections();
