@@ -34,7 +34,6 @@ const OozeOptimizationSection: React.FC<OptimizationProps> = ({ optimizationData
         </div>
       ) : (
         <div className="flex flex-col h-full">
-          
           {initializationStatus === 'loading' || initializationStatus === 'error' ? (
             <ChatStateDisplay 
               state={initializationStatus} 
