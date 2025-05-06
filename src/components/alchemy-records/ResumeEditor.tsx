@@ -479,6 +479,28 @@ const ResumeEditor = ({
     }
   };
 
+    const resumeEditorRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+    const setDesktopHeight = () => {
+      if (window.innerWidth >= 768 && resumeEditorRef.current) {
+        resumeEditorRef.current.style.height = `${window.innerHeight}px`;
+      } else if (resumeEditorRef.current) {
+        resumeEditorRef.current.style.height = 'auto'; // 移除手機上的固定高度
+      }
+    };
+
+    // 初始設定
+    setDesktopHeight();
+
+    // 監聽視窗大小變化
+    window.addEventListener('resize', setDesktopHeight);
+
+    return () => {
+      window.removeEventListener('resize', setDesktopHeight);
+    };
+  }, []);
+  
   const handleDragEnd = (result: DropResult) => {
     if (!result.destination) return;
 
@@ -498,173 +520,113 @@ const ResumeEditor = ({
   }
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex-1 min-h-0">
-        <Tabs
-          value={viewMode}
-          onValueChange={(value) => setViewMode(value as "visual" | "json")}
-          className="h-full"
+    <div ref={resumeEditorRef} className="flex flex-col h-full lg:flex-row overflow-hidden">
+      {/* 桌機版：左右佈局，固定總高，內容超出捲動 */}
+      <div className="lg:w-1/4 overflow-y-auto border-r lg:border-r-1 p-2">
+        <JobDescriptionViewer jobData={jobData} />
+      </div>
+
+      <div className="lg:w-2/4 overflow-y-auto p-2">
+        <div className="mb-4 flex items-center lg:hidden">
+          <h3 className="text-xl font-semibold">Resume Sections</h3>
+        </div>
+
+        <div className="lg:hidden mb-4">
+          <SectionSelector
+            sections={sectionOrder}
+            onSectionToggle={handleSectionToggle}
+            onSectionsReorder={handleSectionsReorder}
+            collapsedSections={collapsedSections}
+          />
+        </div>
+
+        <SectionEditor
+          key="personalInfo"
+          section="personalInfo"
+          resumeData={resumeData}
+          onChange={handleResumeDataChange}
+          isCollapsed={collapsedSections["personalInfo"]}
+          onToggleCollapse={handleSectionToggle}
+          isDraggable={false}
+          onAutoSave={scheduleAutoSave}
+        />
+
+        <DragDropContext onDragEnd={handleDragEnd}>
+          <Droppable droppableId="droppable-sections">
+            {(provided) => (
+              <div
+                {...provided.droppableProps}
+                ref={provided.innerRef}
+                className="space-y-4"
+              >
+                {sectionOrder
+                  .filter((section) => section !== "personalInfo")
+                  .map((section, index) => (
+                    <Draggable
+                      key={section}
+                      draggableId={section}
+                      index={index}
+                      isDragDisabled={false}
+                    >
+                      {(provided) => (
+                        <div
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          {...provided.dragHandleProps}
+                          style={{
+                            ...provided.draggableProps.style,
+                          }}
+                        >
+                          <SectionEditor
+                            key={section}
+                            section={section}
+                            resumeData={resumeData}
+                            onChange={handleResumeDataChange}
+                            isCollapsed={collapsedSections[section]}
+                            onToggleCollapse={handleSectionToggle}
+                            isDraggable={true}
+                            onAutoSave={scheduleAutoSave}
+                          />
+                        </div>
+                      )}
+                    </Draggable>
+                  ))}
+                {provided.placeholder}
+              </div>
+            )}
+          </Droppable>
+        </DragDropContext>
+      </div>
+
+      {/* 桌機版：左右佈局 */}
+      <div className="lg:w-1/4 overflow-y-auto border-l lg:border-l-1 p-2">
+        <OozeOptimizationSection
+          optimizationData={resumeData}
+          analysisId={analysisId}
+        />
+      </div>
+
+      {/* 手機版：Ooze Optimization 圖示（絕對定位在右下角，點擊後展開） */}
+      <div className="fixed bottom-4 right-4 z-50 lg:hidden">
+        {/* 這裡可以放一個觸發 Ooze Optimization Section 展開的按鈕或圖示 */}
+        <button
+          className="bg-primary text-primary-foreground rounded-full p-2 shadow-md"
+          onClick={() => {
+            // 處理手機版展開 Ooze Optimization 的邏輯
+            console.log("Ooze Optimization展开");
+            // 你可能需要使用一個 state 來控制 OozeOptimizationSection 的顯示
+          }}
         >
-          <TabsContent value="visual" className="mt-0 h-full">
-            <ResizablePanelGroup
-              direction="horizontal"
-              className="h-[calc(100vh-200px)]"
-            >
-              <ResizablePanel defaultSize={25} minSize={15}>
-                <ScrollArea className="h-full">
-                  <div className="h-full p-2">
-                    <JobDescriptionViewer jobData={jobData} />
-                  </div>
-                </ScrollArea>
-              </ResizablePanel>
-
-              <ResizableHandle withHandle />
-
-              <ResizablePanel defaultSize={50} minSize={30}>
-                <ScrollArea className="h-full">
-                  <div className="p-2">
-                    <div className="mb-4 flex items-center">
-                      <h3 className="text-xl font-semibold">Resume Sections</h3>
-                    </div>
-
-                    <div className="lg:hidden mb-4">
-                      <SectionSelector
-                        sections={sectionOrder}
-                        onSectionToggle={handleSectionToggle}
-                        onSectionsReorder={handleSectionsReorder}
-                        collapsedSections={collapsedSections}
-                      />
-                    </div>
-
-                    <SectionEditor
-                      key="personalInfo"
-                      section="personalInfo"
-                      resumeData={resumeData}
-                      onChange={handleResumeDataChange}
-                      isCollapsed={collapsedSections["personalInfo"]}
-                      onToggleCollapse={handleSectionToggle}
-                      isDraggable={false}
-                      onAutoSave={scheduleAutoSave}
-                    />
-
-                    <DragDropContext onDragEnd={handleDragEnd}>
-                      <Droppable droppableId="droppable-sections">
-                        {(provided) => (
-                          <div
-                            {...provided.droppableProps}
-                            ref={provided.innerRef}
-                            className="space-y-4"
-                          >
-                            {sectionOrder
-                              .filter((section) => section !== "personalInfo")
-                              .map((section, index) => (
-                                <Draggable
-                                  key={section}
-                                  draggableId={section}
-                                  index={index}
-                                  isDragDisabled={false}
-                                >
-                                  {(provided) => (
-                                    <div
-                                      ref={provided.innerRef}
-                                      {...provided.draggableProps}
-                                      {...provided.dragHandleProps}
-                                      style={{
-                                        ...provided.draggableProps.style,
-                                      }}
-                                    >
-                                      <SectionEditor
-                                        key={section}
-                                        section={section}
-                                        resumeData={resumeData}
-                                        onChange={handleResumeDataChange}
-                                        isCollapsed={collapsedSections[section]}
-                                        onToggleCollapse={handleSectionToggle}
-                                        isDraggable={true}
-                                        onAutoSave={scheduleAutoSave}
-                                      />
-                                    </div>
-                                  )}
-                                </Draggable>
-                              ))}
-                            {provided.placeholder}
-                          </div>
-                        )}
-                      </Droppable>
-                    </DragDropContext>
-                  </div>
-                </ScrollArea>
-              </ResizablePanel>
-
-              <ResizableHandle withHandle />
-
-              <ResizablePanel defaultSize={25} minSize={15}>
-                <ScrollArea className="h-full">
-                  <div className="p-2">
-                    <OozeOptimizationSection
-                      optimizationData={resumeData}
-                      analysisId={analysisId}
-                    />
-                  </div>
-                </ScrollArea>
-              </ResizablePanel>
-            </ResizablePanelGroup>
-          </TabsContent>
-
-          <TabsContent value="json" className="mt-0 h-full">
-            <div className="border rounded-md h-[calc(100vh-200px)]">
-              <textarea
-                value={JSON.stringify(resumeData, null, 2)}
-                onChange={handleRawJsonChange}
-                className="w-full h-full p-4 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-md resize-none font-mono text-base"
-                placeholder="Edit your resume here in JSON format..."
-              />
-            </div>
-          </TabsContent>
-
-          <div className="flex justify-between mt-4">
-            <Button
-              variant="outline"
-              onClick={() =>
-                setViewMode(viewMode === "visual" ? "json" : "visual")
-              }
-            >
-              <FileJson className="h-4 w-4 mr-2" />
-              {viewMode === "visual" ? "JSON Editor" : "Visual Editor"}
-            </Button>
-
-            <div className="flex gap-2 items-center">
-              {hasUnsavedChanges && (
-                <span className="text-amber-500 flex items-center gap-1">
-                  <AlertTriangle className="h-4 w-4" />
-                  Unsaved changes
-                </span>
-              )}
-              <Button
-                onClick={handlePreview}
-                variant="outline"
-                className="ml-2"
-              >
-                <Eye className="h-4 w-4 mr-2" />
-                Preview
-              </Button>
-              <Button
-                onClick={() => handleSaveContent(false)}
-                disabled={isSaving || !hasUnsavedChanges}
-                className={isSaving ? "cursor-not-allowed" : ""}
-              >
-                {isSaving ? (
-                  "Saving..."
-                ) : (
-                  <>
-                    <Save className="h-4 w-4 mr-2" />
-                    Save
-                  </>
-                )}
-              </Button>
-            </div>
-          </div>
-        </Tabs>
+          {/* 可以放一個 Ooze 的小圖示 */}
+          ✨
+        </button>
+        {/* 手機版展開的 OozeOptimizationSection (根據 state 條件式渲染) */}
+        {/* <div className="absolute bottom-full right-0 bg-white rounded-md shadow-lg p-4">
+          <OozeOptimizationSection
+            optimizationData={resumeData}
+            analysisId={analysisId}
+          />
+        </div> */}
       </div>
     </div>
   );
