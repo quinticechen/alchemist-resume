@@ -103,19 +103,6 @@ const ResumeEditor = ({
         hasUnsavedChanges={localHasUnsavedChanges}
       />
 
-      {/* Mobile Ooze Optimization Button - Keep for mobile */}
-      {isMobile && (
-        <div className="fixed bottom-4 right-4 z-50 lg:hidden">
-          <button
-            className="bg-primary text-primary-foreground rounded-full p-2 shadow-md"
-            onClick={() => {
-              console.log("Ooze Optimization展开");
-            }}
-          >
-            ✨
-          </button>
-        </div>
-      )}
     </div>
   );
 };
