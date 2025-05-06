@@ -92,6 +92,20 @@ const AnalysisCard = ({
       </div>
 
       <div className="mt-4 flex flex-wrap gap-4">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => navigate('/resume-preview', {
+            state: {
+              analysisId: id
+            }
+          })}
+          className="text-info border-info/20 hover:bg-info/5"
+        >
+          <Crown className="h-4 w-4 mr-2 bg-gradient-primary-light hover:opacity-90 transition-opacity " />
+          Golden Resume
+        </Button>
+        
         {job?.job_url && (
           <Button
             variant="outline"
@@ -136,19 +150,6 @@ const AnalysisCard = ({
           </Button>
         )}
 
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => navigate('/resume-preview', {
-            state: {
-              analysisId: id
-            }
-          })}
-          className="text-info border-info/20 hover:bg-info/5"
-        >
-          <Crown className="h-4 w-4 mr-2" />
-          Golden Resume
-        </Button>
       </div>
     </div>
   );
