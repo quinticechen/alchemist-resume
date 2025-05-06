@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -8,6 +7,8 @@ import EditorToolbar from "./editor/EditorToolbar";
 import JsonEditorView from "./editor/JsonEditorView";
 import VisualEditorView from "./editor/VisualEditorView";
 import LoadingEditor from "./editor/LoadingEditor";
+import JobDescriptionViewer from "./JobDescriptionViewer";
+import OozeOptimizationSection from "./chat/OozeOptimizationSection";
 
 export interface ResumeEditorProps {
   resumeId: string;
@@ -51,30 +52,10 @@ const ResumeEditor = ({
   
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const resumeEditorRef = useRef<HTMLDivElement>(null);
   
-  useEffect(() => {
-    // Force immediate calculation of heights on mount
-    const calculateHeights = () => {
-      const headerHeight = 80; // Height for the page header including title and any padding
-      const viewportHeight = window.innerHeight;
-      const editorHeight = viewportHeight - headerHeight;
-      
-      if (resumeEditorRef.current) {
-        resumeEditorRef.current.style.height = `${editorHeight}px`;
-      }
-    };
-
-    // Calculate heights immediately
-    calculateHeights();
-    
-    // Also set up resize handler
-    window.addEventListener('resize', calculateHeights);
-    
-    return () => {
-      window.removeEventListener('resize', calculateHeights);
-    };
-  }, []);
+  if (isLoading) {
+    return <LoadingEditor />;
+  }
 
   const handlePreview = () => {
     navigate(`/resume-preview/${analysisId}`, {
@@ -94,56 +75,73 @@ const ResumeEditor = ({
     handleResumeDataChange(parsedJson);
   };
 
-  if (isLoading) {
-    return <LoadingEditor />;
-  }
-
   return (
-    <div 
-      ref={resumeEditorRef} 
-      className="flex flex-col h-full lg:flex-row overflow-hidden"
-    >
-      {/* Top action buttons - JSON Editor, Preview, and Save buttons */}
-      <EditorToolbar
-        viewMode={viewMode}
-        onViewModeToggle={handleToggleViewMode}
-        onPreview={handlePreview}
-        onSave={() => handleSaveContent(false)}
-        isSaving={isSaving}
-        hasUnsavedChanges={localHasUnsavedChanges}
-      />
-
-      {/* Main content area - conditional rendering based on viewMode */}
-      {viewMode === 'json' ? (
-        <JsonEditorView
-          resumeData={resumeData}
-          onChange={handleRawJsonChange}
-        />
-      ) : (
-        <VisualEditorView
-          resumeData={resumeData}
-          jobData={jobData}
-          analysisId={analysisId}
-          sectionOrder={sectionOrder}
-          collapsedSections={collapsedSections}
-          onSectionToggle={handleSectionToggle}
-          onSectionsReorder={handleSectionsReorder}
-          onResumeDataChange={handleResumeDataChange}
-          onAutoSave={scheduleAutoSave}
-        />
-      )}
-
-      {/* Mobile Ooze Optimization Button */}
-      <div className="fixed bottom-4 right-4 z-50 lg:hidden">
-        <button
-          className="bg-primary text-primary-foreground rounded-full p-2 shadow-md"
-          onClick={() => {
-            console.log("Ooze Optimization展开");
-          }}
-        >
-          ✨
-        </button>
+    <div className="flex flex-col h-full overflow-hidden">
+      {/* Top section - Empty for now, title is handled in ResumeRefine.tsx */}
+      
+      {/* Middle section - Main content with 3 columns */}
+      <div className="flex-grow overflow-hidden flex flex-row">
+        {/* Left column - Job Description */}
+        <div className="w-1/4 h-full p-1 overflow-hidden">
+          <JobDescriptionViewer jobData={jobData} />
+        </div>
+        
+        {/* Middle column - Resume Editor */}
+        <div className="w-2/4 h-full p-1 overflow-hidden">
+          {viewMode === 'json' ? (
+            <JsonEditorView
+              resumeData={resumeData}
+              onChange={handleRawJsonChange}
+            />
+          ) : (
+            <VisualEditorView
+              resumeData={resumeData}
+              jobData={jobData}
+              analysisId={analysisId}
+              sectionOrder={sectionOrder}
+              collapsedSections={collapsedSections}
+              onSectionToggle={handleSectionToggle}
+              onSectionsReorder={handleSectionsReorder}
+              onResumeDataChange={handleResumeDataChange}
+              onAutoSave={scheduleAutoSave}
+            />
+          )}
+        </div>
+        
+        {/* Right column - Ooze Optimization */}
+        <div className="w-1/4 h-full p-1 overflow-hidden">
+          <OozeOptimizationSection 
+            optimizationData={resumeData} 
+            analysisId={analysisId} 
+          />
+        </div>
       </div>
+      
+      {/* Bottom section - Toolbar */}
+      <div className="flex-shrink-0 mt-auto">
+        <EditorToolbar
+          viewMode={viewMode}
+          onViewModeToggle={handleToggleViewMode}
+          onPreview={handlePreview}
+          onSave={() => handleSaveContent(false)}
+          isSaving={isSaving}
+          hasUnsavedChanges={localHasUnsavedChanges}
+        />
+      </div>
+
+      {/* Mobile Ooze Optimization Button - Keep for mobile */}
+      {isMobile && (
+        <div className="fixed bottom-4 right-4 z-50 lg:hidden">
+          <button
+            className="bg-primary text-primary-foreground rounded-full p-2 shadow-md"
+            onClick={() => {
+              console.log("Ooze Optimization展开");
+            }}
+          >
+            ✨
+          </button>
+        </div>
+      )}
     </div>
   );
 };

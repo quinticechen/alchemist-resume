@@ -23,7 +23,7 @@ const EditorToolbar: React.FC<EditorToolbarProps> = ({
   hasUnsavedChanges
 }) => {
   return (
-    <div className="flex items-center justify-between p-2 border-b bg-white">
+    <div className="flex items-center justify-between p-3 border-t bg-white">
       <div className="flex gap-2">
         <Button 
           variant="outline" 
