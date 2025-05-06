@@ -3,17 +3,11 @@ import React from 'react';
 import { User } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { AlertCircle } from "lucide-react";
-import { ChatMessage } from './types';
+import { ChatMessage, MessageListProps } from './types';
 
-interface MessageListProps {
-  messages: ChatMessage[];
-  analysisId?: string;
-  messagesEndRef: React.RefObject<HTMLDivElement>;
-}
-
-const MessageList: React.FC<MessageListProps> = ({ messages, analysisId, messagesEndRef }) => {
+const MessageList: React.FC<MessageListProps> = ({ messages, analysisId, messagesEndRef, className }) => {
   return (
-    <ScrollArea className="flex-1 pr-2">
+    <ScrollArea className={`flex-1 pr-2 ${className || ''}`}>
       <div className="space-y-4 mb-4">
         {messages.filter(msg => msg.role !== 'system').map((message) => (
           <div 
