@@ -39,20 +39,20 @@ const OozeOptimizationSection = ({ optimizationData, analysisId }: OozeOptimizat
   ];
 
   const promptGuides = [
-    { 
+    {
       text: "What are the most attractive highlights in this resume?",
       icon: <Lightbulb className="h-4 w-4" />
     },
-    { 
+    {
       text: "Which keywords could we strengthen?",
       icon: <Search className="h-4 w-4" />
     },
-    { 
-      text: "How can we make your experience more compelling?", 
+    {
+      text: "How can we make your experience more compelling?",
       icon: <MessageSquare className="h-4 w-4" />
     },
-    { 
-      text: "What questions might interviewers ask?", 
+    {
+      text: "What questions might interviewers ask?",
       icon: <HelpCircle className="h-4 w-4" />
     }
   ];
@@ -370,7 +370,8 @@ const OozeOptimizationSection = ({ optimizationData, analysisId }: OozeOptimizat
                 key={index}
                 variant="outline"
                 size="sm"
-                className="text-xs"
+                className="text-xs break-words"
+                style={{ wordBreak: 'break-word' }}
                 onClick={() => handlePromptSelect(prompt.text)}
                 disabled={isLoading || !analysisId || initializationStatus !== 'success'}
               >
