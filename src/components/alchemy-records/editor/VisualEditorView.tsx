@@ -4,7 +4,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import SectionEditor from '../sections/SectionEditor';
 import SectionSelector from '../SectionSelector';
 import JobDescriptionViewer from '../JobDescriptionViewer';
-import OozeOptimizationSection from '../OozeOptimizationSection';
+import OozeOptimizationSection from '../chat/OozeOptimizationSection';
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 import { ResumeSection } from '@/utils/resumeUtils';
 
@@ -31,10 +31,6 @@ const VisualEditorView: React.FC<VisualEditorViewProps> = ({
   onResumeDataChange,
   onAutoSave,
 }) => {
-  const jobDescriptionRef = useRef<HTMLDivElement>(null);
-  const resumeSectionsRef = useRef<HTMLDivElement>(null);
-  const oozeOptimizationRef = useRef<HTMLDivElement>(null);
-  
   const handleDragEnd = (result: DropResult) => {
     if (!result.destination) return;
 
@@ -46,29 +42,22 @@ const VisualEditorView: React.FC<VisualEditorViewProps> = ({
   };
 
   return (
-    <div className="flex flex-1 overflow-hidden">
+    <div className="flex flex-1 h-full overflow-hidden">
       {/* Job Description Section */}
-      <div
-        ref={jobDescriptionRef}
-        className="lg:w-1/4 border-r lg:border-r-1 overflow-hidden bg-white"
-      >
+      <div className="w-1/4 overflow-hidden bg-white border-r">
         <ScrollArea className="h-full">
-          <div className="p-4">
+          <div className="p-4 pt-2">
+            <h3 className="text-lg font-medium mb-2 sticky top-0 bg-white pb-2 border-b">Job Description</h3>
             <JobDescriptionViewer jobData={jobData} />
           </div>
         </ScrollArea>
       </div>
 
       {/* Resume Sections */}
-      <div
-        ref={resumeSectionsRef}
-        className="lg:w-2/4 overflow-hidden bg-white"
-      >
+      <div className="w-2/4 overflow-hidden bg-white">
         <ScrollArea className="h-full">
-          <div className="p-4">
-            <div className="mb-4 flex items-center lg:hidden">
-              <h3 className="text-xl font-semibold">Resume Sections</h3>
-            </div>
+          <div className="p-4 pt-2">
+            <h3 className="text-lg font-medium mb-2 sticky top-0 bg-white pb-2 border-b">Resume Sections</h3>
 
             <div className="lg:hidden mb-4">
               <SectionSelector
@@ -140,12 +129,10 @@ const VisualEditorView: React.FC<VisualEditorViewProps> = ({
       </div>
 
       {/* Ooze Optimization Section */}
-      <div
-        ref={oozeOptimizationRef}
-        className="lg:w-1/4 border-l lg:border-l-1 overflow-hidden bg-white"
-      >
+      <div className="w-1/4 overflow-hidden bg-white border-l">
         <ScrollArea className="h-full">
-          <div className="p-4">
+          <div className="p-4 pt-2">
+            <h3 className="text-lg font-medium mb-2 sticky top-0 bg-white pb-2 border-b">Ooze Optimization</h3>
             <OozeOptimizationSection
               optimizationData={resumeData}
               analysisId={analysisId}

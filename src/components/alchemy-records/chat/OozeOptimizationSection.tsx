@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import OozeAnimation from "@/components/OozeAnimation";
 import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -28,64 +28,58 @@ const OozeOptimizationSection: React.FC<OptimizationProps> = ({ optimizationData
   } = useOozeOptimization(analysisId);
 
   return (
-    <Card className="h-full overflow-hidden flex flex-col">
-      <CardHeader className="p-3">
-        <CardTitle className="text-lg flex items-center gap-2">
-          <OozeAnimation width={18} height={18} />
-          Ooze Optimization
-          {initializationStatus === 'error' && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="ml-auto"
-              onClick={handleRetryInitialization}
-              disabled={isLoading}
-            >
-              <RefreshCw className="h-4 w-4 mr-1" />
-              Retry
-            </Button>
-          )}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="flex flex-col flex-1 overflow-hidden p-3">
-        {debugInfo ? (
-          <div className="flex-1 overflow-auto bg-slate-100 p-4 rounded text-xs font-mono">
-            <pre>{debugInfo}</pre>
+    <Card className="h-full overflow-hidden flex flex-col border-none shadow-none">
+      {debugInfo ? (
+        <div className="flex-1 overflow-auto bg-slate-100 p-4 rounded text-xs font-mono">
+          <pre>{debugInfo}</pre>
+        </div>
+      ) : initializationStatus === 'loading' || initializationStatus === 'error' ? (
+        <ChatStateDisplay 
+          state={initializationStatus} 
+          onRetry={handleRetryInitialization}
+        />
+      ) : (
+        <div className="flex flex-col h-full">
+          <div className="flex justify-center mb-2">
+            <OozeAnimation width={60} height={60} />
           </div>
-        ) : initializationStatus === 'loading' || initializationStatus === 'error' ? (
-          <ChatStateDisplay 
-            state={initializationStatus} 
-            onRetry={handleRetryInitialization}
+          
+          <MessageList 
+            messages={messages} 
+            analysisId={analysisId} 
+            messagesEndRef={messagesEndRef}
           />
-        ) : (
-          <div className="flex flex-col h-full">
-            <div className="flex justify-center mb-2">
-              <OozeAnimation width={60} height={60} />
+          
+          <PromptGuides
+            onPromptSelect={handlePromptSelect}
+            isDisabled={isLoading || !analysisId || initializationStatus !== 'success'}
+          />
+          
+          <ChatInputArea 
+            input={input}
+            setInput={setInput}
+            handleKeyDown={handleKeyDown}
+            handleSendMessage={handleSendMessage}
+            isLoading={isLoading}
+            threadId={threadId}
+            isDisabled={isLoading || !analysisId || initializationStatus !== 'success'}
+          />
+          
+          {initializationStatus === 'error' && (
+            <div className="flex justify-end mt-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleRetryInitialization}
+                disabled={isLoading}
+              >
+                <RefreshCw className="h-4 w-4 mr-1" />
+                Retry
+              </Button>
             </div>
-            
-            <MessageList 
-              messages={messages} 
-              analysisId={analysisId} 
-              messagesEndRef={messagesEndRef}
-            />
-            
-            <PromptGuides
-              onPromptSelect={handlePromptSelect}
-              isDisabled={isLoading || !analysisId || initializationStatus !== 'success'}
-            />
-            
-            <ChatInputArea 
-              input={input}
-              setInput={setInput}
-              handleKeyDown={handleKeyDown}
-              handleSendMessage={handleSendMessage}
-              isLoading={isLoading}
-              threadId={threadId}
-              isDisabled={isLoading || !analysisId || initializationStatus !== 'success'}
-            />
-          </div>
-        )}
-      </CardContent>
+          )}
+        </div>
+      )}
     </Card>
   );
 };

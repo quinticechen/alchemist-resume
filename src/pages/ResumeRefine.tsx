@@ -274,8 +274,8 @@ const ResumeRefine = () => {
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-gradient-to-b from-neutral-50 to-neutral-100">
-      {/* Top section - Header */}
-      <div className="flex-shrink-0 py-2">
+      {/* Top section - Header with job title */}
+      <div className="flex-shrink-0 py-3 border-b">
         <h1 className="text-2xl font-bold bg-gradient-primary text-transparent bg-clip-text text-center">
           {resumeData?.jobTitle || "Resume Editor"}
         </h1>
