@@ -127,19 +127,16 @@ const VisualEditorView: React.FC<VisualEditorViewProps> = ({
       </div>
 
       {/* Ooze Optimization Section */}
-      <div className="w-1/4 overflow-hidden bg-white border-l">
+      <div className="w-1/4 overflow-hidden bg-white border-l flex flex-col">
         <div className="sticky top-0 z-10 bg-white flex justify-center py-2 border-b">
           <OozeAnimation width="w-1/8" />
         </div>
-        <ScrollArea className="h-full">
-          <div className="p-4">
-
-            <OozeOptimizationSection
-              optimizationData={resumeData}
-              analysisId={analysisId}
-            />
-          </div>
-        </ScrollArea>
+        <div className="flex-grow overflow-hidden">
+          <OozeOptimizationSection
+            optimizationData={resumeData}
+            analysisId={analysisId}
+          />
+        </div>
       </div>
     </div>
   );

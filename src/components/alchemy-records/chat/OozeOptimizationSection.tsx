@@ -27,7 +27,7 @@ const OozeOptimizationSection: React.FC<OptimizationProps> = ({ optimizationData
   } = useOozeOptimization(analysisId);
 
   return (
-    <Card className="h-full overflow-hidden flex flex-col border-none shadow-none">
+    <Card className="h-full flex flex-col border-none shadow-none">
       {debugInfo ? (
         <div className="flex-1 overflow-auto bg-slate-100 p-4 rounded text-xs font-mono">
           <pre>{debugInfo}</pre>
@@ -42,12 +42,12 @@ const OozeOptimizationSection: React.FC<OptimizationProps> = ({ optimizationData
           ) : (
             <div className="flex flex-col h-full">
               {/* Scrollable chat messages area */}
-              <div className="flex-grow overflow-auto">
+              <div className="flex-grow overflow-hidden">
                 <MessageList 
                   messages={messages} 
                   analysisId={analysisId} 
                   messagesEndRef={messagesEndRef}
-                  className="overflow-y-auto pb-4"
+                  className="h-full pr-4"
                 />
               </div>
               
