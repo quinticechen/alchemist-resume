@@ -1,11 +1,10 @@
-
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import React from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { FileText, Link as LinkIcon, Crown, Pencil } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import AnalysisTitle from './AnalysisTitle';
-import FeedbackButtons from './FeedbackButtons';
+import AnalysisTitle from "./AnalysisTitle";
+import FeedbackButtons from "./FeedbackButtons";
 
 interface Resume {
   file_name: string;
@@ -50,9 +49,9 @@ const AnalysisCard = ({
   onFeedback,
 }: AnalysisCardProps) => {
   // Get the job title from either the job object or use a default
-  const jobTitle = job?.job_title || 'Unnamed Position';
+  const jobTitle = job?.job_title || "Unnamed Position";
   const navigate = useNavigate();
-  
+
   return (
     <div className="bg-white rounded-xl p-6 shadow-apple">
       <div className="flex justify-between items-start mb-4">
@@ -67,22 +66,22 @@ const AnalysisCard = ({
         </div>
         <FeedbackButtons
           feedback={feedback}
-          onFeedback={(value) => onFeedback(id, value)} 
+          onFeedback={(value) => onFeedback(id, value)}
           analysisId={id}
         />
       </div>
 
       <div className="flex items-center gap-4 text-sm text-neutral-600">
         <span>
-          {new Date(created_at).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
+          {new Date(created_at).toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
           })}
         </span>
         <div className="flex items-center gap-2">
           <FileText className="h-4 w-4" />
-          {resume?.file_name || 'Unnamed Resume'}
+          {resume?.file_name || "Unnamed Resume"}
         </div>
         {match_score !== null && (
           <div className="font-semibold">
@@ -92,32 +91,18 @@ const AnalysisCard = ({
       </div>
 
       <div className="mt-4 flex flex-wrap gap-4">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => navigate('/resume-preview', {
-            state: {
-              analysisId: id
-            }
-          })}
-          className="text-info border-info/20 hover:bg-info/5"
-        >
-          <Crown className="h-4 w-4 mr-2 bg-gradient-primary-light hover:opacity-90 transition-opacity " />
-          Golden Resume
-        </Button>
-        
         {job?.job_url && (
           <Button
             variant="outline"
             size="sm"
-            onClick={() => window.open(job.job_url, '_blank')}
-            className="text-accent-2 border-accent-2/20 hover:bg-accent-2/5"
+            onClick={() => window.open(job.job_url, "_blank")}
+            className="text-info border-info/20 hover:bg-info/5"
           >
             <LinkIcon className="h-4 w-4 mr-2" />
             Job Post
           </Button>
         )}
-        
+
         <Button
           variant="outline"
           size="sm"
@@ -125,31 +110,46 @@ const AnalysisCard = ({
             // Get the public URL from Supabase storage
             if (resume?.file_path) {
               const { data } = supabase.storage
-                .from('resumes')
+                .from("resumes")
                 .getPublicUrl(resume.file_path);
-              
+
               // Open the original resume document in a new tab
-              window.open(data.publicUrl, '_blank');
+              window.open(data.publicUrl, "_blank");
             }
           }}
-          className="text-primary border-primary/20 hover:bg-primary/5"
+          className="text-info border-info/20 hover:bg-info/5"
         >
           <FileText className="h-4 w-4 mr-2" />
           Original Resume
         </Button>
-        
+
         {google_doc_url && (
           <Button
             variant="outline"
             size="sm"
-            onClick={() => window.open(google_doc_url, '_blank')}
-            className="text-accent-1 border-accent-1/20 hover:bg-accent-2/5"
+            onClick={() => window.open(google_doc_url, "_blank")}
+            className="text-info border-info/20 hover:bg-info/5"
           >
-            <FileText className="h-4 w-4 mr-2" />
-            Google Doc Resume
+            <Pencil className="h-4 w-4 mr-2" />
+            Edit with Google Doc
           </Button>
         )}
 
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() =>
+            navigate("/resume-preview", {
+              state: {
+                analysisId: id,
+              },
+            })
+          }
+          className="text-info border-info/20 hover:bg-info/5 bg-gradient-primary-light hover:opacity-90 transition-opacity"
+        >
+          <Crown className="h-4 w-4 mr-2" />
+          View Golden Resume
+        </Button>
       </div>
     </div>
   );
