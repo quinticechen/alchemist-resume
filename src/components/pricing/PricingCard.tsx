@@ -116,7 +116,7 @@ export const PricingCard = ({ plan, isAnnual, isLoading, onSelect }: PricingCard
       <CardFooter className="pt-6 flex flex-col gap-3">
         {plan.showButton && (
           <Button
-            className="w-full"
+            className="bg-gradient-primary-light text-white hover:opacity-90 transition-opacity"
             variant={plan.highlighted ? "default" : "outline"}
             onClick={() => onSelect(plan.planId)}
             disabled={isLoading || plan.isCurrentPlan}
