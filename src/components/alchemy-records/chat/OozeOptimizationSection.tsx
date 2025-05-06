@@ -34,7 +34,7 @@ const OozeOptimizationSection: React.FC<OptimizationProps> = ({ optimizationData
           <pre>{debugInfo}</pre>
         </div>
       ) : (
-        <div className="flex flex-col h-full flex-grow justify-between">
+        <div className="flex flex-col h-full">
           <div className="flex justify-center mb-2">
             <OozeAnimation width={100} height={100} />
           </div>
@@ -46,22 +46,28 @@ const OozeOptimizationSection: React.FC<OptimizationProps> = ({ optimizationData
             />
           ) : (
             <>
-              <MessageList 
-                messages={messages} 
-                analysisId={analysisId} 
-                messagesEndRef={messagesEndRef}
-                className="flex-grow overflow-y-auto"
-              />
+              {/* Use flex-grow to push the chat input to the bottom */}
+              <div className="flex-grow overflow-hidden flex flex-col">
+                <MessageList 
+                  messages={messages} 
+                  analysisId={analysisId} 
+                  messagesEndRef={messagesEndRef}
+                  className="flex-grow overflow-y-auto"
+                />
+              </div>
               
-              <ChatInputArea 
-                input={input}
-                setInput={setInput}
-                handleKeyDown={handleKeyDown}
-                handleSendMessage={handleSendMessage}
-                isLoading={isLoading}
-                threadId={threadId}
-                isDisabled={isLoading || !analysisId || initializationStatus !== 'success'}
-              />
+              {/* Chat input stays at the bottom regardless of content */}
+              <div className="mt-auto">
+                <ChatInputArea 
+                  input={input}
+                  setInput={setInput}
+                  handleKeyDown={handleKeyDown}
+                  handleSendMessage={handleSendMessage}
+                  isLoading={isLoading}
+                  threadId={threadId}
+                  isDisabled={isLoading || !analysisId || initializationStatus !== 'success'}
+                />
+              </div>
             </>
           )}
           
