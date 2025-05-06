@@ -46,7 +46,7 @@ const VisualEditorView: React.FC<VisualEditorViewProps> = ({
       {/* Job Description Section */}
       <div className="w-1/4 overflow-hidden bg-white border-r">
         <ScrollArea className="h-full">
-          <div className="p-4 pt-2">
+          <div className="p-4">
             <JobDescriptionViewer jobData={jobData} />
           </div>
         </ScrollArea>
@@ -55,7 +55,7 @@ const VisualEditorView: React.FC<VisualEditorViewProps> = ({
       {/* Resume Sections */}
       <div className="w-2/4 overflow-hidden bg-white">
         <ScrollArea className="h-full">
-          <div className="p-4 pt-2">
+          <div className="p-4">
             <div className="lg:hidden mb-4">
               <SectionSelector
                 sections={sectionOrder}
@@ -128,7 +128,7 @@ const VisualEditorView: React.FC<VisualEditorViewProps> = ({
       {/* Ooze Optimization Section */}
       <div className="w-1/4 overflow-hidden bg-white border-l">
         <ScrollArea className="h-full">
-          <div className="p-4 pt-2">
+          <div className="p-4">
             <OozeOptimizationSection
               optimizationData={resumeData}
               analysisId={analysisId}

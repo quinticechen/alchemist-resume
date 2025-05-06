@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useCallback } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -290,6 +289,7 @@ const ResumeRefine = () => {
             goldenResume={resumeData.goldenResume}
             analysisId={analysisId}
             setHasUnsavedChanges={setHasUnsavedChanges}
+            pageHeaderHeight={56} // Adding estimated height for the header (can be adjusted)
           />
         )}
       </div>

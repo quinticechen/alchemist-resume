@@ -1,4 +1,5 @@
-import React from "react";
+
+import React, { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ResumeSection } from "@/utils/resumeUtils";
@@ -15,6 +16,7 @@ export interface ResumeEditorProps {
   setHasUnsavedChanges: React.Dispatch<React.SetStateAction<boolean>>;
   activeSection?: ResumeSection;
   onSectionChange?: (section: ResumeSection) => void;
+  pageHeaderHeight?: number; // Added prop for page header height
 }
 
 const ResumeEditor = ({
@@ -24,7 +26,10 @@ const ResumeEditor = ({
   setHasUnsavedChanges,
   activeSection: initialActiveSection,
   onSectionChange: parentSectionChangeHandler,
+  pageHeaderHeight = 0, // Default to 0 if not provided
 }: ResumeEditorProps) => {
+  const contentRef = useRef<HTMLDivElement>(null);
+  
   const {
     resumeData,
     jobData,
@@ -51,6 +56,24 @@ const ResumeEditor = ({
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   
+  // Adjust content height based on page header height
+  useEffect(() => {
+    const calculateHeight = () => {
+      const viewportHeight = window.innerHeight;
+      // Account for the header height (title) + toolbar height at bottom
+      const toolbarHeight = 56; // Approximate toolbar height
+      const availableHeight = viewportHeight - pageHeaderHeight - toolbarHeight;
+      
+      if (contentRef.current) {
+        contentRef.current.style.height = `${availableHeight}px`;
+      }
+    };
+    
+    calculateHeight();
+    window.addEventListener('resize', calculateHeight);
+    return () => window.removeEventListener('resize', calculateHeight);
+  }, [pageHeaderHeight]);
+  
   if (isLoading) {
     return <LoadingEditor />;
   }
@@ -72,7 +95,7 @@ const ResumeEditor = ({
   return (
     <div className="flex flex-col h-full overflow-hidden">
       {/* Main content - Editor View */}
-      <div className="flex-grow overflow-hidden">
+      <div className="flex-grow overflow-hidden" ref={contentRef}>
         {viewMode === 'json' ? (
           <JsonEditorView
             resumeData={resumeData}
@@ -102,7 +125,6 @@ const ResumeEditor = ({
         isSaving={isSaving}
         hasUnsavedChanges={localHasUnsavedChanges}
       />
-
     </div>
   );
 };

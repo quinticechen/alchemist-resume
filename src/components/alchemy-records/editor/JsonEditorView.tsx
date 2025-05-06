@@ -45,10 +45,11 @@ const JsonEditorView: React.FC<JsonEditorViewProps> = ({ resumeData, onChange })
           </div>
         )}
         <textarea
-          className="h-[calc(100vh-180px)] w-full font-mono text-sm p-2 border rounded focus:outline-none focus:ring-2 focus:ring-primary"
+          className="h-full w-full font-mono text-sm p-2 border rounded focus:outline-none focus:ring-2 focus:ring-primary"
           value={jsonText}
           onChange={handleChange}
           spellCheck="false"
+          style={{ minHeight: 'calc(100vh - 160px)' }}
         />
       </div>
     </ScrollArea>
