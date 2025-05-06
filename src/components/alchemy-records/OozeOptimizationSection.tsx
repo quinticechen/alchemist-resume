@@ -38,21 +38,26 @@ const OozeOptimizationSection = ({ optimizationData, analysisId }: OozeOptimizat
     "My tentacles sense there's still some hidden potential in your resume! Want to explore together!"
   ];
 
+  // Updated prompt guides with shorter text for mobile
   const promptGuides = [
     {
       text: "What are the most attractive highlights in this resume?",
+      shortText: "Resume highlights?",
       icon: <Lightbulb className="h-4 w-4" />
     },
     {
       text: "Which keywords could we strengthen?",
+      shortText: "Keywords to strengthen?",
       icon: <Search className="h-4 w-4" />
     },
     {
       text: "How can we make your experience more compelling?",
+      shortText: "Improve experience?",
       icon: <MessageSquare className="h-4 w-4" />
     },
     {
       text: "What questions might interviewers ask?",
+      shortText: "Interview questions?",
       icon: <HelpCircle className="h-4 w-4" />
     }
   ];
@@ -361,19 +366,20 @@ const OozeOptimizationSection = ({ optimizationData, analysisId }: OozeOptimizat
             </ScrollArea>
           
             <div className="pt-3 border-t mt-auto">
-              {/* Prompt guide buttons */}
+              {/* Prompt guide buttons - Using responsive text */}
               <div className="mb-3 flex flex-wrap gap-2">
                 {promptGuides.map((prompt, index) => (
                   <Button
                     key={index}
                     variant="outline"
                     size="sm"
-                    className="text-xs"
+                    className="text-xs flex-shrink-0"
                     onClick={() => handlePromptSelect(prompt.text)}
                     disabled={isLoading || !analysisId || initializationStatus !== 'success'}
                   >
                     {prompt.icon}
                     <span className="ml-1 hidden sm:inline">{prompt.text}</span>
+                    <span className="ml-1 sm:hidden">{prompt.shortText}</span>
                   </Button>
                 ))}
               </div>

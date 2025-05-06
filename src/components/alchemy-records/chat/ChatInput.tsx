@@ -21,18 +21,22 @@ interface ChatInputProps {
 const promptGuides = [
   { 
     text: "What are the most attractive highlights in this resume?",
+    shortText: "Resume highlights?",
     icon: <Lightbulb className="h-4 w-4" />
   },
   { 
     text: "Which keywords could we strengthen?",
+    shortText: "Keywords to strengthen?",
     icon: <Search className="h-4 w-4" />
   },
   { 
     text: "How can we make your experience more compelling?", 
+    shortText: "Improve experience?",
     icon: <MessageSquare className="h-4 w-4" />
   },
   { 
     text: "What questions might interviewers ask?", 
+    shortText: "Interview questions?",
     icon: <HelpCircle className="h-4 w-4" />
   }
 ];
@@ -52,19 +56,20 @@ const ChatInput: React.FC<ChatInputProps> = ({
 }) => {
   return (
     <div className="p-4 border-t">
-      {/* Prompt guide buttons */}
+      {/* Prompt guide buttons with responsive text */}
       <div className="mb-3 flex flex-wrap gap-2">
         {promptGuides.map((prompt, index) => (
           <Button
             key={index}
             variant="outline"
             size="sm"
-            className="text-xs"
+            className="text-xs flex-shrink-0"
             onClick={() => onPromptSelect(prompt.text)}
             disabled={isLoading || disabled}
           >
             {prompt.icon}
-            <span className="ml-1">{prompt.text}</span>
+            <span className="ml-1 hidden sm:inline">{prompt.text}</span>
+            <span className="ml-1 sm:inline-block md:hidden">{prompt.shortText}</span>
           </Button>
         ))}
       </div>

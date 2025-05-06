@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useCallback } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -57,6 +56,7 @@ const ResumeRefine = () => {
 
   const analysisId = paramAnalysisId || locationAnalysisId;
 
+  // Set body height to 100vh and remove overflow to make the page full height
   useEffect(() => {
     // Set body to full height and remove overflow
     document.body.style.height = "100vh";
@@ -273,24 +273,20 @@ const ResumeRefine = () => {
   }
 
   return (
-    <div className="min-h-screen h-screen bg-gradient-to-b from-neutral-50 to-neutral-100 relative overflow-hidden">
-      <div className="h-full">
-        <div className="h-full max-h-screen">
-          <h1 className="text-4xl font-bold py-4 bg-gradient-primary text-transparent bg-clip-text text-center">
-            {resumeData?.jobTitle || "Resume Editor"}
-          </h1>
+    <div className="min-h-screen h-screen bg-gradient-to-b from-neutral-50 to-neutral-100 relative overflow-hidden flex flex-col">
+      <h1 className="text-4xl font-bold py-2 bg-gradient-primary text-transparent bg-clip-text text-center">
+        {resumeData?.jobTitle || "Resume Editor"}
+      </h1>
 
-          <div className="h-[calc(100vh-4rem)]">
-            {resumeData && (
-              <ResumeEditor
-                resumeId={resumeData.resumeId}
-                goldenResume={resumeData.goldenResume}
-                analysisId={analysisId}
-                setHasUnsavedChanges={setHasUnsavedChanges}
-              />
-            )}
-          </div>
-        </div>
+      <div className="flex-grow overflow-hidden">
+        {resumeData && (
+          <ResumeEditor
+            resumeId={resumeData.resumeId}
+            goldenResume={resumeData.goldenResume}
+            analysisId={analysisId}
+            setHasUnsavedChanges={setHasUnsavedChanges}
+          />
+        )}
       </div>
 
       <AlertDialog open={showUnsavedDialog} onOpenChange={setShowUnsavedDialog}>

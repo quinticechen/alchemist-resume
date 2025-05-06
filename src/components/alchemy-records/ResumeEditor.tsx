@@ -544,112 +544,181 @@ const ResumeEditor = ({
       ref={resumeEditorRef} 
       className="flex flex-col h-full lg:flex-row overflow-hidden"
     >
-      {/* Job Description Section */}
-      <div
-        ref={jobDescriptionRef}
-        className="lg:w-1/4 border-r lg:border-r-1 overflow-hidden bg-white"
-      >
-        <ScrollArea className="h-full">
-          <div className="p-4">
-            <JobDescriptionViewer jobData={jobData} />
-          </div>
-        </ScrollArea>
+      {/* Top action buttons - Added JSON Editor, Preview, and Save buttons */}
+      <div className="flex items-center justify-between p-2 border-b bg-white">
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => setViewMode(viewMode === 'visual' ? 'json' : 'visual')}
+            className="flex items-center gap-1"
+          >
+            <FileJson className="h-4 w-4" />
+            {viewMode === 'visual' ? 'JSON Editor' : 'Visual Editor'}
+          </Button>
+        </div>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handlePreview}
+            className="flex items-center gap-1"
+          >
+            <Eye className="h-4 w-4" />
+            Preview
+          </Button>
+          <Button
+            onClick={() => handleSaveContent(false)}
+            disabled={isSaving || !hasUnsavedChanges}
+            variant="default"
+            size="sm"
+            className="flex items-center gap-1"
+          >
+            {isSaving ? (
+              <span className="flex items-center gap-1">
+                <Lottie 
+                  options={{
+                    loop: true,
+                    autoplay: true,
+                    animationData: Loading,
+                    rendererSettings: {
+                      preserveAspectRatio: "xMidYMid slice",
+                    }
+                  }}
+                  height={16}
+                  width={16}
+                />
+                Saving...
+              </span>
+            ) : (
+              <>
+                <Save className="h-4 w-4" />
+                Save
+              </>
+            )}
+          </Button>
+        </div>
       </div>
 
-      {/* Resume Sections */}
-      <div
-        ref={resumeSectionsRef}
-        className="lg:w-2/4 overflow-hidden bg-white"
-      >
-        <ScrollArea className="h-full">
-          <div className="p-4">
-            <div className="mb-4 flex items-center lg:hidden">
-              <h3 className="text-xl font-semibold">Resume Sections</h3>
-            </div>
+      {/* Main content area - conditional rendering based on viewMode */}
+      {viewMode === 'json' ? (
+        <div className="flex-1 p-4 overflow-auto">
+          <Textarea
+            className="h-full font-mono text-sm"
+            value={JSON.stringify(resumeData, null, 2)}
+            onChange={handleRawJsonChange}
+          />
+        </div>
+      ) : (
+        <div className="flex flex-1 overflow-hidden">
+          {/* Job Description Section */}
+          <div
+            ref={jobDescriptionRef}
+            className="lg:w-1/4 border-r lg:border-r-1 overflow-hidden bg-white"
+          >
+            <ScrollArea className="h-full">
+              <div className="p-4">
+                <JobDescriptionViewer jobData={jobData} />
+              </div>
+            </ScrollArea>
+          </div>
 
-            <div className="lg:hidden mb-4">
-              <SectionSelector
-                sections={sectionOrder}
-                onSectionToggle={handleSectionToggle}
-                onSectionsReorder={handleSectionsReorder}
-                collapsedSections={collapsedSections}
-              />
-            </div>
+          {/* Resume Sections */}
+          <div
+            ref={resumeSectionsRef}
+            className="lg:w-2/4 overflow-hidden bg-white"
+          >
+            <ScrollArea className="h-full">
+              <div className="p-4">
+                <div className="mb-4 flex items-center lg:hidden">
+                  <h3 className="text-xl font-semibold">Resume Sections</h3>
+                </div>
 
-            <SectionEditor
-              key="personalInfo"
-              section="personalInfo"
-              resumeData={resumeData}
-              onChange={handleResumeDataChange}
-              isCollapsed={collapsedSections["personalInfo"]}
-              onToggleCollapse={handleSectionToggle}
-              isDraggable={false}
-              onAutoSave={scheduleAutoSave}
-            />
+                <div className="lg:hidden mb-4">
+                  <SectionSelector
+                    sections={sectionOrder}
+                    onSectionToggle={handleSectionToggle}
+                    onSectionsReorder={handleSectionsReorder}
+                    collapsedSections={collapsedSections}
+                  />
+                </div>
 
-            <DragDropContext onDragEnd={handleDragEnd}>
-              <Droppable droppableId="droppable-sections">
-                {(provided) => (
-                  <div
-                    {...provided.droppableProps}
-                    ref={provided.innerRef}
-                    className="space-y-4"
-                  >
-                    {sectionOrder
-                      .filter((section) => section !== "personalInfo")
-                      .map((section, index) => (
-                        <Draggable
-                          key={section}
-                          draggableId={section}
-                          index={index}
-                          isDragDisabled={false}
-                        >
-                          {(provided) => (
-                            <div
-                              ref={provided.innerRef}
-                              {...provided.draggableProps}
-                              {...provided.dragHandleProps}
-                              style={{
-                                ...provided.draggableProps.style,
-                              }}
+                <SectionEditor
+                  key="personalInfo"
+                  section="personalInfo"
+                  resumeData={resumeData}
+                  onChange={handleResumeDataChange}
+                  isCollapsed={collapsedSections["personalInfo"]}
+                  onToggleCollapse={handleSectionToggle}
+                  isDraggable={false}
+                  onAutoSave={scheduleAutoSave}
+                />
+
+                <DragDropContext onDragEnd={handleDragEnd}>
+                  <Droppable droppableId="droppable-sections">
+                    {(provided) => (
+                      <div
+                        {...provided.droppableProps}
+                        ref={provided.innerRef}
+                        className="space-y-4"
+                      >
+                        {sectionOrder
+                          .filter((section) => section !== "personalInfo")
+                          .map((section, index) => (
+                            <Draggable
+                              key={section}
+                              draggableId={section}
+                              index={index}
+                              isDragDisabled={false}
                             >
-                              <SectionEditor
-                                key={section}
-                                section={section}
-                                resumeData={resumeData}
-                                onChange={handleResumeDataChange}
-                                isCollapsed={collapsedSections[section]}
-                                onToggleCollapse={handleSectionToggle}
-                                isDraggable={true}
-                                onAutoSave={scheduleAutoSave}
-                              />
-                            </div>
-                          )}
-                        </Draggable>
-                      ))}
-                    {provided.placeholder}
-                  </div>
-                )}
-              </Droppable>
-            </DragDropContext>
+                              {(provided) => (
+                                <div
+                                  ref={provided.innerRef}
+                                  {...provided.draggableProps}
+                                  {...provided.dragHandleProps}
+                                  style={{
+                                    ...provided.draggableProps.style,
+                                  }}
+                                >
+                                  <SectionEditor
+                                    key={section}
+                                    section={section}
+                                    resumeData={resumeData}
+                                    onChange={handleResumeDataChange}
+                                    isCollapsed={collapsedSections[section]}
+                                    onToggleCollapse={handleSectionToggle}
+                                    isDraggable={true}
+                                    onAutoSave={scheduleAutoSave}
+                                  />
+                                </div>
+                              )}
+                            </Draggable>
+                          ))}
+                        {provided.placeholder}
+                      </div>
+                    )}
+                  </Droppable>
+                </DragDropContext>
+              </div>
+            </ScrollArea>
           </div>
-        </ScrollArea>
-      </div>
 
-      {/* Ooze Optimization Section */}
-      <div
-        ref={oozeOptimizationRef}
-        className="lg:w-1/4 border-l lg:border-l-1 overflow-hidden bg-white"
-      >
-        <ScrollArea className="h-full">
-          <div className="p-4">
-            <OozeOptimizationSection
-              optimizationData={resumeData}
-              analysisId={analysisId}
-            />
+          {/* Ooze Optimization Section */}
+          <div
+            ref={oozeOptimizationRef}
+            className="lg:w-1/4 border-l lg:border-l-1 overflow-hidden bg-white"
+          >
+            <ScrollArea className="h-full">
+              <div className="p-4">
+                <OozeOptimizationSection
+                  optimizationData={resumeData}
+                  analysisId={analysisId}
+                />
+              </div>
+            </ScrollArea>
           </div>
-        </ScrollArea>
-      </div>
+        </div>
+      )}
 
       {/* Mobile Ooze Optimization Button (unchanged) */}
       <div className="fixed bottom-4 right-4 z-50 lg:hidden">
