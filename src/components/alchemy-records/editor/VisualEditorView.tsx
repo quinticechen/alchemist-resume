@@ -7,6 +7,7 @@ import JobDescriptionViewer from '../JobDescriptionViewer';
 import OozeOptimizationSection from '../chat/OozeOptimizationSection';
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 import { ResumeSection } from '@/utils/resumeUtils';
+import OozeAnimation from "@/components/OozeAnimation";
 
 interface VisualEditorViewProps {
   resumeData: any;
@@ -127,8 +128,12 @@ const VisualEditorView: React.FC<VisualEditorViewProps> = ({
 
       {/* Ooze Optimization Section */}
       <div className="w-1/4 overflow-hidden bg-white border-l">
+        <div className="sticky top-0 z-10 bg-white flex justify-center py-2 border-b">
+          <OozeAnimation width={100} height={100} />
+        </div>
         <ScrollArea className="h-full">
           <div className="p-4">
+
             <OozeOptimizationSection
               optimizationData={resumeData}
               analysisId={analysisId}

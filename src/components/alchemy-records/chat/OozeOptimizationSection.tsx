@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
-import OozeAnimation from "@/components/OozeAnimation";
 import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useOozeOptimization } from "@/hooks/use-ooze-optimization";
@@ -35,10 +34,6 @@ const OozeOptimizationSection: React.FC<OptimizationProps> = ({ optimizationData
         </div>
       ) : (
         <div className="flex flex-col h-full">
-          {/* Ooze animation fixed at the top */}
-          <div className="sticky top-0 z-10 bg-white flex justify-center py-2 border-b">
-            <OozeAnimation width={100} height={100} />
-          </div>
           
           {initializationStatus === 'loading' || initializationStatus === 'error' ? (
             <ChatStateDisplay 
