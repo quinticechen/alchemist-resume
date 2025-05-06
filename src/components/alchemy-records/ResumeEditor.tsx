@@ -28,6 +28,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import Lottie from "react-lottie";
 import Loading from "@/animations/Loading.json";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ResumeData {
   resume?: {
@@ -99,6 +100,7 @@ const ResumeEditor = ({
       preserveAspectRatio: "xMidYMid slice",
     },
   };
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const initialSections = getAllSections();
@@ -485,21 +487,33 @@ const ResumeEditor = ({
   const oozeOptimizationRef = useRef<HTMLDivElement>(null);
     
   useEffect(() => {
-    const setDesktopHeight = () => {
-      if (window.innerWidth >= 768 && resumeEditorRef.current) {
-        resumeEditorRef.current.style.height = `${window.innerHeight - 64}px`; // 減去 header 或其他固定元素的高度
-      } else if (resumeEditorRef.current) {
-        resumeEditorRef.current.style.height = 'auto';
+    const updateEditorHeight = () => {
+      if (resumeEditorRef.current) {
+        // Calculate viewport height minus header and any other fixed elements
+        // Typically header is around 64px, adjust as needed
+        const headerHeight = 64;
+        const paddingBottom = 20; // Additional padding to prevent awkward cut-off
+        const viewportHeight = window.innerHeight;
+        const editorHeight = viewportHeight - headerHeight - paddingBottom;
+        
+        resumeEditorRef.current.style.height = `${editorHeight}px`;
+        
+        // If we're on desktop, also set heights for the columns
+        if (!isMobile && jobDescriptionRef.current && resumeSectionsRef.current && oozeOptimizationRef.current) {
+          jobDescriptionRef.current.style.height = `${editorHeight}px`;
+          resumeSectionsRef.current.style.height = `${editorHeight}px`;
+          oozeOptimizationRef.current.style.height = `${editorHeight}px`;
+        }
       }
     };
 
-    setDesktopHeight();
-    window.addEventListener('resize', setDesktopHeight);
+    updateEditorHeight();
+    window.addEventListener('resize', updateEditorHeight);
 
     return () => {
-      window.removeEventListener('resize', setDesktopHeight);
+      window.removeEventListener('resize', updateEditorHeight);
     };
-  }, []);
+  }, [isMobile]);
   
   const handleDragEnd = (result: DropResult) => {
     if (!result.destination) return;
@@ -519,125 +533,128 @@ const ResumeEditor = ({
     );
   }
 
-    return (
-    <div ref={resumeEditorRef} className="flex flex-col h-full lg:flex-row overflow-hidden">
+  return (
+    <div 
+      ref={resumeEditorRef} 
+      className="flex flex-col h-full lg:flex-row overflow-hidden"
+    >
       {/* Job Description Section */}
       <div
         ref={jobDescriptionRef}
-        className="lg:w-1/4 overflow-y-auto border-r lg:border-r-1 p-2"
-        style={{ height: '100%' }} // 確保佔滿父容器高度
+        className="lg:w-1/4 border-r lg:border-r-1 overflow-hidden"
       >
-        <JobDescriptionViewer jobData={jobData} />
+        <ScrollArea className="h-full">
+          <div className="p-4">
+            <JobDescriptionViewer jobData={jobData} />
+          </div>
+        </ScrollArea>
       </div>
 
       {/* Resume Sections */}
       <div
         ref={resumeSectionsRef}
-        className="lg:w-2/4 overflow-y-auto p-2"
-        style={{ height: '100%' }} // 確保佔滿父容器高度
+        className="lg:w-2/4 overflow-hidden"
       >
-        <div className="mb-4 flex items-center lg:hidden">
-          <h3 className="text-xl font-semibold">Resume Sections</h3>
-        </div>
+        <ScrollArea className="h-full">
+          <div className="p-4">
+            <div className="mb-4 flex items-center lg:hidden">
+              <h3 className="text-xl font-semibold">Resume Sections</h3>
+            </div>
 
-        <div className="lg:hidden mb-4">
-          <SectionSelector
-            sections={sectionOrder}
-            onSectionToggle={handleSectionToggle}
-            onSectionsReorder={handleSectionsReorder}
-            collapsedSections={collapsedSections}
-          />
-        </div>
+            <div className="lg:hidden mb-4">
+              <SectionSelector
+                sections={sectionOrder}
+                onSectionToggle={handleSectionToggle}
+                onSectionsReorder={handleSectionsReorder}
+                collapsedSections={collapsedSections}
+              />
+            </div>
 
-        <SectionEditor
-          key="personalInfo"
-          section="personalInfo"
-          resumeData={resumeData}
-          onChange={handleResumeDataChange}
-          isCollapsed={collapsedSections["personalInfo"]}
-          onToggleCollapse={handleSectionToggle}
-          isDraggable={false}
-          onAutoSave={scheduleAutoSave}
-        />
+            <SectionEditor
+              key="personalInfo"
+              section="personalInfo"
+              resumeData={resumeData}
+              onChange={handleResumeDataChange}
+              isCollapsed={collapsedSections["personalInfo"]}
+              onToggleCollapse={handleSectionToggle}
+              isDraggable={false}
+              onAutoSave={scheduleAutoSave}
+            />
 
-        <DragDropContext onDragEnd={handleDragEnd}>
-          <Droppable droppableId="droppable-sections">
-            {(provided) => (
-              <div
-                {...provided.droppableProps}
-                ref={provided.innerRef}
-                className="space-y-4"
-              >
-                {sectionOrder
-                  .filter((section) => section !== "personalInfo")
-                  .map((section, index) => (
-                    <Draggable
-                      key={section}
-                      draggableId={section}
-                      index={index}
-                      isDragDisabled={false}
-                    >
-                      {(provided) => (
-                        <div
-                          ref={provided.innerRef}
-                          {...provided.draggableProps}
-                          {...provided.dragHandleProps}
-                          style={{
-                            ...provided.draggableProps.style,
-                          }}
+            <DragDropContext onDragEnd={handleDragEnd}>
+              <Droppable droppableId="droppable-sections">
+                {(provided) => (
+                  <div
+                    {...provided.droppableProps}
+                    ref={provided.innerRef}
+                    className="space-y-4"
+                  >
+                    {sectionOrder
+                      .filter((section) => section !== "personalInfo")
+                      .map((section, index) => (
+                        <Draggable
+                          key={section}
+                          draggableId={section}
+                          index={index}
+                          isDragDisabled={false}
                         >
-                          <SectionEditor
-                            key={section}
-                            section={section}
-                            resumeData={resumeData}
-                            onChange={handleResumeDataChange}
-                            isCollapsed={collapsedSections[section]}
-                            onToggleCollapse={handleSectionToggle}
-                            isDraggable={true}
-                            onAutoSave={scheduleAutoSave}
-                          />
-                        </div>
-                      )}
-                    </Draggable>
-                  ))}
-                {provided.placeholder}
-              </div>
-            )}
-          </Droppable>
-        </DragDropContext>
+                          {(provided) => (
+                            <div
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                              {...provided.dragHandleProps}
+                              style={{
+                                ...provided.draggableProps.style,
+                              }}
+                            >
+                              <SectionEditor
+                                key={section}
+                                section={section}
+                                resumeData={resumeData}
+                                onChange={handleResumeDataChange}
+                                isCollapsed={collapsedSections[section]}
+                                onToggleCollapse={handleSectionToggle}
+                                isDraggable={true}
+                                onAutoSave={scheduleAutoSave}
+                              />
+                            </div>
+                          )}
+                        </Draggable>
+                      ))}
+                    {provided.placeholder}
+                  </div>
+                )}
+              </Droppable>
+            </DragDropContext>
+          </div>
+        </ScrollArea>
       </div>
 
       {/* Ooze Optimization Section */}
       <div
         ref={oozeOptimizationRef}
-        className="lg:w-1/4 overflow-y-auto border-l lg:border-l-1 p-2"
-        style={{ height: '100%' }} // 確保佔滿父容器高度
+        className="lg:w-1/4 border-l lg:border-l-1 overflow-hidden"
       >
-        <OozeOptimizationSection
-          optimizationData={resumeData}
-          analysisId={analysisId}
-        />
+        <ScrollArea className="h-full">
+          <div className="p-4">
+            <OozeOptimizationSection
+              optimizationData={resumeData}
+              analysisId={analysisId}
+            />
+          </div>
+        </ScrollArea>
       </div>
 
-      {/* 手機版 Ooze Optimization (保持不變) */}
+      {/* Mobile Ooze Optimization Button (unchanged) */}
       <div className="fixed bottom-4 right-4 z-50 lg:hidden">
         <button
           className="bg-primary text-primary-foreground rounded-full p-2 shadow-md"
           onClick={() => {
-            // 處理手機版展開 Ooze Optimization 的邏輯
             console.log("Ooze Optimization展开");
-            // 你可能需要使用一個 state 來控制 OozeOptimizationSection 的顯示
           }}
         >
           ✨
         </button>
-        {/* 手機版展開的 OozeOptimizationSection (根據 state 條件式渲染) */}
-        {/* <div className="absolute bottom-full right-0 bg-white rounded-md shadow-lg p-4">
-          <OozeOptimizationSection
-            optimizationData={resumeData}
-            analysisId={analysisId}
-          />
-        </div> */}
       </div>
     </div>
   );

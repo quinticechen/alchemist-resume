@@ -280,7 +280,7 @@ const OozeOptimizationSection = ({ optimizationData, analysisId }: OozeOptimizat
 
   return (
     <Card className="h-full overflow-hidden flex flex-col">
-      <CardHeader>
+      <CardHeader className="p-3">
         <CardTitle className="text-lg flex items-center gap-2">
           <OozeAnimation width={18} height={18} />
           Ooze Optimization
@@ -298,7 +298,7 @@ const OozeOptimizationSection = ({ optimizationData, analysisId }: OozeOptimizat
           )}
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex flex-col flex-1 overflow-hidden p-4">
+      <CardContent className="flex flex-col flex-1 overflow-hidden p-3">
         {debugInfo ? (
           <div className="flex-1 overflow-auto bg-slate-100 p-4 rounded text-xs font-mono">
             <pre>{debugInfo}</pre>
@@ -322,13 +322,13 @@ const OozeOptimizationSection = ({ optimizationData, analysisId }: OozeOptimizat
             </Button>
           </div>
         ) : (
-          <>
+          <div className="flex flex-col h-full">
             <div className="flex justify-center mb-4">
-              <OozeAnimation width={120} height={120} />
+              <OozeAnimation width={80} height={80} />
             </div>
             
-            <ScrollArea className="flex-1 pr-4">
-              <div className="space-y-4">
+            <ScrollArea className="flex-1 pr-2">
+              <div className="space-y-4 mb-4">
                 {messages.filter(msg => msg.role !== 'system').map((message) => (
                   <div 
                     key={message.id} 
@@ -341,9 +341,9 @@ const OozeOptimizationSection = ({ optimizationData, analysisId }: OozeOptimizat
                           : 'bg-muted'
                       }`}
                     >
-                      <div className="flex gap-2">
-                        <p className="whitespace-pre-wrap">{message.content}</p>
-                        {message.role === 'user' && <User className="h-5 w-5 flex-shrink-0" />}
+                      <div className="flex gap-2 items-start">
+                        <p className="whitespace-pre-wrap text-sm">{message.content}</p>
+                        {message.role === 'user' && <User className="h-4 w-4 flex-shrink-0 mt-1" />}
                       </div>
                     </div>
                   </div>
@@ -359,50 +359,50 @@ const OozeOptimizationSection = ({ optimizationData, analysisId }: OozeOptimizat
                 <div ref={messagesEndRef} />
               </div>
             </ScrollArea>
-          </>
-        )}
-        
-        <div className="mt-4 pt-4 border-t">
-          {/* Prompt guide buttons */}
-          <div className="mb-3 flex flex-wrap gap-2">
-            {promptGuides.map((prompt, index) => (
-              <Button
-                key={index}
-                variant="outline"
-                size="sm"
-                className="text-xs break-words"
-                style={{ wordBreak: 'break-word' }}
-                onClick={() => handlePromptSelect(prompt.text)}
-                disabled={isLoading || !analysisId || initializationStatus !== 'success'}
-              >
-                {prompt.icon}
-                <span className="ml-1 hidden sm:inline">{prompt.text}</span>
-              </Button>
-            ))}
-          </div>
           
-          <div className="flex gap-2">
-            <Textarea
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Ask for resume optimization suggestions..."
-              className="resize-none"
-              disabled={isLoading || !analysisId || initializationStatus !== 'success'}
-            />
-            <Button 
-              onClick={handleSendMessage} 
-              disabled={isLoading || input.trim() === '' || !analysisId || initializationStatus !== 'success'}
-              size="icon"
-            >
-              {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-            </Button>
+            <div className="pt-3 border-t mt-auto">
+              {/* Prompt guide buttons */}
+              <div className="mb-3 flex flex-wrap gap-2">
+                {promptGuides.map((prompt, index) => (
+                  <Button
+                    key={index}
+                    variant="outline"
+                    size="sm"
+                    className="text-xs"
+                    onClick={() => handlePromptSelect(prompt.text)}
+                    disabled={isLoading || !analysisId || initializationStatus !== 'success'}
+                  >
+                    {prompt.icon}
+                    <span className="ml-1 hidden sm:inline">{prompt.text}</span>
+                  </Button>
+                ))}
+              </div>
+              
+              <div className="flex gap-2">
+                <Textarea
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Ask for resume optimization suggestions..."
+                  className="resize-none text-sm"
+                  rows={2}
+                  disabled={isLoading || !analysisId || initializationStatus !== 'success'}
+                />
+                <Button 
+                  onClick={handleSendMessage} 
+                  disabled={isLoading || input.trim() === '' || !analysisId || initializationStatus !== 'success'}
+                  size="icon"
+                >
+                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                </Button>
+              </div>
+              {isLoading && <p className="text-xs text-muted-foreground mt-2">AI is thinking...</p>}
+              {threadId && (
+                <p className="text-xs text-muted-foreground mt-2">Thread ID: {threadId.substring(0, 8)}...</p>
+              )}
+            </div>
           </div>
-          {isLoading && <p className="text-sm text-muted-foreground mt-2">AI is thinking...</p>}
-          {threadId && (
-            <p className="text-xs text-muted-foreground mt-2">Thread ID: {threadId.substring(0, 8)}...</p>
-          )}
-        </div>
+        )}
       </CardContent>
     </Card>
   );
