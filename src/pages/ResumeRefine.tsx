@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useCallback } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -55,6 +56,18 @@ const ResumeRefine = () => {
   const { toast } = useToast();
 
   const analysisId = paramAnalysisId || locationAnalysisId;
+
+  useEffect(() => {
+    // Set body to full height and remove overflow
+    document.body.style.height = "100vh";
+    document.body.style.overflow = "hidden";
+    
+    // Clean up function
+    return () => {
+      document.body.style.height = "";
+      document.body.style.overflow = "";
+    };
+  }, []);
 
   useEffect(() => {
     if (analysisId) {
@@ -260,14 +273,14 @@ const ResumeRefine = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100 relative">
-      <div className="container mx-auto px-4 py-12">
-        <div className="max-w-7xl mx-auto">
-          <h1 className="text-4xl font-bold mb-8 bg-gradient-primary text-transparent bg-clip-text text-center">
+    <div className="min-h-screen h-screen bg-gradient-to-b from-neutral-50 to-neutral-100 relative overflow-hidden">
+      <div className="h-full">
+        <div className="h-full max-h-screen">
+          <h1 className="text-4xl font-bold py-4 bg-gradient-primary text-transparent bg-clip-text text-center">
             {resumeData?.jobTitle || "Resume Editor"}
           </h1>
 
-          <div className="bg-white rounded-xl p-6 shadow-apple mb-6">
+          <div className="h-[calc(100vh-4rem)]">
             {resumeData && (
               <ResumeEditor
                 resumeId={resumeData.resumeId}

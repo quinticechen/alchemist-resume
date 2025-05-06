@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -488,34 +487,40 @@ const ResumeEditor = ({
   const oozeOptimizationRef = useRef<HTMLDivElement>(null);
     
   useEffect(() => {
-    const updateEditorHeight = () => {
+    // Force immediate calculation of heights on mount
+    const calculateHeights = () => {
+      const headerHeight = 80; // Height for the page header including title and any padding
+      const viewportHeight = window.innerHeight;
+      const editorHeight = viewportHeight - headerHeight;
+      
       if (resumeEditorRef.current) {
-        // Calculate viewport height minus header and any other fixed elements
-        // Typically header is around 64px, adjust as needed
-        const headerHeight = 64;
-        const paddingBottom = 20; // Additional padding to prevent awkward cut-off
-        const viewportHeight = window.innerHeight;
-        const editorHeight = viewportHeight - headerHeight - paddingBottom;
-        
         resumeEditorRef.current.style.height = `${editorHeight}px`;
-        
-        // If we're on desktop, also set heights for the columns
-        if (!isMobile && jobDescriptionRef.current && resumeSectionsRef.current && oozeOptimizationRef.current) {
-          jobDescriptionRef.current.style.height = `${editorHeight}px`;
-          resumeSectionsRef.current.style.height = `${editorHeight}px`;
-          oozeOptimizationRef.current.style.height = `${editorHeight}px`;
-        }
+      }
+      
+      if (jobDescriptionRef.current) {
+        jobDescriptionRef.current.style.height = `${editorHeight}px`;
+      }
+      
+      if (resumeSectionsRef.current) {
+        resumeSectionsRef.current.style.height = `${editorHeight}px`;
+      }
+      
+      if (oozeOptimizationRef.current) {
+        oozeOptimizationRef.current.style.height = `${editorHeight}px`;
       }
     };
 
-    updateEditorHeight();
-    window.addEventListener('resize', updateEditorHeight);
-
+    // Calculate heights immediately
+    calculateHeights();
+    
+    // Also set up resize handler
+    window.addEventListener('resize', calculateHeights);
+    
     return () => {
-      window.removeEventListener('resize', updateEditorHeight);
+      window.removeEventListener('resize', calculateHeights);
     };
-  }, [isMobile]);
-  
+  }, []);
+
   const handleDragEnd = (result: DropResult) => {
     if (!result.destination) return;
 
@@ -542,7 +547,7 @@ const ResumeEditor = ({
       {/* Job Description Section */}
       <div
         ref={jobDescriptionRef}
-        className="lg:w-1/4 border-r lg:border-r-1 overflow-hidden"
+        className="lg:w-1/4 border-r lg:border-r-1 overflow-hidden bg-white"
       >
         <ScrollArea className="h-full">
           <div className="p-4">
@@ -554,7 +559,7 @@ const ResumeEditor = ({
       {/* Resume Sections */}
       <div
         ref={resumeSectionsRef}
-        className="lg:w-2/4 overflow-hidden"
+        className="lg:w-2/4 overflow-hidden bg-white"
       >
         <ScrollArea className="h-full">
           <div className="p-4">
@@ -634,7 +639,7 @@ const ResumeEditor = ({
       {/* Ooze Optimization Section */}
       <div
         ref={oozeOptimizationRef}
-        className="lg:w-1/4 border-l lg:border-l-1 overflow-hidden"
+        className="lg:w-1/4 border-l lg:border-l-1 overflow-hidden bg-white"
       >
         <ScrollArea className="h-full">
           <div className="p-4">

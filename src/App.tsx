@@ -1,5 +1,5 @@
 
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Home from "@/pages/Home";
@@ -22,6 +22,28 @@ import UserOnboard from "@/pages/UserOnboard";
 import ScrollToTop from './components/ScrollToTop';
 import ProtectedRoute from './components/ProtectedRoute';
 import JobWebsites from "@/pages/JobWebsites";
+
+// Component to conditionally render the footer
+const ConditionalFooter = () => {
+  const location = useLocation();
+  const hideFooterPaths = ['/resume-refine', '/resume-refine/:analysisId'];
+  
+  // Check if current path should hide footer
+  const shouldHideFooter = hideFooterPaths.some(path => {
+    if (path.includes(':')) {
+      // For paths with parameters, check if the current path starts with the path without the parameter
+      const basePath = path.split('/:')[0];
+      return location.pathname.startsWith(basePath);
+    }
+    return location.pathname === path;
+  });
+  
+  if (shouldHideFooter) {
+    return null;
+  }
+  
+  return <Footer />;
+};
 
 const App = () => {
   return (
@@ -109,7 +131,7 @@ const App = () => {
               <Route path="/job-websites" element={<JobWebsites />} />
             </Routes>
           </main>
-          <Footer />
+          <ConditionalFooter />
           <Toaster />
         </div>
       </AuthProvider>
