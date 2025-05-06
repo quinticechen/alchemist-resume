@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { FileJson, Eye, Save } from "lucide-react";
+import { FileJson, Eye, Save, Check } from "lucide-react";
 import Lottie from "react-lottie";
 import Loading from "@/animations/Loading.json";
 
@@ -10,6 +10,7 @@ interface EditorToolbarProps {
   onViewModeToggle: () => void;
   onPreview: () => void;
   onSave: () => void;
+  onFinish: () => void;
   isSaving: boolean;
   hasUnsavedChanges: boolean;
 }
@@ -19,6 +20,7 @@ const EditorToolbar: React.FC<EditorToolbarProps> = ({
   onViewModeToggle,
   onPreview,
   onSave,
+  onFinish,
   isSaving,
   hasUnsavedChanges
 }) => {
@@ -54,7 +56,7 @@ const EditorToolbar: React.FC<EditorToolbarProps> = ({
           <Button
             onClick={onSave}
             disabled={isSaving || !hasUnsavedChanges}
-            variant="default"
+            variant="secondary"
             size="sm"
             className="flex items-center gap-1"
           >
@@ -80,6 +82,15 @@ const EditorToolbar: React.FC<EditorToolbarProps> = ({
                 Save
               </>
             )}
+          </Button>
+          <Button
+            onClick={onFinish}
+            variant="default"
+            size="sm"
+            className="flex items-center gap-1"
+          >
+            <Check className="h-4 w-4" />
+            Finish
           </Button>
         </div>
       </div>

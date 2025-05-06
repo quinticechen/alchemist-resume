@@ -79,17 +79,26 @@ const ResumeEditor = ({
   }
 
   const handlePreview = () => {
+    // Open a preview dialog without saving or navigating away
     navigate(`/resume-preview/${analysisId}`, {
       state: {
         resumeId,
         goldenResume: JSON.stringify(resumeData),
         analysisId,
+        previewOnly: true,
       },
     });
   };
 
   const handleToggleViewMode = () => {
     setViewMode(viewMode === 'visual' ? 'json' : 'visual');
+  };
+
+  const handleFinish = () => {
+    // Save content and then navigate back to alchemy records
+    handleSaveContent(false).then(() => {
+      navigate('/alchemy-records');
+    });
   };
 
   return (
@@ -122,6 +131,7 @@ const ResumeEditor = ({
         onViewModeToggle={handleToggleViewMode}
         onPreview={handlePreview}
         onSave={() => handleSaveContent(false)}
+        onFinish={handleFinish}
         isSaving={isSaving}
         hasUnsavedChanges={localHasUnsavedChanges}
       />

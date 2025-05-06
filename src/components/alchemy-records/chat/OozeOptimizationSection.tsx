@@ -35,7 +35,8 @@ const OozeOptimizationSection: React.FC<OptimizationProps> = ({ optimizationData
         </div>
       ) : (
         <div className="flex flex-col h-full">
-          <div className="flex justify-center mb-2">
+          {/* Ooze animation fixed at the top */}
+          <div className="sticky top-0 z-10 bg-white flex justify-center py-2 border-b">
             <OozeAnimation width={100} height={100} />
           </div>
           
@@ -45,19 +46,19 @@ const OozeOptimizationSection: React.FC<OptimizationProps> = ({ optimizationData
               onRetry={handleRetryInitialization}
             />
           ) : (
-            <>
-              {/* Use flex-grow to push the chat input to the bottom */}
-              <div className="flex-grow overflow-hidden flex flex-col">
+            <div className="flex flex-col h-full">
+              {/* Scrollable chat messages area */}
+              <div className="flex-grow overflow-auto">
                 <MessageList 
                   messages={messages} 
                   analysisId={analysisId} 
                   messagesEndRef={messagesEndRef}
-                  className="flex-grow overflow-y-auto"
+                  className="overflow-y-auto pb-4"
                 />
               </div>
               
-              {/* Chat input stays at the bottom regardless of content */}
-              <div className="mt-auto">
+              {/* Chat input stays at the bottom */}
+              <div className="mt-auto bg-white sticky bottom-0">
                 <ChatInputArea 
                   input={input}
                   setInput={setInput}
@@ -68,7 +69,7 @@ const OozeOptimizationSection: React.FC<OptimizationProps> = ({ optimizationData
                   isDisabled={isLoading || !analysisId || initializationStatus !== 'success'}
                 />
               </div>
-            </>
+            </div>
           )}
           
           {initializationStatus === 'error' && (
