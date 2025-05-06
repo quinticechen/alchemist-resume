@@ -53,6 +53,7 @@ const ResumeRefine = () => {
   } | null>(null);
   const [jobDescription, setJobDescription] = useState<any>(null);
   const { toast } = useToast();
+  const [headerHeight, setHeaderHeight] = useState(72); // Set to 72px as specified
 
   const analysisId = paramAnalysisId || locationAnalysisId;
 
@@ -68,6 +69,24 @@ const ResumeRefine = () => {
       document.body.style.overflow = "";
     };
   }, []);
+
+  // Effect to measure actual header height if needed
+  useEffect(() => {
+    const measureHeaderHeight = () => {
+      const headerElement = document.querySelector('.page-header');
+      if (headerElement) {
+        const headerRect = headerElement.getBoundingClientRect();
+        setHeaderHeight(headerRect.height);
+      }
+    };
+    
+    // Initial measurement
+    measureHeaderHeight();
+    
+    // Re-measure on resize
+    window.addEventListener('resize', measureHeaderHeight);
+    return () => window.removeEventListener('resize', measureHeaderHeight);
+  }, [resumeData]);
 
   useEffect(() => {
     if (analysisId) {
@@ -275,7 +294,7 @@ const ResumeRefine = () => {
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-gradient-to-b from-neutral-50 to-neutral-100">
       {/* Top section - Header with job title */}
-      <div className="flex-shrink-0 py-3 px-4 border-b bg-white shadow-sm">
+      <div className="page-header flex-shrink-0 py-3 px-4 border-b bg-white shadow-sm">
         <h1 className="text-2xl font-bold bg-gradient-primary text-transparent bg-clip-text">
           {resumeData?.jobTitle || "Resume Editor"}
         </h1>
@@ -289,7 +308,7 @@ const ResumeRefine = () => {
             goldenResume={resumeData.goldenResume}
             analysisId={analysisId}
             setHasUnsavedChanges={setHasUnsavedChanges}
-            pageHeaderHeight={56} // Adding estimated height for the header (can be adjusted)
+            pageHeaderHeight={headerHeight} // Using the measured or default header height
           />
         )}
       </div>

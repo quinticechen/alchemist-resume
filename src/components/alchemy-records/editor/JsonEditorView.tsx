@@ -49,7 +49,7 @@ const JsonEditorView: React.FC<JsonEditorViewProps> = ({ resumeData, onChange })
           value={jsonText}
           onChange={handleChange}
           spellCheck="false"
-          style={{ minHeight: 'calc(100vh - 160px)' }}
+          style={{ height: "calc(100% - 20px)" }}
         />
       </div>
     </ScrollArea>
