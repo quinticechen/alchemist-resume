@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -145,7 +146,7 @@ const AnalysisCard = ({
               },
             })
           }
-          className="text-info border-info/20 hover:bg-info/5 bg-gradient-primary-light hover:opacity-90 transition-opacity"
+          className="bg-gradient-primary-light text-white hover:opacity-90 transition-opacity"
         >
           <Crown className="h-4 w-4 mr-2" />
           View Golden Resume

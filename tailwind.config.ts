@@ -58,6 +58,7 @@ const config: Config = {
         'soft-yellow': '#FEF7CD',
         'soft-blue': '#D3E4FD',
         'soft-green': '#F2FCE2',
+        'info': '#7E69AB',
       },
       borderRadius: {
         lg: 'var(--radius)',
@@ -74,6 +75,7 @@ const config: Config = {
       },
       backgroundImage: {
         'gradient-primary': 'linear-gradient(to right, #9b87f5, #7E69AB)',
+        'gradient-primary-light': 'linear-gradient(to right, #b8aaf8, #9b87f5)',
       },
       keyframes: {
         'accordion-down': {
