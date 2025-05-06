@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@//ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { CheckCircle, Save, AlertTriangle, Eye, FileJson } from "lucide-react";
@@ -478,22 +478,22 @@ const ResumeEditor = ({
       console.error("Invalid JSON:", error);
     }
   };
-
-    const resumeEditorRef = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
+  
+  const resumeEditorRef = useRef<HTMLDivElement>(null);
+  const jobDescriptionRef = useRef<HTMLDivElement>(null);
+  const resumeSectionsRef = useRef<HTMLDivElement>(null);
+  const oozeOptimizationRef = useRef<HTMLDivElement>(null);
+    
+  useEffect(() => {
     const setDesktopHeight = () => {
       if (window.innerWidth >= 768 && resumeEditorRef.current) {
-        resumeEditorRef.current.style.height = `${window.innerHeight}px`;
+        resumeEditorRef.current.style.height = `${window.innerHeight - 64}px`; // 減去 header 或其他固定元素的高度
       } else if (resumeEditorRef.current) {
-        resumeEditorRef.current.style.height = 'auto'; // 移除手機上的固定高度
+        resumeEditorRef.current.style.height = 'auto';
       }
     };
 
-    // 初始設定
     setDesktopHeight();
-
-    // 監聽視窗大小變化
     window.addEventListener('resize', setDesktopHeight);
 
     return () => {
@@ -519,14 +519,23 @@ const ResumeEditor = ({
     );
   }
 
-  return (
+    return (
     <div ref={resumeEditorRef} className="flex flex-col h-full lg:flex-row overflow-hidden">
-      {/* 桌機版：左右佈局，固定總高，內容超出捲動 */}
-      <div className="lg:w-1/4 overflow-y-auto border-r lg:border-r-1 p-2">
+      {/* Job Description Section */}
+      <div
+        ref={jobDescriptionRef}
+        className="lg:w-1/4 overflow-y-auto border-r lg:border-r-1 p-2"
+        style={{ height: '100%' }} // 確保佔滿父容器高度
+      >
         <JobDescriptionViewer jobData={jobData} />
       </div>
 
-      <div className="lg:w-2/4 overflow-y-auto p-2">
+      {/* Resume Sections */}
+      <div
+        ref={resumeSectionsRef}
+        className="lg:w-2/4 overflow-y-auto p-2"
+        style={{ height: '100%' }} // 確保佔滿父容器高度
+      >
         <div className="mb-4 flex items-center lg:hidden">
           <h3 className="text-xl font-semibold">Resume Sections</h3>
         </div>
@@ -598,17 +607,20 @@ const ResumeEditor = ({
         </DragDropContext>
       </div>
 
-      {/* 桌機版：左右佈局 */}
-      <div className="lg:w-1/4 overflow-y-auto border-l lg:border-l-1 p-2">
+      {/* Ooze Optimization Section */}
+      <div
+        ref={oozeOptimizationRef}
+        className="lg:w-1/4 overflow-y-auto border-l lg:border-l-1 p-2"
+        style={{ height: '100%' }} // 確保佔滿父容器高度
+      >
         <OozeOptimizationSection
           optimizationData={resumeData}
           analysisId={analysisId}
         />
       </div>
 
-      {/* 手機版：Ooze Optimization 圖示（絕對定位在右下角，點擊後展開） */}
+      {/* 手機版 Ooze Optimization (保持不變) */}
       <div className="fixed bottom-4 right-4 z-50 lg:hidden">
-        {/* 這裡可以放一個觸發 Ooze Optimization Section 展開的按鈕或圖示 */}
         <button
           className="bg-primary text-primary-foreground rounded-full p-2 shadow-md"
           onClick={() => {
@@ -617,7 +629,6 @@ const ResumeEditor = ({
             // 你可能需要使用一個 state 來控制 OozeOptimizationSection 的顯示
           }}
         >
-          {/* 可以放一個 Ooze 的小圖示 */}
           ✨
         </button>
         {/* 手機版展開的 OozeOptimizationSection (根據 state 條件式渲染) */}
