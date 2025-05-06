@@ -173,10 +173,10 @@ const JobWebsites = () => {
     <div className="container mx-auto p-8">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Job Websites</h1>
-        <Button 
+        {/* <Button 
           onClick={triggerSync} 
           disabled={isSyncing}
-          className="flex items-center gap-2"
+          className="bg-gradient-primary-light text-white hover:opacity-90 transition-opacity"
         >
           {isSyncing ? (
             <>
@@ -189,7 +189,7 @@ const JobWebsites = () => {
               Sync from Notion
             </>
           )}
-        </Button>
+        </Button> */}
       </div>
       
       {syncStatus && (syncStatus.hasNotionApiKey === false || syncStatus.hasNotionDatabaseId === false) && (
@@ -285,7 +285,7 @@ const JobWebsites = () => {
               <li>There was an error during the sync process</li>
             </ul>
             {currentEnv === 'staging' && (
-              <Button onClick={triggerSync} className="w-full">
+              <Button onClick={triggerSync} className="w-full" className="bg-gradient-primary-light text-white hover:opacity-90 transition-opacity">
                   {isSyncing ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
