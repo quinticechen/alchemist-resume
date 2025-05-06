@@ -1,4 +1,5 @@
 
+
 export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant' | 'system';
@@ -14,5 +15,13 @@ export interface OptimizationProps {
 // Added for cleaner layout implementation
 export interface LayoutProps {
   children: React.ReactNode;
+  className?: string;
+}
+
+// Add className to MessageListProps
+export interface MessageListProps {
+  messages: ChatMessage[];
+  analysisId?: string;
+  messagesEndRef: React.RefObject<HTMLDivElement>;
   className?: string;
 }
