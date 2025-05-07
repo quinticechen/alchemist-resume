@@ -84,7 +84,11 @@ export const PlatformLogos = () => {
           className="h-10 object-contain mx-auto"
           onError={(e) => {
             e.currentTarget.style.display = 'none';
-            e.currentTarget.nextSibling!.classList.remove('hidden');
+            // The error is on this next line - fixing by using a proper HTMLElement type check
+            const nextElement = e.currentTarget.nextSibling;
+            if (nextElement && nextElement instanceof HTMLElement) {
+              nextElement.classList.remove('hidden');
+            }
           }}
         />
       ) : null}
