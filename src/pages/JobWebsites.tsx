@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getEnvironment } from "@/integrations/supabase/client";
@@ -324,8 +325,7 @@ const JobWebsites = () => {
             {currentEnv === "staging" && (
               <Button
                 onClick={triggerSync}
-                className="w-full"
-                className="bg-gradient-primary-light text-white hover:opacity-90 transition-opacity"
+                className="w-full bg-gradient-primary-light text-white hover:opacity-90 transition-opacity"
               >
                 {isSyncing ? (
                   <>
