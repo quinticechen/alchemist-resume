@@ -9,6 +9,54 @@ const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
 interface NotionBlock {
   type: string;
   text: string;
+  content?: Array<NotionBlock>;
+  url?: string;
+  annotations?: any;
+  is_list_item?: boolean;
+  list_type?: 'bulleted_list' | 'numbered_list';
+  media_type?: string;
+  media_url?: string;
+}
+
+// Function to extract text from rich_text array with annotations
+function extractRichText(richTextArray: any[]): { text: string, annotations: any[], links: any[] } {
+  let combinedText = '';
+  const annotations = [];
+  const links = [];
+  
+  if (!richTextArray || richTextArray.length === 0) return { text: '', annotations: [], links: [] };
+  
+  for (const textObject of richTextArray) {
+    combinedText += textObject.plain_text || '';
+    
+    // Capture annotations
+    if (textObject.annotations) {
+      if (textObject.annotations.bold || 
+          textObject.annotations.italic || 
+          textObject.annotations.strikethrough || 
+          textObject.annotations.underline ||
+          textObject.annotations.code) {
+        annotations.push({
+          text: textObject.plain_text,
+          ...textObject.annotations,
+          start: combinedText.length - textObject.plain_text.length,
+          end: combinedText.length
+        });
+      }
+    }
+    
+    // Capture links
+    if (textObject.href) {
+      links.push({
+        text: textObject.plain_text,
+        url: textObject.href,
+        start: combinedText.length - textObject.plain_text.length,
+        end: combinedText.length
+      });
+    }
+  }
+  
+  return { text: combinedText, annotations, links };
 }
 
 async function getNotionPageContent(notionClient: Client, pageId: string): Promise<NotionBlock[]> {
@@ -17,39 +65,139 @@ async function getNotionPageContent(notionClient: Client, pageId: string): Promi
       block_id: pageId,
     });
 
-    return blocks.results.map(block => {
+    const processedBlocks: NotionBlock[] = [];
+    let currentListType = null;
+    let currentListItems: NotionBlock[] = [];
+
+    for (const block of blocks.results) {
       // @ts-ignore - Notion SDK types are not complete
       const blockType = block.type;
-      let text = '';
+      let result: NotionBlock | null = null;
 
-      // Extract text based on block type
+      // Handle different block types
       switch (blockType) {
-        case 'paragraph':
+        case 'paragraph': {
           // @ts-ignore
-          text = block.paragraph?.rich_text?.[0]?.plain_text || '';
+          const { text, annotations, links } = extractRichText(block.paragraph?.rich_text || []);
+          result = { 
+            type: 'paragraph', 
+            text: text,
+            annotations: annotations.length > 0 ? annotations : undefined,
+            url: links.length > 0 ? links[0].url : undefined
+          };
           break;
-        case 'heading_1':
+        }
+        
+        case 'heading_1': {
           // @ts-ignore
-          text = block.heading_1?.rich_text?.[0]?.plain_text || '';
+          const { text, annotations, links } = extractRichText(block.heading_1?.rich_text || []);
+          result = { 
+            type: 'heading_1', 
+            text: text,
+            annotations: annotations.length > 0 ? annotations : undefined,
+            url: links.length > 0 ? links[0].url : undefined
+          };
           break;
-        case 'heading_2':
+        }
+        
+        case 'heading_2': {
           // @ts-ignore
-          text = block.heading_2?.rich_text?.[0]?.plain_text || '';
+          const { text, annotations, links } = extractRichText(block.heading_2?.rich_text || []);
+          result = { 
+            type: 'heading_2', 
+            text: text,
+            annotations: annotations.length > 0 ? annotations : undefined,
+            url: links.length > 0 ? links[0].url : undefined
+          };
           break;
-        case 'heading_3':
+        }
+        
+        case 'heading_3': {
           // @ts-ignore
-          text = block.heading_3?.rich_text?.[0]?.plain_text || '';
+          const { text, annotations, links } = extractRichText(block.heading_3?.rich_text || []);
+          result = { 
+            type: 'heading_3', 
+            text: text,
+            annotations: annotations.length > 0 ? annotations : undefined,
+            url: links.length > 0 ? links[0].url : undefined
+          };
           break;
+        }
+        
+        case 'bulleted_list_item': {
+          // @ts-ignore
+          const { text, annotations, links } = extractRichText(block.bulleted_list_item?.rich_text || []);
+          result = { 
+            type: 'list_item', 
+            text: text,
+            annotations: annotations.length > 0 ? annotations : undefined,
+            url: links.length > 0 ? links[0].url : undefined,
+            is_list_item: true,
+            list_type: 'bulleted_list'
+          };
+          break;
+        }
+        
+        case 'numbered_list_item': {
+          // @ts-ignore
+          const { text, annotations, links } = extractRichText(block.numbered_list_item?.rich_text || []);
+          result = { 
+            type: 'list_item', 
+            text: text,
+            annotations: annotations.length > 0 ? annotations : undefined,
+            url: links.length > 0 ? links[0].url : undefined,
+            is_list_item: true,
+            list_type: 'numbered_list'
+          };
+          break;
+        }
+        
+        case 'image': {
+          // @ts-ignore
+          const imageUrl = block.image?.file?.url || block.image?.external?.url;
+          // @ts-ignore
+          const caption = block.image?.caption?.length > 0 ? extractRichText(block.image?.caption).text : '';
+          
+          if (imageUrl) {
+            result = { 
+              type: 'media', 
+              text: caption,
+              media_type: 'image',
+              media_url: imageUrl
+            };
+          }
+          break;
+        }
+        
+        case 'video': {
+          // @ts-ignore
+          const videoUrl = block.video?.file?.url || block.video?.external?.url;
+          // @ts-ignore
+          const caption = block.video?.caption?.length > 0 ? extractRichText(block.video?.caption).text : '';
+          
+          if (videoUrl) {
+            result = { 
+              type: 'media', 
+              text: caption,
+              media_type: 'video',
+              media_url: videoUrl
+            };
+          }
+          break;
+        }
+        
         default:
           // Handle other block types if needed
-          text = '';
+          console.log(`Unhandled block type: ${blockType}`);
+          break;
       }
 
-      return {
-        type: blockType,
-        text: text
-      };
-    }).filter(block => block.text !== ''); // Filter out empty blocks
+      if (result) {
+        processedBlocks.push(result);
+      }
+    }
+
+    return processedBlocks.filter(block => block.text !== '' || block.media_url);
   } catch (error) {
     console.error(`Error fetching page content for ${pageId}:`, error);
     return [];

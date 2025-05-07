@@ -3,11 +3,23 @@ import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PlatformContentModal } from "./PlatformContentModal";
 
+interface ContentBlock {
+  type: string;
+  text: string;
+  content?: ContentBlock[];
+  url?: string;
+  annotations?: any[];
+  is_list_item?: boolean;
+  list_type?: 'bulleted_list' | 'numbered_list';
+  media_type?: string;
+  media_url?: string;
+}
+
 interface PlatformCardProps {
   name: string;
   url: string;
   description?: string;
-  content?: Array<{ type: string; text: string }>;
+  content?: ContentBlock[];
 }
 
 export const PlatformCard = ({ name, url, description, content = [] }: PlatformCardProps) => {
