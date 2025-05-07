@@ -294,12 +294,31 @@ Deno.serve(async (req) => {
           try {
             // Extract basic page information
             const pageContent = await getNotionPageContent(notion, page.id);
+            
+            // Extract logo URL from the "Logo" property (Files & media field)
+            let logoUrl = null;
+            if (
+              page.properties.Logo && 
+              page.properties.Logo.files && 
+              Array.isArray(page.properties.Logo.files) && 
+              page.properties.Logo.files.length > 0
+            ) {
+              const logoFile = page.properties.Logo.files[0];
+              // Notion can store both external files and internal files
+              if (logoFile.type === 'external') {
+                logoUrl = logoFile.external?.url || null;
+              } else if (logoFile.type === 'file') {
+                logoUrl = logoFile.file?.url || null;
+              }
+            }
+            
             const platformData = {
               id: page.id,
               title: page.properties.Platform?.title?.[0]?.plain_text || 'Untitled',
               url: page.properties.URL?.url || '',
               description: page.properties.Description?.rich_text?.[0]?.plain_text || '',
               content: pageContent,
+              logo_url: logoUrl, // Add the logo URL to the platform data
               notion_url: page.url || '',
               created_time: page.created_time,
               last_edited_time: page.last_edited_time,

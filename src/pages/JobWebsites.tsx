@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getEnvironment } from "@/integrations/supabase/client";
@@ -16,6 +17,7 @@ interface Platform {
   content: Array<{ type: string; text: string }> | null;
   notion_url: string | null;
   created_time: string | null;
+  logo_url: string | null; // Add logo_url field
   attrs: any;
 }
 
@@ -317,6 +319,7 @@ const JobWebsites = () => {
               url={platform.url || "#"}
               description={platform.description || ""}
               content={platform.content || []}
+              logoUrl={platform.logo_url || undefined} // Pass the logo URL to PlatformCard
             />
           ))}
         </div>

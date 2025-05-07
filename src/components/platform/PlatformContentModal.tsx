@@ -44,6 +44,7 @@ interface PlatformContentModalProps {
   title: string;
   content: ContentBlock[];
   url: string;
+  logoUrl?: string; // Add logoUrl prop
 }
 
 export const PlatformContentModal = ({
@@ -52,6 +53,7 @@ export const PlatformContentModal = ({
   title,
   content,
   url,
+  logoUrl,
 }: PlatformContentModalProps) => {
   // Helper to render text with annotations and links
   const renderFormattedText = (text: string, url?: string) => {
@@ -229,7 +231,20 @@ export const PlatformContentModal = ({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
+        <DialogHeader className="text-center">
+          {/* Add logo display */}
+          {logoUrl && (
+            <div className="flex justify-center mb-4">
+              <img 
+                src={logoUrl} 
+                alt={`${title} logo`} 
+                className="h-16 object-contain" 
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                }}
+              />
+            </div>
+          )}
           <DialogTitle className="text-2xl font-bold">{title}</DialogTitle>
         </DialogHeader>
         <div className="mt-4">

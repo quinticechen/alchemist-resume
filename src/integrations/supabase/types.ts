@@ -145,6 +145,7 @@ export type Database = {
           description: string | null
           id: string
           last_edited_time: string | null
+          logo_url: string | null
           notion_url: string | null
           title: string | null
           url: string | null
@@ -157,6 +158,7 @@ export type Database = {
           description?: string | null
           id: string
           last_edited_time?: string | null
+          logo_url?: string | null
           notion_url?: string | null
           title?: string | null
           url?: string | null
@@ -169,6 +171,7 @@ export type Database = {
           description?: string | null
           id?: string
           last_edited_time?: string | null
+          logo_url?: string | null
           notion_url?: string | null
           title?: string | null
           url?: string | null
