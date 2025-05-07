@@ -21,6 +21,23 @@ interface ContentBlock {
   media_url?: string;
 }
 
+// Define a type for the special list block we're creating during processing
+interface ListBlock {
+  type: 'list';
+  items: ContentBlock[];
+  list_type: 'bulleted_list' | 'numbered_list';
+}
+
+// Type guard to check if a block is a ListBlock
+function isListBlock(block: ContentBlock | ListBlock): block is ListBlock {
+  return block.type === 'list' && 'items' in block;
+}
+
+// Type guard to check if a block is a ContentBlock
+function isContentBlock(block: ContentBlock | ListBlock): block is ContentBlock {
+  return 'text' in block;
+}
+
 interface PlatformContentModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -56,7 +73,7 @@ export const PlatformContentModal = ({
   // Process content blocks for lists
   const processedContent = React.useMemo(() => {
     // Group list items together
-    let result: (ContentBlock | { type: 'list', items: ContentBlock[], list_type: 'bulleted_list' | 'numbered_list' })[] = [];
+    let result: (ContentBlock | ListBlock)[] = [];
     let currentList: ContentBlock[] = [];
     let currentListType: 'bulleted_list' | 'numbered_list' | null = null;
 
@@ -104,10 +121,10 @@ export const PlatformContentModal = ({
     return result;
   }, [content]);
 
-  const renderContent = (blocks: typeof processedContent) => {
+  const renderContent = (blocks: (ContentBlock | ListBlock)[]) => {
     return blocks.map((block, index) => {
-      // Handle special case for grouped lists
-      if (block.type === 'list') {
+      // Handle special case for grouped lists using type guard
+      if (isListBlock(block)) {
         if (block.list_type === 'bulleted_list') {
           return (
             <ul key={index} className="list-disc pl-6 mb-4 space-y-1">
@@ -131,76 +148,81 @@ export const PlatformContentModal = ({
         }
       }
 
-      // Handle regular block types
-      switch (block.type) {
-        case 'heading_1':
-          return (
-            <h1 key={index} className="text-2xl font-bold mb-4">
-              {renderFormattedText(block.text, block.url)}
-            </h1>
-          );
-        case 'heading_2':
-          return (
-            <h2 key={index} className="text-xl font-semibold mb-3">
-              {renderFormattedText(block.text, block.url)}
-            </h2>
-          );
-        case 'heading_3':
-          return (
-            <h3 key={index} className="text-lg font-medium mb-2">
-              {renderFormattedText(block.text, block.url)}
-            </h3>
-          );
-        case 'paragraph':
-          return (
-            <p key={index} className="mb-4 text-gray-600">
-              {renderFormattedText(block.text, block.url)}
-            </p>
-          );
-        case 'media':
-          if (block.media_type === 'image') {
+      // Handle regular block types for ContentBlock (not ListBlock)
+      if (isContentBlock(block)) {
+        switch (block.type) {
+          case 'heading_1':
             return (
-              <figure key={index} className="mb-4">
-                <img 
-                  src={block.media_url} 
-                  alt={block.text || "Embedded image"} 
-                  className="max-w-full h-auto rounded-md"
-                />
-                {block.text && (
-                  <figcaption className="text-sm text-gray-500 mt-2 text-center">
-                    {block.text}
-                  </figcaption>
-                )}
-              </figure>
+              <h1 key={index} className="text-2xl font-bold mb-4">
+                {renderFormattedText(block.text, block.url)}
+              </h1>
             );
-          } else if (block.media_type === 'video') {
+          case 'heading_2':
             return (
-              <figure key={index} className="mb-4">
-                <div className="relative pb-[56.25%] h-0 overflow-hidden rounded-md">
-                  <iframe
-                    src={block.media_url}
-                    frameBorder="0"
-                    allowFullScreen
-                    className="absolute top-0 left-0 w-full h-full"
-                    title={block.text || "Embedded video"}
+              <h2 key={index} className="text-xl font-semibold mb-3">
+                {renderFormattedText(block.text, block.url)}
+              </h2>
+            );
+          case 'heading_3':
+            return (
+              <h3 key={index} className="text-lg font-medium mb-2">
+                {renderFormattedText(block.text, block.url)}
+              </h3>
+            );
+          case 'paragraph':
+            return (
+              <p key={index} className="mb-4 text-gray-600">
+                {renderFormattedText(block.text, block.url)}
+              </p>
+            );
+          case 'media':
+            if (block.media_type === 'image') {
+              return (
+                <figure key={index} className="mb-4">
+                  <img 
+                    src={block.media_url} 
+                    alt={block.text || "Embedded image"} 
+                    className="max-w-full h-auto rounded-md"
                   />
-                </div>
-                {block.text && (
-                  <figcaption className="text-sm text-gray-500 mt-2 text-center">
-                    {block.text}
-                  </figcaption>
-                )}
-              </figure>
+                  {block.text && (
+                    <figcaption className="text-sm text-gray-500 mt-2 text-center">
+                      {block.text}
+                    </figcaption>
+                  )}
+                </figure>
+              );
+            } else if (block.media_type === 'video') {
+              return (
+                <figure key={index} className="mb-4">
+                  <div className="relative pb-[56.25%] h-0 overflow-hidden rounded-md">
+                    <iframe
+                      src={block.media_url}
+                      frameBorder="0"
+                      allowFullScreen
+                      className="absolute top-0 left-0 w-full h-full"
+                      title={block.text || "Embedded video"}
+                    />
+                  </div>
+                  {block.text && (
+                    <figcaption className="text-sm text-gray-500 mt-2 text-center">
+                      {block.text}
+                    </figcaption>
+                  )}
+                </figure>
+              );
+            }
+            return null;
+          default:
+            return (
+              <p key={index} className="mb-4 text-gray-600">
+                {renderFormattedText(block.text, block.url)}
+              </p>
             );
-          }
-          return null;
-        default:
-          return (
-            <p key={index} className="mb-4 text-gray-600">
-              {renderFormattedText(block.text, block.url)}
-            </p>
-          );
+        }
       }
+      
+      // Fallback for any cases not handled
+      return null;
     });
   };
 
