@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -84,7 +83,7 @@ const Home = () => {
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
-  // Lottie 設定 (使用 react-lottie)
+  // Lottie settings
   const defaultOptions = {
     loop: true,
     autoplay: true,
@@ -107,13 +106,11 @@ const Home = () => {
           throw sessionError;
         }
 
-        // console.log("Initial session check:", initialSession);
         setSession(initialSession);
 
         const {
           data: { subscription },
         } = supabase.auth.onAuthStateChange((event, currentSession) => {
-          // console.log("Auth state changed:", event, currentSession);
           setSession(currentSession);
 
           if (event === "SIGNED_IN" && currentSession) {
@@ -129,7 +126,6 @@ const Home = () => {
           subscription.unsubscribe();
         };
       } catch (error) {
-        // console.error("Session initialization error:", error);
         toast({
           title: "Error",
           description:
@@ -149,17 +145,13 @@ const Home = () => {
       const {
         data: { session: currentSession },
       } = await supabase.auth.getSession();
-      // console.log("Current session before navigation:", currentSession);
 
       if (currentSession) {
-        // console.log("Navigating to workshop (user is logged in)");
         navigate("/alchemist-workshop");
       } else {
-        // console.log("Navigating to login (user is not logged in)");
         navigate("/login");
       }
     } catch (error) {
-      // console.error("Navigation error:", error);
       toast({
         title: "Error",
         description:

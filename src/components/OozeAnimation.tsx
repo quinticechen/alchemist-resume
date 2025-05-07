@@ -79,11 +79,16 @@ const OozeAnimation: React.FC<OozeAnimationProps> = ({
     
     const { x: delayedX, y: delayedY } = delayedMouse.current;
     
+    // Position the animation at the top-right of the cursor
+    // Adjust the offset as needed to make it appear at the top-right
+    const topRightOffsetX = 20; // Positive offset moves it to the right
+    const topRightOffsetY = -20; // Negative offset moves it up
+    
     gsap.set(oozeRef.current, {
-      x: delayedX,
-      y: delayedY,
-      xPercent: -50,
-      yPercent: -50
+      x: delayedX + topRightOffsetX,
+      y: delayedY + topRightOffsetY,
+      xPercent: 0, // Changed from -50 to 0 to position at the left edge
+      yPercent: 0  // Changed from -50 to 0 to position at the top edge
     });
     
     rafId.current = window.requestAnimationFrame(animate);
