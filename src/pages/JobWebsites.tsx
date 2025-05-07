@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getEnvironment } from "@/integrations/supabase/client";
@@ -44,6 +43,9 @@ const JobWebsites = () => {
   const [apiErrorDetails, setApiErrorDetails] = useState<string | null>(null);
   const { toast } = useToast();
   const currentEnv = getEnvironment();
+  
+  // Determine if we should show sync controls based on environment
+  const shouldShowSyncControls = currentEnv !== "production";
 
   const fetchPlatforms = async () => {
     try {
@@ -81,6 +83,9 @@ const JobWebsites = () => {
   };
 
   const checkSyncStatus = async () => {
+    // Skip sync status check in production
+    if (currentEnv === "production") return;
+    
     try {
       console.log("Checking Notion sync status...");
 
@@ -125,6 +130,9 @@ const JobWebsites = () => {
   };
 
   const triggerSync = async () => {
+    // Prevent sync on production
+    if (currentEnv === "production") return;
+    
     try {
       setIsSyncing(true);
       setError(null);
@@ -180,33 +188,38 @@ const JobWebsites = () => {
 
   useEffect(() => {
     fetchPlatforms();
-    checkSyncStatus();
+    if (shouldShowSyncControls) {
+      checkSyncStatus();
+    }
   }, []);
 
   return (
     <div className="container mx-auto p-8">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Job Websites</h1>
-        <Button
-          onClick={triggerSync}
-          disabled={isSyncing}
-          className="bg-gradient-primary-light text-white hover:opacity-90 transition-opacity"
-        >
-          {isSyncing ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Syncing...
-            </>
-          ) : (
-            <>
-              <RefreshCcw className="h-4 w-4" />
-              Sync from Notion
-            </>
-          )}
-        </Button>
+        {shouldShowSyncControls && (
+          <Button
+            onClick={triggerSync}
+            disabled={isSyncing}
+            className="bg-gradient-primary-light text-white hover:opacity-90 transition-opacity"
+          >
+            {isSyncing ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Syncing...
+              </>
+            ) : (
+              <>
+                <RefreshCcw className="h-4 w-4" />
+                Sync from Notion
+              </>
+            )}
+          </Button>
+        )}
       </div>
 
       {syncStatus &&
+        shouldShowSyncControls &&
         (syncStatus.hasNotionApiKey === false ||
           syncStatus.hasNotionDatabaseId === false) && (
           <div className="bg-amber-50 border border-amber-200 text-amber-800 p-4 mb-6 rounded-lg">
@@ -248,7 +261,7 @@ const JobWebsites = () => {
         />
       )}
 
-      {syncResults.length > 0 && (
+      {syncResults.length > 0 && shouldShowSyncControls && (
         <div className="mb-6 bg-gray-50 p-4 rounded-lg border border-gray-200">
           <h3 className="font-medium mb-2">Sync Results</h3>
           <div className="text-sm">
@@ -322,7 +335,7 @@ const JobWebsites = () => {
               <li>The Notion database is empty</li>
               <li>There was an error during the sync process</li>
             </ul>
-            {currentEnv === "staging" && (
+            {shouldShowSyncControls && (
               <Button
                 onClick={triggerSync}
                 className="w-full bg-gradient-primary-light text-white hover:opacity-90 transition-opacity"
@@ -342,7 +355,7 @@ const JobWebsites = () => {
             )}
           </div>
 
-          {syncStatus?.message && (
+          {syncStatus?.message && shouldShowSyncControls && (
             <div className="text-sm text-gray-500">
               Last sync message: {syncStatus.message}
             </div>
