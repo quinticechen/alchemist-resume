@@ -175,19 +175,59 @@ async function getNotionPageContent(notionClient: Client, pageId: string): Promi
           // @ts-ignore
           const caption = block.video?.caption?.length > 0 ? extractRichText(block.video?.caption).text : '';
           
-          if (videoUrl) {
+          // Process YouTube and other video URLs to ensure they're embeddable
+          let processedVideoUrl = videoUrl;
+          if (videoUrl && videoUrl.includes('youtube.com/watch')) {
+            // Convert YouTube watch URLs to embed URLs
+            const videoId = new URL(videoUrl).searchParams.get('v');
+            if (videoId) {
+              processedVideoUrl = `https://www.youtube.com/embed/${videoId}`;
+            }
+          } else if (videoUrl && videoUrl.includes('youtu.be')) {
+            // Convert youtu.be short URLs to embed URLs
+            const videoId = new URL(videoUrl).pathname.substring(1);
+            processedVideoUrl = `https://www.youtube.com/embed/${videoId}`;
+          } else if (videoUrl && videoUrl.includes('vimeo.com')) {
+            // Convert Vimeo URLs to embed URLs
+            const vimeoId = new URL(videoUrl).pathname.substring(1);
+            processedVideoUrl = `https://player.vimeo.com/video/${vimeoId}`;
+          }
+          
+          if (processedVideoUrl) {
             result = { 
               type: 'media', 
               text: caption,
               media_type: 'video',
-              media_url: videoUrl
+              media_url: processedVideoUrl
             };
           }
           break;
         }
         
+        case 'divider': {
+          // Handle divider blocks
+          result = {
+            type: 'divider',
+            text: '',
+          };
+          break;
+        }
+        
+        case 'quote': {
+          // Handle quote blocks
+          // @ts-ignore
+          const { text, annotations, links } = extractRichText(block.quote?.rich_text || []);
+          result = {
+            type: 'quote',
+            text: text,
+            annotations: annotations.length > 0 ? annotations : undefined,
+            url: links.length > 0 ? links[0].url : undefined
+          };
+          break;
+        }
+
         default:
-          // Handle other block types if needed
+          // Log unhandled block types for debugging
           console.log(`Unhandled block type: ${blockType}`);
           break;
       }
@@ -197,7 +237,7 @@ async function getNotionPageContent(notionClient: Client, pageId: string): Promi
       }
     }
 
-    return processedBlocks.filter(block => block.text !== '' || block.media_url);
+    return processedBlocks.filter(block => block.text !== '' || block.media_url || block.type === 'divider');
   } catch (error) {
     console.error(`Error fetching page content for ${pageId}:`, error);
     return [];
@@ -318,7 +358,7 @@ Deno.serve(async (req) => {
               url: page.properties.URL?.url || '',
               description: page.properties.Description?.rich_text?.[0]?.plain_text || '',
               content: pageContent,
-              logo_url: logoUrl, // Add the logo URL to the platform data
+              logo_url: logoUrl,
               notion_url: page.url || '',
               created_time: page.created_time,
               last_edited_time: page.last_edited_time,

@@ -5,9 +5,11 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ExternalLink } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
 
 interface ContentBlock {
   type: string;
@@ -44,7 +46,7 @@ interface PlatformContentModalProps {
   title: string;
   content: ContentBlock[];
   url: string;
-  logoUrl?: string; // Add logoUrl prop
+  logoUrl?: string; 
 }
 
 export const PlatformContentModal = ({
@@ -177,6 +179,14 @@ export const PlatformContentModal = ({
                 {renderFormattedText(block.text, block.url)}
               </p>
             );
+          case 'quote':
+            return (
+              <blockquote key={index} className="pl-4 border-l-4 border-gray-300 italic my-4 text-gray-600">
+                {renderFormattedText(block.text, block.url)}
+              </blockquote>
+            );
+          case 'divider':
+            return <Separator key={index} className="my-6" />;
           case 'media':
             if (block.media_type === 'image') {
               return (
@@ -199,7 +209,7 @@ export const PlatformContentModal = ({
                   <div className="relative pb-[56.25%] h-0 overflow-hidden rounded-md">
                     <iframe
                       src={block.media_url}
-                      frameBorder="0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                       allowFullScreen
                       className="absolute top-0 left-0 w-full h-full"
                       title={block.text || "Embedded video"}
@@ -246,6 +256,9 @@ export const PlatformContentModal = ({
             </div>
           )}
           <DialogTitle className="text-2xl font-bold">{title}</DialogTitle>
+          <DialogDescription className="text-gray-500">
+            Job platform details and information
+          </DialogDescription>
         </DialogHeader>
         <div className="mt-4">
           {content && content.length > 0 ? renderContent(processedContent) : (
