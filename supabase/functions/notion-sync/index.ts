@@ -1,4 +1,3 @@
-
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.47.12'
 import { Client } from "https://deno.land/x/notion_sdk@v2.2.3/src/mod.ts";
 import { corsHeaders } from '../_shared/cors.ts';
@@ -57,6 +56,116 @@ function extractRichText(richTextArray: any[]): { text: string, annotations: any
   }
   
   return { text: combinedText, annotations, links };
+}
+
+// Function to download image and upload to Supabase Storage
+async function backupImageToStorage(imageUrl: string, platformTitle: string, imageType = 'image'): Promise<string | null> {
+  if (!imageUrl) return null;
+  
+  try {
+    console.log(`Downloading ${imageType}: ${imageUrl.substring(0, 50)}...`);
+    
+    // Create sanitized filename from URL
+    const fileName = `${Date.now()}_${imageType}_${Math.random().toString(36).substring(2, 10)}`;
+    const extension = imageUrl.includes('.') ? 
+      imageUrl.split('.').pop()?.split('?')[0].toLowerCase() : 'jpg';
+    
+    // Create sanitized platform name for folder structure
+    const sanitizedPlatformName = platformTitle
+      .replace(/[^a-zA-Z0-9]/g, '_')
+      .toLowerCase();
+    
+    const folderPath = `notion-media/${sanitizedPlatformName}`;
+    const filePath = `${folderPath}/${fileName}.${extension}`;
+    
+    // Fetch the image content
+    const imageResponse = await fetch(imageUrl);
+    if (!imageResponse.ok) {
+      throw new Error(`Failed to download image: ${imageResponse.status}`);
+    }
+    
+    const imageBlob = await imageResponse.blob();
+    
+    // Initialize Supabase client
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    
+    // Ensure the bucket exists (create if it doesn't)
+    const bucketName = 'notion-media';
+    const { data: buckets } = await supabase.storage.listBuckets();
+    
+    if (!buckets?.some(bucket => bucket.name === bucketName)) {
+      console.log(`Creating bucket: ${bucketName}`);
+      const { error: bucketError } = await supabase.storage.createBucket(bucketName, { 
+        public: true,
+        fileSizeLimit: 100 * 1024 * 1024 // 100MB limit
+      });
+      
+      if (bucketError) {
+        console.error(`Error creating bucket: ${bucketError.message}`);
+        return null;
+      }
+    }
+    
+    // Upload the image to Supabase storage
+    const { data, error } = await supabase.storage
+      .from(bucketName)
+      .upload(filePath, imageBlob, {
+        contentType: imageBlob.type,
+        upsert: true
+      });
+      
+    if (error) {
+      console.error(`Error uploading to storage: ${error.message}`);
+      return null;
+    }
+    
+    // Get the public URL
+    const { data: publicUrlData } = supabase.storage
+      .from(bucketName)
+      .getPublicUrl(filePath);
+      
+    console.log(`Successfully backed up ${imageType} to: ${publicUrlData.publicUrl}`);
+    
+    return publicUrlData.publicUrl;
+  } catch (error) {
+    console.error(`Error backing up ${imageType}:`, error);
+    return null;
+  }
+}
+
+// Process content blocks and backup media
+async function processContentWithMediaBackup(blocks: NotionBlock[], platformTitle: string): Promise<NotionBlock[]> {
+  const processedBlocks = [...blocks];
+  
+  for (let i = 0; i < processedBlocks.length; i++) {
+    const block = processedBlocks[i];
+    
+    // Handle media blocks
+    if (block.type === 'media' && block.media_url) {
+      // Backup image or video thumbnail
+      const backupUrl = await backupImageToStorage(
+        block.media_url, 
+        platformTitle,
+        block.media_type
+      );
+      
+      // Replace the URL with the backup if successful
+      if (backupUrl) {
+        processedBlocks[i] = {
+          ...block,
+          media_url: backupUrl,
+          original_media_url: block.media_url // Store original URL for reference
+        };
+      }
+    }
+    
+    // Process nested content if it exists
+    if (block.content && Array.isArray(block.content)) {
+      processedBlocks[i].content = await processContentWithMediaBackup(block.content, platformTitle);
+    }
+  }
+  
+  return processedBlocks;
 }
 
 async function getNotionPageContent(notionClient: Client, pageId: string): Promise<NotionBlock[]> {
@@ -352,13 +461,28 @@ Deno.serve(async (req) => {
               }
             }
             
+            // If we have a logo URL, back it up too
+            let backedUpLogoUrl = logoUrl;
+            if (logoUrl) {
+              const platformTitle = page.properties.Platform?.title?.[0]?.plain_text || 'Untitled';
+              backedUpLogoUrl = await backupImageToStorage(
+                logoUrl,
+                platformTitle,
+                'logo'
+              ) || logoUrl;
+            }
+            
+            // Process all media content and replace with backed up versions
+            const platformTitle = page.properties.Platform?.title?.[0]?.plain_text || 'Untitled';
+            const processedPageContent = await processContentWithMediaBackup(pageContent, platformTitle);
+            
             const platformData = {
               id: page.id,
               title: page.properties.Platform?.title?.[0]?.plain_text || 'Untitled',
               url: page.properties.URL?.url || '',
               description: page.properties.Description?.rich_text?.[0]?.plain_text || '',
-              content: pageContent,
-              logo_url: logoUrl,
+              content: processedPageContent,
+              logo_url: backedUpLogoUrl,
               notion_url: page.url || '',
               created_time: page.created_time,
               last_edited_time: page.last_edited_time,
