@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,16 +6,11 @@ import { Textarea } from "@/components/ui/textarea";
 interface PersonalInfo {
   firstName?: string;
   lastName?: string;
-  name?: string;
-  email?: string;
   phone?: string;
-  address?: string;
+  email?: string;
   location?: string;
-  website?: string;
-  linkedin?: string;
   linkedIn?: string;
-  summary?: string;
-  professionalSummary?: string;
+  website?: string;
 }
 
 interface PersonalInfoSectionProps {
@@ -35,6 +29,9 @@ const PersonalInfoSection = ({ data, onChange }: PersonalInfoSectionProps) => {
     return (data as PersonalInfo) || {};
   })();
   
+  console.log('PersonalInfoSection render - personalInfo:', personalInfo);
+  console.log('PersonalInfoSection render - raw data:', data);
+  
   const handleFieldChange = (field: string, value: string) => {
     console.log(`PersonalInfoSection: Updating field ${field} with value:`, value);
     
@@ -46,58 +43,30 @@ const PersonalInfoSection = ({ data, onChange }: PersonalInfoSectionProps) => {
     
     console.log('Updated personalInfo:', updatedPersonalInfo);
     
-    // Check if the parent data has a nested structure
-    if (data && typeof data === 'object' && 'personalInfo' in data) {
-      // Parent expects nested structure - update the whole data object
-      onChange('personalInfo', updatedPersonalInfo);
-    } else {
-      // Parent expects direct personalInfo - pass the field and value
-      onChange(field, value);
-    }
+    // Always pass the entire personalInfo object to parent
+    onChange('personalInfo', updatedPersonalInfo);
   };
-
-  // Get the full name from firstName + lastName or use name field
-  const fullName = personalInfo.firstName && personalInfo.lastName 
-    ? `${personalInfo.firstName} ${personalInfo.lastName}`.trim()
-    : personalInfo.name || '';
-
-  const handleFullNameChange = (value: string) => {
-    console.log('Full name change:', value);
-    
-    const nameParts = value.trim().split(' ');
-    const firstName = nameParts[0] || '';
-    const lastName = nameParts.slice(1).join(' ') || '';
-    
-    const updatedPersonalInfo: PersonalInfo = {
-      ...personalInfo,
-      firstName,
-      lastName,
-      name: value
-    };
-    
-    // Check if the parent data has a nested structure
-    if (data && typeof data === 'object' && 'personalInfo' in data) {
-      onChange('personalInfo', updatedPersonalInfo);
-    } else {
-      // For direct structure, we need to update multiple fields
-      onChange('name', value);
-      onChange('firstName', firstName);
-      onChange('lastName', lastName);
-    }
-  };
-
-  console.log('PersonalInfoSection render - personalInfo:', personalInfo);
 
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="name" className="text-gray-700 font-medium">Full Name</Label>
+          <Label htmlFor="firstName" className="text-gray-700 font-medium">First Name</Label>
           <Input
-            id="name"
-            value={fullName}
-            onChange={(e) => handleFullNameChange(e.target.value)}
-            placeholder="Enter your full name"
+            id="firstName"
+            value={personalInfo.firstName || ''}
+            onChange={(e) => handleFieldChange('firstName', e.target.value)}
+            placeholder="Enter your first name"
+            className="mt-1 text-gray-900 placeholder-gray-400 bg-white border-gray-300"
+          />
+        </div>
+        <div>
+          <Label htmlFor="lastName" className="text-gray-700 font-medium">Last Name</Label>
+          <Input
+            id="lastName"
+            value={personalInfo.lastName || ''}
+            onChange={(e) => handleFieldChange('lastName', e.target.value)}
+            placeholder="Enter your last name"
             className="mt-1 text-gray-900 placeholder-gray-400 bg-white border-gray-300"
           />
         </div>
@@ -123,6 +92,26 @@ const PersonalInfoSection = ({ data, onChange }: PersonalInfoSectionProps) => {
           />
         </div>
         <div>
+          <Label htmlFor="location" className="text-gray-700 font-medium">Location</Label>
+          <Input
+            id="location"
+            value={personalInfo.location || ''}
+            onChange={(e) => handleFieldChange('location', e.target.value)}
+            placeholder="Enter your location"
+            className="mt-1 text-gray-900 placeholder-gray-400 bg-white border-gray-300"
+          />
+        </div>
+        <div>
+          <Label htmlFor="linkedIn" className="text-gray-700 font-medium">LinkedIn</Label>
+          <Input
+            id="linkedIn"
+            value={personalInfo.linkedIn || ''}
+            onChange={(e) => handleFieldChange('linkedIn', e.target.value)}
+            placeholder="Enter your LinkedIn profile URL"
+            className="mt-1 text-gray-900 placeholder-gray-400 bg-white border-gray-300"
+          />
+        </div>
+        <div className="md:col-span-2">
           <Label htmlFor="website" className="text-gray-700 font-medium">Website</Label>
           <Input
             id="website"
@@ -132,37 +121,6 @@ const PersonalInfoSection = ({ data, onChange }: PersonalInfoSectionProps) => {
             className="mt-1 text-gray-900 placeholder-gray-400 bg-white border-gray-300"
           />
         </div>
-        <div>
-          <Label htmlFor="linkedin" className="text-gray-700 font-medium">LinkedIn</Label>
-          <Input
-            id="linkedin"
-            value={personalInfo.linkedin || personalInfo.linkedIn || ''}
-            onChange={(e) => handleFieldChange('linkedin', e.target.value)}
-            placeholder="Enter your LinkedIn profile URL"
-            className="mt-1 text-gray-900 placeholder-gray-400 bg-white border-gray-300"
-          />
-        </div>
-        <div>
-          <Label htmlFor="address" className="text-gray-700 font-medium">Address</Label>
-          <Input
-            id="address"
-            value={personalInfo.address || personalInfo.location || ''}
-            onChange={(e) => handleFieldChange('address', e.target.value)}
-            placeholder="Enter your address"
-            className="mt-1 text-gray-900 placeholder-gray-400 bg-white border-gray-300"
-          />
-        </div>
-      </div>
-      
-      <div>
-        <Label htmlFor="summary" className="text-gray-700 font-medium">Professional Summary</Label>
-        <Textarea
-          id="summary"
-          value={personalInfo.summary || personalInfo.professionalSummary || ''}
-          onChange={(e) => handleFieldChange('summary', e.target.value)}
-          placeholder="Enter a brief professional summary"
-          className="min-h-[100px] mt-1 text-gray-900 placeholder-gray-400 bg-white border-gray-300"
-        />
       </div>
     </div>
   );
