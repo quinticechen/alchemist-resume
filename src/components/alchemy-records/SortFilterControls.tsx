@@ -114,7 +114,7 @@ const SortFilterControls = ({
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {/* Filter Dropdown */}
+      {/* Filter Dropdown - Ensure each item closes the dropdown after selection */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="outline" className="flex items-center gap-2">

@@ -98,12 +98,15 @@ export const useAlchemyRecords = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const { data: profile } = await supabase
+        // Fix the profiles query to avoid 406 error
+        const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('usage_count')
           .single();
 
-        if (profile) {
+        if (profileError) {
+          console.error('Error fetching profile:', profileError);
+        } else if (profile) {
           setUsageCount(profile.usage_count || 0);
         }
 

@@ -9,7 +9,6 @@ import RecordsPagination from "@/components/alchemy-records/RecordsPagination";
 import SortFilterControls from "@/components/alchemy-records/SortFilterControls";
 import Lottie from "react-lottie";
 import Loading from "@/animations/Loading.json";
-import SeekerDialog from "@/components/SeekerDialog";
 
 const AlchemyRecords = () => {
   const { session, isLoading } = useAuth();
@@ -107,7 +106,6 @@ const AlchemyRecords = () => {
           />
         </div>
       </div>
-      {/* <SeekerDialog position="bottom" /> */}
     </div>
   );
 };
