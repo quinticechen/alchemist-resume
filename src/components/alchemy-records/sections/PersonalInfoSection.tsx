@@ -1,7 +1,7 @@
+
 import React from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 
 interface PersonalInfo {
   firstName?: string;
@@ -14,20 +14,13 @@ interface PersonalInfo {
 }
 
 interface PersonalInfoSectionProps {
-  data: { personalInfo?: PersonalInfo } | PersonalInfo;
-  onChange: (field: string, value: string | PersonalInfo) => void;
+  data: any; // The resume data object
+  onChange: (updatedData: any) => void; // Function to update the entire resume data
 }
 
 const PersonalInfoSection = ({ data, onChange }: PersonalInfoSectionProps) => {
-  // Extract personalInfo from nested structure or use data directly
-  const personalInfo: PersonalInfo = (() => {
-    // If data has a personalInfo property, use it
-    if (data && typeof data === 'object' && 'personalInfo' in data) {
-      return data.personalInfo || {};
-    }
-    // Otherwise, data IS the personalInfo
-    return (data as PersonalInfo) || {};
-  })();
+  // Extract personalInfo from the data
+  const personalInfo: PersonalInfo = data?.personalInfo || {};
   
   console.log('PersonalInfoSection render - personalInfo:', personalInfo);
   console.log('PersonalInfoSection render - raw data:', data);
@@ -43,8 +36,16 @@ const PersonalInfoSection = ({ data, onChange }: PersonalInfoSectionProps) => {
     
     console.log('Updated personalInfo:', updatedPersonalInfo);
     
-    // Always pass the entire personalInfo object to parent
-    onChange('personalInfo', updatedPersonalInfo);
+    // Create the complete updated data structure
+    const updatedData = {
+      ...data,
+      personalInfo: updatedPersonalInfo
+    };
+    
+    console.log('Complete updated data:', updatedData);
+    
+    // Pass the entire updated data structure to parent
+    onChange(updatedData);
   };
 
   return (
