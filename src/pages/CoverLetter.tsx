@@ -76,17 +76,15 @@ const CoverLetter = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100">
-      <div className="container mx-auto px-4 py-6">
+    <div className="flex flex-col h-screen overflow-hidden bg-gradient-to-b from-neutral-50 to-neutral-100">
+      <div className="mt-[72px] page-header flex-shrink-0 py-3 px-4 border-b bg-white shadow-sm">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="relative flex items-center justify-center h-full">
+        <div className="relative flex items-center justify-center h-full">
             <Button variant="outline" onClick={handleBack} size="sm" className="absolute left-4 flex items-center gap-2">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Alchemy Records
             </Button>
             <h1 className="text-2xl font-bold bg-gradient-primary text-transparent bg-clip-text">Cover Letter</h1>
-          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
