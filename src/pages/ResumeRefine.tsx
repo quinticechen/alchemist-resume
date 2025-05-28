@@ -1,10 +1,11 @@
-
 import React, { useEffect, useState, useCallback } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import ResumeEditor from "@/components/alchemy-records/ResumeEditor";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -54,7 +55,7 @@ const ResumeRefine = () => {
   } | null>(null);
   const [jobDescription, setJobDescription] = useState<any>(null);
   const { toast } = useToast();
-  const [headerHeight, setHeaderHeight] = useState(72); // Set to 72px as specified
+  const [headerHeight, setHeaderHeight] = useState(72);
 
   const analysisId = paramAnalysisId || locationAnalysisId;
 
@@ -272,6 +273,14 @@ const ResumeRefine = () => {
     [toast]
   );
 
+  const handleBack = () => {
+    if (hasUnsavedChanges) {
+      setShowUnsavedDialog(true);
+    } else {
+      navigate("/alchemy-records");
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="w-64 h-64 mx-auto">
@@ -294,11 +303,22 @@ const ResumeRefine = () => {
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-gradient-to-b from-neutral-50 to-neutral-100">
-      {/* Top section - Header with job title */}
+      {/* Top section - Header with back button and job title */}
       <div className="mt-[72px] page-header flex-shrink-0 py-3 px-4 border-b bg-white shadow-sm">
-        <h1 className="text-2xl font-bold bg-gradient-primary text-transparent bg-clip-text text-center">
-          {resumeData?.jobTitle || "Resume Editor"}
-        </h1>
+        <div className="flex items-center gap-4">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={handleBack}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back
+          </Button>
+          <h1 className="text-2xl font-bold bg-gradient-primary text-transparent bg-clip-text">
+            {resumeData?.jobTitle || "Resume Editor"}
+          </h1>
+        </div>
       </div>
 
       {/* Middle section - Main content */}
@@ -309,7 +329,7 @@ const ResumeRefine = () => {
             goldenResume={resumeData.goldenResume}
             analysisId={analysisId}
             setHasUnsavedChanges={setHasUnsavedChanges}
-            pageHeaderHeight={headerHeight} // Using the measured or default header height
+            pageHeaderHeight={headerHeight}
           />
         )}
       </div>

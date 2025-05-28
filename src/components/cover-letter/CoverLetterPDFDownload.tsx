@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Download, FileText } from "lucide-react";
+import { Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import jsPDF from "jspdf";
 
@@ -46,12 +46,32 @@ const CoverLetterPDFDownload = ({
         pdf.text(`Company: ${companyName}`, 20, 50);
       }
 
-      // Add content
+      // Clean and prepare content - remove any special characters that might cause issues
+      const cleanContent = coverLetterContent
+        .replace(/[^\x00-\x7F]/g, '') // Remove non-ASCII characters
+        .replace(/\r\n/g, '\n') // Normalize line endings
+        .replace(/\r/g, '\n')
+        .trim();
+
+      // Add content with proper text splitting
       pdf.setFontSize(fontSettings.fontSize);
       pdf.setFont('helvetica', 'normal');
       
-      const lines = pdf.splitTextToSize(coverLetterContent, 170);
-      pdf.text(lines, 20, jobTitle || companyName ? 65 : 45);
+      const startY = jobTitle || companyName ? 65 : 45;
+      const lines = pdf.splitTextToSize(cleanContent, 170);
+      
+      // Handle multi-page content
+      let currentY = startY;
+      const lineHeight = fontSettings.lineHeight * fontSettings.fontSize * 0.352778; // Convert to mm
+      
+      lines.forEach((line: string) => {
+        if (currentY > 270) { // Near bottom of page
+          pdf.addPage();
+          currentY = 20;
+        }
+        pdf.text(line, 20, currentY);
+        currentY += lineHeight;
+      });
 
       // Generate filename
       const filename = `Cover_Letter_${jobTitle?.replace(/[^a-zA-Z0-9]/g, '_') || 'Position'}.pdf`;
