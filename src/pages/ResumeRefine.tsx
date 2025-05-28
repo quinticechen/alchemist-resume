@@ -305,19 +305,21 @@ const ResumeRefine = () => {
     <div className="flex flex-col h-screen overflow-hidden bg-gradient-to-b from-neutral-50 to-neutral-100">
       {/* Top section - Header with back button and job title */}
       <div className="mt-[72px] page-header flex-shrink-0 py-3 px-4 border-b bg-white shadow-sm">
-        <div className="flex items-center gap-4 text-center">
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={handleBack}
-            className="flex items-center gap-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back
-          </Button>
-          <h1 className="text-2xl font-bold bg-gradient-primary text-transparent bg-clip-text">
-            {resumeData?.jobTitle || "Resume Editor"}
-          </h1>
+        <div className="relative flex items-center justify-center h-full"> {/* 父層容器：相對定位，Flexbox 置中 */}
+        {/* 返回按鈕：絕對定位在左側 */}
+        <Button 
+          variant="outline" 
+          size="sm"
+          onClick={handleBack}
+          className="absolute left-4 flex items-center gap-2" // left-4 將按鈕固定在左側
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back
+        </Button>
+        
+        <h1 className="text-2xl font-bold bg-gradient-primary text-transparent bg-clip-text">
+          {resumeData?.jobTitle || "Resume Editor"}
+        </h1>
         </div>
       </div>
 
