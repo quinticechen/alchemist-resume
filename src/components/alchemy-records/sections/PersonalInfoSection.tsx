@@ -26,11 +26,11 @@ interface PersonalInfoSectionProps {
 
 const PersonalInfoSection = ({ data, onChange }: PersonalInfoSectionProps) => {
   // Extract personalInfo from nested structure or use data directly
-  const personalInfo = 'personalInfo' in data ? data.personalInfo || {} : data || {};
+  const personalInfo: PersonalInfo = 'personalInfo' in data ? (data.personalInfo || {}) : (data || {});
   
   const handleFieldChange = (field: string, value: string) => {
     // Update the personalInfo section specifically
-    const updatedPersonalInfo = {
+    const updatedPersonalInfo: PersonalInfo = {
       ...personalInfo,
       [field]: value
     };
@@ -47,7 +47,7 @@ const PersonalInfoSection = ({ data, onChange }: PersonalInfoSectionProps) => {
     const firstName = nameParts[0] || '';
     const lastName = nameParts.slice(1).join(' ') || '';
     
-    const updatedPersonalInfo = {
+    const updatedPersonalInfo: PersonalInfo = {
       ...personalInfo,
       firstName,
       lastName,
