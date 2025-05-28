@@ -1,552 +1,247 @@
-import React, { useState, useEffect, useRef } from "react";
-import { useNavigate, useLocation, useParams } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { Pencil, FileText, Download, Edit, ThumbsUp, ThumbsDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import html2canvas from "html2canvas";
-import { jsPDF } from "jspdf";
-import { ResumeSection } from "@/utils/resumeUtils";
-import Lottie from "react-lottie";
-import Loading from "@/animations/Loading.json";
-import OozeDialog from "@/components/OozeDialog";
-
-const loadingOptions = {
-  loop: true,
-  autoplay: true,
-  animationData: Loading,
-  rendererSettings: {
-    preserveAspectRatio: "xMidYMid slice",
-  },
-};
-
-const RESUME_STYLES = [
-  { id: "classic", name: "Classic", color: "bg-white" },
-  { id: "modern", name: "Modern", color: "bg-blue-50" },
-  { id: "minimal", name: "Minimal", color: "bg-gray-50" },
-  { id: "professional", name: "Professional", color: "bg-amber-50" },
-  { id: "creative", name: "Creative", color: "bg-purple-50" },
-];
+import { 
+  Crown, 
+  FileEdit, 
+  Download, 
+  FileText, 
+  ExternalLink,
+  ChevronLeft
+} from "lucide-react";
+import FeedbackButtons from "@/components/alchemy-records/FeedbackButtons";
+import { toast } from "sonner";
 
 interface ResumeData {
-  file_name?: string;
-  file_path?: string;
-  formatted_resume?: any;
-}
-
-interface JobData {
-  job_title?: string;
-  company_name?: string | null;
-  company_url?: string | null;
-  job_url?: string | null;
-}
-
-interface EditorContent {
-  resume?: ResumeContent;
-  sectionOrder?: ResumeSection[];
-}
-
-interface ResumeContent {
-  personalInfo?: any;
-  summary?: string;
-  professionalSummary?: string;
-  professionalExperience?: Array<{
-    companyName?: string;
-    companyIntroduction?: string;
-    location?: string;
-    jobTitle?: string;
-    startDate?: string;
-    endDate?: string;
-    achievements?: string[];
-  }>;
-  education?: any;
-  skills?: any;
-  projects?: any[];
-  volunteer?: any[];
-  certifications?: any[];
-  guidanceForOptimization?: Array<{
-    guidance: string[];
-  }>;
-}
-
-const LOCAL_STORAGE_STYLE_KEY = "resumePreviewStyle";
-
-const isSectionEmpty = (data: any, section: string): boolean => {
-  if (!data || !data.resume) return true;
-
-  const sectionMapping: Record<string, string[]> = {
-    personalInfo: ["personalInfo"],
-    professionalSummary: ["summary", "professionalSummary"],
-    professionalExperience: ["professionalExperience", "experience"],
-    education: ["education"],
-    skills: ["skills"],
-    projects: ["projects"],
-    volunteer: ["volunteer"],
-    certifications: ["certifications"],
+  id: string;
+  created_at: string;
+  google_doc_url: string | null;
+  match_score: number | null;
+  feedback: boolean | null;
+  resume: {
+    file_name: string;
+    file_path: string;
+    formatted_resume: any | null;
   };
-
-  const possibleKeys = sectionMapping[section] || [section];
-
-  for (const key of possibleKeys) {
-    const sectionData = data.resume[key];
-
-    if (key === "personalInfo") {
-      if (sectionData && Object.keys(sectionData).length > 0) return false;
-    } else if (key === "summary" || key === "professionalSummary") {
-      if (sectionData && sectionData.trim() !== "") return false;
-    } else if (Array.isArray(sectionData)) {
-      if (sectionData && sectionData.length > 0) return false;
-    } else if (sectionData) {
-      return false;
-    }
-  }
-
-  return true;
-};
-
-const DEFAULT_SECTION_ORDER: ResumeSection[] = [
-  "personalInfo",
-  "professionalSummary",
-  "professionalExperience",
-  "education",
-  "skills",
-  "projects",
-  "volunteer",
-  "certifications",
-];
-
-const normalizeResumeData = (data: any): EditorContent => {
-  if (!data) return { resume: {} };
-
-  console.log("Normalizing resume data:", data);
-
-  let result: EditorContent = { resume: {} };
-
-  if (data.resume) {
-    if (data.resume.resume) {
-      result = {
-        resume: data.resume.resume,
-        sectionOrder: data.sectionOrder || DEFAULT_SECTION_ORDER,
-      };
-    } else {
-      result = data;
-    }
-  } else if (
-    Object.keys(data).includes("personalInfo") ||
-    Object.keys(data).includes("professionalExperience")
-  ) {
-    result = { resume: data };
-  }
-
-  return result;
-};
+  job: {
+    job_title: string;
+    company_name: string | null;
+    company_url: string | null;
+    job_url: string | null;
+  } | null;
+}
 
 const ResumePreview = () => {
-  const { session, isLoading } = useAuth();
-  const navigate = useNavigate();
   const location = useLocation();
-  const params = useParams();
-  const { toast } = useToast();
-  const [resumeData, setResumeData] = useState<any>(null);
+  const navigate = useNavigate();
+  const { session, isLoading } = useAuth();
+  const [resumeData, setResumeData] = useState<ResumeData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [style, setStyle] = useState<string>(() => {
-    return localStorage.getItem(LOCAL_STORAGE_STYLE_KEY) || "classic";
-  });
-  const [styleDialogOpen, setStyleDialogOpen] = useState(false);
-  const [feedback, setFeedback] = useState<boolean | null>(null);
-  const resumeRef = useRef<HTMLDivElement>(null);
-  const locationState = location.state || {};
-  const paramAnalysisId = params.analysisId;
-  const { analysisId: locationAnalysisId } = locationState;
 
-  const analysisId = paramAnalysisId || locationAnalysisId;
+  const analysisId = location.state?.analysisId;
 
   useEffect(() => {
-    if (!isLoading && !session && !analysisId) {
+    if (!isLoading && !session) {
       navigate("/login", { state: { from: "/resume-preview" } });
       return;
     }
 
     if (!analysisId) {
+      toast.error("No analysis ID provided");
       navigate("/alchemy-records");
       return;
     }
 
-    const fetchResumeData = async () => {
-      try {
-        setLoading(true);
-
-        console.log("Fetching data for analysis ID:", analysisId);
-
-        const { data: editorData, error: editorError } = await supabase
-          .from("resume_editors")
-          .select("content")
-          .eq("analysis_id", analysisId)
-          .maybeSingle();
-
-        if (editorError) {
-          console.error("Editor data error:", editorError);
-          throw editorError;
-        }
-
-        if (!editorData || !editorData.content) {
-          console.error("No editor content found");
-          toast({
-            title: "Resume content not found",
-            description: "Could not find resume content for preview",
-            variant: "destructive",
-          });
-          navigate("/alchemy-records");
-          return;
-        }
-
-        console.log("Found editor content:", editorData.content);
-
-        const normalizedContent = normalizeResumeData(editorData.content);
-        console.log("Normalized content:", normalizedContent);
-
-        const { data: analysisData, error: analysisError } = await supabase
-          .from("resume_analyses")
-          .select(
-            `
-            id,
-            google_doc_url,
-            feedback,
-            resume:resume_id(file_name, file_path),
-            job:job_id(job_title)
-          `
-          )
-          .eq("id", analysisId)
-          .single();
-
-        if (analysisError) {
-          console.error("Analysis data error:", analysisError);
-          throw analysisError;
-        }
-
-        if (!analysisData) {
-          console.error("No analysis data found");
-          toast({
-            title: "Resume not found",
-            description: "The requested resume could not be found",
-            variant: "destructive",
-          });
-          navigate("/alchemy-records");
-          return;
-        }
-
-        console.log("Found analysis data:", analysisData);
-
-        let jobTitle = "Unnamed Position";
-        let fileName = "Resume";
-
-        if (analysisData.job) {
-          if (Array.isArray(analysisData.job)) {
-            const firstJob = analysisData.job[0] as JobData;
-            if (firstJob && firstJob.job_title) {
-              jobTitle = firstJob.job_title;
-            }
-          } else if (
-            typeof analysisData.job === "object" &&
-            analysisData.job !== null
-          ) {
-            const jobObj = analysisData.job as JobData;
-            if (jobObj.job_title) {
-              jobTitle = jobObj.job_title;
-            }
-          }
-        }
-
-        if (analysisData.resume) {
-          if (Array.isArray(analysisData.resume)) {
-            const firstResume = analysisData.resume[0] as ResumeData;
-            if (firstResume && firstResume.file_name) {
-              fileName = firstResume.file_name;
-            }
-          } else if (
-            typeof analysisData.resume === "object" &&
-            analysisData.resume !== null
-          ) {
-            const resumeObj = analysisData.resume as ResumeData;
-            if (resumeObj.file_name) {
-              fileName = resumeObj.file_name;
-            }
-          }
-        }
-
-        const sectionOrder =
-          normalizedContent.sectionOrder &&
-          Array.isArray(normalizedContent.sectionOrder) &&
-          normalizedContent.sectionOrder.length > 0
-            ? normalizedContent.sectionOrder
-            : DEFAULT_SECTION_ORDER;
-
-        setResumeData({
-          ...analysisData,
-          resume: normalizedContent.resume || {},
-          sectionOrder: sectionOrder,
-          jobTitle,
-          fileName,
-          googleDocUrl: analysisData.google_doc_url,
-          originalResume: analysisData.resume,
-        });
-        
-        setFeedback(analysisData.feedback);
-      } catch (error) {
-        console.error("Error fetching resume data:", error);
-        toast({
-          title: "Error",
-          description: "Failed to load resume data",
-          variant: "destructive",
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchResumeData();
-  }, [session, isLoading, navigate, analysisId, toast]);
+  }, [session, isLoading, analysisId, navigate]);
 
-  useEffect(() => {
-    localStorage.setItem(LOCAL_STORAGE_STYLE_KEY, style);
-  }, [style]);
-
-  const handleFeedback = async (value: boolean | null) => {
+  const fetchResumeData = async () => {
     try {
-      setFeedback(value);
-
-      const { error } = await supabase
-        .from("resume_analyses")
-        .update({ feedback: value })
-        .eq("id", analysisId);
+      const { data, error } = await supabase
+        .from('resume_analyses')
+        .select(`
+          id,
+          created_at,
+          google_doc_url,
+          match_score,
+          feedback,
+          job:job_id (
+            job_title,
+            company_name,
+            company_url,
+            job_url
+          ),
+          resume:resume_id (
+            file_name,
+            file_path,
+            formatted_resume
+          )
+        `)
+        .eq('id', analysisId)
+        .single();
 
       if (error) throw error;
 
-      toast({
-        title: "Feedback recorded",
-        description: "Thank you for your feedback!",
+      const resumeInfo = Array.isArray(data.resume) ? data.resume[0] : data.resume;
+      const jobInfo = Array.isArray(data.job) ? data.job[0] : data.job;
+
+      setResumeData({
+        ...data,
+        resume: resumeInfo,
+        job: jobInfo
       });
     } catch (error) {
-      console.error("Error submitting feedback:", error);
-      toast({
-        title: "Error",
-        description: "Failed to submit feedback",
-        variant: "destructive",
-      });
-      setFeedback(null);
+      console.error('Error fetching resume data:', error);
+      toast.error("Failed to load resume data");
+      navigate("/alchemy-records");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleEditSection = (section: ResumeSection) => {
-    navigate(`/resume-refine/${analysisId}`, {
-      state: {
-        analysisId,
-        section,
-      },
-    });
-  };
-
-  const handleEditClick = () => {
-    if (!session) {
-      toast({
-        title: "Login Required",
-        description: "You need to log in to edit this resume",
-        variant: "destructive",
-      });
-      navigate("/login", {
-        state: {
-          from: `/resume-refine/${analysisId}`,
-        },
-      });
-      return;
+  const handleFeedback = (value: boolean | null) => {
+    if (resumeData) {
+      setResumeData(prev => prev ? { ...prev, feedback: value } : null);
     }
+  };
 
-    navigate(`/resume-refine/${analysisId}`, {
-      state: { analysisId },
+  const handleEditResume = () => {
+    navigate("/alchemist-workshop", {
+      state: { analysisId }
     });
   };
 
-  const handleExportPDF = async () => {
-    if (!resumeRef.current) return;
+  const handleCreateCoverLetter = () => {
+    navigate("/cover-letter", {
+      state: { analysisId }
+    });
+  };
 
-    try {
-      toast({
-        title: "Preparing PDF",
-        description: "Your resume is being converted to PDF...",
-      });
+  const handleExportPDF = () => {
+    // TODO: Implement PDF export functionality
+    toast.info("PDF export functionality coming soon!");
+  };
 
-      const resumeElement = resumeRef.current;
-
-      const bgColor =
-        style === "classic"
-          ? "#ffffff"
-          : style === "modern"
-          ? "#EFF6FF"
-          : style === "minimal"
-          ? "#F9FAFB"
-          : style === "professional"
-          ? "#FFFBEB"
-          : style === "creative"
-          ? "#F5F3FF"
-          : "#ffffff";
-
-      const pdf = new jsPDF({
-        orientation: "portrait",
-        unit: "mm",
-        format: "a4",
-        compress: true,
-      });
-
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-
-      const canvas = await html2canvas(resumeElement, {
-        scale: 3,
-        useCORS: true,
-        backgroundColor: bgColor,
-        logging: false,
-        allowTaint: true,
-        foreignObjectRendering: false,
-      });
-
-      const canvasWidth = canvas.width;
-      const canvasHeight = canvas.height;
-      const ratio = canvasWidth / pageWidth;
-
-      const totalPages = Math.ceil(canvasHeight / (pageHeight * ratio));
-
-      for (let page = 0; page < totalPages; page++) {
-        if (page > 0) {
-          pdf.addPage();
-        }
-
-        const srcY = page * pageHeight * ratio;
-        const srcHeight = Math.min(pageHeight * ratio, canvasHeight - srcY);
-
-        const tempCanvas = document.createElement("canvas");
-        tempCanvas.width = canvasWidth;
-        tempCanvas.height = srcHeight;
-
-        const ctx = tempCanvas.getContext("2d");
-        if (ctx) {
-          ctx.fillStyle = bgColor;
-          ctx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-          ctx.drawImage(
-            canvas,
-            0,
-            srcY,
-            canvasWidth,
-            srcHeight,
-            0,
-            0,
-            canvasWidth,
-            srcHeight
-          );
-
-          const imgData = tempCanvas.toDataURL("image/jpeg", 1.0);
-          pdf.addImage(imgData, "JPEG", 0, 0, pageWidth, srcHeight / ratio);
-        }
+  const handleViewOriginalResume = () => {
+    if (resumeData?.resume?.file_path) {
+      // Construct the public URL for the resume file
+      const { data } = supabase.storage
+        .from('resumes')
+        .getPublicUrl(resumeData.resume.file_path);
+      
+      if (data?.publicUrl) {
+        window.open(data.publicUrl, '_blank');
+      } else {
+        toast.error("Unable to access original resume file");
       }
+    }
+  };
 
-      const fileName = resumeData?.jobTitle
-        ? `Resume_${resumeData.jobTitle.replace(/[^a-zA-Z0-9]/g, "_")}.pdf`
-        : "Resume.pdf";
-
-      pdf.save(fileName);
-
-      toast({
-        title: "PDF Exported",
-        description: "Your resume has been successfully downloaded",
-        variant: "default",
-      });
-    } catch (error) {
-      console.error("Error exporting PDF:", error);
-      toast({
-        title: "Export Failed",
-        description: "Failed to export resume to PDF. Please try again.",
-        variant: "destructive",
-      });
+  const handleEditWithGoogleDoc = () => {
+    if (resumeData?.google_doc_url) {
+      window.open(resumeData.google_doc_url, '_blank');
+    } else {
+      toast.error("Google Doc URL not available");
     }
   };
 
   if (isLoading || loading) {
     return (
-      <div className="w-64 h-64 mx-auto">
-        <Lottie options={loadingOptions} />
+      <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-purple-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading resume preview...</p>
+        </div>
       </div>
     );
   }
 
   if (!resumeData) {
-    return null;
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600">Resume data not found</p>
+          <Button onClick={() => navigate("/alchemy-records")} className="mt-4">
+            Back to Alchemy Records
+          </Button>
+        </div>
+      </div>
+    );
   }
 
-  console.log("Rendering with resume data:", resumeData);
-
-  const personalInfo = resumeData.resume?.personalInfo || {};
-  const experiences = resumeData.resume?.professionalExperience || [];
-  const firstName = personalInfo.firstName || "John";
-  const lastName = personalInfo.lastName || "Smith";
-  const email = personalInfo.email || "email@example.com";
-  const phone = personalInfo.phone || "(123) 456-7890";
-  const website = personalInfo.website || "https://example.com";
-
-  const latestExperience =
-    experiences && experiences.length > 0
-      ? experiences[0]
-      : {
-          jobTitle: "Software Developer",
-          companyName: "Tech Company",
-          startDate: "2020",
-          endDate: "Present",
-        };
-
-  const orderedSections = resumeData.sectionOrder || DEFAULT_SECTION_ORDER;
+  const jobTitle = resumeData.job?.job_title || "Unnamed Position";
+  const companyName = resumeData.job?.company_name || "Unknown Company";
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100">
-      {/* <OozeDialog 
-        position="bottom" 
-        title="Resume Alchemist" 
-        resumeEditMode={true}
-      /> */}
-
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
-          <div className="flex flex-col items-center mb-6 text-center">
-            <h1 className="text-3xl font-bold bg-gradient-primary text-transparent bg-clip-text mb-4">
-              {resumeData.jobTitle}
-            </h1>
-            <div className="flex gap-4 flex-wrap justify-center">
+          {/* Header */}
+          <div className="flex items-center gap-4 mb-6">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate("/alchemy-records")}
+              className="flex items-center gap-2"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Back to Records
+            </Button>
+          </div>
+
+          {/* Resume Info Card */}
+          <div className="bg-white rounded-xl p-6 shadow-apple mb-6">
+            <div className="flex justify-between items-start mb-4">
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">{jobTitle}</h1>
+                <p className="text-gray-600">{companyName}</p>
+                <p className="text-sm text-gray-500 mt-2">
+                  Generated on {new Date(resumeData.created_at).toLocaleDateString("en-US", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })}
+                </p>
+                {resumeData.match_score && (
+                  <p className="text-sm font-semibold text-purple-600 mt-1">
+                    Match Score: {Math.round(resumeData.match_score * 100)}%
+                  </p>
+                )}
+              </div>
+              
+              {/* Feedback Buttons */}
+              <FeedbackButtons
+                feedback={resumeData.feedback}
+                onFeedback={handleFeedback}
+                analysisId={resumeData.id}
+              />
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-wrap gap-3">
               <Button
-                variant="outline"
-                onClick={handleEditClick}
-                className="flex items-center gap-2"
+                onClick={handleEditResume}
+                className="bg-gradient-primary-light text-white hover:opacity-90 transition-opacity"
               >
-                <Pencil className="h-4 w-4" />
+                <Crown className="h-4 w-4 mr-2" />
                 Edit Resume
               </Button>
 
               <Button
                 variant="outline"
-                onClick={() => setStyleDialogOpen(true)}
+                onClick={() => {/* TODO: Implement change style */}}
                 className="flex items-center gap-2"
               >
-                <FileText className="h-4 w-4" />
+                <FileEdit className="h-4 w-4" />
                 Change Style
               </Button>
 
               <Button
                 variant="outline"
                 onClick={handleExportPDF}
-                className="bg-gradient-primary-light text-white hover:opacity-90 transition-opacity"
+                className="flex items-center gap-2"
               >
                 <Download className="h-4 w-4" />
                 Export PDF
@@ -554,630 +249,61 @@ const ResumePreview = () => {
 
               <Button
                 variant="outline"
-                size="sm"
-                onClick={() => {
-                  if (resumeData.originalResume?.file_path) {
-                    const { data } = supabase.storage
-                      .from("resumes")
-                      .getPublicUrl(resumeData.originalResume.file_path);
-                    window.open(data.publicUrl, "_blank");
-                  }
-                }}
+                onClick={handleViewOriginalResume}
                 className="flex items-center gap-2"
               >
                 <FileText className="h-4 w-4" />
                 Original Resume
               </Button>
 
-              {resumeData.googleDocUrl && (
+              {resumeData.google_doc_url && (
                 <Button
                   variant="outline"
-                  size="sm"
-                  onClick={() => window.open(resumeData.googleDocUrl, "_blank")}
+                  onClick={handleEditWithGoogleDoc}
                   className="flex items-center gap-2"
                 >
-                  <Edit className="h-4 w-4" />
+                  <ExternalLink className="h-4 w-4" />
                   Edit with Google Doc
                 </Button>
               )}
 
-              <div className="flex items-center gap-2">
-                <Button
-                  variant={feedback === true ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => handleFeedback(feedback === true ? null : true)}
-                  className="flex items-center gap-2"
-                >
-                  <ThumbsUp className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant={feedback === false ? "destructive" : "outline"}
-                  size="sm"
-                  onClick={() => handleFeedback(feedback === false ? null : false)}
-                  className="flex items-center gap-2"
-                >
-                  <ThumbsDown className="h-4 w-4" />
-                </Button>
-              </div>
+              <Button
+                variant="outline"
+                onClick={handleCreateCoverLetter}
+                className="flex items-center gap-2 border-green-200 text-green-700 hover:bg-green-50"
+              >
+                <FileEdit className="h-4 w-4" />
+                Create Cover Letter
+              </Button>
             </div>
           </div>
 
-          <div
-            ref={resumeRef}
-            className={`bg-white rounded-xl p-8 shadow-apple relative ${
-              style === "modern"
-                ? "bg-blue-50"
-                : style === "minimal"
-                ? "bg-gray-50"
-                : style === "professional"
-                ? "bg-amber-50"
-                : style === "creative"
-                ? "bg-purple-50"
-                : "bg-white"
-            }`}
-          >
-            <div
-              className={`mb-6 pb-4 relative group ${
-                style === "modern"
-                  ? "border-b-2 border-blue-300"
-                  : style === "minimal"
-                  ? "border-b border-gray-200"
-                  : style === "professional"
-                  ? "border-b-2 border-amber-300"
-                  : style === "creative"
-                  ? "border-b-2 border-purple-300"
-                  : "border-b-2 border-neutral-200"
-              }`}
-            >
-              <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity">
+          {/* Resume Preview Content */}
+          <div className="bg-white rounded-xl p-6 shadow-apple">
+            {resumeData.google_doc_url ? (
+              <div className="w-full h-[800px]">
+                <iframe
+                  src={`${resumeData.google_doc_url}/preview`}
+                  className="w-full h-full border-0 rounded-lg"
+                  title="Resume Preview"
+                />
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <p className="text-gray-600">
+                  Resume preview not available. Please try regenerating the resume.
+                </p>
                 <Button
-                  size="sm"
-                  variant="ghost"
-                  className="rounded-full h-8 w-8 p-0"
-                  onClick={() => handleEditSection("personalInfo")}
+                  onClick={() => navigate("/alchemy-records")}
+                  className="mt-4"
                 >
-                  <Edit className="h-4 w-4" />
+                  Back to Records
                 </Button>
               </div>
-              <h1
-                className={`text-3xl font-bold mb-2 ${
-                  style === "modern"
-                    ? "text-blue-700"
-                    : style === "professional"
-                    ? "text-amber-700"
-                    : style === "creative"
-                    ? "text-purple-700"
-                    : "text-gray-800"
-                }`}
-              >
-                {resumeData.resume?.personalInfo?.firstName}{" "}
-                {resumeData.resume?.personalInfo?.lastName}
-              </h1>
-              <div className="flex flex-wrap gap-3 text-sm text-gray-600">
-                {resumeData.resume?.personalInfo?.email && (
-                  <span>{resumeData.resume.personalInfo.email}</span>
-                )}
-                {resumeData.resume?.personalInfo?.phone && (
-                  <span>• {resumeData.resume.personalInfo.phone}</span>
-                )}
-                {resumeData.resume?.personalInfo?.location && (
-                  <span>• {resumeData.resume.personalInfo.location}</span>
-                )}
-                {resumeData.resume?.personalInfo?.linkedIn && (
-                  <span>• {resumeData.resume.personalInfo.linkedIn}</span>
-                )}
-                {resumeData.resume?.personalInfo?.website && (
-                  <span>• {resumeData.resume.personalInfo.website}</span>
-                )}
-              </div>
-            </div>
-
-            {orderedSections.map((sectionKey) => {
-              if (sectionKey === "personalInfo") return null;
-
-              if (sectionKey === "professionalSummary") {
-                const summaryText =
-                  resumeData.resume?.summary ||
-                  resumeData.resume?.professionalSummary ||
-                  "";
-
-                if (summaryText && summaryText.trim() !== "") {
-                  return (
-                    <div key={sectionKey} className="mb-6 relative group">
-                      <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="rounded-full h-8 w-8 p-0"
-                          onClick={() =>
-                            handleEditSection("professionalSummary")
-                          }
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      <h2
-                        className={`text-xl font-bold mb-2 ${
-                          style === "modern"
-                            ? "text-blue-600"
-                            : style === "professional"
-                            ? "text-amber-600"
-                            : style === "creative"
-                            ? "text-purple-600"
-                            : "text-gray-800"
-                        }`}
-                      >
-                        Professional Summary
-                      </h2>
-                      <p className="text-gray-700">{summaryText}</p>
-                    </div>
-                  );
-                }
-                return null;
-              }
-
-              if (
-                sectionKey === "professionalExperience" &&
-                resumeData.resume?.professionalExperience?.length > 0
-              ) {
-                return (
-                  <div key={sectionKey} className="mb-6 relative group">
-                    <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="rounded-full h-8 w-8 p-0"
-                        onClick={() =>
-                          handleEditSection("professionalExperience")
-                        }
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <h2
-                      className={`text-xl font-bold mb-2 ${
-                        style === "modern"
-                          ? "text-blue-600"
-                          : style === "professional"
-                          ? "text-amber-600"
-                          : style === "creative"
-                          ? "text-purple-600"
-                          : "text-gray-800"
-                      }`}
-                    >
-                      Professional Experience
-                    </h2>
-                    {resumeData.resume.professionalExperience.map(
-                      (exp: any, index: number) => (
-                        <div key={index} className="mb-4">
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <h3 className="font-bold text-gray-800">
-                                {exp.jobTitle}
-                              </h3>
-                              <p className="text-gray-600">
-                                {exp.companyName}
-                                {exp.location ? `, ${exp.location}` : ""}
-                              </p>
-                            </div>
-                            <p className="text-gray-500 text-sm">
-                              {exp.startDate} - {exp.endDate || "Present"}
-                            </p>
-                          </div>
-                          {exp.companyIntroduction && (
-                            <p className="text-sm text-gray-600 mt-1 italic">
-                              {exp.companyIntroduction}
-                            </p>
-                          )}
-                          {exp.achievements && (
-                            <ul className="list-disc ml-5 mt-2 text-gray-700">
-                              {exp.achievements.map(
-                                (achievement: string, i: number) => (
-                                  <li key={i}>{achievement}</li>
-                                )
-                              )}
-                            </ul>
-                          )}
-                        </div>
-                      )
-                    )}
-                  </div>
-                );
-              }
-
-              if (sectionKey === "education" && resumeData.resume?.education) {
-                return (
-                  <div key={sectionKey} className="mb-6 relative group">
-                    <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="rounded-full h-8 w-8 p-0"
-                        onClick={() => handleEditSection("education")}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <h2
-                      className={`text-xl font-bold mb-2 ${
-                        style === "modern"
-                          ? "text-blue-600"
-                          : style === "professional"
-                          ? "text-amber-600"
-                          : style === "creative"
-                          ? "text-purple-600"
-                          : "text-gray-800"
-                      }`}
-                    >
-                      Education
-                    </h2>
-
-                    {Array.isArray(resumeData.resume.education) ? (
-                      resumeData.resume.education.map(
-                        (edu: any, index: number) => (
-                          <div key={index} className="mb-3">
-                            <h3 className="font-bold text-gray-800">
-                              {edu.degreeName}
-                            </h3>
-                            <p className="text-gray-600">{edu.institution}</p>
-                            {edu.enrollmentDate && edu.graduationDate ? (
-                              <p className="text-gray-500">
-                                {edu.enrollmentDate} - {edu.graduationDate}
-                              </p>
-                            ) : (
-                              <p className="text-gray-500">
-                                Graduated: {edu.graduationDate}
-                              </p>
-                            )}
-                            {edu.gpa && (
-                              <p className="text-gray-500">GPA: {edu.gpa}</p>
-                            )}
-                          </div>
-                        )
-                      )
-                    ) : (
-                      <div>
-                        <h3 className="font-bold text-gray-800">
-                          {resumeData.resume.education.degreeName}
-                        </h3>
-                        <p className="text-gray-600">
-                          {resumeData.resume.education.institution}
-                        </p>
-                        {resumeData.resume.education.enrollmentDate &&
-                        resumeData.resume.education.graduationDate ? (
-                          <p className="text-gray-500">
-                            {resumeData.resume.education.enrollmentDate} -{" "}
-                            {resumeData.resume.education.graduationDate}
-                          </p>
-                        ) : (
-                          <p className="text-gray-500">
-                            Graduated:{" "}
-                            {resumeData.resume.education.graduationDate}
-                          </p>
-                        )}
-                        {resumeData.resume.education.gpa && (
-                          <p className="text-gray-500">
-                            GPA: {resumeData.resume.education.gpa}
-                          </p>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                );
-              }
-
-              if (sectionKey === "skills" && resumeData.resume?.skills) {
-                return (
-                  <div key={sectionKey} className="mb-6 relative group">
-                    <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="rounded-full h-8 w-8 p-0"
-                        onClick={() => handleEditSection("skills")}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <h2
-                      className={`text-xl font-bold mb-2 ${
-                        style === "modern"
-                          ? "text-blue-600"
-                          : style === "professional"
-                          ? "text-amber-600"
-                          : style === "creative"
-                          ? "text-purple-600"
-                          : "text-gray-800"
-                      }`}
-                    >
-                      Skills
-                    </h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {resumeData.resume.skills.technical &&
-                        resumeData.resume.skills.technical.length > 0 && (
-                          <div>
-                            <h3 className="font-bold text-gray-700 mb-1">
-                              Technical Skills
-                            </h3>
-                            <ul className="list-disc ml-5 text-gray-700">
-                              {resumeData.resume.skills.technical.map(
-                                (skill: string, i: number) => (
-                                  <li key={i}>{skill}</li>
-                                )
-                              )}
-                            </ul>
-                          </div>
-                        )}
-
-                      {resumeData.resume.skills.soft &&
-                        resumeData.resume.skills.soft.length > 0 && (
-                          <div>
-                            <h3 className="font-bold text-gray-700 mb-1">
-                              Soft Skills
-                            </h3>
-                            <ul className="list-disc ml-5 text-gray-700">
-                              {resumeData.resume.skills.soft.map(
-                                (skill: string, i: number) => (
-                                  <li key={i}>{skill}</li>
-                                )
-                              )}
-                            </ul>
-                          </div>
-                        )}
-                    </div>
-                  </div>
-                );
-              }
-
-              if (
-                sectionKey === "projects" &&
-                resumeData.resume?.projects?.length > 0
-              ) {
-                return (
-                  <div key={sectionKey} className="mb-6 relative group">
-                    <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="rounded-full h-8 w-8 p-0"
-                        onClick={() => handleEditSection("projects")}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <h2
-                      className={`text-xl font-bold mb-2 ${
-                        style === "modern"
-                          ? "text-blue-600"
-                          : style === "professional"
-                          ? "text-amber-600"
-                          : style === "creative"
-                          ? "text-purple-600"
-                          : "text-gray-800"
-                      }`}
-                    >
-                      Projects
-                    </h2>
-                    {resumeData.resume.projects.map(
-                      (project: any, index: number) => (
-                        <div key={index} className="mb-4">
-                          <div className="flex justify-between items-start">
-                            <h3 className="font-bold text-gray-800">
-                              {project.name}
-                            </h3>
-                            {project.startDate && (
-                              <p className="text-gray-500 text-sm">
-                                {project.startDate} -{" "}
-                                {project.endDate || "Present"}
-                              </p>
-                            )}
-                          </div>
-                          {project.achievements && (
-                            <ul className="list-disc ml-5 mt-2 text-gray-700">
-                              {project.achievements.map(
-                                (achievement: string, i: number) => (
-                                  <li key={i}>{achievement}</li>
-                                )
-                              )}
-                            </ul>
-                          )}
-                        </div>
-                      )
-                    )}
-                  </div>
-                );
-              }
-
-              if (
-                sectionKey === "certifications" &&
-                resumeData.resume?.certifications?.length > 0
-              ) {
-                return (
-                  <div key={sectionKey} className="mb-6 relative group">
-                    <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="rounded-full h-8 w-8 p-0"
-                        onClick={() => handleEditSection("certifications")}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <h2
-                      className={`text-xl font-bold mb-2 ${
-                        style === "modern"
-                          ? "text-blue-600"
-                          : style === "professional"
-                          ? "text-amber-600"
-                          : style === "creative"
-                          ? "text-purple-600"
-                          : "text-gray-800"
-                      }`}
-                    >
-                      Certifications
-                    </h2>
-                    <ul className="list-disc ml-5 text-gray-700">
-                      {resumeData.resume.certifications.map(
-                        (cert: any, i: number) => (
-                          <li key={i}>
-                            {cert.name}
-                            {cert.dateAchieved && (
-                              <span className="text-gray-500">
-                                {" "}
-                                (Achieved: {cert.dateAchieved}
-                              </span>
-                            )}
-                            {cert.expiredDate && (
-                              <span className="text-gray-500">
-                                , Expires: {cert.expiredDate}
-                              </span>
-                            )}
-                            {cert.dateAchieved && (
-                              <span className="text-gray-500">)</span>
-                            )}
-                          </li>
-                        )
-                      )}
-                    </ul>
-                  </div>
-                );
-              }
-
-              if (
-                sectionKey === "volunteer" &&
-                resumeData.resume?.volunteer?.length > 0
-              ) {
-                return (
-                  <div key={sectionKey} className="mb-6 relative group">
-                    <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="rounded-full h-8 w-8 p-0"
-                        onClick={() => handleEditSection("volunteer")}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <h2
-                      className={`text-xl font-bold mb-2 ${
-                        style === "modern"
-                          ? "text-blue-600"
-                          : style === "professional"
-                          ? "text-amber-600"
-                          : style === "creative"
-                          ? "text-purple-600"
-                          : "text-gray-800"
-                      }`}
-                    >
-                      Volunteer Experience
-                    </h2>
-                    {resumeData.resume.volunteer.map(
-                      (vol: any, index: number) => (
-                        <div key={index} className="mb-4">
-                          <div className="flex justify-between items-start">
-                            <h3 className="font-bold text-gray-800">
-                              {vol.name}
-                            </h3>
-                            {vol.startDate && (
-                              <p className="text-gray-500 text-sm">
-                                {vol.startDate} - {vol.endDate || "Present"}
-                              </p>
-                            )}
-                          </div>
-                          {vol.achievements && (
-                            <ul className="list-disc ml-5 mt-2 text-gray-700">
-                              {vol.achievements.map(
-                                (achievement: string, i: number) => (
-                                  <li key={i}>{achievement}</li>
-                                )
-                              )}
-                            </ul>
-                          )}
-                        </div>
-                      )
-                    )}
-                  </div>
-                );
-              }
-
-              return null;
-            })}
+            )}
           </div>
         </div>
       </div>
-
-      <Dialog open={styleDialogOpen} onOpenChange={setStyleDialogOpen}>
-        <DialogContent className="max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>Choose Resume Style</DialogTitle>
-          </DialogHeader>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 bg-white">
-            {RESUME_STYLES.map((styleOption) => (
-              <div
-                key={styleOption.id}
-                className={`border rounded-md p-4 cursor-pointer transition-all ${
-                  style === styleOption.id
-                    ? "ring-2 ring-primary border-primary"
-                    : "hover:border-gray-400"
-                } ${styleOption.color}`}
-                onClick={() => {
-                  setStyle(styleOption.id);
-                  setStyleDialogOpen(false);
-                }}
-              >
-                <h3 className="font-semibold mb-2">{styleOption.name}</h3>
-                <div className="h-40 overflow-hidden">
-                  <div
-                    className={`text-xs p-2 ${
-                      styleOption.id === "modern"
-                        ? "border-b-2 border-blue-300"
-                        : styleOption.id === "minimal"
-                        ? "border-b border-gray-200"
-                        : styleOption.id === "professional"
-                        ? "border-b-2 border-amber-300"
-                        : styleOption.id === "creative"
-                        ? "border-b-2 border-purple-300"
-                        : "border-b-2 border-neutral-200"
-                    }`}
-                  >
-                    <p className="font-bold">
-                      {firstName} {lastName}
-                    </p>
-                    <p className="text-xs text-gray-600">
-                      {email} • {phone}
-                    </p>
-                  </div>
-                  <div className="mt-2">
-                    <p
-                      className={`font-bold text-xs ${
-                        styleOption.id === "modern"
-                          ? "text-blue-600"
-                          : styleOption.id === "professional"
-                          ? "text-amber-600"
-                          : styleOption.id === "creative"
-                          ? "text-purple-600"
-                          : "text-gray-800"
-                      }`}
-                    >
-                      Professional Experience
-                    </p>
-                    <p className="text-xs mt-1 font-semibold">
-                      {latestExperience.jobTitle}
-                    </p>
-                    <p className="text-xs text-gray-600">
-                      {latestExperience.companyName},{" "}
-                      {latestExperience.startDate}-
-                      {latestExperience.endDate || "Present"}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
