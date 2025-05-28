@@ -465,6 +465,7 @@ const ResumePreview = () => {
   const lastName = personalInfo.lastName || "Smith";
   const email = personalInfo.email || "email@example.com";
   const phone = personalInfo.phone || "(123) 456-7890";
+  const website = personalInfo.website || "https://example.com";
 
   const latestExperience =
     experiences && experiences.length > 0
@@ -585,6 +586,9 @@ const ResumePreview = () => {
                 )}
                 {resumeData.resume?.personalInfo?.linkedIn && (
                   <span>• {resumeData.resume.personalInfo.linkedIn}</span>
+                )}
+                {resumeData.resume?.personalInfo?.website && (
+                  <span>• {resumeData.resume.personalInfo.website}</span>
                 )}
               </div>
             </div>
