@@ -305,7 +305,7 @@ const ResumeRefine = () => {
     <div className="flex flex-col h-screen overflow-hidden bg-gradient-to-b from-neutral-50 to-neutral-100">
       {/* Top section - Header with back button and job title */}
       <div className="mt-[72px] page-header flex-shrink-0 py-3 px-4 border-b bg-white shadow-sm">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 text-center">
           <Button 
             variant="outline" 
             size="sm"

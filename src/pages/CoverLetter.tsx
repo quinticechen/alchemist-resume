@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import CoverLetterEditor from "@/components/cover-letter/CoverLetterEditor";
 import JobDescriptionCard from "@/components/cover-letter/JobDescriptionCard";
 
+
 const CoverLetter = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -79,12 +80,12 @@ const CoverLetter = () => {
       <div className="container mx-auto px-4 py-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 text-center">
             <Button variant="outline" onClick={handleBack} size="sm">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Alchemy Records
             </Button>
-            <h1 className="text-2xl font-bold text-gray-900">Cover Letter</h1>
+            <h1 className="text-2xl font-bold bg-gradient-primary text-transparent bg-clip-text mb-4">Cover Letter</h1>
           </div>
         </div>
 
