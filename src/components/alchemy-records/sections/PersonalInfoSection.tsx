@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,12 +36,24 @@ const PersonalInfoSection = ({ data, onChange }: PersonalInfoSectionProps) => {
   })();
   
   const handleFieldChange = (field: string, value: string) => {
-    // Update the personalInfo section specifically
+    console.log(`PersonalInfoSection: Updating field ${field} with value:`, value);
+    
+    // Create updated personalInfo object
     const updatedPersonalInfo: PersonalInfo = {
       ...personalInfo,
       [field]: value
     };
-    onChange('personalInfo', updatedPersonalInfo);
+    
+    console.log('Updated personalInfo:', updatedPersonalInfo);
+    
+    // Check if the parent data has a nested structure
+    if (data && typeof data === 'object' && 'personalInfo' in data) {
+      // Parent expects nested structure - update the whole data object
+      onChange('personalInfo', updatedPersonalInfo);
+    } else {
+      // Parent expects direct personalInfo - pass the field and value
+      onChange(field, value);
+    }
   };
 
   // Get the full name from firstName + lastName or use name field
@@ -49,6 +62,8 @@ const PersonalInfoSection = ({ data, onChange }: PersonalInfoSectionProps) => {
     : personalInfo.name || '';
 
   const handleFullNameChange = (value: string) => {
+    console.log('Full name change:', value);
+    
     const nameParts = value.trim().split(' ');
     const firstName = nameParts[0] || '';
     const lastName = nameParts.slice(1).join(' ') || '';
@@ -59,8 +74,19 @@ const PersonalInfoSection = ({ data, onChange }: PersonalInfoSectionProps) => {
       lastName,
       name: value
     };
-    onChange('personalInfo', updatedPersonalInfo);
+    
+    // Check if the parent data has a nested structure
+    if (data && typeof data === 'object' && 'personalInfo' in data) {
+      onChange('personalInfo', updatedPersonalInfo);
+    } else {
+      // For direct structure, we need to update multiple fields
+      onChange('name', value);
+      onChange('firstName', firstName);
+      onChange('lastName', lastName);
+    }
   };
+
+  console.log('PersonalInfoSection render - personalInfo:', personalInfo);
 
   return (
     <div className="space-y-4">
