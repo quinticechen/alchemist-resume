@@ -94,9 +94,9 @@ const CoverLetter = () => {
   }
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden bg-gradient-to-b from-neutral-50 to-neutral-100">
+    <div className="flex flex-col min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100">
       {/* Header */}
-      <div className="mt-[72px] page-header flex-shrink-0 py-3 px-4 border-b bg-white shadow-sm">
+      <div className="page-header flex-shrink-0 pt-6 px-4">
         <div className="relative flex items-center justify-center">
           <Button variant="outline" onClick={handleBack} size="sm" className="absolute left-4 flex items-center gap-2">
             <ArrowLeft className="h-4 w-4" />
@@ -107,7 +107,7 @@ const CoverLetter = () => {
       </div>
 
       {/* Main Content */}
-      <div className="flex-grow overflow-hidden p-6">
+      <div className="flex-grow p-6 overflow-auto">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-full">
           {/* Job Description - Left Column */}
           <div className="lg:col-span-4 h-full">
