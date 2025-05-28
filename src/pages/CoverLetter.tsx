@@ -80,12 +80,12 @@ const CoverLetter = () => {
       <div className="container mx-auto px-4 py-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4 text-center">
-            <Button variant="outline" onClick={handleBack} size="sm">
+          <div className="relative flex items-center justify-center h-full">
+            <Button variant="outline" onClick={handleBack} size="sm" className="absolute left-4 flex items-center gap-2">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Alchemy Records
             </Button>
-            <h1 className="text-2xl font-bold bg-gradient-primary text-transparent bg-clip-text mb-4">Cover Letter</h1>
+            <h1 className="text-2xl font-bold bg-gradient-primary text-transparent bg-clip-text">Cover Letter</h1>
           </div>
         </div>
 
