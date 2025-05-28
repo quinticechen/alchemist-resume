@@ -79,7 +79,7 @@ const CoverLetter = () => {
     <div className="flex flex-col h-screen overflow-hidden bg-gradient-to-b from-neutral-50 to-neutral-100">
       <div className="mt-[72px] page-header flex-shrink-0 py-3 px-4 border-b bg-white shadow-sm">
         {/* Header */}
-        <div className="relative flex items-center justify-center h-full">
+        <div className="relative flex items-center justify-center">
             <Button variant="outline" onClick={handleBack} size="sm" className="absolute left-4 flex items-center gap-2">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Alchemy Records
