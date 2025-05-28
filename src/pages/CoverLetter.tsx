@@ -59,7 +59,15 @@ const CoverLetter = () => {
         
         // Format the data to match JobDescriptionViewer's expected structure
         if (analysisData?.job && !Array.isArray(analysisData.job)) {
-          const jobInfo = analysisData.job;
+          const jobInfo = analysisData.job as {
+            id: any;
+            job_title: any;
+            company_name: any;
+            job_description: any;
+            job_url: any;
+            company_url: any;
+          };
+          
           const formattedJobData = {
             job: {
               title: jobInfo.job_title,
