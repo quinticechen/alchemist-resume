@@ -3,7 +3,7 @@ import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Pencil, FileText, Download, Edit, ThumbsUp, ThumbsDown } from "lucide-react";
+import { Pencil, FileText, Download, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -16,7 +16,7 @@ import { jsPDF } from "jspdf";
 import { ResumeSection } from "@/utils/resumeUtils";
 import Lottie from "react-lottie";
 import Loading from "@/animations/Loading.json";
-import OozeDialog from "@/components/OozeDialog";
+import FeedbackButtons from "@/components/alchemy-records/FeedbackButtons";
 
 const loadingOptions = {
   loop: true,
@@ -318,30 +318,8 @@ const ResumePreview = () => {
     localStorage.setItem(LOCAL_STORAGE_STYLE_KEY, style);
   }, [style]);
 
-  const handleFeedback = async (value: boolean | null) => {
-    try {
-      setFeedback(value);
-
-      const { error } = await supabase
-        .from("resume_analyses")
-        .update({ feedback: value })
-        .eq("id", analysisId);
-
-      if (error) throw error;
-
-      toast({
-        title: "Feedback recorded",
-        description: "Thank you for your feedback!",
-      });
-    } catch (error) {
-      console.error("Error submitting feedback:", error);
-      toast({
-        title: "Error",
-        description: "Failed to submit feedback",
-        variant: "destructive",
-      });
-      setFeedback(null);
-    }
+  const handleFeedback = (value: boolean | null) => {
+    setFeedback(value);
   };
 
   const handleEditSection = (section: ResumeSection) => {
@@ -581,24 +559,11 @@ const ResumePreview = () => {
                 </Button>
               )}
 
-              <div className="flex items-center gap-2">
-                <Button
-                  variant={feedback === true ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => handleFeedback(feedback === true ? null : true)}
-                  className="flex items-center gap-2"
-                >
-                  <ThumbsUp className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant={feedback === false ? "destructive" : "outline"}
-                  size="sm"
-                  onClick={() => handleFeedback(feedback === false ? null : false)}
-                  className="flex items-center gap-2"
-                >
-                  <ThumbsDown className="h-4 w-4" />
-                </Button>
-              </div>
+              <FeedbackButtons
+                feedback={feedback}
+                onFeedback={handleFeedback}
+                analysisId={analysisId}
+              />
             </div>
           </div>
 
