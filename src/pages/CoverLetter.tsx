@@ -65,6 +65,7 @@ const CoverLetter = () => {
               title: jobInfo.job_title,
               url: jobInfo.job_url,
               description: jobInfo.job_description,
+              language: jobInfo.job_description?.language,
               "10keywords": jobInfo.job_description?.["10keywords"],
               keywords: jobInfo.job_description?.keywords,
             },

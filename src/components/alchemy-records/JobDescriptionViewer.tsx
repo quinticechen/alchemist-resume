@@ -15,7 +15,7 @@ const JobDescriptionViewer = ({ jobData }: JobDescriptionViewerProps) => {
 
   return (
     <Card className="h-full overflow-hidden flex flex-col">
-      <CardHeader className="pb-2">
+      <CardHeader className="pb-2 flex-shrink-0">
         <CardTitle className="text-lg">Job Description</CardTitle>
         <CardDescription>
           {jobData.company?.name && (
@@ -29,26 +29,26 @@ const JobDescriptionViewer = ({ jobData }: JobDescriptionViewerProps) => {
           )}
         </CardDescription>
       </CardHeader>
-      <ScrollArea className="flex-1">
-        <CardContent className="space-y-4 pt-0">
+      <ScrollArea className="flex-1 px-6">
+        <CardContent className="space-y-4 pt-0 pb-6">
           {jobData.job?.title && (
             <div>
-              <h3 className="font-medium">Title</h3>
-              <p className="text-sm">{jobData.job.title}</p>
+              <h3 className="font-medium text-gray-900">Title</h3>
+              <p className="text-sm text-gray-700">{jobData.job.title}</p>
             </div>
           )}
 
           {jobData.job?.language && (
             <div>
-              <h3 className="font-medium">Language</h3>
-              <p className="text-sm">{jobData.job.language}</p>
+              <h3 className="font-medium text-gray-900">Language</h3>
+              <p className="text-sm text-gray-700">{jobData.job.language}</p>
             </div>
           )}
 
           {/* Display 10keywords if available */}
           {jobData.job?.["10keywords"] && (
             <div>
-              <h3 className="font-medium">Keywords</h3>
+              <h3 className="font-medium text-gray-900">Keywords</h3>
               <div className="flex flex-wrap gap-1 mt-1">
                 {jobData.job["10keywords"].split(', ').map((keyword: string, idx: number) => (
                   <span key={idx} className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
@@ -62,7 +62,7 @@ const JobDescriptionViewer = ({ jobData }: JobDescriptionViewerProps) => {
           {/* Also display keywords if available (fallback) */}
           {!jobData.job?.["10keywords"] && jobData.job?.keywords && jobData.job.keywords.length > 0 && (
             <div>
-              <h3 className="font-medium">Keywords</h3>
+              <h3 className="font-medium text-gray-900">Keywords</h3>
               <div className="flex flex-wrap gap-1 mt-1">
                 {jobData.job.keywords.map((keyword: string, idx: number) => (
                   <span key={idx} className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
@@ -73,17 +73,19 @@ const JobDescriptionViewer = ({ jobData }: JobDescriptionViewerProps) => {
             </div>
           )}
 
+          {/* Description text */}
           {jobData.job?.description?.text && (
             <div>
-              <h3 className="font-medium">Description</h3>
-              <p className="text-sm whitespace-pre-line">{jobData.job.description.text}</p>
+              <h3 className="font-medium text-gray-900">Description</h3>
+              <p className="text-sm text-gray-700 whitespace-pre-line">{jobData.job.description.text}</p>
             </div>
           )}
 
+          {/* Responsibilities */}
           {jobData.job?.description?.responsibilities && jobData.job.description.responsibilities.length > 0 && (
             <div>
-              <h3 className="font-medium">Responsibilities</h3>
-              <ul className="list-disc pl-5 space-y-1 text-sm">
+              <h3 className="font-medium text-gray-900">Responsibilities</h3>
+              <ul className="list-disc pl-5 space-y-1 text-sm text-gray-700">
                 {jobData.job.description.responsibilities.map((item: string, idx: number) => (
                   <li key={idx}>{item}</li>
                 ))}
@@ -91,10 +93,11 @@ const JobDescriptionViewer = ({ jobData }: JobDescriptionViewerProps) => {
             </div>
           )}
 
+          {/* Required Qualifications */}
           {jobData.job?.description?.requiredQualifications && jobData.job.description.requiredQualifications.length > 0 && (
             <div>
-              <h3 className="font-medium">Required Qualifications</h3>
-              <ul className="list-disc pl-5 space-y-1 text-sm">
+              <h3 className="font-medium text-gray-900">Required Qualifications</h3>
+              <ul className="list-disc pl-5 space-y-1 text-sm text-gray-700">
                 {jobData.job.description.requiredQualifications.map((item: string, idx: number) => (
                   <li key={idx}>{item}</li>
                 ))}
@@ -102,10 +105,11 @@ const JobDescriptionViewer = ({ jobData }: JobDescriptionViewerProps) => {
             </div>
           )}
 
+          {/* Preferred Qualifications */}
           {jobData.job?.description?.preferredQualifications && jobData.job.description.preferredQualifications.length > 0 && (
             <div>
-              <h3 className="font-medium">Preferred Qualifications</h3>
-              <ul className="list-disc pl-5 space-y-1 text-sm">
+              <h3 className="font-medium text-gray-900">Preferred Qualifications</h3>
+              <ul className="list-disc pl-5 space-y-1 text-sm text-gray-700">
                 {jobData.job.description.preferredQualifications.map((item: string, idx: number) => (
                   <li key={idx}>{item}</li>
                 ))}
@@ -113,6 +117,7 @@ const JobDescriptionViewer = ({ jobData }: JobDescriptionViewerProps) => {
             </div>
           )}
 
+          {/* Job URL */}
           {jobData.job?.url && (
             <div>
               <a href={jobData.job.url} target="_blank" rel="noopener noreferrer" 
