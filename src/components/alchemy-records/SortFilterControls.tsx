@@ -8,7 +8,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { ChevronDown, Filter, ArrowUpDown } from "lucide-react";
+import { ChevronDown, Filter, ArrowUpDown, X } from "lucide-react";
 
 export type SortOption = 
   | "created_at_desc" 
@@ -30,9 +30,9 @@ export type StatusFilter =
 
 interface SortFilterControlsProps {
   currentSort: SortOption;
-  currentFilter: StatusFilter;
+  currentFilter: StatusFilter[];
   onSortChange: (sort: SortOption) => void;
-  onFilterChange: (filter: StatusFilter) => void;
+  onFilterChange: (filter: StatusFilter[]) => void;
 }
 
 const sortOptions = [
@@ -86,67 +86,137 @@ const SortFilterControls = ({
     return sortOptions.find(option => option.value === currentSort)?.label || "Sort by";
   };
 
-  const getCurrentFilterLabel = () => {
-    return filterOptions.find(option => option.value === currentFilter)?.label || "All Statuses";
+  const handleFilterToggle = (filterValue: StatusFilter) => {
+    if (filterValue === "all") {
+      onFilterChange(["all"]);
+      return;
+    }
+
+    let newFilters = [...currentFilter];
+    
+    // Remove "all" if it exists when selecting specific filters
+    if (newFilters.includes("all")) {
+      newFilters = newFilters.filter(f => f !== "all");
+    }
+
+    if (newFilters.includes(filterValue)) {
+      // Remove the filter if it's already selected
+      newFilters = newFilters.filter(f => f !== filterValue);
+      // If no filters left, set to "all"
+      if (newFilters.length === 0) {
+        newFilters = ["all"];
+      }
+    } else {
+      // Add the filter
+      newFilters.push(filterValue);
+    }
+
+    onFilterChange(newFilters);
+  };
+
+  const removeFilter = (filterToRemove: StatusFilter) => {
+    const newFilters = currentFilter.filter(f => f !== filterToRemove);
+    if (newFilters.length === 0) {
+      onFilterChange(["all"]);
+    } else {
+      onFilterChange(newFilters);
+    }
+  };
+
+  const getFilterButtonLabel = () => {
+    if (currentFilter.includes("all")) {
+      return "All Statuses";
+    }
+    if (currentFilter.length === 1) {
+      const option = filterOptions.find(opt => opt.value === currentFilter[0]);
+      return option?.label || "Filter";
+    }
+    return `${currentFilter.length} filters selected`;
   };
 
   return (
-    <div className="flex gap-4 mb-6">
-      {/* Sort Dropdown */}
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline" className="flex items-center gap-2">
-            <ArrowUpDown className="h-4 w-4" />
-            {getCurrentSortLabel()}
-            <ChevronDown className="h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" className="w-64">
-          {sortOptions.map((option) => (
-            <DropdownMenuItem
-              key={option.value}
-              onClick={() => onSortChange(option.value)}
-              className={currentSort === option.value ? "bg-gray-100" : ""}
-            >
-              {option.label}
-            </DropdownMenuItem>
-          ))}
-        </DropdownMenuContent>
-      </DropdownMenu>
+    <div className="space-y-4 mb-6">
+      <div className="flex gap-4">
+        {/* Sort Dropdown */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" className="flex items-center gap-2">
+              <ArrowUpDown className="h-4 w-4" />
+              {getCurrentSortLabel()}
+              <ChevronDown className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-64">
+            {sortOptions.map((option) => (
+              <DropdownMenuItem
+                key={option.value}
+                onClick={() => onSortChange(option.value)}
+                className={currentSort === option.value ? "bg-gray-100" : ""}
+              >
+                {option.label}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
 
-      {/* Filter Dropdown - Ensure each item closes the dropdown after selection */}
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline" className="flex items-center gap-2">
-            <Filter className="h-4 w-4" />
-            {currentFilter === "all" ? (
-              "All Statuses"
-            ) : (
-              <Badge variant="outline" className={getStatusColor(currentFilter)}>
-                {getCurrentFilterLabel()}
+        {/* Filter Dropdown */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" className="flex items-center gap-2">
+              <Filter className="h-4 w-4" />
+              {getFilterButtonLabel()}
+              <ChevronDown className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-48">
+            {filterOptions.map((option) => (
+              <DropdownMenuItem
+                key={option.value}
+                onClick={() => handleFilterToggle(option.value)}
+                className={currentFilter.includes(option.value) ? "bg-gray-100" : ""}
+              >
+                <div className="flex items-center gap-2">
+                  {option.value === "all" ? (
+                    option.label
+                  ) : (
+                    <Badge variant="outline" className={getStatusColor(option.value)}>
+                      {option.label}
+                    </Badge>
+                  )}
+                  {currentFilter.includes(option.value) && (
+                    <span className="ml-auto text-blue-600">✓</span>
+                  )}
+                </div>
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      {/* Selected Filters Display */}
+      {!currentFilter.includes("all") && currentFilter.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          <span className="text-sm text-gray-600 flex items-center">Active filters:</span>
+          {currentFilter.map((filter) => {
+            const option = filterOptions.find(opt => opt.value === filter);
+            return (
+              <Badge 
+                key={filter} 
+                variant="outline" 
+                className={`${getStatusColor(filter)} flex items-center gap-1`}
+              >
+                {option?.label}
+                <button
+                  onClick={() => removeFilter(filter)}
+                  className="ml-1 hover:bg-black/10 rounded-full p-0.5"
+                >
+                  <X className="h-3 w-3" />
+                </button>
               </Badge>
-            )}
-            <ChevronDown className="h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" className="w-48">
-          {filterOptions.map((option) => (
-            <DropdownMenuItem
-              key={option.value}
-              onClick={() => onFilterChange(option.value)}
-              className={currentFilter === option.value ? "bg-gray-100" : ""}
-            >
-              {option.value === "all" ? (
-                option.label
-              ) : (
-                <Badge variant="outline" className={getStatusColor(option.value)}>
-                  {option.label}
-                </Badge>
-              )}
-            </DropdownMenuItem>
-          ))}
-        </DropdownMenuContent>
-      </DropdownMenu>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };

@@ -47,16 +47,18 @@ export const useAlchemyRecords = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [sortOption, setSortOption] = useState<SortOption>("created_at_desc");
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter[]>(["all"]);
   const { toast } = useToast();
 
   // Sort and filter analyses
   const sortedAndFilteredAnalyses = useMemo(() => {
     let filtered = allAnalyses;
 
-    // Apply status filter
-    if (statusFilter !== "all") {
-      filtered = allAnalyses.filter(analysis => analysis.status === statusFilter);
+    // Apply status filter - support multiple selections
+    if (!statusFilter.includes("all")) {
+      filtered = allAnalyses.filter(analysis => 
+        statusFilter.includes(analysis.status as StatusFilter)
+      );
     }
 
     // Apply sorting
@@ -98,16 +100,21 @@ export const useAlchemyRecords = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fix the profiles query to avoid 406 error
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('usage_count')
-          .single();
+        // Get current user to fetch their profile - fix the API key issue
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (user) {
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('usage_count')
+            .eq('id', user.id)
+            .maybeSingle();
 
-        if (profileError) {
-          console.error('Error fetching profile:', profileError);
-        } else if (profile) {
-          setUsageCount(profile.usage_count || 0);
+          if (profileError) {
+            console.error('Error fetching profile:', profileError);
+          } else if (profile) {
+            setUsageCount(profile.usage_count || 0);
+          }
         }
 
         // Fetch all records with google_doc_url and join with job_apply for status

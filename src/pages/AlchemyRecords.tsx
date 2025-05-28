@@ -57,6 +57,16 @@ const AlchemyRecords = () => {
     return null;
   }
 
+  const getFilterDescription = () => {
+    if (statusFilter.includes("all")) {
+      return "No resume analyses found.";
+    }
+    if (statusFilter.length === 1) {
+      return `No analyses found with status "${statusFilter[0]}".`;
+    }
+    return `No analyses found with the selected status filters.`;
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100">
       <div className="container mx-auto px-4 py-12">
@@ -90,12 +100,7 @@ const AlchemyRecords = () => {
 
           {analyses.length === 0 && !loading && (
             <div className="text-center py-12">
-              <p className="text-gray-600">
-                {statusFilter === "all" 
-                  ? "No resume analyses found." 
-                  : `No analyses found with status "${statusFilter}".`
-                }
-              </p>
+              <p className="text-gray-600">{getFilterDescription()}</p>
             </div>
           )}
 
