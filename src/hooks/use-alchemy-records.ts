@@ -1,7 +1,8 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { SortOption, StatusFilter } from "@/components/alchemy-records/SortFilterControls";
 
 export interface ResumeAnalysis {
   id: string;
@@ -20,18 +21,79 @@ export interface ResumeAnalysis {
     company_url: string | null;
     job_url: string | null;
   } | null;
+  status?: string;
+  lastEditTime?: string;
 }
 
 const ITEMS_PER_PAGE = 10;
 
+const getStatusOrder = (status: string) => {
+  const statusOrder = {
+    'resume': 1,
+    'cover_letter': 2,
+    'application_submitted': 3,
+    'following_up': 4,
+    'interview': 5,
+    'rejected': 6,
+    'accepted': 7
+  };
+  return statusOrder[status as keyof typeof statusOrder] || 0;
+};
+
 export const useAlchemyRecords = () => {
   const [usageCount, setUsageCount] = useState<number>(0);
-  const [analyses, setAnalyses] = useState<ResumeAnalysis[]>([]);
+  const [allAnalyses, setAllAnalyses] = useState<ResumeAnalysis[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [sortOption, setSortOption] = useState<SortOption>("created_at_desc");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const { toast } = useToast();
+
+  // Sort and filter analyses
+  const sortedAndFilteredAnalyses = useMemo(() => {
+    let filtered = allAnalyses;
+
+    // Apply status filter
+    if (statusFilter !== "all") {
+      filtered = allAnalyses.filter(analysis => analysis.status === statusFilter);
+    }
+
+    // Apply sorting
+    const sorted = [...filtered].sort((a, b) => {
+      switch (sortOption) {
+        case "created_at_asc":
+          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        case "created_at_desc":
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        case "last_edit_asc":
+          const aEditTime = a.lastEditTime ? new Date(a.lastEditTime).getTime() : new Date(a.created_at).getTime();
+          const bEditTime = b.lastEditTime ? new Date(b.lastEditTime).getTime() : new Date(b.created_at).getTime();
+          return aEditTime - bEditTime;
+        case "last_edit_desc":
+          const aEditTimeDesc = a.lastEditTime ? new Date(a.lastEditTime).getTime() : new Date(a.created_at).getTime();
+          const bEditTimeDesc = b.lastEditTime ? new Date(b.lastEditTime).getTime() : new Date(b.created_at).getTime();
+          return bEditTimeDesc - aEditTimeDesc;
+        case "status_asc":
+          return getStatusOrder(a.status || 'resume') - getStatusOrder(b.status || 'resume');
+        case "status_desc":
+          return getStatusOrder(b.status || 'resume') - getStatusOrder(a.status || 'resume');
+        default:
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      }
+    });
+
+    return sorted;
+  }, [allAnalyses, sortOption, statusFilter]);
+
+  // Paginate the sorted and filtered results
+  const analyses = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    return sortedAndFilteredAnalyses.slice(startIndex, endIndex);
+  }, [sortedAndFilteredAnalyses, currentPage]);
+
+  const totalPages = Math.ceil(sortedAndFilteredAnalyses.length / ITEMS_PER_PAGE);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -45,18 +107,7 @@ export const useAlchemyRecords = () => {
           setUsageCount(profile.usage_count || 0);
         }
 
-        // Count only records with google_doc_url
-        const { count } = await supabase
-          .from('resume_analyses')
-          .select('*', { count: 'exact', head: true })
-          .not('google_doc_url', 'is', null);
-
-        if (count) {
-          setTotalPages(Math.ceil(count / ITEMS_PER_PAGE));
-        }
-
-        // Fetch only records with google_doc_url
-        // Updated to include formatted_resume from the resumes table
+        // Fetch all records with google_doc_url and join with job_apply for status
         const { data: analysesData, error } = await supabase
           .from('resume_analyses')
           .select(`
@@ -75,29 +126,47 @@ export const useAlchemyRecords = () => {
               file_name,
               file_path,
               formatted_resume
+            ),
+            job_apply!inner (
+              status,
+              created_at,
+              cover_letter
+            ),
+            resume_editors (
+              updated_at
             )
           `)
           .not('google_doc_url', 'is', null)
-          .range((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE - 1)
           .order('created_at', { ascending: false });
 
         if (error) throw error;
 
-        // Transform the data to ensure job is properly handled
+        // Transform the data
         const transformedData: ResumeAnalysis[] = (analysesData || []).map(item => {
-          // Ensure resume is an object and not an array
           const resumeData = Array.isArray(item.resume) ? item.resume[0] : item.resume;
           
-          // Handle job data - it might be null, an array with one item, or an object
           let jobData = null;
           if (item.job) {
-            // If job is an array with items, use the first one
             if (Array.isArray(item.job) && item.job.length > 0) {
               jobData = item.job[0];
-            } 
-            // If job is already an object, use it directly
-            else if (typeof item.job === 'object') {
+            } else if (typeof item.job === 'object') {
               jobData = item.job;
+            }
+          }
+
+          // Get status from job_apply
+          const jobApply = Array.isArray(item.job_apply) ? item.job_apply[0] : item.job_apply;
+          const status = jobApply?.status || 'resume';
+
+          // Determine last edit time
+          let lastEditTime = item.created_at;
+          if (jobApply?.cover_letter) {
+            lastEditTime = jobApply.created_at;
+          }
+          if (item.resume_editors && item.resume_editors.length > 0) {
+            const editorUpdate = item.resume_editors[0].updated_at;
+            if (new Date(editorUpdate) > new Date(lastEditTime)) {
+              lastEditTime = editorUpdate;
             }
           }
 
@@ -108,11 +177,13 @@ export const useAlchemyRecords = () => {
             match_score: item.match_score,
             feedback: item.feedback,
             resume: resumeData,
-            job: jobData
+            job: jobData,
+            status,
+            lastEditTime
           };
         });
 
-        setAnalyses(transformedData);
+        setAllAnalyses(transformedData);
       } catch (error) {
         console.error('Error fetching alchemy records:', error);
       } finally {
@@ -121,15 +192,18 @@ export const useAlchemyRecords = () => {
     };
 
     fetchData();
-  }, [currentPage]);
+  }, []);
+
+  // Reset to first page when filter or sort changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [sortOption, statusFilter]);
 
   const handleFeedback = async (id: string, value: boolean | null) => {
     try {
-      setAnalyses(analyses.map(analysis => 
+      setAllAnalyses(analyses => analyses.map(analysis => 
         analysis.id === id ? { ...analysis, feedback: value } : analysis
       ));
-
-      // Database update is handled in the FeedbackButtons component
     } catch (error) {
       toast({
         title: "Error",
@@ -141,11 +215,9 @@ export const useAlchemyRecords = () => {
 
   const handleSaveTitle = async (id: string, title: string) => {
     try {
-      // Get the analysis to find the job_id
-      const analysis = analyses.find(a => a.id === id);
+      const analysis = allAnalyses.find(a => a.id === id);
       
       if (analysis?.job) {
-        // Extract the job_id from the analysis
         const { data, error: jobIdError } = await supabase
           .from('resume_analyses')
           .select('job_id')
@@ -156,7 +228,6 @@ export const useAlchemyRecords = () => {
         
         const jobId = data.job_id;
         
-        // Update the job title
         const { error } = await supabase
           .from('jobs')
           .update({ job_title: title })
@@ -164,8 +235,7 @@ export const useAlchemyRecords = () => {
         
         if (error) throw error;
         
-        // Update the local state
-        setAnalyses(analyses.map(a => {
+        setAllAnalyses(analyses => analyses.map(a => {
           if (a.id === id && a.job) {
             return {
               ...a,
@@ -201,8 +271,12 @@ export const useAlchemyRecords = () => {
     totalPages,
     editingId,
     usageCount,
+    sortOption,
+    statusFilter,
     setCurrentPage,
     setEditingId,
+    setSortOption,
+    setStatusFilter,
     handleSaveTitle,
     handleFeedback
   };

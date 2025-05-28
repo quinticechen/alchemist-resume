@@ -1,3 +1,4 @@
+
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -5,6 +6,7 @@ import { useAlchemyRecords } from "@/hooks/use-alchemy-records";
 import UsageStats from "@/components/alchemy-records/UsageStats";
 import AnalysisCard from "@/components/alchemy-records/AnalysisCard";
 import RecordsPagination from "@/components/alchemy-records/RecordsPagination";
+import SortFilterControls from "@/components/alchemy-records/SortFilterControls";
 import Lottie from "react-lottie";
 import Loading from "@/animations/Loading.json";
 import SeekerDialog from "@/components/SeekerDialog";
@@ -19,8 +21,12 @@ const AlchemyRecords = () => {
     totalPages,
     editingId,
     usageCount,
+    sortOption,
+    statusFilter,
     setCurrentPage,
     setEditingId,
+    setSortOption,
+    setStatusFilter,
     handleSaveTitle,
     handleFeedback,
   } = useAlchemyRecords();
@@ -62,6 +68,13 @@ const AlchemyRecords = () => {
 
           <UsageStats usageCount={usageCount} />
 
+          <SortFilterControls
+            currentSort={sortOption}
+            currentFilter={statusFilter}
+            onSortChange={setSortOption}
+            onFilterChange={setStatusFilter}
+          />
+
           <div className="space-y-6">
             {analyses.map((analysis) => (
               <AnalysisCard
@@ -75,6 +88,17 @@ const AlchemyRecords = () => {
               />
             ))}
           </div>
+
+          {analyses.length === 0 && !loading && (
+            <div className="text-center py-12">
+              <p className="text-gray-600">
+                {statusFilter === "all" 
+                  ? "No resume analyses found." 
+                  : `No analyses found with status "${statusFilter}".`
+                }
+              </p>
+            </div>
+          )}
 
           <RecordsPagination
             currentPage={currentPage}
