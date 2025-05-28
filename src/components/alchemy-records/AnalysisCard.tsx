@@ -171,18 +171,6 @@ const AnalysisCard = ({
       </div>
 
       <div className="flex flex-wrap gap-4">
-        {job?.job_url && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => window.open(job.job_url, "_blank")}
-            className="flex items-center gap-2"
-          >
-            <LinkIcon className="h-4 w-4" />
-            Job Post
-          </Button>
-        )}
-
         <Button
           variant={getButtonVariant("golden")}
           size="sm"
@@ -203,13 +191,26 @@ const AnalysisCard = ({
           variant={getButtonVariant("cover")}
           size="sm"
           onClick={handleCreateCoverLetter}
-          className={`${getButtonClassName("cover")} ${
-            isPrimaryButton("cover") ? "" : "border-green-200 text-green-700 hover:bg-green-50"
-          }`}
+          className={getButtonClassName("cover")}
+          // className={`${getButtonClassName("cover")} ${
+          //   isPrimaryButton("cover") ? "" : "border-green-200 text-green-700 hover:bg-green-50"
+          // }`}
         >
           <FileEdit className="h-4 w-4 mr-2" />
           Create Cover Letter
         </Button>
+
+        {job?.job_url && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => window.open(job.job_url, "_blank")}
+            className="flex items-center gap-2"
+          >
+            <LinkIcon className="h-4 w-4" />
+            Apply Job
+          </Button>
+        )}
       </div>
     </div>
   );
