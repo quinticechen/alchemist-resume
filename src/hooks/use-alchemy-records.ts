@@ -52,13 +52,20 @@ export const useAlchemyRecords = () => {
 
   // Sort and filter analyses
   const sortedAndFilteredAnalyses = useMemo(() => {
+    console.log('Applying filters to', allAnalyses.length, 'analyses');
+    console.log('Current status filter:', statusFilter);
+    
     let filtered = allAnalyses;
 
     // Apply status filter - support multiple selections
-    if (!statusFilter.includes("all")) {
-      filtered = allAnalyses.filter(analysis => 
-        statusFilter.includes(analysis.status as StatusFilter)
-      );
+    if (!statusFilter.includes("all") && statusFilter.length > 0) {
+      filtered = allAnalyses.filter(analysis => {
+        const analysisStatus = analysis.status || 'resume';
+        const isIncluded = statusFilter.includes(analysisStatus as StatusFilter);
+        console.log(`Analysis ${analysis.id} has status "${analysisStatus}", included: ${isIncluded}`);
+        return isIncluded;
+      });
+      console.log('After filtering:', filtered.length, 'analyses remain');
     }
 
     // Apply sorting
@@ -97,110 +104,124 @@ export const useAlchemyRecords = () => {
 
   const totalPages = Math.ceil(sortedAndFilteredAnalyses.length / ITEMS_PER_PAGE);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Get current user to fetch their profile - fix the API key issue
-        const { data: { user } } = await supabase.auth.getUser();
-        
-        if (user) {
-          const { data: profile, error: profileError } = await supabase
-            .from('profiles')
-            .select('usage_count')
-            .eq('id', user.id)
-            .maybeSingle();
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      
+      // Get current user to fetch their profile
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user) {
+        // Fix the profiles query - use .select() without .maybeSingle() to avoid the error
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('usage_count')
+          .eq('id', user.id)
+          .limit(1);
 
-          if (profileError) {
-            console.error('Error fetching profile:', profileError);
-          } else if (profile) {
-            setUsageCount(profile.usage_count || 0);
+        if (profileError) {
+          console.error('Error fetching profile:', profileError);
+        } else if (profileData && profileData.length > 0) {
+          setUsageCount(profileData[0].usage_count || 0);
+        }
+      }
+
+      // Fetch all records with google_doc_url and join with job_apply for status
+      const { data: analysesData, error } = await supabase
+        .from('resume_analyses')
+        .select(`
+          id,
+          created_at,
+          google_doc_url,
+          match_score,
+          feedback,
+          job:job_id (
+            job_title,
+            company_name,
+            company_url,
+            job_url
+          ),
+          resume:resume_id (
+            file_name,
+            file_path,
+            formatted_resume
+          ),
+          job_apply!inner (
+            status,
+            created_at,
+            cover_letter
+          ),
+          resume_editors (
+            updated_at
+          )
+        `)
+        .not('google_doc_url', 'is', null)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching analyses:', error);
+        throw error;
+      }
+
+      console.log('Raw analyses data:', analysesData?.length || 0, 'records');
+
+      // Transform the data
+      const transformedData: ResumeAnalysis[] = (analysesData || []).map(item => {
+        const resumeData = Array.isArray(item.resume) ? item.resume[0] : item.resume;
+        
+        let jobData = null;
+        if (item.job) {
+          if (Array.isArray(item.job) && item.job.length > 0) {
+            jobData = item.job[0];
+          } else if (typeof item.job === 'object') {
+            jobData = item.job;
           }
         }
 
-        // Fetch all records with google_doc_url and join with job_apply for status
-        const { data: analysesData, error } = await supabase
-          .from('resume_analyses')
-          .select(`
-            id,
-            created_at,
-            google_doc_url,
-            match_score,
-            feedback,
-            job:job_id (
-              job_title,
-              company_name,
-              company_url,
-              job_url
-            ),
-            resume:resume_id (
-              file_name,
-              file_path,
-              formatted_resume
-            ),
-            job_apply!inner (
-              status,
-              created_at,
-              cover_letter
-            ),
-            resume_editors (
-              updated_at
-            )
-          `)
-          .not('google_doc_url', 'is', null)
-          .order('created_at', { ascending: false });
+        // Get status from job_apply
+        const jobApply = Array.isArray(item.job_apply) ? item.job_apply[0] : item.job_apply;
+        const status = jobApply?.status || 'resume';
 
-        if (error) throw error;
-
-        // Transform the data
-        const transformedData: ResumeAnalysis[] = (analysesData || []).map(item => {
-          const resumeData = Array.isArray(item.resume) ? item.resume[0] : item.resume;
-          
-          let jobData = null;
-          if (item.job) {
-            if (Array.isArray(item.job) && item.job.length > 0) {
-              jobData = item.job[0];
-            } else if (typeof item.job === 'object') {
-              jobData = item.job;
-            }
+        // Determine last edit time
+        let lastEditTime = item.created_at;
+        if (jobApply?.cover_letter) {
+          lastEditTime = jobApply.created_at;
+        }
+        if (item.resume_editors && item.resume_editors.length > 0) {
+          const editorUpdate = item.resume_editors[0].updated_at;
+          if (new Date(editorUpdate) > new Date(lastEditTime)) {
+            lastEditTime = editorUpdate;
           }
+        }
 
-          // Get status from job_apply
-          const jobApply = Array.isArray(item.job_apply) ? item.job_apply[0] : item.job_apply;
-          const status = jobApply?.status || 'resume';
+        return {
+          id: item.id,
+          created_at: item.created_at,
+          google_doc_url: item.google_doc_url,
+          match_score: item.match_score,
+          feedback: item.feedback,
+          resume: resumeData,
+          job: jobData,
+          status,
+          lastEditTime
+        };
+      });
 
-          // Determine last edit time
-          let lastEditTime = item.created_at;
-          if (jobApply?.cover_letter) {
-            lastEditTime = jobApply.created_at;
-          }
-          if (item.resume_editors && item.resume_editors.length > 0) {
-            const editorUpdate = item.resume_editors[0].updated_at;
-            if (new Date(editorUpdate) > new Date(lastEditTime)) {
-              lastEditTime = editorUpdate;
-            }
-          }
+      console.log('Transformed data:', transformedData.length, 'records');
+      setAllAnalyses(transformedData);
+    } catch (error) {
+      console.error('Error fetching alchemy records:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load alchemy records",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
-          return {
-            id: item.id,
-            created_at: item.created_at,
-            google_doc_url: item.google_doc_url,
-            match_score: item.match_score,
-            feedback: item.feedback,
-            resume: resumeData,
-            job: jobData,
-            status,
-            lastEditTime
-          };
-        });
-
-        setAllAnalyses(transformedData);
-      } catch (error) {
-        console.error('Error fetching alchemy records:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
+  useEffect(() => {
     fetchData();
   }, []);
 
@@ -209,9 +230,14 @@ export const useAlchemyRecords = () => {
     setCurrentPage(1);
   }, [sortOption, statusFilter]);
 
+  // Add function to refresh data when status changes
+  const refreshData = () => {
+    fetchData();
+  };
+
   const handleFeedback = async (id: string, value: boolean | null) => {
     try {
-      setAllAnalyses(analyses => analyses.map(analysis => 
+      setAllAnalyses(prevAnalyses => prevAnalyses.map(analysis => 
         analysis.id === id ? { ...analysis, feedback: value } : analysis
       ));
     } catch (error) {
@@ -245,7 +271,7 @@ export const useAlchemyRecords = () => {
         
         if (error) throw error;
         
-        setAllAnalyses(analyses => analyses.map(a => {
+        setAllAnalyses(prevAnalyses => prevAnalyses.map(a => {
           if (a.id === id && a.job) {
             return {
               ...a,
@@ -288,6 +314,7 @@ export const useAlchemyRecords = () => {
     setSortOption,
     setStatusFilter,
     handleSaveTitle,
-    handleFeedback
+    handleFeedback,
+    refreshData
   };
 };

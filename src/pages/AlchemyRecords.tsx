@@ -28,6 +28,7 @@ const AlchemyRecords = () => {
     setStatusFilter,
     handleSaveTitle,
     handleFeedback,
+    refreshData,
   } = useAlchemyRecords();
 
   const loadingOptions = {
@@ -94,6 +95,7 @@ const AlchemyRecords = () => {
                 onSaveTitle={handleSaveTitle}
                 onCancelEditing={() => setEditingId(null)}
                 onFeedback={handleFeedback}
+                onStatusChange={refreshData}
               />
             ))}
           </div>

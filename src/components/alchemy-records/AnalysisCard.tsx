@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -34,6 +33,7 @@ interface AnalysisCardProps {
   onSaveTitle: (id: string, title: string) => void;
   onCancelEditing: () => void;
   onFeedback: (id: string, value: boolean | null) => void;
+  onStatusChange?: () => void; // Add callback for status changes
 }
 
 const AnalysisCard = ({
@@ -49,6 +49,7 @@ const AnalysisCard = ({
   onSaveTitle,
   onCancelEditing,
   onFeedback,
+  onStatusChange,
 }: AnalysisCardProps) => {
   const jobTitle = job?.job_title || "Unnamed Position";
   const companyName = job?.company_name || "Unknown Company";
@@ -61,6 +62,14 @@ const AnalysisCard = ({
     navigate("/cover-letter", {
       state: { analysisId: id }
     });
+  };
+
+  const handleStatusChange = async (newStatus: string) => {
+    await updateStatus(newStatus);
+    // Trigger refresh of the parent data
+    if (onStatusChange) {
+      onStatusChange();
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -140,7 +149,7 @@ const AnalysisCard = ({
         <div className="ml-4">
           <StatusSelector
             currentStatus={currentStatus}
-            onStatusChange={updateStatus}
+            onStatusChange={handleStatusChange}
             disabled={false}
           />
         </div>
