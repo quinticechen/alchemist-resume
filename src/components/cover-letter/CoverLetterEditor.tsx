@@ -3,6 +3,8 @@ import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { RefreshCw, Wand2 } from "lucide-react";
+import CoverLetterStyleSelector from "./CoverLetterStyleSelector";
+import CoverLetterPDFDownload from "./CoverLetterPDFDownload";
 
 interface CoverLetterEditorProps {
   coverLetter: string | null;
@@ -10,6 +12,8 @@ interface CoverLetterEditorProps {
   isLoading: boolean;
   onGenerate: () => void;
   onUpdate: (content: string) => void;
+  jobTitle: string;
+  companyName?: string;
 }
 
 const CoverLetterEditor = ({
@@ -18,9 +22,12 @@ const CoverLetterEditor = ({
   isLoading,
   onGenerate,
   onUpdate,
+  jobTitle,
+  companyName,
 }: CoverLetterEditorProps) => {
   const [editedContent, setEditedContent] = useState(coverLetter || "");
   const [hasChanges, setHasChanges] = useState(false);
+  const [selectedStyle, setSelectedStyle] = useState("professional");
 
   useEffect(() => {
     setEditedContent(coverLetter || "");
@@ -68,10 +75,17 @@ const CoverLetterEditor = ({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
+      {/* Style Selector */}
+      <CoverLetterStyleSelector
+        selectedStyle={selectedStyle}
+        onStyleChange={setSelectedStyle}
+      />
+
+      {/* Header with actions */}
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-semibold text-gray-900">Cover Letter</h3>
-        <div className="flex gap-2">
+        <div className="flex gap-3">
           <Button
             variant="outline"
             onClick={handleRegenerate}
@@ -90,6 +104,14 @@ const CoverLetterEditor = ({
               </>
             )}
           </Button>
+          
+          <CoverLetterPDFDownload
+            coverLetterContent={editedContent}
+            jobTitle={jobTitle}
+            companyName={companyName}
+            selectedStyle={selectedStyle}
+          />
+          
           {hasChanges && (
             <Button onClick={handleSave} disabled={isLoading} size="sm">
               Save Changes
@@ -98,17 +120,20 @@ const CoverLetterEditor = ({
         </div>
       </div>
 
-      <Textarea
-        value={editedContent}
-        onChange={(e) => handleContentChange(e.target.value)}
-        className="min-h-[400px] resize-none"
-        placeholder="Your cover letter will appear here..."
-        disabled={isGenerating}
-      />
+      {/* Editor */}
+      <div className="space-y-4">
+        <Textarea
+          value={editedContent}
+          onChange={(e) => handleContentChange(e.target.value)}
+          className="min-h-[500px] resize-none"
+          placeholder="Your cover letter will appear here..."
+          disabled={isGenerating}
+        />
 
-      {hasChanges && (
-        <p className="text-sm text-amber-600">You have unsaved changes</p>
-      )}
+        {hasChanges && (
+          <p className="text-sm text-amber-600">You have unsaved changes</p>
+        )}
+      </div>
     </div>
   );
 };

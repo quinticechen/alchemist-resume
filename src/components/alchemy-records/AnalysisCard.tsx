@@ -6,6 +6,8 @@ import { FileText, Link as LinkIcon, Crown, Pencil, FileEdit } from "lucide-reac
 import { supabase } from "@/integrations/supabase/client";
 import AnalysisTitle from "./AnalysisTitle";
 import FeedbackButtons from "./FeedbackButtons";
+import StatusSelector from "../cover-letter/StatusSelector";
+import { useCoverLetter } from "@/hooks/use-cover-letter";
 
 interface Resume {
   file_name: string;
@@ -49,9 +51,10 @@ const AnalysisCard = ({
   onCancelEditing,
   onFeedback,
 }: AnalysisCardProps) => {
-  // Get the job title from either the job object or use a default
   const jobTitle = job?.job_title || "Unnamed Position";
   const navigate = useNavigate();
+  
+  const { jobApplication, updateStatus } = useCoverLetter(id);
 
   const handleCreateCoverLetter = () => {
     navigate("/cover-letter", {
@@ -78,7 +81,7 @@ const AnalysisCard = ({
         />
       </div>
 
-      <div className="flex items-center gap-4 text-sm text-neutral-600">
+      <div className="flex items-center gap-4 text-sm text-neutral-600 mb-4">
         <span>
           {new Date(created_at).toLocaleDateString("en-US", {
             year: "numeric",
@@ -97,7 +100,16 @@ const AnalysisCard = ({
         )}
       </div>
 
-      <div className="mt-4 flex flex-wrap gap-4">
+      {/* Application Status Section */}
+      <div className="mb-4">
+        <StatusSelector
+          currentStatus={jobApplication?.status || "resume"}
+          onStatusChange={updateStatus}
+          disabled={false}
+        />
+      </div>
+
+      <div className="flex flex-wrap gap-4">
         {job?.job_url && (
           <Button
             variant="outline"
@@ -114,13 +126,10 @@ const AnalysisCard = ({
           variant="outline"
           size="sm"
           onClick={() => {
-            // Get the public URL from Supabase storage
             if (resume?.file_path) {
               const { data } = supabase.storage
                 .from("resumes")
                 .getPublicUrl(resume.file_path);
-
-              // Open the original resume document in a new tab
               window.open(data.publicUrl, "_blank");
             }
           }}

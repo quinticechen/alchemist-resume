@@ -6,8 +6,7 @@ import { ArrowLeft } from "lucide-react";
 import { useCoverLetter } from "@/hooks/use-cover-letter";
 import { supabase } from "@/integrations/supabase/client";
 import CoverLetterEditor from "@/components/cover-letter/CoverLetterEditor";
-import StatusSelector from "@/components/cover-letter/StatusSelector";
-import JobDescriptionViewer from "@/components/alchemy-records/JobDescriptionViewer";
+import JobDescriptionCard from "@/components/cover-letter/JobDescriptionCard";
 
 const CoverLetter = () => {
   const location = useLocation();
@@ -22,7 +21,6 @@ const CoverLetter = () => {
     isGenerating,
     generateCoverLetter,
     updateCoverLetter,
-    updateStatus,
   } = useCoverLetter(analysisId);
 
   // Get analysis ID from location state or URL params
@@ -31,7 +29,6 @@ const CoverLetter = () => {
     if (id) {
       setAnalysisId(id);
     } else {
-      // If no analysis ID, redirect back to alchemy records
       navigate("/alchemy-records");
     }
   }, [location, navigate]);
@@ -50,7 +47,8 @@ const CoverLetter = () => {
               job_title,
               company_name,
               job_description,
-              job_url
+              job_url,
+              company_url
             )
           `)
           .eq("id", analysisId)
@@ -90,37 +88,30 @@ const CoverLetter = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Job Description - Left Column */}
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-xl p-6 shadow-apple h-fit">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Job Description</h2>
+          <div className="lg:col-span-4">
+            <div className="h-fit">
               {isLoadingJob ? (
-                <div className="animate-pulse">
-                  <div className="h-4 bg-gray-200 rounded mb-2"></div>
-                  <div className="h-4 bg-gray-200 rounded mb-2"></div>
-                  <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                <div className="bg-white rounded-xl p-6 shadow-apple">
+                  <div className="animate-pulse space-y-4">
+                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                    <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                    <div className="h-32 bg-gray-200 rounded"></div>
+                  </div>
                 </div>
               ) : jobData ? (
-                <JobDescriptionViewer jobData={jobData} />
+                <JobDescriptionCard jobData={jobData} />
               ) : (
-                <p className="text-gray-500">No job description available</p>
+                <div className="bg-white rounded-xl p-6 shadow-apple">
+                  <p className="text-gray-500">No job description available</p>
+                </div>
               )}
             </div>
           </div>
 
           {/* Cover Letter Editor - Right Columns */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Status Selector */}
-            <div className="bg-white rounded-xl p-6 shadow-apple">
-              <StatusSelector
-                currentStatus={jobApplication?.status || "resume"}
-                onStatusChange={updateStatus}
-                disabled={isLoading}
-              />
-            </div>
-
-            {/* Cover Letter Editor */}
+          <div className="lg:col-span-8">
             <div className="bg-white rounded-xl p-6 shadow-apple">
               <CoverLetterEditor
                 coverLetter={jobApplication?.cover_letter}
@@ -128,6 +119,8 @@ const CoverLetter = () => {
                 isLoading={isLoading}
                 onGenerate={generateCoverLetter}
                 onUpdate={updateCoverLetter}
+                jobTitle={jobData?.job_title || ""}
+                companyName={jobData?.company_name || ""}
               />
             </div>
           </div>
