@@ -1,4 +1,3 @@
-
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
@@ -181,7 +180,7 @@ Deno.serve(async (req) => {
       throw analysisUpdateError;
     }
 
-    // Ensure professionalExperience entries have companyIntroduction
+    // Ensure professionalExperience entries have companyIntroduction and handle website field
     if (goldenResume && analysis.resume_id) {
       // Log the incoming golden resume format for debugging
       console.log("Received goldenResume format:", typeof goldenResume, JSON.stringify(goldenResume).substring(0, 200) + "...");
@@ -237,6 +236,15 @@ Deno.serve(async (req) => {
             ...exp,
             companyIntroduction: exp.companyIntroduction || '' // Ensure companyIntroduction exists
           }));
+        }
+        
+        // Ensure personalInfo has website field
+        if (normalizedResume.resume.personalInfo) {
+          // Keep existing website if it exists, or add empty string
+          normalizedResume.resume.personalInfo = {
+            ...normalizedResume.resume.personalInfo,
+            website: normalizedResume.resume.personalInfo.website || ''
+          };
         }
       }
 
