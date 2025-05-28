@@ -26,7 +26,9 @@ interface PersonalInfoSectionProps {
 
 const PersonalInfoSection = ({ data, onChange }: PersonalInfoSectionProps) => {
   // Extract personalInfo from nested structure or use data directly
-  const personalInfo: PersonalInfo = 'personalInfo' in data ? (data.personalInfo || {}) : data;
+  const personalInfo: PersonalInfo = 'personalInfo' in data && data.personalInfo 
+    ? data.personalInfo 
+    : ('personalInfo' in data ? {} : data);
   
   const handleFieldChange = (field: string, value: string) => {
     // Update the personalInfo section specifically
