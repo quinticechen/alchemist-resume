@@ -76,12 +76,6 @@ const CoverLetterEditor = ({
 
   return (
     <div className="space-y-6">
-      {/* Style Selector */}
-      <CoverLetterStyleSelector
-        selectedStyle={selectedStyle}
-        onStyleChange={setSelectedStyle}
-      />
-
       {/* Header with actions */}
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-semibold text-gray-900">Cover Letter</h3>
@@ -134,6 +128,12 @@ const CoverLetterEditor = ({
           <p className="text-sm text-amber-600">You have unsaved changes</p>
         )}
       </div>
+
+      {/* Style Selector */}
+      <CoverLetterStyleSelector
+        selectedStyle={selectedStyle}
+        onStyleChange={setSelectedStyle}
+      />
     </div>
   );
 };
