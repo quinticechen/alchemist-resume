@@ -98,21 +98,16 @@ export const useAlchemyRecords = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fix the profiles query by using proper select syntax and error handling
-        const { data: profile, error: profileError } = await supabase
+        const { data: profile } = await supabase
           .from('profiles')
           .select('usage_count')
           .single();
 
-        if (profileError) {
-          console.error('Error fetching profile:', profileError);
-          // Set default usage count if profile fetch fails
-          setUsageCount(0);
-        } else if (profile) {
+        if (profile) {
           setUsageCount(profile.usage_count || 0);
         }
 
-        // Fetch all records with proper error handling
+        // Fetch all records with google_doc_url and join with job_apply for status
         const { data: analysesData, error } = await supabase
           .from('resume_analyses')
           .select(`
@@ -144,10 +139,7 @@ export const useAlchemyRecords = () => {
           .not('google_doc_url', 'is', null)
           .order('created_at', { ascending: false });
 
-        if (error) {
-          console.error('Error fetching analyses:', error);
-          throw error;
-        }
+        if (error) throw error;
 
         // Transform the data
         const transformedData: ResumeAnalysis[] = (analysesData || []).map(item => {
@@ -194,18 +186,13 @@ export const useAlchemyRecords = () => {
         setAllAnalyses(transformedData);
       } catch (error) {
         console.error('Error fetching alchemy records:', error);
-        toast({
-          title: "Error",
-          description: "Failed to load alchemy records. Please try refreshing the page.",
-          variant: "destructive",
-        });
       } finally {
         setLoading(false);
       }
     };
 
     fetchData();
-  }, [toast]);
+  }, []);
 
   // Reset to first page when filter or sort changes
   useEffect(() => {
