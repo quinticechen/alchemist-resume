@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,10 +26,12 @@ interface PersonalInfoSectionProps {
 const PersonalInfoSection = ({ data, onChange }: PersonalInfoSectionProps) => {
   // Extract personalInfo from nested structure or use data directly
   const personalInfo: PersonalInfo = (() => {
+    // If data has a personalInfo property, use it
     if (data && typeof data === 'object' && 'personalInfo' in data) {
       return data.personalInfo || {};
     }
-    return data || {};
+    // Otherwise, data IS the personalInfo
+    return (data as PersonalInfo) || {};
   })();
   
   const handleFieldChange = (field: string, value: string) => {
