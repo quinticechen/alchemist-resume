@@ -1,3 +1,4 @@
+
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
@@ -178,6 +179,37 @@ Deno.serve(async (req) => {
 
     if (analysisUpdateError) {
       throw analysisUpdateError;
+    }
+
+    // Create job_apply record if it doesn't exist
+    const { data: existingJobApply, error: jobApplyCheckError } = await supabaseClient
+      .from('job_apply')
+      .select('id')
+      .eq('analysis_id', analysisId)
+      .maybeSingle();
+
+    if (jobApplyCheckError && jobApplyCheckError.code !== 'PGRST116') {
+      console.error('Error checking existing job_apply record:', jobApplyCheckError);
+    }
+
+    if (!existingJobApply) {
+      console.log('Creating new job_apply record for analysis:', analysisId);
+      const { error: jobApplyInsertError } = await supabaseClient
+        .from('job_apply')
+        .insert({
+          analysis_id: analysisId,
+          status: 'resume',
+          created_at: new Date().toISOString()
+        });
+
+      if (jobApplyInsertError) {
+        console.error('Error creating job_apply record:', jobApplyInsertError);
+        // Don't fail the entire operation, just log the error
+      } else {
+        console.log('Successfully created job_apply record for analysis:', analysisId);
+      }
+    } else {
+      console.log('job_apply record already exists for analysis:', analysisId);
     }
 
     // Ensure professionalExperience entries have companyIntroduction and handle website field
