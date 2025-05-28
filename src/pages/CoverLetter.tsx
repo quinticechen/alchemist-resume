@@ -58,18 +58,19 @@ const CoverLetter = () => {
         if (error) throw error;
         
         // Format the data to match JobDescriptionViewer's expected structure
-        if (analysisData.job) {
+        if (analysisData?.job) {
+          const jobInfo = analysisData.job;
           const formattedJobData = {
             job: {
-              title: analysisData.job.job_title,
-              url: analysisData.job.job_url,
-              description: analysisData.job.job_description,
-              "10keywords": analysisData.job.job_description?.["10keywords"],
-              keywords: analysisData.job.job_description?.keywords,
+              title: jobInfo.job_title,
+              url: jobInfo.job_url,
+              description: jobInfo.job_description,
+              "10keywords": jobInfo.job_description?.["10keywords"],
+              keywords: jobInfo.job_description?.keywords,
             },
             company: {
-              name: analysisData.job.company_name,
-              url: analysisData.job.company_url,
+              name: jobInfo.company_name,
+              url: jobInfo.company_url,
             }
           };
           setJobData(formattedJobData);
