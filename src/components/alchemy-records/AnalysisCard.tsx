@@ -2,10 +2,9 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { FileText, Link as LinkIcon, Crown, Pencil, FileEdit } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { Link as LinkIcon, Crown, FileEdit } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import AnalysisTitle from "./AnalysisTitle";
-import FeedbackButtons from "./FeedbackButtons";
 import StatusSelector from "../cover-letter/StatusSelector";
 import { useCoverLetter } from "@/hooks/use-cover-letter";
 
@@ -52,14 +51,75 @@ const AnalysisCard = ({
   onFeedback,
 }: AnalysisCardProps) => {
   const jobTitle = job?.job_title || "Unnamed Position";
+  const companyName = job?.company_name || "Unknown Company";
   const navigate = useNavigate();
   
   const { jobApplication, updateStatus } = useCoverLetter(id);
+  const currentStatus = jobApplication?.status || "resume";
 
   const handleCreateCoverLetter = () => {
     navigate("/cover-letter", {
       state: { analysisId: id }
     });
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "resume":
+        return "bg-blue-100 text-blue-800";
+      case "cover_letter":
+        return "bg-green-100 text-green-800";
+      case "application_submitted":
+        return "bg-purple-100 text-purple-800";
+      case "following_up":
+        return "bg-yellow-100 text-yellow-800";
+      case "interview":
+        return "bg-orange-100 text-orange-800";
+      case "rejected":
+        return "bg-red-100 text-red-800";
+      case "accepted":
+        return "bg-emerald-100 text-emerald-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case "resume":
+        return "Resume";
+      case "cover_letter":
+        return "Cover Letter";
+      case "application_submitted":
+        return "Application Submitted";
+      case "following_up":
+        return "Following Up";
+      case "interview":
+        return "Interview";
+      case "rejected":
+        return "Rejected";
+      case "accepted":
+        return "Accepted";
+      default:
+        return "Resume";
+    }
+  };
+
+  const isPrimaryButton = (buttonType: string) => {
+    if (currentStatus === "resume" && buttonType === "golden") return true;
+    if (currentStatus === "cover_letter" && buttonType === "cover") return true;
+    return false;
+  };
+
+  const getButtonVariant = (buttonType: string) => {
+    return isPrimaryButton(buttonType) ? "default" : "outline";
+  };
+
+  const getButtonClassName = (buttonType: string) => {
+    if (isPrimaryButton(buttonType)) {
+      return "bg-gradient-primary-light text-white hover:opacity-90 transition-opacity";
+    }
+    return "flex items-center gap-2";
   };
 
   return (
@@ -73,12 +133,17 @@ const AnalysisCard = ({
             onSave={(title) => onSaveTitle(id, title)}
             onCancel={onCancelEditing}
           />
+          <p className="text-gray-600 text-sm mt-1">{companyName}</p>
         </div>
-        <FeedbackButtons
-          feedback={feedback}
-          onFeedback={(value) => onFeedback(id, value)}
-          analysisId={id}
-        />
+        
+        {/* Status Badge in top right */}
+        <div className="ml-4">
+          <StatusSelector
+            currentStatus={currentStatus}
+            onStatusChange={updateStatus}
+            disabled={false}
+          />
+        </div>
       </div>
 
       <div className="flex items-center gap-4 text-sm text-neutral-600 mb-4">
@@ -89,24 +154,11 @@ const AnalysisCard = ({
             day: "numeric",
           })}
         </span>
-        <div className="flex items-center gap-2">
-          <FileText className="h-4 w-4" />
-          {resume?.file_name || "Unnamed Resume"}
-        </div>
         {match_score !== null && (
           <div className="font-semibold">
             Match: {Math.round(match_score * 100)}%
           </div>
         )}
-      </div>
-
-      {/* Application Status Section */}
-      <div className="mb-4">
-        <StatusSelector
-          currentStatus={jobApplication?.status || "resume"}
-          onStatusChange={updateStatus}
-          disabled={false}
-        />
       </div>
 
       <div className="flex flex-wrap gap-4">
@@ -117,42 +169,13 @@ const AnalysisCard = ({
             onClick={() => window.open(job.job_url, "_blank")}
             className="flex items-center gap-2"
           >
-            <LinkIcon className="h-4 w-4 mr-2" />
+            <LinkIcon className="h-4 w-4" />
             Job Post
           </Button>
         )}
 
         <Button
-          variant="outline"
-          size="sm"
-          onClick={() => {
-            if (resume?.file_path) {
-              const { data } = supabase.storage
-                .from("resumes")
-                .getPublicUrl(resume.file_path);
-              window.open(data.publicUrl, "_blank");
-            }
-          }}
-          className="flex items-center gap-2"
-        >
-          <FileText className="h-4 w-4 mr-2" />
-          Original Resume
-        </Button>
-
-        {google_doc_url && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => window.open(google_doc_url, "_blank")}
-            className="flex items-center gap-2"
-          >
-            <Pencil className="h-4 w-4 mr-2" />
-            Edit with Google Doc
-          </Button>
-        )}
-
-        <Button
-          variant="outline"
+          variant={getButtonVariant("golden")}
           size="sm"
           onClick={() =>
             navigate("/resume-preview", {
@@ -161,17 +184,19 @@ const AnalysisCard = ({
               },
             })
           }
-          className="bg-gradient-primary-light text-white hover:opacity-90 transition-opacity"
+          className={getButtonClassName("golden")}
         >
           <Crown className="h-4 w-4 mr-2" />
           View Golden Resume
         </Button>
 
         <Button
-          variant="outline"
+          variant={getButtonVariant("cover")}
           size="sm"
           onClick={handleCreateCoverLetter}
-          className="flex items-center gap-2 border-green-200 text-green-700 hover:bg-green-50"
+          className={`${getButtonClassName("cover")} ${
+            isPrimaryButton("cover") ? "" : "border-green-200 text-green-700 hover:bg-green-50"
+          }`}
         >
           <FileEdit className="h-4 w-4 mr-2" />
           Create Cover Letter

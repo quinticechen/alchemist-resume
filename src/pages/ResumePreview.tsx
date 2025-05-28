@@ -3,7 +3,7 @@ import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Pencil, FileText, Download, Edit } from "lucide-react";
+import { Pencil, FileText, Download, Edit, ThumbsUp, ThumbsDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -160,6 +160,7 @@ const ResumePreview = () => {
     return localStorage.getItem(LOCAL_STORAGE_STYLE_KEY) || "classic";
   });
   const [styleDialogOpen, setStyleDialogOpen] = useState(false);
+  const [feedback, setFeedback] = useState<boolean | null>(null);
   const resumeRef = useRef<HTMLDivElement>(null);
   const locationState = location.state || {};
   const paramAnalysisId = params.analysisId;
@@ -217,7 +218,8 @@ const ResumePreview = () => {
             `
             id,
             google_doc_url,
-            resume:resume_id(file_name),
+            feedback,
+            resume:resume_id(file_name, file_path),
             job:job_id(job_title)
           `
           )
@@ -293,7 +295,10 @@ const ResumePreview = () => {
           jobTitle,
           fileName,
           googleDocUrl: analysisData.google_doc_url,
+          originalResume: analysisData.resume,
         });
+        
+        setFeedback(analysisData.feedback);
       } catch (error) {
         console.error("Error fetching resume data:", error);
         toast({
@@ -312,6 +317,32 @@ const ResumePreview = () => {
   useEffect(() => {
     localStorage.setItem(LOCAL_STORAGE_STYLE_KEY, style);
   }, [style]);
+
+  const handleFeedback = async (value: boolean | null) => {
+    try {
+      setFeedback(value);
+
+      const { error } = await supabase
+        .from("resume_analyses")
+        .update({ feedback: value })
+        .eq("id", analysisId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Feedback recorded",
+        description: "Thank you for your feedback!",
+      });
+    } catch (error) {
+      console.error("Error submitting feedback:", error);
+      toast({
+        title: "Error",
+        description: "Failed to submit feedback",
+        variant: "destructive",
+      });
+      setFeedback(null);
+    }
+  };
 
   const handleEditSection = (section: ResumeSection) => {
     navigate(`/resume-refine/${analysisId}`, {
@@ -493,7 +524,7 @@ const ResumePreview = () => {
             <h1 className="text-3xl font-bold bg-gradient-primary text-transparent bg-clip-text mb-4">
               {resumeData.jobTitle}
             </h1>
-            <div className="flex gap-4">
+            <div className="flex gap-4 flex-wrap justify-center">
               <Button
                 variant="outline"
                 onClick={handleEditClick}
@@ -520,6 +551,54 @@ const ResumePreview = () => {
                 <Download className="h-4 w-4" />
                 Export PDF
               </Button>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  if (resumeData.originalResume?.file_path) {
+                    const { data } = supabase.storage
+                      .from("resumes")
+                      .getPublicUrl(resumeData.originalResume.file_path);
+                    window.open(data.publicUrl, "_blank");
+                  }
+                }}
+                className="flex items-center gap-2"
+              >
+                <FileText className="h-4 w-4" />
+                Original Resume
+              </Button>
+
+              {resumeData.googleDocUrl && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => window.open(resumeData.googleDocUrl, "_blank")}
+                  className="flex items-center gap-2"
+                >
+                  <Edit className="h-4 w-4" />
+                  Edit with Google Doc
+                </Button>
+              )}
+
+              <div className="flex items-center gap-2">
+                <Button
+                  variant={feedback === true ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => handleFeedback(feedback === true ? null : true)}
+                  className="flex items-center gap-2"
+                >
+                  <ThumbsUp className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant={feedback === false ? "destructive" : "outline"}
+                  size="sm"
+                  onClick={() => handleFeedback(feedback === false ? null : false)}
+                  className="flex items-center gap-2"
+                >
+                  <ThumbsDown className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           </div>
 
