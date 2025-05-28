@@ -21,7 +21,7 @@ interface PersonalInfo {
 
 interface PersonalInfoSectionProps {
   data: { personalInfo?: PersonalInfo } | PersonalInfo;
-  onChange: (field: string, value: string) => void;
+  onChange: (field: string, value: string | PersonalInfo) => void;
 }
 
 const PersonalInfoSection = ({ data, onChange }: PersonalInfoSectionProps) => {
@@ -30,10 +30,11 @@ const PersonalInfoSection = ({ data, onChange }: PersonalInfoSectionProps) => {
   
   const handleFieldChange = (field: string, value: string) => {
     // Update the personalInfo section specifically
-    onChange('personalInfo', {
+    const updatedPersonalInfo = {
       ...personalInfo,
       [field]: value
-    });
+    };
+    onChange('personalInfo', updatedPersonalInfo);
   };
 
   // Get the full name from firstName + lastName or use name field
@@ -46,12 +47,13 @@ const PersonalInfoSection = ({ data, onChange }: PersonalInfoSectionProps) => {
     const firstName = nameParts[0] || '';
     const lastName = nameParts.slice(1).join(' ') || '';
     
-    onChange('personalInfo', {
+    const updatedPersonalInfo = {
       ...personalInfo,
       firstName,
       lastName,
       name: value
-    });
+    };
+    onChange('personalInfo', updatedPersonalInfo);
   };
 
   return (
