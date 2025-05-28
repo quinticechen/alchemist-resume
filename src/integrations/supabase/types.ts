@@ -97,6 +97,47 @@ export type Database = {
           },
         ]
       }
+      job_apply: {
+        Row: {
+          analysis_id: string
+          apply_date: string | null
+          cover_later: string | null
+          cover_letter: string | null
+          created_at: string
+          id: number
+          note: string | null
+          status: Database["public"]["Enums"]["application_status"] | null
+        }
+        Insert: {
+          analysis_id: string
+          apply_date?: string | null
+          cover_later?: string | null
+          cover_letter?: string | null
+          created_at?: string
+          id?: number
+          note?: string | null
+          status?: Database["public"]["Enums"]["application_status"] | null
+        }
+        Update: {
+          analysis_id?: string
+          apply_date?: string | null
+          cover_later?: string | null
+          cover_letter?: string | null
+          created_at?: string
+          id?: number
+          note?: string | null
+          status?: Database["public"]["Enums"]["application_status"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_apply_analysis_id_fkey"
+            columns: ["analysis_id"]
+            isOneToOne: false
+            referencedRelation: "resume_analyses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       jobs: {
         Row: {
           company_name: string | null
@@ -592,6 +633,14 @@ export type Database = {
     }
     Enums: {
       analysis_status_type: "pending" | "error" | "timeout" | "success"
+      application_status:
+        | "resume"
+        | "cover_letter"
+        | "application_submitted"
+        | "following_up"
+        | "interview"
+        | "rejected"
+        | "accepted"
       payment_period_type: "monthly" | "annual"
       subscription_tier: "apprentice" | "alchemist" | "grandmaster"
     }
@@ -710,6 +759,15 @@ export const Constants = {
   public: {
     Enums: {
       analysis_status_type: ["pending", "error", "timeout", "success"],
+      application_status: [
+        "resume",
+        "cover_letter",
+        "application_submitted",
+        "following_up",
+        "interview",
+        "rejected",
+        "accepted",
+      ],
       payment_period_type: ["monthly", "annual"],
       subscription_tier: ["apprentice", "alchemist", "grandmaster"],
     },

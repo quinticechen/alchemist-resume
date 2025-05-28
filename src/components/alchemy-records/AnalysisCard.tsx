@@ -2,7 +2,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { FileText, Link as LinkIcon, Crown, Pencil } from "lucide-react";
+import { FileText, Link as LinkIcon, Crown, Pencil, FileEdit } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import AnalysisTitle from "./AnalysisTitle";
 import FeedbackButtons from "./FeedbackButtons";
@@ -53,6 +53,12 @@ const AnalysisCard = ({
   const jobTitle = job?.job_title || "Unnamed Position";
   const navigate = useNavigate();
 
+  const handleCreateCoverLetter = () => {
+    navigate("/cover-letter", {
+      state: { analysisId: id }
+    });
+  };
+
   return (
     <div className="bg-white rounded-xl p-6 shadow-apple">
       <div className="flex justify-between items-start mb-4">
@@ -98,7 +104,6 @@ const AnalysisCard = ({
             size="sm"
             onClick={() => window.open(job.job_url, "_blank")}
             className="flex items-center gap-2"
-            // className="text-info border-info/20 hover:bg-info/5"
           >
             <LinkIcon className="h-4 w-4 mr-2" />
             Job Post
@@ -151,6 +156,16 @@ const AnalysisCard = ({
         >
           <Crown className="h-4 w-4 mr-2" />
           View Golden Resume
+        </Button>
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleCreateCoverLetter}
+          className="flex items-center gap-2 border-green-200 text-green-700 hover:bg-green-50"
+        >
+          <FileEdit className="h-4 w-4 mr-2" />
+          Create Cover Letter
         </Button>
       </div>
     </div>
