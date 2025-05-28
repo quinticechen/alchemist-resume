@@ -101,7 +101,6 @@ export type Database = {
         Row: {
           analysis_id: string
           apply_date: string | null
-          cover_later: string | null
           cover_letter: string | null
           created_at: string
           id: number
@@ -111,7 +110,6 @@ export type Database = {
         Insert: {
           analysis_id: string
           apply_date?: string | null
-          cover_later?: string | null
           cover_letter?: string | null
           created_at?: string
           id?: number
@@ -121,7 +119,6 @@ export type Database = {
         Update: {
           analysis_id?: string
           apply_date?: string | null
-          cover_later?: string | null
           cover_letter?: string | null
           created_at?: string
           id?: number
