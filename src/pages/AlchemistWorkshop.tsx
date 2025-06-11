@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import ResumeUploader from "@/components/ResumeUploader";
@@ -167,23 +168,32 @@ const AlchemistWorkshop = () => {
         throw resumeError;
       }
 
-      // Prepare webhook data based on how resume and job were provided
-      const webhookData = {
+      // Prepare webhook data based on the scenario
+      let webhookData: any = {
         analysisId: analysisRecord.id,
         fileName: resumeData.file_name,
-        // Only include resumeUrl if user uploaded a new resume
-        ...(isFromPreviousResume ? {} : {
-          resumeUrl: supabase.storage.from("resumes").getPublicUrl(resumeData.file_path).data.publicUrl
-        }),
-        // Only include resumeContent if user selected previous resume
-        ...(isFromPreviousResume ? {
-          resumeContent: resumeData.formatted_resume || ""
-        } : {}),
-        // Only include jobUrl if user provided URL
-        ...(data.jobUrl ? { jobUrl: data.jobUrl } : {}),
-        // Only include jobContent if user pasted description
-        ...(data.jobContent ? { jobContent: data.jobContent } : {})
       };
+
+      // Scenario 1: Previous resume + job description
+      if (isFromPreviousResume && data.jobContent) {
+        webhookData.resumeContent = resumeData.formatted_resume || "";
+        webhookData.jobContent = data.jobContent;
+      }
+      // Scenario 2: Previous resume + job URL  
+      else if (isFromPreviousResume && data.jobUrl) {
+        webhookData.resumeContent = resumeData.formatted_resume || "";
+        webhookData.jobUrl = data.jobUrl;
+      }
+      // Scenario 3: New resume + job URL
+      else if (!isFromPreviousResume && data.jobUrl) {
+        webhookData.resumeUrl = supabase.storage.from("resumes").getPublicUrl(resumeData.file_path).data.publicUrl;
+        webhookData.jobUrl = data.jobUrl;
+      }
+      // Scenario 4: New resume + job description
+      else if (!isFromPreviousResume && data.jobContent) {
+        webhookData.resumeUrl = supabase.storage.from("resumes").getPublicUrl(resumeData.file_path).data.publicUrl;
+        webhookData.jobContent = data.jobContent;
+      }
 
       const currentEnv = getEnvironment();
       const makeWebhookUrl =
