@@ -14,7 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface ResumeSelectorProps {
-  onSelect: (resumeId: string, resumeName: string, resumePath: string) => void;
+  onSelect: (resumeId: string, resumeName: string, resumePath: string, resumeContent: string) => void;
   className?: string;
 }
 
@@ -67,7 +67,7 @@ const ResumeSelector: React.FC<ResumeSelectorProps> = ({
     fetchResumes();
   }, [toast, session?.user?.id]);
 
-  const handleSelect = () => {
+  const handleSelect = async () => {
     if (!selectedResumeId) {
       toast({
         title: "No Resume Selected",
@@ -81,11 +81,38 @@ const ResumeSelector: React.FC<ResumeSelectorProps> = ({
       (resume) => resume.id === selectedResumeId
     );
     if (selectedResume) {
-      onSelect(
-        selectedResume.id,
-        selectedResume.file_name,
-        selectedResume.file_path
-      );
+      try {
+        // Fetch the resume content from the database
+        const { data: resumeData, error } = await supabase
+          .from("resumes")
+          .select("formatted_resume")
+          .eq("id", selectedResumeId)
+          .single();
+
+        if (error) {
+          console.error("Error fetching resume content:", error);
+          toast({
+            title: "Error",
+            description: "Failed to load resume content. Please try again.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        onSelect(
+          selectedResume.id,
+          selectedResume.file_name,
+          selectedResume.file_path,
+          resumeData.formatted_resume || ""
+        );
+      } catch (error) {
+        console.error("Error selecting resume:", error);
+        toast({
+          title: "Error",
+          description: "Failed to select resume. Please try again.",
+          variant: "destructive",
+        });
+      }
     }
   };
 
