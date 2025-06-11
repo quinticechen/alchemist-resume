@@ -180,7 +180,7 @@ const AlchemistWorkshop = () => {
       }
       // Scenario 2: Previous resume + job URL  
       else if (isFromPreviousResume && data.jobUrl) {
-        webhookData.resumeUrl = resumeData.file_path;
+        webhookData.resumeContent = resumeData.formatted_resume || "";
         webhookData.jobUrl = data.jobUrl;
       }
       // Scenario 3: New resume + job URL
