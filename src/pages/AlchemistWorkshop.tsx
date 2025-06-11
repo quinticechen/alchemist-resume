@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import ResumeUploader from "@/components/ResumeUploader";
-import JobUrlInput from "@/components/JobUrlInput";
+import JobDescriptionInput from "@/components/JobDescriptionInput";
 import ProcessingPreview from "@/components/ProcessingPreview";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,7 +10,6 @@ import { useSubscriptionCheck } from "@/hooks/useSubscriptionCheck";
 import { getEnvironment } from "@/integrations/supabase/client";
 import Lottie from "react-lottie";
 import Loading from "@/animations/Loading.json";
-import { Button } from "@/components/ui/button";
 
 const AlchemistWorkshop = () => {
   const { session, isLoading } = useAuth();
@@ -18,7 +17,6 @@ const AlchemistWorkshop = () => {
   const [filePath, setFilePath] = useState<string>("");
   const [publicUrl, setPublicUrl] = useState<string>("");
   const [resumeId, setResumeId] = useState<string>("");
-  const [jobUrl, setJobUrl] = useState<string>("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [analysisId, setAnalysisId] = useState<string>("");
   const { toast } = useToast();
@@ -71,7 +69,6 @@ const AlchemistWorkshop = () => {
     setFilePath(path);
     setPublicUrl(url);
     setResumeId(id);
-    setJobUrl("");
     setAnalysisId("");
     setIsProcessing(false);
     setIsTimeout(false);
@@ -90,7 +87,7 @@ const AlchemistWorkshop = () => {
     setResumeId("");
   };
 
-  const handleUrlSubmit = async (url: string) => {
+  const handleJobSubmit = async (data: { jobUrl?: string; jobContent?: string }) => {
     setIsProcessing(true);
     setIsTimeout(false);
     setIsGenerationComplete(false);
@@ -103,8 +100,9 @@ const AlchemistWorkshop = () => {
       const { data: jobData, error: jobError } = await supabase
         .from("jobs")
         .insert({
-          company_url: url,
-          job_url: url,
+          company_url: data.jobUrl || null,
+          job_url: data.jobUrl || null,
+          job_content: data.jobContent || null,
           user_id: session?.user?.id,
         })
         .select()
@@ -133,7 +131,7 @@ const AlchemistWorkshop = () => {
 
       const { data: resumeData, error: resumeError } = await supabase
         .from("resumes")
-        .select("file_name, file_path")
+        .select("file_name, file_path, formatted_resume")
         .eq("id", resumeId)
         .single();
 
@@ -147,10 +145,11 @@ const AlchemistWorkshop = () => {
 
       const webhookData = {
         analysisId: analysisRecord.id,
-        jobId: jobId,
-        resumeUrl: storageData.publicUrl,
-        jobUrl: url,
+        jobUrl: data.jobUrl || "",
+        jobContent: data.jobContent || "",
         fileName: resumeData.file_name,
+        resumeUrl: storageData.publicUrl,
+        resumeContent: resumeData.formatted_resume || "",
       };
 
       const currentEnv = getEnvironment();
@@ -171,7 +170,6 @@ const AlchemistWorkshop = () => {
         throw new Error("Failed to trigger Make.com webhook");
       }
 
-      setJobUrl(url);
       setAnalysisId(analysisRecord.id);
 
       toast({
@@ -260,13 +258,9 @@ const AlchemistWorkshop = () => {
         />
 
         {selectedFile && (
-          <JobUrlInput
-            onUrlSubmit={handleUrlSubmit}
+          <JobDescriptionInput
+            onSubmit={handleJobSubmit}
             isProcessing={isProcessing}
-            jobUrl={jobUrl}
-            setJobUrl={setJobUrl}
-            resumeId={resumeId}
-            setIsProcessing={setIsProcessing}
             isGenerationComplete={isGenerationComplete}
           />
         )}
@@ -274,7 +268,7 @@ const AlchemistWorkshop = () => {
         {analysisId && (
           <ProcessingPreview
             analysisId={analysisId}
-            jobUrl={jobUrl}
+            jobUrl=""
             isProcessing={isProcessing}
             setIsProcessing={setIsProcessing}
             onGenerationComplete={handleGenerationComplete}

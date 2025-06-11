@@ -141,6 +141,7 @@ export type Database = {
           company_url: string | null
           created_at: string | null
           id: string
+          job_content: string | null
           job_description: Json | null
           job_title: string | null
           job_url: string | null
@@ -153,6 +154,7 @@ export type Database = {
           company_url?: string | null
           created_at?: string | null
           id?: string
+          job_content?: string | null
           job_description?: Json | null
           job_title?: string | null
           job_url?: string | null
@@ -165,6 +167,7 @@ export type Database = {
           company_url?: string | null
           created_at?: string | null
           id?: string
+          job_content?: string | null
           job_description?: Json | null
           job_title?: string | null
           job_url?: string | null

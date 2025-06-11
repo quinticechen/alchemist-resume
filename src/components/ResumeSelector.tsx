@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { FileText, Upload, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface ResumeSelectorProps {
   onSelect: (resumeId: string, resumeName: string, resumePath: string) => void;
@@ -22,6 +22,7 @@ const ResumeSelector: React.FC<ResumeSelectorProps> = ({
   onSelect,
   className = "",
 }) => {
+  const { session } = useAuth();
   const [resumes, setResumes] = useState<
     Array<{
       id: string;
@@ -36,11 +37,17 @@ const ResumeSelector: React.FC<ResumeSelectorProps> = ({
 
   useEffect(() => {
     const fetchResumes = async () => {
+      if (!session?.user?.id) {
+        setIsLoading(false);
+        return;
+      }
+
       try {
         setIsLoading(true);
         const { data, error } = await supabase
           .from("resumes")
           .select("id, file_name, file_path, created_at")
+          .eq("user_id", session.user.id)
           .order("created_at", { ascending: false });
 
         if (error) throw error;
@@ -58,7 +65,7 @@ const ResumeSelector: React.FC<ResumeSelectorProps> = ({
     };
 
     fetchResumes();
-  }, [toast]);
+  }, [toast, session?.user?.id]);
 
   const handleSelect = () => {
     if (!selectedResumeId) {
