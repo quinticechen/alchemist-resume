@@ -31,25 +31,23 @@ const ResumeUploader: React.FC<ResumeUploaderProps> = ({
   const [isUploaded, setIsUploaded] = useState<boolean>(false);
   const { uploadResume, isUploading } = useResumeUpload();
 
-  const handleFileSelect = (file: File) => {
+  const handleFileSelect = async (file: File) => {
     setSelectedFile(file);
     setSelectedResumeName("");
     setSelectedResumeId("");
     setSelectedResumePath("");
     setIsUploaded(false);
-  };
-
-  const handleUpload = async () => {
-    if (!selectedFile) return;
-
+    
+    // Auto-upload the file
     try {
-      const result = await uploadResume(selectedFile);
+      const result = await uploadResume(file);
       if (result) {
         setIsUploaded(true);
-        onUploadSuccess(selectedFile, result.path, result.url, result.id);
+        setSelectedResumePath(result.path);
+        onUploadSuccess(file, result.path, result.url, result.id);
       }
     } catch (error) {
-      console.error("Upload failed:", error);
+      console.error("Auto-upload failed:", error);
     }
   };
 
@@ -72,21 +70,18 @@ const ResumeUploader: React.FC<ResumeUploaderProps> = ({
   };
 
   const handlePreview = () => {
-    let previewUrl = "";
-    
-    if (selectedFile && isUploaded) {
-      // For newly uploaded files, get the public URL from Supabase
-      const { data } = supabase.storage
-        .from("resumes")
-        .getPublicUrl(selectedResumePath || "");
-      previewUrl = data.publicUrl;
-    } else if (selectedResumePath) {
-      // For previously selected resumes
-      const { data } = supabase.storage
-        .from("resumes")
-        .getPublicUrl(selectedResumePath);
-      previewUrl = data.publicUrl;
+    if (!selectedResumePath) {
+      console.error("No resume path available for preview");
+      return;
     }
+    
+    // Generate the correct public URL using the file path
+    const { data } = supabase.storage
+      .from("resumes")
+      .getPublicUrl(selectedResumePath);
+    
+    const previewUrl = data.publicUrl;
+    console.log("Opening preview URL:", previewUrl);
     
     if (previewUrl) {
       window.open(previewUrl, "_blank");
@@ -144,6 +139,7 @@ const ResumeUploader: React.FC<ResumeUploaderProps> = ({
                   size="sm"
                   onClick={handlePreview}
                   className="flex items-center gap-2"
+                  disabled={!selectedResumePath}
                 >
                   <Eye className="h-4 w-4" />
                   Preview Resume
@@ -169,29 +165,14 @@ const ResumeUploader: React.FC<ResumeUploaderProps> = ({
 
             <TabsContent value="upload" className="space-y-4">
               <UploadZone onFileSelect={handleFileSelect} isUploading={isUploading} />
-              {selectedFile && !isUploaded && (
+              {isUploading && (
                 <div className="space-y-3">
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                     <div className="flex items-center gap-2">
-                      <FileText className="h-4 w-4 text-blue-600" />
-                      <span className="text-blue-800 text-sm font-medium">{selectedFile.name}</span>
-                      <span className="text-blue-600 text-xs">({formatFileSize(selectedFile.size)})</span>
+                      <Upload className="h-4 w-4 text-blue-600 animate-pulse" />
+                      <span className="text-blue-800 text-sm font-medium">Uploading...</span>
                     </div>
                   </div>
-                  <Button 
-                    onClick={handleUpload} 
-                    disabled={isUploading}
-                    className="w-full"
-                  >
-                    {isUploading ? (
-                      <>
-                        <Upload className="mr-2 h-4 w-4 animate-pulse" />
-                        Uploading...
-                      </>
-                    ) : (
-                      "Upload Resume"
-                    )}
-                  </Button>
                 </div>
               )}
             </TabsContent>
