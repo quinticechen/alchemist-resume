@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import ResumeUploader from "@/components/ResumeUploader";
@@ -17,6 +18,8 @@ const AlchemistWorkshop = () => {
   const [filePath, setFilePath] = useState<string>("");
   const [publicUrl, setPublicUrl] = useState<string>("");
   const [resumeId, setResumeId] = useState<string>("");
+  const [resumeContent, setResumeContent] = useState<string>("");
+  const [isFromPreviousResume, setIsFromPreviousResume] = useState<boolean>(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [analysisId, setAnalysisId] = useState<string>("");
   const { toast } = useToast();
@@ -69,6 +72,8 @@ const AlchemistWorkshop = () => {
     setFilePath(path);
     setPublicUrl(url);
     setResumeId(id);
+    setResumeContent("");
+    setIsFromPreviousResume(false);
     setAnalysisId("");
     setIsProcessing(false);
     setIsTimeout(false);
@@ -80,11 +85,31 @@ const AlchemistWorkshop = () => {
     });
   };
 
+  const handleResumeSelection = (id: string, name: string, path: string, content: string) => {
+    setResumeId(id);
+    setSelectedFile(null);
+    setFilePath(path);
+    setPublicUrl("");
+    setResumeContent(content);
+    setIsFromPreviousResume(true);
+    setAnalysisId("");
+    setIsProcessing(false);
+    setIsTimeout(false);
+    setIsGenerationComplete(false);
+
+    toast({
+      title: "Resume selected",
+      description: `${name} has been selected successfully.`,
+    });
+  };
+
   const handleResetResume = () => {
     setSelectedFile(null);
     setFilePath("");
     setPublicUrl("");
     setResumeId("");
+    setResumeContent("");
+    setIsFromPreviousResume(false);
   };
 
   const handleJobSubmit = async (data: { jobUrl?: string; jobContent?: string }) => {
@@ -139,17 +164,22 @@ const AlchemistWorkshop = () => {
         throw resumeError;
       }
 
-      const { data: storageData } = supabase.storage
-        .from("resumes")
-        .getPublicUrl(resumeData.file_path);
-
+      // Prepare webhook data based on how resume and job were provided
       const webhookData = {
         analysisId: analysisRecord.id,
-        jobUrl: data.jobUrl || "",
-        jobContent: data.jobContent || "",
         fileName: resumeData.file_name,
-        resumeUrl: storageData.publicUrl,
-        resumeContent: resumeData.formatted_resume || "",
+        // Only include resumeUrl if user uploaded a new resume
+        ...(isFromPreviousResume ? {} : {
+          resumeUrl: supabase.storage.from("resumes").getPublicUrl(resumeData.file_path).data.publicUrl
+        }),
+        // Only include resumeContent if user selected previous resume
+        ...(isFromPreviousResume ? {
+          resumeContent: resumeData.formatted_resume || ""
+        } : {}),
+        // Only include jobUrl if user provided URL
+        ...(data.jobUrl ? { jobUrl: data.jobUrl } : {}),
+        // Only include jobContent if user pasted description
+        ...(data.jobContent ? { jobContent: data.jobContent } : {})
       };
 
       const currentEnv = getEnvironment();
@@ -252,12 +282,13 @@ const AlchemistWorkshop = () => {
 
         <ResumeUploader
           onUploadSuccess={handleFileUploadSuccess}
+          onResumeSelect={handleResumeSelection}
           activeTab={activeTab}
           onTabChange={(tab) => setActiveTab(tab)}
           onRemove={handleResetResume}
         />
 
-        {selectedFile && (
+        {(selectedFile || resumeId) && (
           <JobDescriptionInput
             onSubmit={handleJobSubmit}
             isProcessing={isProcessing}

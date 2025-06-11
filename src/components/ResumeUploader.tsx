@@ -1,159 +1,133 @@
+
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import UploadZone from "./upload/UploadZone";
-import { useResumeUpload } from "./upload/useResumeUpload";
-import ResumeSelector from "./ResumeSelector";
-import { Button } from "@/components/ui/button";
-import { FileText, Trash, Eye } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { X } from "lucide-react";
+import UploadZone from "@/components/upload/UploadZone";
+import ResumeSelector from "@/components/ResumeSelector";
+import { useResumeUpload } from "@/components/upload/useResumeUpload";
 
 interface ResumeUploaderProps {
   onUploadSuccess: (file: File, path: string, url: string, id: string) => void;
-  onFileUpload?: (
-    file: File,
-    filePath: string,
-    publicUrl: string,
-    id: string
-  ) => void;
-  activeTab?: string;
-  onTabChange?: (tab: string) => void;
-  onRemove?: () => void;
+  onResumeSelect: (id: string, name: string, path: string, content: string) => void;
+  activeTab: string;
+  onTabChange: (tab: string) => void;
+  onRemove: () => void;
 }
 
-const ResumeUploader = ({
+const ResumeUploader: React.FC<ResumeUploaderProps> = ({
   onUploadSuccess,
-  onFileUpload,
-  activeTab: externalActiveTab,
+  onResumeSelect,
+  activeTab,
   onTabChange,
   onRemove,
-}: ResumeUploaderProps) => {
+}) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [resumePath, setResumePath] = useState<string>("");
-  const [resumeUrl, setResumeUrl] = useState<string>("");
-  const [activeTab, setActiveTab] = useState<string>(
-    externalActiveTab || "upload"
-  );
-  const { isUploading, uploadFile } = useResumeUpload((file, path, url, id) => {
-    setSelectedFile(file);
-    setResumePath(path);
-    setResumeUrl(url);
-    if (onUploadSuccess) onUploadSuccess(file, path, url, id);
-    if (onFileUpload) onFileUpload(file, path, url, id);
-  });
-
-  const handleTabChange = (value: string) => {
-    setActiveTab(value);
-    if (onTabChange) {
-      onTabChange(value);
-    }
-  };
-
-  const previewResume = () => {
-    if (resumeUrl) {
-      window.open(resumeUrl, "_blank");
-    } else if (resumePath) {
-      const { data } = supabase.storage
-        .from("resumes")
-        .getPublicUrl(resumePath);
-      window.open(data.publicUrl, "_blank");
-    }
-  };
-
-  const removeResume = () => {
-    setSelectedFile(null);
-    setResumePath("");
-    setResumeUrl("");
-    if (onRemove) {
-      onRemove();
-    }
-  };
+  const [selectedResumeName, setSelectedResumeName] = useState<string>("");
+  const { uploadResume, isUploading } = useResumeUpload();
 
   const handleFileSelect = (file: File) => {
-    if (selectedFile) {
-      // User needs to remove current resume first
-      return;
-    }
-    uploadFile(file);
+    setSelectedFile(file);
+    setSelectedResumeName("");
   };
 
+  const handleUpload = async () => {
+    if (!selectedFile) return;
+
+    try {
+      const result = await uploadResume(selectedFile);
+      if (result) {
+        onUploadSuccess(selectedFile, result.path, result.url, result.id);
+      }
+    } catch (error) {
+      console.error("Upload failed:", error);
+    }
+  };
+
+  const handleResumeSelection = async (resumeId: string, resumeName: string, resumePath: string) => {
+    // Fetch the resume content from the database
+    const { supabase } = await import("@/integrations/supabase/client");
+    
+    try {
+      const { data: resumeData, error } = await supabase
+        .from("resumes")
+        .select("formatted_resume")
+        .eq("id", resumeId)
+        .single();
+
+      if (error) {
+        console.error("Error fetching resume content:", error);
+        return;
+      }
+
+      setSelectedResumeName(resumeName);
+      setSelectedFile(null);
+      onResumeSelect(resumeId, resumeName, resumePath, resumeData.formatted_resume || "");
+    } catch (error) {
+      console.error("Error selecting resume:", error);
+    }
+  };
+
+  const handleRemove = () => {
+    setSelectedFile(null);
+    setSelectedResumeName("");
+    onRemove();
+  };
+
+  const hasSelectedResume = selectedFile || selectedResumeName;
+
   return (
-    <div>
-      {selectedFile ? (
-        <div className="space-y-4">
-          <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-            <p className="text-sm font-medium text-green-800 flex items-center gap-2">
-              <FileText className="h-4 w-4" />
-              {selectedFile.name} ({Math.round(selectedFile.size / 1024)} KB)
-            </p>
-          </div>
-          <div className="flex justify-center gap-3">
-            <Button
-              variant="outline"
-              onClick={previewResume}
-              className="text-primary border-primary/20 hover:bg-primary/5 flex items-center gap-2"
-            >
-              <Eye className="h-4 w-4" />
-              Preview Resume
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle className="flex items-center justify-between">
+          Resume Upload
+          {hasSelectedResume && (
+            <Button variant="ghost" size="sm" onClick={handleRemove}>
+              <X className="h-4 w-4" />
             </Button>
-            <Button
-              variant="outline"
-              onClick={removeResume}
-              className="text-red-500 border-red-200 hover:bg-red-50 flex items-center gap-2"
-            >
-              <Trash className="h-4 w-4" />
-              Remove
-            </Button>
+          )}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {hasSelectedResume ? (
+          <div className="text-center py-8">
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <p className="text-green-800 font-medium">
+                {selectedFile ? "New resume ready for upload" : "Previous resume selected"}
+              </p>
+              <p className="text-green-600 text-sm mt-1">
+                {selectedFile?.name || selectedResumeName}
+              </p>
+            </div>
           </div>
-        </div>
-      ) : (
-        <Tabs
-          defaultValue={activeTab}
-          value={activeTab}
-          onValueChange={handleTabChange}
-          className="w-full"
-        >
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="upload">Upload New Resume</TabsTrigger>
-            <TabsTrigger value="select">Select Previous Resume</TabsTrigger>
-          </TabsList>
+        ) : (
+          <Tabs value={activeTab} onValueChange={onTabChange}>
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="upload">Upload New Resume</TabsTrigger>
+              <TabsTrigger value="select">Select Previous Resume</TabsTrigger>
+            </TabsList>
 
-          <TabsContent value="upload" className="mt-4">
-            <UploadZone
-              isUploading={isUploading}
-              onFileSelect={handleFileSelect}
-            />
-          </TabsContent>
+            <TabsContent value="upload" className="space-y-4">
+              <UploadZone onFileSelect={handleFileSelect} />
+              {selectedFile && (
+                <Button 
+                  onClick={handleUpload} 
+                  disabled={isUploading}
+                  className="w-full"
+                >
+                  {isUploading ? "Uploading..." : "Upload Resume"}
+                </Button>
+              )}
+            </TabsContent>
 
-          <TabsContent value="select" className="mt-4">
-            <ResumeSelector
-              onSelect={(resumeId, fileName, filePath) => {
-                // Create a fake File object for consistency
-                const fakeFile = new File([], fileName, {
-                  type: "application/pdf",
-                });
-                setSelectedFile(fakeFile);
-                setResumePath(filePath);
-
-                // Get public URL for the resume
-                const { data } = supabase.storage
-                  .from("resumes")
-                  .getPublicUrl(filePath);
-
-                setResumeUrl(data.publicUrl);
-
-                if (onUploadSuccess) {
-                  onUploadSuccess(fakeFile, filePath, data.publicUrl, resumeId);
-                }
-                if (onFileUpload) {
-                  onFileUpload(fakeFile, filePath, data.publicUrl, resumeId);
-                }
-              }}
-            />
-          </TabsContent>
-        </Tabs>
-      )}
-    </div>
+            <TabsContent value="select" className="space-y-4">
+              <ResumeSelector onSelect={handleResumeSelection} />
+            </TabsContent>
+          </Tabs>
+        )}
+      </CardContent>
+    </Card>
   );
 };
 
