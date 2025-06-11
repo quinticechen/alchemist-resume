@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,7 +7,7 @@ const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB in bytes
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000; // 1 second
 
-export const useResumeUpload = (onUploadSuccess: (file: File, filePath: string, publicUrl: string, id: string) => void) => {
+export const useResumeUpload = () => {
   const { toast } = useToast();
   const [isUploading, setIsUploading] = useState(false);
 
@@ -34,13 +35,11 @@ export const useResumeUpload = (onUploadSuccess: (file: File, filePath: string, 
 
   const uploadWithRetry = async (filePath: string, file: File, retryCount = 0): Promise<boolean> => {
     try {
-      // console.log(`Attempting upload, retry count: ${retryCount}`);
       const { error: uploadError } = await supabase.storage
         .from('resumes')
         .upload(filePath, file);
 
       if (uploadError) {
-        // console.error('Upload error:', uploadError);
         throw uploadError;
       }
 
@@ -49,7 +48,6 @@ export const useResumeUpload = (onUploadSuccess: (file: File, filePath: string, 
       console.error(`Upload attempt ${retryCount + 1} failed:`, error);
       
       if (retryCount < MAX_RETRIES) {
-        // console.log(`Retrying upload in ${RETRY_DELAY}ms...`);
         await delay(RETRY_DELAY);
         return uploadWithRetry(filePath, file, retryCount + 1);
       }
@@ -58,15 +56,14 @@ export const useResumeUpload = (onUploadSuccess: (file: File, filePath: string, 
     }
   };
 
-  const uploadFile = async (file: File) => {
-    if (!validateFile(file)) return;
+  const uploadResume = async (file: File) => {
+    if (!validateFile(file)) return null;
 
     try {
       setIsUploading(true);
       const fileExt = file.name.split('.').pop();
       const filePath = `${crypto.randomUUID()}.${fileExt}`;
 
-      // console.log('Starting file upload with retry mechanism');
       await uploadWithRetry(filePath, file);
 
       const { data: publicUrlData } = supabase.storage
@@ -90,17 +87,19 @@ export const useResumeUpload = (onUploadSuccess: (file: File, filePath: string, 
         throw insertError;
       }
 
-      // console.log('Resume uploaded successfully:', resume);
-      // console.log('Public URL:', publicUrl);
-      
-      onUploadSuccess(file, filePath, publicUrl, resume.id);
+      return {
+        path: filePath,
+        url: publicUrl,
+        id: resume.id
+      };
     } catch (error) {
-      // console.error('Error uploading resume:', error);
+      console.error('Error uploading resume:', error);
       toast({
         title: "Upload Failed",
         description: "Failed to upload resume. Please try again.",
         variant: "destructive",
       });
+      return null;
     } finally {
       setIsUploading(false);
     }
@@ -108,6 +107,6 @@ export const useResumeUpload = (onUploadSuccess: (file: File, filePath: string, 
 
   return {
     isUploading,
-    uploadFile
+    uploadResume
   };
 };

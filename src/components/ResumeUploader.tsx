@@ -45,28 +45,10 @@ const ResumeUploader: React.FC<ResumeUploaderProps> = ({
     }
   };
 
-  const handleResumeSelection = async (resumeId: string, resumeName: string, resumePath: string) => {
-    // Fetch the resume content from the database
-    const { supabase } = await import("@/integrations/supabase/client");
-    
-    try {
-      const { data: resumeData, error } = await supabase
-        .from("resumes")
-        .select("formatted_resume")
-        .eq("id", resumeId)
-        .single();
-
-      if (error) {
-        console.error("Error fetching resume content:", error);
-        return;
-      }
-
-      setSelectedResumeName(resumeName);
-      setSelectedFile(null);
-      onResumeSelect(resumeId, resumeName, resumePath, resumeData.formatted_resume || "");
-    } catch (error) {
-      console.error("Error selecting resume:", error);
-    }
+  const handleResumeSelection = async (resumeId: string, resumeName: string, resumePath: string, resumeContent: string) => {
+    setSelectedResumeName(resumeName);
+    setSelectedFile(null);
+    onResumeSelect(resumeId, resumeName, resumePath, resumeContent);
   };
 
   const handleRemove = () => {
@@ -109,7 +91,7 @@ const ResumeUploader: React.FC<ResumeUploaderProps> = ({
             </TabsList>
 
             <TabsContent value="upload" className="space-y-4">
-              <UploadZone onFileSelect={handleFileSelect} />
+              <UploadZone onFileSelect={handleFileSelect} isUploading={isUploading} />
               {selectedFile && (
                 <Button 
                   onClick={handleUpload} 
