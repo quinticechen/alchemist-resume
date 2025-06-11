@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -101,6 +102,20 @@ const isSectionEmpty = (data: any, section: string): boolean => {
       if (sectionData && Object.keys(sectionData).length > 0) return false;
     } else if (key === "summary" || key === "professionalSummary") {
       if (sectionData && sectionData.trim() !== "") return false;
+    } else if (key === "skills") {
+      // Check if skills has any content
+      if (sectionData) {
+        if (sectionData.technical && Array.isArray(sectionData.technical) && sectionData.technical.length > 0) return false;
+        if (sectionData.soft && Array.isArray(sectionData.soft) && sectionData.soft.length > 0) return false;
+        if (Array.isArray(sectionData) && sectionData.length > 0) return false;
+        if (typeof sectionData === 'string' && sectionData.trim() !== '') return false;
+      }
+    } else if (key === "education") {
+      // Check if education has content
+      if (sectionData) {
+        if (Array.isArray(sectionData) && sectionData.length > 0) return false;
+        if (typeof sectionData === 'object' && Object.keys(sectionData).length > 0) return false;
+      }
     } else if (Array.isArray(sectionData)) {
       if (sectionData && sectionData.length > 0) return false;
     } else if (sectionData) {
@@ -640,6 +655,11 @@ const ResumePreview = () => {
             {orderedSections.map((sectionKey) => {
               if (sectionKey === "personalInfo") return null;
 
+              // Check if section is empty before rendering
+              if (isSectionEmpty(resumeData, sectionKey)) {
+                return null;
+              }
+
               if (sectionKey === "professionalSummary") {
                 const summaryText =
                   resumeData.resume?.summary ||
@@ -832,40 +852,44 @@ const ResumePreview = () => {
               }
 
               if (sectionKey === "skills" && resumeData.resume?.skills) {
-                return (
-                  <div key={sectionKey} className="mb-6 relative group">
-                    <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="rounded-full h-8 w-8 p-0"
-                        onClick={() => handleEditSection("skills")}
+                const skillsData = resumeData.resume.skills;
+                const hasTechnical = skillsData.technical && Array.isArray(skillsData.technical) && skillsData.technical.length > 0;
+                const hasSoft = skillsData.soft && Array.isArray(skillsData.soft) && skillsData.soft.length > 0;
+                
+                if (hasTechnical || hasSoft) {
+                  return (
+                    <div key={sectionKey} className="mb-6 relative group">
+                      <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="rounded-full h-8 w-8 p-0"
+                          onClick={() => handleEditSection("skills")}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <h2
+                        className={`text-xl font-bold mb-2 ${
+                          style === "modern"
+                            ? "text-blue-600"
+                            : style === "professional"
+                            ? "text-amber-600"
+                            : style === "creative"
+                            ? "text-purple-600"
+                            : "text-gray-800"
+                        }`}
                       >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <h2
-                      className={`text-xl font-bold mb-2 ${
-                        style === "modern"
-                          ? "text-blue-600"
-                          : style === "professional"
-                          ? "text-amber-600"
-                          : style === "creative"
-                          ? "text-purple-600"
-                          : "text-gray-800"
-                      }`}
-                    >
-                      Skills
-                    </h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {resumeData.resume.skills.technical &&
-                        resumeData.resume.skills.technical.length > 0 && (
+                        Skills
+                      </h2>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {hasTechnical && (
                           <div>
                             <h3 className="font-bold text-gray-700 mb-1">
                               Technical Skills
                             </h3>
                             <ul className="list-disc ml-5 text-gray-700">
-                              {resumeData.resume.skills.technical.map(
+                              {skillsData.technical.map(
                                 (skill: string, i: number) => (
                                   <li key={i}>{skill}</li>
                                 )
@@ -874,14 +898,13 @@ const ResumePreview = () => {
                           </div>
                         )}
 
-                      {resumeData.resume.skills.soft &&
-                        resumeData.resume.skills.soft.length > 0 && (
+                        {hasSoft && (
                           <div>
                             <h3 className="font-bold text-gray-700 mb-1">
                               Soft Skills
                             </h3>
                             <ul className="list-disc ml-5 text-gray-700">
-                              {resumeData.resume.skills.soft.map(
+                              {skillsData.soft.map(
                                 (skill: string, i: number) => (
                                   <li key={i}>{skill}</li>
                                 )
@@ -889,9 +912,11 @@ const ResumePreview = () => {
                             </ul>
                           </div>
                         )}
+                      </div>
                     </div>
-                  </div>
-                );
+                  );
+                }
+                return null;
               }
 
               if (
