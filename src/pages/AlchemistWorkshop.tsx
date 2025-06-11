@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import ResumeUploader from "@/components/ResumeUploader";
@@ -181,17 +180,17 @@ const AlchemistWorkshop = () => {
       }
       // Scenario 2: Previous resume + job URL  
       else if (isFromPreviousResume && data.jobUrl) {
-        webhookData.resumeContent = resumeData.formatted_resume || "";
+        webhookData.resumeUrl = resumeData.file_path;
         webhookData.jobUrl = data.jobUrl;
       }
       // Scenario 3: New resume + job URL
       else if (!isFromPreviousResume && data.jobUrl) {
-        webhookData.resumeUrl = supabase.storage.from("resumes").getPublicUrl(resumeData.file_path).data.publicUrl;
+        webhookData.resumeUrl = resumeData.file_path;
         webhookData.jobUrl = data.jobUrl;
       }
       // Scenario 4: New resume + job description
       else if (!isFromPreviousResume && data.jobContent) {
-        webhookData.resumeUrl = supabase.storage.from("resumes").getPublicUrl(resumeData.file_path).data.publicUrl;
+        webhookData.resumeContent = resumeData.formatted_resume || "";
         webhookData.jobContent = data.jobContent;
       }
 
