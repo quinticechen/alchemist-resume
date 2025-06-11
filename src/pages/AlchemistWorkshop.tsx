@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import ResumeUploader from "@/components/ResumeUploader";
@@ -22,6 +21,7 @@ const AlchemistWorkshop = () => {
   const [isFromPreviousResume, setIsFromPreviousResume] = useState<boolean>(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [analysisId, setAnalysisId] = useState<string>("");
+  const [hasResumeReady, setHasResumeReady] = useState<boolean>(false);
   const { toast } = useToast();
   const navigate = useNavigate();
   const { checkSubscriptionAndRedirect } = useSubscriptionCheck();
@@ -74,6 +74,7 @@ const AlchemistWorkshop = () => {
     setResumeId(id);
     setResumeContent("");
     setIsFromPreviousResume(false);
+    setHasResumeReady(true);
     setAnalysisId("");
     setIsProcessing(false);
     setIsTimeout(false);
@@ -92,6 +93,7 @@ const AlchemistWorkshop = () => {
     setPublicUrl("");
     setResumeContent(content);
     setIsFromPreviousResume(true);
+    setHasResumeReady(true);
     setAnalysisId("");
     setIsProcessing(false);
     setIsTimeout(false);
@@ -110,6 +112,7 @@ const AlchemistWorkshop = () => {
     setResumeId("");
     setResumeContent("");
     setIsFromPreviousResume(false);
+    setHasResumeReady(false);
   };
 
   const handleJobSubmit = async (data: { jobUrl?: string; jobContent?: string }) => {
@@ -288,7 +291,7 @@ const AlchemistWorkshop = () => {
           onRemove={handleResetResume}
         />
 
-        {(selectedFile || resumeId) && (
+        {hasResumeReady && (
           <JobDescriptionInput
             onSubmit={handleJobSubmit}
             isProcessing={isProcessing}

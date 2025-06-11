@@ -3,10 +3,11 @@ import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
+import { X, FileText, Eye, Upload } from "lucide-react";
 import UploadZone from "@/components/upload/UploadZone";
 import ResumeSelector from "@/components/ResumeSelector";
 import { useResumeUpload } from "@/components/upload/useResumeUpload";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ResumeUploaderProps {
   onUploadSuccess: (file: File, path: string, url: string, id: string) => void;
@@ -25,11 +26,17 @@ const ResumeUploader: React.FC<ResumeUploaderProps> = ({
 }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [selectedResumeName, setSelectedResumeName] = useState<string>("");
+  const [selectedResumeId, setSelectedResumeId] = useState<string>("");
+  const [selectedResumePath, setSelectedResumePath] = useState<string>("");
+  const [isUploaded, setIsUploaded] = useState<boolean>(false);
   const { uploadResume, isUploading } = useResumeUpload();
 
   const handleFileSelect = (file: File) => {
     setSelectedFile(file);
     setSelectedResumeName("");
+    setSelectedResumeId("");
+    setSelectedResumePath("");
+    setIsUploaded(false);
   };
 
   const handleUpload = async () => {
@@ -38,6 +45,7 @@ const ResumeUploader: React.FC<ResumeUploaderProps> = ({
     try {
       const result = await uploadResume(selectedFile);
       if (result) {
+        setIsUploaded(true);
         onUploadSuccess(selectedFile, result.path, result.url, result.id);
       }
     } catch (error) {
@@ -47,17 +55,55 @@ const ResumeUploader: React.FC<ResumeUploaderProps> = ({
 
   const handleResumeSelection = async (resumeId: string, resumeName: string, resumePath: string, resumeContent: string) => {
     setSelectedResumeName(resumeName);
+    setSelectedResumeId(resumeId);
+    setSelectedResumePath(resumePath);
     setSelectedFile(null);
+    setIsUploaded(false);
     onResumeSelect(resumeId, resumeName, resumePath, resumeContent);
   };
 
   const handleRemove = () => {
     setSelectedFile(null);
     setSelectedResumeName("");
+    setSelectedResumeId("");
+    setSelectedResumePath("");
+    setIsUploaded(false);
     onRemove();
   };
 
-  const hasSelectedResume = selectedFile || selectedResumeName;
+  const handlePreview = () => {
+    let previewUrl = "";
+    
+    if (selectedFile && isUploaded) {
+      // For newly uploaded files, get the public URL from Supabase
+      const { data } = supabase.storage
+        .from("resumes")
+        .getPublicUrl(selectedResumePath || "");
+      previewUrl = data.publicUrl;
+    } else if (selectedResumePath) {
+      // For previously selected resumes
+      const { data } = supabase.storage
+        .from("resumes")
+        .getPublicUrl(selectedResumePath);
+      previewUrl = data.publicUrl;
+    }
+    
+    if (previewUrl) {
+      window.open(previewUrl, "_blank");
+    }
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return "0 Bytes";
+    const k = 1024;
+    const sizes = ["Bytes", "KB", "MB", "GB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+  };
+
+  const hasSelectedResume = (selectedFile && isUploaded) || selectedResumeName;
+  const currentFileName = selectedFile?.name || selectedResumeName;
+  const currentFileSize = selectedFile?.size;
 
   return (
     <Card className="w-full">
@@ -73,14 +119,45 @@ const ResumeUploader: React.FC<ResumeUploaderProps> = ({
       </CardHeader>
       <CardContent>
         {hasSelectedResume ? (
-          <div className="text-center py-8">
+          <div className="space-y-4">
             <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-              <p className="text-green-800 font-medium">
-                {selectedFile ? "New resume ready for upload" : "Previous resume selected"}
-              </p>
-              <p className="text-green-600 text-sm mt-1">
-                {selectedFile?.name || selectedResumeName}
-              </p>
+              <div className="flex items-center gap-3 mb-2">
+                <FileText className="h-5 w-5 text-green-600" />
+                <div className="flex-1">
+                  <p className="text-green-800 font-medium">
+                    {selectedFile && isUploaded ? "Resume uploaded successfully" : "Previous resume selected"}
+                  </p>
+                  <p className="text-green-600 text-sm">
+                    {currentFileName}
+                  </p>
+                  {currentFileSize && (
+                    <p className="text-green-600 text-xs">
+                      {formatFileSize(currentFileSize)}
+                    </p>
+                  )}
+                </div>
+              </div>
+              
+              <div className="flex gap-2 mt-3">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handlePreview}
+                  className="flex items-center gap-2"
+                >
+                  <Eye className="h-4 w-4" />
+                  Preview Resume
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleRemove}
+                  className="flex items-center gap-2"
+                >
+                  <X className="h-4 w-4" />
+                  Remove
+                </Button>
+              </div>
             </div>
           </div>
         ) : (
@@ -92,14 +169,30 @@ const ResumeUploader: React.FC<ResumeUploaderProps> = ({
 
             <TabsContent value="upload" className="space-y-4">
               <UploadZone onFileSelect={handleFileSelect} isUploading={isUploading} />
-              {selectedFile && (
-                <Button 
-                  onClick={handleUpload} 
-                  disabled={isUploading}
-                  className="w-full"
-                >
-                  {isUploading ? "Uploading..." : "Upload Resume"}
-                </Button>
+              {selectedFile && !isUploaded && (
+                <div className="space-y-3">
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    <div className="flex items-center gap-2">
+                      <FileText className="h-4 w-4 text-blue-600" />
+                      <span className="text-blue-800 text-sm font-medium">{selectedFile.name}</span>
+                      <span className="text-blue-600 text-xs">({formatFileSize(selectedFile.size)})</span>
+                    </div>
+                  </div>
+                  <Button 
+                    onClick={handleUpload} 
+                    disabled={isUploading}
+                    className="w-full"
+                  >
+                    {isUploading ? (
+                      <>
+                        <Upload className="mr-2 h-4 w-4 animate-pulse" />
+                        Uploading...
+                      </>
+                    ) : (
+                      "Upload Resume"
+                    )}
+                  </Button>
+                </div>
               )}
             </TabsContent>
 
