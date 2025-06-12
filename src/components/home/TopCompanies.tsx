@@ -36,7 +36,7 @@ export const TopCompanies = () => {
 
   return (
     <section className="py-16 bg-neutral-50">
-      <div className="max-w-6xl mx-auto px-4 text-center">
+      <div className="max-w-6xl mt-32 mb-32 mx-auto px-4 text-center">
         <h2 className="text-3xl font-bold tracking-tight text-neutral-900 sm:text-4xl">
           Optimize Your Resume for Top Companies
         </h2>
