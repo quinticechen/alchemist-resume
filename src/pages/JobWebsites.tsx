@@ -17,7 +17,7 @@ interface Platform {
   content: Array<{ type: string; text: string }> | null;
   notion_url: string | null;
   created_time: string | null;
-  logo_url: string | null; // Add logo_url field
+  logo_url: string | null;
   attrs: any;
 }
 
@@ -46,7 +46,6 @@ const JobWebsites = () => {
   const { toast } = useToast();
   const currentEnv = getEnvironment();
   
-  // Determine if we should show sync controls based on environment
   const shouldShowSyncControls = currentEnv !== "production";
 
   const fetchPlatforms = async () => {
@@ -62,16 +61,13 @@ const JobWebsites = () => {
       if (error) throw error;
 
       if (data) {
-        console.log(`Fetched ${data.length} platforms:`, data.slice(0, 2));
         setPlatforms(data || []);
 
-        // Clear the configuration error if we successfully got data
         if (data.length > 0) {
           setError(null);
         }
       }
     } catch (error) {
-      console.error("Error fetching platforms:", error);
       setError("Failed to load job websites. Please try again later.");
       toast({
         title: "Error fetching job websites",
@@ -85,19 +81,15 @@ const JobWebsites = () => {
   };
 
   const checkSyncStatus = async () => {
-    // Skip sync status check in production
     if (currentEnv === "production") return;
     
     try {
-      console.log("Checking Notion sync status...");
-
       const { data, error } = await supabase.functions.invoke("notion-sync", {
         body: { action: "check-status" },
         headers: { "Content-Type": "application/json" },
       });
 
       if (error) {
-        console.error("Error checking sync status:", error);
         setApiErrorDetails(
           `Error type: ${error.name}, Message: ${
             error.message
@@ -106,10 +98,8 @@ const JobWebsites = () => {
         throw error;
       }
 
-      console.log("Sync status response:", data);
       setSyncStatus(data);
 
-      // Only set error if we have no platforms AND the configuration is missing
       const hasMissingConfig =
         !data.hasNotionApiKey || !data.hasNotionDatabaseId;
       if (hasMissingConfig && platforms.length === 0) {
@@ -117,13 +107,9 @@ const JobWebsites = () => {
           "Notion API key or Database ID is missing. Please configure them in Supabase Edge Function secrets."
         );
       } else {
-        // Clear the error if we have platforms or the configuration is complete
         setError(null);
       }
     } catch (error) {
-      console.error("Error checking sync status:", error);
-
-      // Don't set error if we already have platforms
       if (platforms.length === 0) {
         setError("Failed to check Notion sync configuration.");
         setApiErrorDetails(`Error checking sync status: ${error.toString()}`);
@@ -132,7 +118,6 @@ const JobWebsites = () => {
   };
 
   const triggerSync = async () => {
-    // Prevent sync on production
     if (currentEnv === "production") return;
     
     try {
@@ -141,14 +126,11 @@ const JobWebsites = () => {
       setApiErrorDetails(null);
       setSyncResults([]);
 
-      console.log("Triggering Notion sync...");
-
       const { data, error } = await supabase.functions.invoke("notion-sync", {
         headers: { "Content-Type": "application/json" },
       });
 
       if (error) {
-        console.error("Error syncing platforms:", error);
         setApiErrorDetails(
           `Error type: ${error.name}, Message: ${
             error.message
@@ -156,8 +138,6 @@ const JobWebsites = () => {
         );
         throw error;
       }
-
-      console.log("Sync response:", data);
 
       if (data.results) {
         setSyncResults(data.results);
@@ -169,11 +149,9 @@ const JobWebsites = () => {
           data?.message || "Job websites have been synchronized from Notion.",
       });
 
-      // Refresh platforms after sync
       fetchPlatforms();
       checkSyncStatus();
     } catch (error) {
-      console.error("Error syncing platforms:", error);
       setError(
         "Failed to synchronize with Notion. Please check your connection and try again."
       );
@@ -319,7 +297,7 @@ const JobWebsites = () => {
               url={platform.url || "#"}
               description={platform.description || ""}
               content={platform.content || []}
-              logoUrl={platform.logo_url || undefined} // Pass the logo URL to PlatformCard
+              logoUrl={platform.logo_url || undefined}
             />
           ))}
         </div>

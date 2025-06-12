@@ -52,9 +52,6 @@ export const useAlchemyRecords = () => {
 
   // Sort and filter analyses
   const sortedAndFilteredAnalyses = useMemo(() => {
-    console.log('Applying filters to', allAnalyses.length, 'analyses');
-    console.log('Current status filter:', statusFilter);
-    
     let filtered = allAnalyses;
 
     // Apply status filter - support multiple selections
@@ -62,10 +59,8 @@ export const useAlchemyRecords = () => {
       filtered = allAnalyses.filter(analysis => {
         const analysisStatus = analysis.status || 'resume';
         const isIncluded = statusFilter.includes(analysisStatus as StatusFilter);
-        console.log(`Analysis ${analysis.id} has status "${analysisStatus}", included: ${isIncluded}`);
         return isIncluded;
       });
-      console.log('After filtering:', filtered.length, 'analyses remain');
     }
 
     // Apply sorting
@@ -112,7 +107,6 @@ export const useAlchemyRecords = () => {
       const { data: { user } } = await supabase.auth.getUser();
       
       if (user) {
-        // Fix the profiles query - use .select() without .maybeSingle() to avoid the error
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('usage_count')
@@ -120,7 +114,7 @@ export const useAlchemyRecords = () => {
           .limit(1);
 
         if (profileError) {
-          console.error('Error fetching profile:', profileError);
+          // Error handled silently
         } else if (profileData && profileData.length > 0) {
           setUsageCount(profileData[0].usage_count || 0);
         }
@@ -159,11 +153,8 @@ export const useAlchemyRecords = () => {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching analyses:', error);
         throw error;
       }
-
-      console.log('Raw analyses data:', analysesData?.length || 0, 'records');
 
       // Transform the data
       const transformedData: ResumeAnalysis[] = (analysesData || []).map(item => {
@@ -207,10 +198,8 @@ export const useAlchemyRecords = () => {
         };
       });
 
-      console.log('Transformed data:', transformedData.length, 'records');
       setAllAnalyses(transformedData);
     } catch (error) {
-      console.error('Error fetching alchemy records:', error);
       toast({
         title: "Error",
         description: "Failed to load alchemy records",
@@ -290,7 +279,6 @@ export const useAlchemyRecords = () => {
         });
       }
     } catch (error) {
-      console.error('Error saving title:', error);
       toast({
         title: "Error",
         description: "Failed to update position name",
