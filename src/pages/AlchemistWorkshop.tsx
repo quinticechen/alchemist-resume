@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import ResumeUploader from "@/components/ResumeUploader";
@@ -174,40 +173,26 @@ const AlchemistWorkshop = () => {
         fileName: resumeData.file_name,
       };
 
-      // For previous resume scenarios, we need to ensure we have resume content
-      if (isFromPreviousResume) {
-        // Try to get content from database first, then fallback to state
-        const contentFromDb = resumeData.formatted_resume;
-        const contentFromState = resumeContent;
-        
-        console.log("Resume content from DB:", contentFromDb);
-        console.log("Resume content from state:", contentFromState);
-        
-        const finalResumeContent = contentFromDb || contentFromState;
-        
-        if (!finalResumeContent) {
-          throw new Error("Resume content is missing for previous resume. Please try uploading the resume again.");
-        }
-
-        webhookData.resumeContent = finalResumeContent;
-        
-        if (data.jobContent) {
-          webhookData.jobContent = data.jobContent;
-        } else if (data.jobUrl) {
-          webhookData.jobUrl = data.jobUrl;
-        }
-      } else {
-        // For new resume uploads, use file path
-        if (data.jobUrl) {
-          webhookData.resumeUrl = resumeData.file_path;
-          webhookData.jobUrl = data.jobUrl;
-        } else if (data.jobContent) {
-          webhookData.resumeUrl = resumeData.file_path;
-          webhookData.jobContent = data.jobContent;
-        }
+      // Scenario 1: Previous resume + job description
+      if (isFromPreviousResume && data.jobContent) {
+        webhookData.resumeContent = resumeData.formatted_resume;
+        webhookData.jobContent = data.jobContent;
       }
-
-      console.log("Webhook data being sent:", webhookData);
+      // Scenario 2: Previous resume + job URL  
+      else if (isFromPreviousResume && data.jobUrl) {
+        webhookData.resumeContent = resumeData.formatted_resume;
+        webhookData.jobUrl = data.jobUrl;
+      }
+      // Scenario 3: New resume + job URL
+      else if (!isFromPreviousResume && data.jobUrl) {
+        webhookData.resumeUrl = resumeData.file_path;
+        webhookData.jobUrl = data.jobUrl;
+      }
+      // Scenario 4: New resume + job description
+      else if (!isFromPreviousResume && data.jobContent) {
+        webhookData.resumeUrl = resumeData.file_path;
+        webhookData.jobContent = data.jobContent;
+      }
 
       const currentEnv = getEnvironment();
       const makeWebhookUrl =
@@ -260,10 +245,9 @@ const AlchemistWorkshop = () => {
         });
       }, 5 * 60 * 1000);
     } catch (error) {
-      console.error("Error in handleJobSubmit:", error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to process resume. Please try again later.",
+        description: "Failed to process resume. Please try again later.",
         variant: "destructive",
       });
       setIsProcessing(false);
