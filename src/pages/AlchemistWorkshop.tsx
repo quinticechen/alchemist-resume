@@ -174,35 +174,37 @@ const AlchemistWorkshop = () => {
         fileName: resumeData.file_name,
       };
 
-      // Scenario 1: Previous resume + job description
-      if (isFromPreviousResume && data.jobContent) {
-        webhookData.resumeContent = resumeData.formatted_resume || resumeContent;
-        webhookData.jobContent = data.jobContent;
+      // For previous resume scenarios, we need to ensure we have resume content
+      if (isFromPreviousResume) {
+        // Try to get content from database first, then fallback to state
+        const contentFromDb = resumeData.formatted_resume;
+        const contentFromState = resumeContent;
         
-        // Ensure resumeContent is not null or empty
-        if (!webhookData.resumeContent) {
-          throw new Error("Resume content is missing for previous resume");
-        }
-      }
-      // Scenario 2: Previous resume + job URL  
-      else if (isFromPreviousResume && data.jobUrl) {
-        webhookData.resumeContent = resumeData.formatted_resume || resumeContent;
-        webhookData.jobUrl = data.jobUrl;
+        console.log("Resume content from DB:", contentFromDb);
+        console.log("Resume content from state:", contentFromState);
         
-        // Ensure resumeContent is not null or empty
-        if (!webhookData.resumeContent) {
-          throw new Error("Resume content is missing for previous resume");
+        const finalResumeContent = contentFromDb || contentFromState;
+        
+        if (!finalResumeContent) {
+          throw new Error("Resume content is missing for previous resume. Please try uploading the resume again.");
         }
-      }
-      // Scenario 3: New resume + job URL
-      else if (!isFromPreviousResume && data.jobUrl) {
-        webhookData.resumeUrl = resumeData.file_path;
-        webhookData.jobUrl = data.jobUrl;
-      }
-      // Scenario 4: New resume + job description
-      else if (!isFromPreviousResume && data.jobContent) {
-        webhookData.resumeUrl = resumeData.file_path;
-        webhookData.jobContent = data.jobContent;
+
+        webhookData.resumeContent = finalResumeContent;
+        
+        if (data.jobContent) {
+          webhookData.jobContent = data.jobContent;
+        } else if (data.jobUrl) {
+          webhookData.jobUrl = data.jobUrl;
+        }
+      } else {
+        // For new resume uploads, use file path
+        if (data.jobUrl) {
+          webhookData.resumeUrl = resumeData.file_path;
+          webhookData.jobUrl = data.jobUrl;
+        } else if (data.jobContent) {
+          webhookData.resumeUrl = resumeData.file_path;
+          webhookData.jobContent = data.jobContent;
+        }
       }
 
       console.log("Webhook data being sent:", webhookData);
