@@ -273,11 +273,13 @@ const Home = () => {
           </Button>
         </div>
       </section>
-      <div>
+      <section>
         <ValueProposition />
+      </section>
+      <section>
         <WebsitesSection />
-      </div>
-      {/* <section id="supported-websites" className="py-20 bg-white">
+      </section>
+      <section id="supported-websites" className="py-20 bg-white">
         <div className="max-w-6xl mx-auto px-4">
           <h2 className="text-4xl font-bold text-center mb-12 hero-element">
             Supported Job Platforms
@@ -319,7 +321,7 @@ const Home = () => {
             </div>
           </div>
         </div>
-      </section> */}
+      </section>
 
       <section className="py-20 bg-neutral-50">
         <div className="max-w-4xl mx-auto px-4">
