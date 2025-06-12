@@ -16,6 +16,8 @@ import Lottie from "react-lottie";
 import animationData from "@/animations/OOze.chat.json";
 import Loading from "@/animations/Loading.json";
 import OozeAnimation from "@/components/OozeAnimation";
+import { ValueProposition } from "@/components/home/ValueProposition";
+import WebsitesSection from "@/components/WebsitesSection";
 
 const companies = ["Google", "Amazon", "Microsoft", "Apple", "Meta"];
 
@@ -271,8 +273,9 @@ const Home = () => {
           </Button>
         </div>
       </section>
-
-      <section id="supported-websites" className="py-20 bg-white">
+      <ValueProposition />
+      <WebsitesSection />
+      {/* <section id="supported-websites" className="py-20 bg-white">
         <div className="max-w-6xl mx-auto px-4">
           <h2 className="text-4xl font-bold text-center mb-12 hero-element">
             Supported Job Platforms
@@ -314,7 +317,7 @@ const Home = () => {
             </div>
           </div>
         </div>
-      </section>
+      </section> */}
 
       <section className="py-20 bg-neutral-50">
         <div className="max-w-4xl mx-auto px-4">

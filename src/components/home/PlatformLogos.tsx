@@ -19,7 +19,7 @@ export const PlatformLogos = () => {
   // Group platforms by region based on URL patterns
   const isAsianPlatform = (url: string | null): boolean => {
     if (!url) return false;
-    const asianDomains = [".tw", "jobsdb.com", "rikunabi.com"];
+    const asianDomains = [".tw", "jobsdb.com", "rikunabi.com", "51job.com"];
     return asianDomains.some(domain => url.includes(domain));
   };
 
