@@ -13,7 +13,7 @@ export const CoreFeatures = () => {
   return (
     <div className="mx-auto mt-32 max-w-7xl px-6 sm:mt-56 lg:px-8">
       <div className="mx-auto max-w-2xl text-center">
-        <h2 className="text-3xl font-bold text-transparent tracking-tight sm:text-4xl">
+        <h2 className="text-3xl font-bold text-center mb-12 bg-gradient-primary text-transparent bg-clip-text">
           The new way to build resumes
         </h2>
         <p className="mt-6 text-lg leading-8 text-neutral-600">
@@ -71,7 +71,7 @@ export const CoreFeatures = () => {
       <div className="py-24 sm:py-32">
         <div className="mx-auto px-6 lg:px-8">
           <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-3xl font-bold text-transparent tracking-tight text-neutral-900 sm:text-4xl">
+            <h2 className="text-3xl font-bold text-center mb-12 bg-gradient-primary text-transparent bg-clip-text">
               How it works
             </h2>
             <p className="mt-6 text-lg leading-8 text-neutral-600">

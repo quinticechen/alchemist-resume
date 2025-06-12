@@ -211,7 +211,7 @@ const Home = () => {
 
       <section className="py-20 bg-neutral-50">
         <div className="max-w-4xl mx-auto px-4">
-          <h2 className="text-4xl font-bold text-center text-transparent mb-12 hero-element">
+          <h2 className="text-3xl font-bold text-center mb-12 bg-gradient-primary text-transparent bg-clip-text">
             Frequently Asked Questions
           </h2>
           <div className="space-y-6">
