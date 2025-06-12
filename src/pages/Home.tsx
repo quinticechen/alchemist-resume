@@ -273,8 +273,10 @@ const Home = () => {
           </Button>
         </div>
       </section>
-      <ValueProposition />
-      <WebsitesSection />
+      <div>
+        <ValueProposition />
+        <WebsitesSection />
+      </div>
       {/* <section id="supported-websites" className="py-20 bg-white">
         <div className="max-w-6xl mx-auto px-4">
           <h2 className="text-4xl font-bold text-center mb-12 hero-element">
