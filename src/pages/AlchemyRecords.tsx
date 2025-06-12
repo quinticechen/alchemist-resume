@@ -1,8 +1,9 @@
-
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAlchemyRecords } from "@/hooks/use-alchemy-records";
+import { SEO } from "@/components/SEO";
+import { H1 } from "@/components/seo/StructuredHeadings";
 import UsageStats from "@/components/alchemy-records/UsageStats";
 import AnalysisCard from "@/components/alchemy-records/AnalysisCard";
 import RecordsPagination from "@/components/alchemy-records/RecordsPagination";
@@ -69,51 +70,61 @@ const AlchemyRecords = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100">
-      <div className="container mx-auto px-4 py-12">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-4xl font-bold text-center mb-8 bg-gradient-primary text-transparent bg-clip-text">
-            Alchemy Records
-          </h1>
+    <>
+      <SEO
+        title="Alchemy Records - Resume Analysis History"
+        description="View and manage your resume analysis history. Track your optimization progress, feedback, and improvements with AI-powered insights."
+        keywords="resume analysis history, AI optimization tracking, career progress, resume improvements, job application records"
+        canonicalUrl="https://resumealchemist.qwizai.com/alchemy-records"
+        noIndex={true}
+      />
+      
+      <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100">
+        <div className="container mx-auto px-4 py-12">
+          <div className="max-w-4xl mx-auto">
+            <H1 className="text-center mb-8 bg-gradient-primary text-transparent bg-clip-text">
+              Alchemy Records
+            </H1>
 
-          <UsageStats usageCount={usageCount} />
+            <UsageStats usageCount={usageCount} />
 
-          <SortFilterControls
-            currentSort={sortOption}
-            currentFilter={statusFilter}
-            onSortChange={setSortOption}
-            onFilterChange={setStatusFilter}
-          />
+            <SortFilterControls
+              currentSort={sortOption}
+              currentFilter={statusFilter}
+              onSortChange={setSortOption}
+              onFilterChange={setStatusFilter}
+            />
 
-          <div className="space-y-6">
-            {analyses.map((analysis) => (
-              <AnalysisCard
-                key={analysis.id}
-                {...analysis}
-                editingId={editingId}
-                onStartEditing={setEditingId}
-                onSaveTitle={handleSaveTitle}
-                onCancelEditing={() => setEditingId(null)}
-                onFeedback={handleFeedback}
-                onStatusChange={refreshData}
-              />
-            ))}
-          </div>
-
-          {analyses.length === 0 && !loading && (
-            <div className="text-center py-12">
-              <p className="text-gray-600">{getFilterDescription()}</p>
+            <div className="space-y-6">
+              {analyses.map((analysis) => (
+                <AnalysisCard
+                  key={analysis.id}
+                  {...analysis}
+                  editingId={editingId}
+                  onStartEditing={setEditingId}
+                  onSaveTitle={handleSaveTitle}
+                  onCancelEditing={() => setEditingId(null)}
+                  onFeedback={handleFeedback}
+                  onStatusChange={refreshData}
+                />
+              ))}
             </div>
-          )}
 
-          <RecordsPagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={setCurrentPage}
-          />
+            {analyses.length === 0 && !loading && (
+              <div className="text-center py-12">
+                <p className="text-gray-600">{getFilterDescription()}</p>
+              </div>
+            )}
+
+            <RecordsPagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 
