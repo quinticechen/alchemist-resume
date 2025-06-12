@@ -175,12 +175,12 @@ const AlchemistWorkshop = () => {
 
       // Scenario 1: Previous resume + job description
       if (isFromPreviousResume && data.jobContent) {
-        webhookData.resumeContent = resumeData.formatted_resume;
+        webhookData.resumeContent = resumeData.formatted_resume || "";
         webhookData.jobContent = data.jobContent;
       }
       // Scenario 2: Previous resume + job URL  
       else if (isFromPreviousResume && data.jobUrl) {
-        webhookData.resumeContent = resumeData.formatted_resume;
+        webhookData.resumeContent = resumeData.formatted_resume || "";
         webhookData.jobUrl = data.jobUrl;
       }
       // Scenario 3: New resume + job URL
