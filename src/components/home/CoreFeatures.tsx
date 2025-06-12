@@ -11,7 +11,7 @@ import {
 
 export const CoreFeatures = () => {
   return (
-    <div className="mx-auto mt-32 max-w-7xl px-6 sm:mt-56 lg:px-8">
+    <div className="mx-auto mt-32 mb-32 max-w-7xl px-6 sm:mt-56 lg:px-8">
       <div className="mx-auto max-w-2xl lg:mx-0">
         <h2 className="text-3xl font-bold tracking-tight text-neutral-900 sm:text-4xl">
           The new way to build resumes
@@ -69,7 +69,7 @@ export const CoreFeatures = () => {
       
       {/* How It Works Section */}
       <div className="bg-white py-24 sm:py-32">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+        <div className="mx-auto px-6 lg:px-8">
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="text-3xl font-bold tracking-tight text-neutral-900 sm:text-4xl">
               How it works
@@ -81,7 +81,7 @@ export const CoreFeatures = () => {
           <div className="mt-16 flow-root sm:mt-24">
             <div className="-m-2 rounded-xl bg-neutral-50 p-2 ring-1 ring-inset ring-neutral-900/10 lg:-m-4 lg:rounded-2xl lg:p-4">
               <div className="relative">
-                <div className="mx-auto max-w-7xl px-6 lg:px-8">
+                <div className="mx-auto px-6 lg:px-8">
                   <div className="mt-16 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
                     <div className="text-center md:text-left">
                       <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-tr from-blue-600 to-blue-400">
