@@ -16,6 +16,7 @@ import Lottie from "react-lottie";
 import animationData from "@/animations/OOze.chat.json";
 import Loading from "@/animations/Loading.json";
 import OozeAnimation from "@/components/OozeAnimation";
+import { TopCompanies } from "@/components/home/TopCompanies";
 import { ValueProposition } from "@/components/home/ValueProposition";
 import WebsitesSection from "@/components/WebsitesSection";
 
@@ -239,23 +240,7 @@ const Home = () => {
         </div>
       </section>
 
-      <section className="py-16 bg-neutral-50">
-        <div className="max-w-6xl mx-auto px-4 text-center">
-          <h2 className="text-2xl font-semibold text-neutral-600 mb-8 hero-element">
-            Optimize Your Resume for Top Companies
-          </h2>
-          <div className="flex flex-wrap justify-center gap-8 items-center">
-            {companies.map((company) => (
-              <span
-                key={company}
-                className="text-2xl font-bold bg-gradient-primary text-transparent bg-clip-text hero-element"
-              >
-                {company}
-              </span>
-            ))}
-          </div>
-        </div>
-      </section>
+      <TopCompanies />
 
       <section className="py-20 bg-gradient-primary text-white">
         <div className="max-w-4xl mx-auto px-4 text-center">
