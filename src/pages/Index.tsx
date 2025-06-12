@@ -222,6 +222,9 @@ const Home = () => {
         </div>
       </section>
 
+      <TopCompanies />
+      <ValueProposition />
+
       <section id="features" className="py-20 bg-white">
         <div className="max-w-6xl mx-auto px-4">
           <h2 className="text-4xl font-bold text-center mb-12 hero-element">How It Works</h2>
@@ -240,8 +243,7 @@ const Home = () => {
         </div>
       </section>
 
-      <TopCompanies />
-
+      
       <section className="py-20 bg-gradient-primary text-white">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <h2 className="text-4xl font-bold mb-6 hero-element">Start with 3 Free Uses</h2>
@@ -258,7 +260,7 @@ const Home = () => {
           </Button>
         </div>
       </section>
-      <ValueProposition />
+      
       <WebsitesSection />
       <section className="py-20 bg-neutral-50">
         <div className="max-w-4xl mx-auto px-4">
