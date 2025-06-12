@@ -12,8 +12,8 @@ import {
 export const CoreFeatures = () => {
   return (
     <div className="mx-auto mt-32 max-w-7xl px-6 sm:mt-56 lg:px-8">
-      <div className="mx-auto max-w-2xl text-center lg:mx-0">
-        <h2 className="text-3xl font-bold tracking-tight  sm:text-4xl">
+      <div className="mx-auto max-w-2xl text-center">
+        <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
           The new way to build resumes
         </h2>
         <p className="mt-6 text-lg leading-8 text-neutral-600">
