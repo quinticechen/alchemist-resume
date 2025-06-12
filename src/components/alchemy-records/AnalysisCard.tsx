@@ -250,7 +250,7 @@ const AnalysisCard = ({
         <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
           <div className="mb-2">
             <p className="text-sm text-yellow-800 font-medium mb-2">
-              ⚠️ Warning: The job URL cannot be changed after saving.
+              The job URL cannot be changed after saving.
             </p>
             <Input
               type="url"
@@ -323,7 +323,7 @@ const AnalysisCard = ({
               variant="outline"
               size="sm"
               onClick={handleAddJobUrl}
-              className="flex items-center gap-2 border-orange-200 text-orange-700 hover:bg-orange-50"
+              className="flex items-center gap-2"
             >
               <ExternalLink className="h-4 w-4" />
               Link JD
