@@ -133,7 +133,7 @@ export const PlatformLogos = () => {
       </div>
 
       <div className="mt-8 text-center">
-        <Button onClick={() => window.open('/job-websites', '_self')} className="gap-2">
+        <Button onClick={() => window.open('/job-websites', '_self')} className="text-primary bg-white hover:bg-neutral-300 hero-element">
           View All Job Platforms
           <ExternalLink className="h-4 w-4" />
         </Button>

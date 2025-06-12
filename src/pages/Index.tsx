@@ -229,7 +229,7 @@ const Home = () => {
                 onClick={() => navigate("/faq")}
                 size="lg"
                 variant="outline"
-                className="bg-secondary hover:bg-secondary/90 text-primary hero-element"
+                className="text-primary bg-white hover:bg-neutral-300 hero-element"
               >
                 More
               </Button>
