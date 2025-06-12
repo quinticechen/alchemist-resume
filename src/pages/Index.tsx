@@ -21,43 +21,6 @@ import { TopCompanies } from "@/components/home/TopCompanies";
 import { ValueProposition } from "@/components/home/ValueProposition";
 import WebsitesSection from "@/components/WebsitesSection";
 
-const companies = ["Google", "Amazon", "Microsoft", "Apple", "Meta"];
-
-const features = [
-  {
-    title: "Upload Resume",
-    description: "Submit your existing PDF resume",
-    icon: Upload,
-  },
-  {
-    title: "Add Job Link",
-    description: "Paste the URL of your target job posting",
-    icon: ArrowRight,
-  },
-  {
-    title: "Get Optimized",
-    description: "Receive a perfectly matched resume",
-    icon: Zap,
-  },
-];
-
-const globalPlatforms = [
-  { name: "LinkedIn", url: "linkedin.com" },
-  { name: "Indeed", url: "indeed.com" },
-  { name: "Glassdoor", url: "glassdoor.com" },
-  { name: "Foundit", url: "foundit.in" },
-  { name: "ZipRecruiter", url: "ziprecruiter.com" },
-  { name: "SimplyHired", url: "simplyhired.com" },
-];
-
-const asianPlatforms = [
-  { name: "104 Job Bank", url: "104.com.tw" },
-  { name: "1111 Job Bank", url: "1111.com.tw" },
-  { name: "JobsDB", url: "jobsdb.com" },
-  { name: "Rikunabi NEXT", url: "next.rikunabi.com" },
-  // { name: "51job", url: "51job.com" },
-];
-
 const faqs = [
   {
     question: "How many free uses do I get?",
@@ -223,11 +186,9 @@ const Home = () => {
         </div>
       </section>
 
+      <CoreFeatures />
       <TopCompanies />
       <ValueProposition />
-      <CoreFeatures />
-
-
       
       <section className="py-20 bg-gradient-primary text-white">
         <div className="max-w-4xl mx-auto px-4 text-center">
@@ -247,9 +208,10 @@ const Home = () => {
       </section>
       
       <WebsitesSection />
+
       <section className="py-20 bg-neutral-50">
         <div className="max-w-4xl mx-auto px-4">
-          <h2 className="text-4xl font-bold text-center mb-12 hero-element">
+          <h2 className="text-4xl font-bold text-center text-transparent mb-12 hero-element">
             Frequently Asked Questions
           </h2>
           <div className="space-y-6">
