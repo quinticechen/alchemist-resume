@@ -19,7 +19,7 @@ const companies = [
   },
   {
     name: 'Apple',
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg',
+    logo: 'https://www.svgrepo.com/show/303665/apple-11-logo.svg',
     jobsUrl: 'https://jobs.apple.com/',
   },
   {
