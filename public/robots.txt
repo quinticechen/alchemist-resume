@@ -1,0 +1,20 @@
+
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://resumealchemist.qwizai.com/sitemap.xml
+
+# Disallow admin/private pages
+Disallow: /alchemist-workshop
+Disallow: /resume-refine/
+Disallow: /alchemy-records
+Disallow: /resume-preview/
+Disallow: /cover-letter
+Disallow: /account
+Disallow: /onboard
+Disallow: /survey
+Disallow: /payment-success
+
+# Crawl delay (optional, adjust as needed)
+Crawl-delay: 1
