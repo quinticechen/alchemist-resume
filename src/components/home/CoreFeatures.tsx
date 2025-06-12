@@ -23,7 +23,7 @@ export const CoreFeatures = () => {
       <div className="mt-16 grid grid-cols-1 gap-x-6 gap-y-12 sm:grid-cols-2 lg:mt-20 lg:grid-cols-4 lg:gap-x-8">
         <div className="text-center md:text-left">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-tr from-blue-600 to-blue-400">
-            <Unlink2 className="h-6 w-6 text-white" />
+            <Bot className="h-6 w-6 text-white" />
           </div>
           <h3 className="mt-4 text-base font-semibold leading-7 text-neutral-900">
             AI-Powered
@@ -34,7 +34,7 @@ export const CoreFeatures = () => {
         </div>
         <div className="text-center md:text-left">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-tr from-orange-600 to-orange-400">
-            <Laugh className="h-6 w-6 text-white" />
+            <Crosshair className="h-6 w-6 text-white" />
           </div>
           <h3 className="mt-4 text-base font-semibold leading-7 text-neutral-900">
             ATS Optimized
@@ -45,7 +45,7 @@ export const CoreFeatures = () => {
         </div>
         <div className="text-center md:text-left">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-tr from-green-600 to-green-400">
-            <Bot className="h-6 w-6 text-white" />
+            <Unlink2 className="h-6 w-6 text-white" />
           </div>
           <h3 className="mt-4 text-base font-semibold leading-7 text-neutral-900">
             Job-Specific
@@ -56,7 +56,7 @@ export const CoreFeatures = () => {
         </div>
         <div className="text-center md:text-left">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-tr from-purple-600 to-purple-400">
-            <Crosshair className="h-6 w-6 text-white" />     
+            <Laugh className="h-6 w-6 text-white" />     
           </div>
           <h3 className="mt-4 text-base font-semibold leading-7 text-neutral-900">
             Easy to Use
