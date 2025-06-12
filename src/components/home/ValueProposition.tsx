@@ -19,7 +19,7 @@ export const ValueProposition = () => {
               &quot;Resume Alchemist helped me land my dream job. The AI-powered resume builder made it easy to create a resume that highlighted my skills and experience.&quot;
             </p>
             <div className="mt-4 flex items-center gap-x-4">
-              <img src="https://www.pexels.com/zh-tw/photo/3970083/" alt="" className="h-10 w-10 rounded-full bg-neutral-50" />
+              <img src="https://images.pexels.com/photos/3970083/pexels-photo-3970083.jpeg?_gl=1*1f1x235*_ga*MTU4MDMwMDIyNi4xNzQ5NzA0MTgw*_ga_8JE65Q40S6*czE3NDk3MDQxNzkkbzEkZzAkdDE3NDk3MDQxNzkkajYwJGwwJGgw" alt="" className="h-10 w-10 rounded-full bg-neutral-50" />
               <div>
                 <p className="text-sm font-semibold leading-6 text-neutral-900">
                   Jane Doe
@@ -35,7 +35,7 @@ export const ValueProposition = () => {
               &quot;I was struggling to create a resume that stood out. Resume Alchemist made it easy to create a professional resume that highlighted my skills and experience.&quot;
             </p>
             <div className="mt-4 flex items-center gap-x-4">
-              <img src="https://www.pexels.com/zh-tw/photo/1645820/" alt="" className="h-10 w-10 rounded-full bg-neutral-50" />
+              <img src="https://images.pexels.com/photos/1645820/pexels-photo-1645820.jpeg?_gl=1*kg97o8*_ga*MTU4MDMwMDIyNi4xNzQ5NzA0MTgw*_ga_8JE65Q40S6*czE3NDk3MDQxNzkkbzEkZzEkdDE3NDk3MDQyNDAkajYwJGwwJGgw" alt="" className="h-10 w-10 rounded-full bg-neutral-50" />
               <div>
                 <p className="text-sm font-semibold leading-6 text-neutral-900">
                   John Smith
@@ -51,7 +51,7 @@ export const ValueProposition = () => {
               &quot;I was skeptical about using an AI-powered resume builder, but Resume Alchemist exceeded my expectations. The AI-powered resume builder made it easy to create a resume that highlighted my skills and experience.&quot;
             </p>
             <div className="mt-4 flex items-center gap-x-4">
-              <img src="https://www.pexels.com/zh-tw/photo/6182551/" alt="" className="h-10 w-10 rounded-full bg-neutral-50" />
+              <img src="https://images.pexels.com/photos/6182551/pexels-photo-6182551.jpeg?_gl=1*1krkj89*_ga*MTU4MDMwMDIyNi4xNzQ5NzA0MTgw*_ga_8JE65Q40S6*czE3NDk3MDQxNzkkbzEkZzEkdDE3NDk3MDQyNTUkajQ1JGwwJGgw" alt="" className="h-10 w-10 rounded-full bg-neutral-50" />
               <div>
                 <p className="text-sm font-semibold leading-6 text-neutral-900">
                   Emily Johnson

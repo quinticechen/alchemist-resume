@@ -16,6 +16,7 @@ import Lottie from "react-lottie";
 import animationData from "@/animations/OOze.chat.json";
 import Loading from "@/animations/Loading.json";
 import OozeAnimation from "@/components/OozeAnimation";
+import { CoreFeatures } from "@/components/home/CoreFeatures";
 import { TopCompanies } from "@/components/home/TopCompanies";
 import { ValueProposition } from "@/components/home/ValueProposition";
 import WebsitesSection from "@/components/WebsitesSection";
@@ -224,24 +225,8 @@ const Home = () => {
 
       <TopCompanies />
       <ValueProposition />
+      <CoreFeatures />
 
-      <section id="features" className="py-20 bg-white">
-        <div className="max-w-6xl mx-auto px-4">
-          <h2 className="text-4xl font-bold text-center mb-12 hero-element">How It Works</h2>
-          <div className="grid md:grid-cols-3 gap-8">
-            {features.map((feature, index) => (
-              <div
-                key={index}
-                className="p-6 rounded-xl border border-neutral-200 bg-white shadow-apple hover:shadow-apple-lg transition-shadow hero-element"
-              >
-                <feature.icon className="w-12 h-12 text-primary mb-4" />
-                <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
-                <p className="text-neutral-600">{feature.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
       
       <section className="py-20 bg-gradient-primary text-white">
