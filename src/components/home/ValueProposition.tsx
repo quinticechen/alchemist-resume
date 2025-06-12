@@ -6,7 +6,7 @@ export const ValueProposition = () => {
     <div className="bg-neutral-50 py-12">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="mx-auto max-w-2xl text-center">
-         <h2 className="text-3xl font-bold text-center mb-12 bg-gradient-primary text-transparent bg-clip-text">
+         <h2 className="text-4xl font-bold text-center bg-gradient-primary text-transparent bg-clip-text">
             What people are saying
           </h2>
           <p className="mt-6 text-lg leading-8 text-neutral-600">
