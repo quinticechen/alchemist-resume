@@ -9,9 +9,6 @@ interface ProfessionalSummarySectionProps {
 }
 
 const ProfessionalSummarySection = ({ data, onChange }: ProfessionalSummarySectionProps) => {
-  // Log the data structure to help with debugging
-  console.log('ProfessionalSummarySection data:', data);
-  
   // Check for both field names - some data models use 'summary' and others use 'professionalSummary'
   const professionalSummary = data?.professionalSummary || data?.summary || '';
 
