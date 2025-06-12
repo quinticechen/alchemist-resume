@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import ResumeUploader from "@/components/ResumeUploader";
@@ -175,13 +176,23 @@ const AlchemistWorkshop = () => {
 
       // Scenario 1: Previous resume + job description
       if (isFromPreviousResume && data.jobContent) {
-        webhookData.resumeContent = resumeData.formatted_resume;
+        webhookData.resumeContent = resumeData.formatted_resume || resumeContent;
         webhookData.jobContent = data.jobContent;
+        
+        // Ensure resumeContent is not null or empty
+        if (!webhookData.resumeContent) {
+          throw new Error("Resume content is missing for previous resume");
+        }
       }
       // Scenario 2: Previous resume + job URL  
       else if (isFromPreviousResume && data.jobUrl) {
-        webhookData.resumeContent = resumeData.formatted_resume;
+        webhookData.resumeContent = resumeData.formatted_resume || resumeContent;
         webhookData.jobUrl = data.jobUrl;
+        
+        // Ensure resumeContent is not null or empty
+        if (!webhookData.resumeContent) {
+          throw new Error("Resume content is missing for previous resume");
+        }
       }
       // Scenario 3: New resume + job URL
       else if (!isFromPreviousResume && data.jobUrl) {
@@ -193,6 +204,8 @@ const AlchemistWorkshop = () => {
         webhookData.resumeUrl = resumeData.file_path;
         webhookData.jobContent = data.jobContent;
       }
+
+      console.log("Webhook data being sent:", webhookData);
 
       const currentEnv = getEnvironment();
       const makeWebhookUrl =
@@ -245,9 +258,10 @@ const AlchemistWorkshop = () => {
         });
       }, 5 * 60 * 1000);
     } catch (error) {
+      console.error("Error in handleJobSubmit:", error);
       toast({
         title: "Error",
-        description: "Failed to process resume. Please try again later.",
+        description: error instanceof Error ? error.message : "Failed to process resume. Please try again later.",
         variant: "destructive",
       });
       setIsProcessing(false);
