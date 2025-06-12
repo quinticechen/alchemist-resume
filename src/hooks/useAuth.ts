@@ -17,7 +17,6 @@ export const useAuth = () => {
   const handleSocialLogin = async (provider: 'google' | 'linkedin_oidc') => {
     try {
       setIsLoading(true);
-      // console.log(`Initiating ${provider} login...`);
       
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
@@ -32,7 +31,6 @@ export const useAuth = () => {
       if (error) throw error;
       
     } catch (error: any) {
-      // console.error(`${provider} login error:`, error);
       toast({
         title: "Authentication Error",
         description: error.message
@@ -45,7 +43,6 @@ export const useAuth = () => {
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    // console.log('Attempting email login/signup...');
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
@@ -59,7 +56,6 @@ export const useAuth = () => {
 
     try {
       if (isSignUp) {
-        // console.log('Attempting signup...');
         const { error } = await supabase.auth.signUp({
           email,
           password,
@@ -76,7 +72,6 @@ export const useAuth = () => {
           description: "Please check your email to verify your account"
         });
       } else {
-        // console.log('Attempting signin...');
         const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password
@@ -101,7 +96,6 @@ export const useAuth = () => {
         }
       }
     } catch (error: any) {
-      // console.error('Auth error:', error);
       toast({
         title: "Error",
         description: error.message

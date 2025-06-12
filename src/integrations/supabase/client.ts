@@ -25,7 +25,10 @@ export const getEnvironment = () => {
   // Production domains - note we're checking the exact hostnames to match
   if (hostname === 'resumealchemist.com' || hostname === 'resumealchemist.qwizai.com' || hostname === 'www.resumealchemist.com') {
     cachedEnvironment = 'production';
-    console.log(`Environment detected: production (${hostname})`);
+    // Only log environment detection if not in production
+    if (hostname !== 'resumealchemist.com' && hostname !== 'resumealchemist.qwizai.com' && hostname !== 'www.resumealchemist.com') {
+      console.log(`Environment detected: production (${hostname})`);
+    }
     return cachedEnvironment;
   }
   

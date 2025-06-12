@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -131,7 +132,6 @@ const AnalysisCard = ({
         onStatusChange();
       }
     } catch (error) {
-      console.error('Error saving job URL:', error);
       toast({
         title: "Error",
         description: "Failed to save job URL. Please try again.",

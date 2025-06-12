@@ -4,6 +4,8 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { SEO } from "@/components/SEO";
+import { H1, H2 } from "@/components/seo/StructuredHeadings";
 import Lottie from "react-lottie";
 import Loading from "@/animations/Loading.json";
 
@@ -192,79 +194,89 @@ const SurveyPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100">
-      <div className="container mx-auto px-4 py-12">
-        <div className="max-w-4xl mx-auto space-y-12">
-          <div className="text-center space-y-4">
-            <h1 className="text-4xl font-bold bg-gradient-primary text-transparent bg-clip-text">
-              Feedback Survey
-            </h1>
-            <p className="text-xl text-neutral-600">
-              Help us improve your resume transformation experience
-            </p>
-          </div>
-
-          <div className="bg-white rounded-xl p-8 shadow-apple">
-            <h2 className="text-2xl font-semibold mb-4 text-primary">
-              Get 3 More Free Uses
-            </h2>
-            <ul className="space-y-4 text-neutral-600">
-              <li className="flex items-start">
-                <span className="text-2xl mr-2">✨</span>
-                <span>
-                  Complete our quick survey to unlock additional free uses
-                </span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-2xl mr-2">🎯</span>
-                <span>Your feedback helps us improve our service</span>
-              </li>
-              <li className="flex items-start">
-                <span className="text-2xl mr-2">⚡</span>
-                <span>Takes less than 5 minutes to complete</span>
-              </li>
-            </ul>
-          </div>
-
-          <div className="bg-white rounded-xl p-8 shadow-apple">
-            <h2 className="text-2xl font-semibold mb-6 text-primary">
-              Quick Survey
-            </h2>
-            <div className="w-full flex justify-center">
-              <iframe
-                src={formUrl}
-                width="100%"
-                height="500"
-                className="border-0"
-                title="Feedback Survey"
-              >
-                <div className="w-64 h-64 mx-auto">
-                  <Lottie options={loadingOptions} />
-                </div>
-              </iframe>
+    <>
+      <SEO
+        title="Feedback Survey - Help Us Improve Resume Alchemist"
+        description="Complete our quick feedback survey to unlock additional free uses. Your input helps us improve our AI resume optimization service."
+        keywords="feedback survey, user experience, resume optimization feedback, AI improvement, customer satisfaction"
+        canonicalUrl="https://resumealchemist.qwizai.com/survey"
+        noIndex={true}
+      />
+      
+      <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100">
+        <div className="container mx-auto px-4 py-12">
+          <div className="max-w-4xl mx-auto space-y-12">
+            <div className="text-center space-y-4">
+              <H1 className="bg-gradient-primary text-transparent bg-clip-text">
+                Feedback Survey
+              </H1>
+              <p className="text-xl text-neutral-600">
+                Help us improve your resume transformation experience
+              </p>
             </div>
-          </div>
 
-          <div className="flex flex-col sm:flex-row justify-center gap-4 pt-8">
-            <Button
-              onClick={handleSurveyCompletion}
-              disabled={isLoading}
-              className="bg-gradient-primary text-white hover:opacity-90"
-            >
-              {isLoading ? "Processing..." : "I've Completed the Survey"}
-            </Button>
-            <Button
-              onClick={handleSkipSurvey}
-              disabled={isLoading}
-              variant="outline"
-              className="border-2 border-primary text-primary hover:bg-neutral-50"
-            >
-              Skip Survey & Purchase Directly
-            </Button>
+            <div className="bg-white rounded-xl p-8 shadow-apple">
+              <H2 className="text-2xl font-semibold mb-4 text-primary">
+                Get 3 More Free Uses
+              </H2>
+              <ul className="space-y-4 text-neutral-600">
+                <li className="flex items-start">
+                  <span className="text-2xl mr-2">✨</span>
+                  <span>
+                    Complete our quick survey to unlock additional free uses
+                  </span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-2xl mr-2">🎯</span>
+                  <span>Your feedback helps us improve our service</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-2xl mr-2">⚡</span>
+                  <span>Takes less than 5 minutes to complete</span>
+                </li>
+              </ul>
+            </div>
+
+            <div className="bg-white rounded-xl p-8 shadow-apple">
+              <H2 className="text-2xl font-semibold mb-6 text-primary">
+                Quick Survey
+              </H2>
+              <div className="w-full flex justify-center">
+                <iframe
+                  src={formUrl}
+                  width="100%"
+                  height="500"
+                  className="border-0"
+                  title="Feedback Survey"
+                >
+                  <div className="w-64 h-64 mx-auto">
+                    <Lottie options={loadingOptions} />
+                  </div>
+                </iframe>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row justify-center gap-4 pt-8">
+              <Button
+                onClick={handleSurveyCompletion}
+                disabled={isLoading}
+                className="bg-gradient-primary text-white hover:opacity-90"
+              >
+                {isLoading ? "Processing..." : "I've Completed the Survey"}
+              </Button>
+              <Button
+                onClick={handleSkipSurvey}
+                disabled={isLoading}
+                variant="outline"
+                className="border-2 border-primary text-primary hover:bg-neutral-50"
+              >
+                Skip Survey & Purchase Directly
+              </Button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

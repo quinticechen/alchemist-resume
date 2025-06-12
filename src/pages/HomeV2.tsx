@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
 import { useToast } from "@/hooks/use-toast";
 import WebsitesSection from "@/components/WebsitesSection";
+import { SEO } from "@/components/SEO";
 
 // Import home page components
 import { HeroSection } from "@/components/home/HeroSection";
@@ -93,15 +94,24 @@ const Home = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100">
-      <div className="relative isolate z-0 overflow-hidden bg-gradient-to-b from-neutral-50 to-white">
-        <HeroSection />
-        <CoreFeatures />
-        <ValueProposition />
-        <CallToAction />
-        <WebsitesSection />
+    <>
+      <SEO
+        title="Resume Alchemist V2 - Next-Gen AI Resume Optimization"
+        description="Experience the next generation of AI-powered resume optimization. Advanced features for job seekers who want the competitive edge."
+        keywords="AI resume builder, advanced resume optimization, next-gen career tools, professional resume enhancement"
+        canonicalUrl="https://resumealchemist.qwizai.com/home-v2"
+      />
+      
+      <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100">
+        <div className="relative isolate z-0 overflow-hidden bg-gradient-to-b from-neutral-50 to-white">
+          <HeroSection />
+          <CoreFeatures />
+          <ValueProposition />
+          <CallToAction />
+          <WebsitesSection />
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 

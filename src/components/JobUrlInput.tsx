@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -77,15 +78,6 @@ const JobUrlInput = ({
         hostname.includes(site)
       );
 
-      // if (!isValidUrl || url.includes("search")) {
-      //   toast({
-      //     title: "Invalid URL",
-      //     description:
-      //       "This URL contains multiple or no job information, or search URLs are not allowed.",
-      //     variant: "destructive",
-      //   });
-      //   return;
-      // }
       if (!isValidUrl) {
         toast({
           title: "Invalid URL",
@@ -116,7 +108,6 @@ const JobUrlInput = ({
         description: "Please enter a valid URL.",
         variant: "destructive",
       });
-      // console.error("URL validation error:", error);
     } finally {
       setIsSubmitting(false);
     }

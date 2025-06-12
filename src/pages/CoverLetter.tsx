@@ -1,10 +1,11 @@
-
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { useCoverLetter } from "@/hooks/use-cover-letter";
 import { supabase } from "@/integrations/supabase/client";
+import { SEO } from "@/components/SEO";
+import { H1 } from "@/components/seo/StructuredHeadings";
 import CoverLetterEditor from "@/components/cover-letter/CoverLetterEditor";
 import JobDescriptionViewer from "@/components/alchemy-records/JobDescriptionViewer";
 
@@ -103,57 +104,67 @@ const CoverLetter = () => {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100">
-      {/* Header */}
-      <div className="page-header flex-shrink-0 pt-6 px-4">
-        <div className="relative flex items-center justify-center">
-          <Button variant="outline" onClick={handleBack} size="sm" className="absolute left-4 flex items-center gap-2">
-            <ArrowLeft className="h-4 w-4" />
-            Back to Alchemy Records
-          </Button>
-          <h1 className="text-2xl font-bold bg-gradient-primary text-transparent bg-clip-text">Cover Letter</h1>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="flex-grow p-6 overflow-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-full">
-          {/* Job Description - Left Column */}
-          <div className="lg:col-span-4 h-full">
-            {isLoadingJob ? (
-              <div className="bg-white rounded-xl p-6 shadow-apple h-full">
-                <div className="animate-pulse space-y-4">
-                  <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                  <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-                  <div className="h-32 bg-gray-200 rounded"></div>
-                </div>
-              </div>
-            ) : jobData ? (
-              <JobDescriptionViewer jobData={jobData} />
-            ) : (
-              <div className="bg-white rounded-xl p-6 shadow-apple h-full flex items-center justify-center">
-                <p className="text-gray-500">No job description available</p>
-              </div>
-            )}
+    <>
+      <SEO
+        title="Cover Letter Generator - AI-Powered Personalization"
+        description="Generate personalized cover letters tailored to specific job postings using AI. Create compelling application letters that match job requirements."
+        keywords="AI cover letter generator, personalized cover letter, job application letter, AI writing assistant, career tools"
+        canonicalUrl="https://resumealchemist.qwizai.com/cover-letter"
+        noIndex={true}
+      />
+      
+      <div className="flex flex-col min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100">
+        {/* Header */}
+        <div className="page-header flex-shrink-0 pt-6 px-4">
+          <div className="relative flex items-center justify-center">
+            <Button variant="outline" onClick={handleBack} size="sm" className="absolute left-4 flex items-center gap-2">
+              <ArrowLeft className="h-4 w-4" />
+              Back to Alchemy Records
+            </Button>
+            <H1 className="text-2xl font-bold bg-gradient-primary text-transparent bg-clip-text">Cover Letter</H1>
           </div>
+        </div>
 
-          {/* Cover Letter Editor - Right Columns */}
-          <div className="lg:col-span-8 h-full">
-            <div className="bg-white rounded-xl p-6 shadow-apple h-full">
-              <CoverLetterEditor
-                coverLetter={jobApplication?.cover_letter}
-                isGenerating={isGenerating}
-                isLoading={isLoading}
-                onGenerate={generateCoverLetter}
-                onUpdate={updateCoverLetter}
-                jobTitle={jobData?.job?.title || ""}
-                companyName={jobData?.company?.name || ""}
-              />
+        {/* Main Content */}
+        <div className="flex-grow p-6 overflow-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-full">
+            {/* Job Description - Left Column */}
+            <div className="lg:col-span-4 h-full">
+              {isLoadingJob ? (
+                <div className="bg-white rounded-xl p-6 shadow-apple h-full">
+                  <div className="animate-pulse space-y-4">
+                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                    <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                    <div className="h-32 bg-gray-200 rounded"></div>
+                  </div>
+                </div>
+              ) : jobData ? (
+                <JobDescriptionViewer jobData={jobData} />
+              ) : (
+                <div className="bg-white rounded-xl p-6 shadow-apple h-full flex items-center justify-center">
+                  <p className="text-gray-500">No job description available</p>
+                </div>
+              )}
+            </div>
+
+            {/* Cover Letter Editor - Right Columns */}
+            <div className="lg:col-span-8 h-full">
+              <div className="bg-white rounded-xl p-6 shadow-apple h-full">
+                <CoverLetterEditor
+                  coverLetter={jobApplication?.cover_letter}
+                  isGenerating={isGenerating}
+                  isLoading={isLoading}
+                  onGenerate={generateCoverLetter}
+                  onUpdate={updateCoverLetter}
+                  jobTitle={jobData?.job?.title || ""}
+                  companyName={jobData?.company?.name || ""}
+                />
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

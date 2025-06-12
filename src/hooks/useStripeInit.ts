@@ -17,7 +17,6 @@ export const useStripeInit = () => {
     const initStripe = async () => {
       try {
         setIsStripeInitializing(true);
-        console.log(`Initializing Stripe in ${environment} environment (attempt ${attempts + 1}/${maxAttempts})`);
         
         // Add environment to headers
         const { data, error: funcError } = await supabase.functions.invoke("get-stripe-key", {
@@ -27,21 +26,17 @@ export const useStripeInit = () => {
         });
         
         if (funcError) {
-          console.error("Error invoking get-stripe-key function:", funcError);
           throw new Error(funcError.message || "Failed to initialize payment system");
         }
         
         if (!data || !data.key) {
-          console.error("No Stripe key returned from function");
           throw new Error("Payment system configuration error: No key returned");
         }
         
-        console.log(`Successfully got Stripe key for ${environment} environment`);
         const stripeInstance = loadStripe(data.key);
         setStripePromise(stripeInstance);
         setError(null);
       } catch (err: any) {
-        console.error(`Stripe initialization failed (attempt ${attempts + 1}/${maxAttempts}):`, err);
         setError(err.message || "Failed to initialize payment system");
         
         // Only show toast on final attempt
