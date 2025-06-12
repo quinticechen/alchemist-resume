@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -11,6 +10,7 @@ import { SEO } from "@/components/SEO";
 // Import home page components
 import { HeroSection } from "@/components/home/HeroSection";
 import { CoreFeatures } from "@/components/home/CoreFeatures";
+import { TopCompanies } from "@/components/home/TopCompanies";
 import { ValueProposition } from "@/components/home/ValueProposition";
 import { CallToAction } from "@/components/home/CallToAction";
 import Lottie from "react-lottie";
@@ -106,6 +106,7 @@ const Home = () => {
         <div className="relative isolate z-0 overflow-hidden bg-gradient-to-b from-neutral-50 to-white">
           <HeroSection />
           <CoreFeatures />
+          <TopCompanies />
           <ValueProposition />
           <CallToAction />
           <WebsitesSection />
