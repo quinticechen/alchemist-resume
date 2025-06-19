@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://resumealchemist.qwizai.com/sitemap.xml
+
+# Disallow pages
+Disallow: /home-v2
+Disallow: /login
+Disallow: /account
+Disallow: /payment-success
+
+# Crawl delay (optional, adjust as needed)
+Crawl-delay: 1
