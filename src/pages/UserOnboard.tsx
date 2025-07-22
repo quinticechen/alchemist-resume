@@ -2,6 +2,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import SeekerAnimation from "@/components/SeekerAnimation";
 import { Card } from "@/components/ui/card";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -14,31 +15,33 @@ const UserOnboard = () => {
   };
 
   return (
-    <div className="min-h-[calc(100vh-80px)] bg-gradient-to-b from-neutral-50 to-neutral-100 flex flex-col items-center justify-center p-4 pt-8">
+    <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100 flex flex-col items-center justify-center p-4">
       <div className="max-w-4xl w-full flex flex-col items-center">
-        {/* Welcome message with character */}
+        {/* OOze with speech bubble - centered on page */}
         <div className="relative mb-12 flex justify-center">
           {/* Speech bubble */}
           <div className="relative mb-4 z-10">
             <div className={`bg-white border border-neutral-100 rounded-3xl p-5 shadow-sm ${isMobile ? 'max-w-xs' : 'max-w-md'}`}>
               <div className="absolute left-1/2 bottom-0 transform translate-y-1/2 -translate-x-1/2 rotate-45 w-4 h-4 bg-white border-r border-b border-neutral-100"></div>
               <p className="text-center text-sm md:text-base font-medium text-neutral-800">
-                🧪 Hello! I'm OOze, the Resume Alchemist here. Want to make your resume stand out? Click below to begin!
+                Hmph! I'm OOze, the Resume Alchemist here. Want to make your resume stand out? Click below to begin!
               </p>
             </div>
           </div>
           
-          {/* Simple character placeholder */}
+          {/* Seeker animation */}
           <div className="absolute top-full -mt-2">
-            <div className="w-24 h-24 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white text-3xl shadow-lg">
-              🧪
-            </div>
-            {/* Shadow */}
-            <div className="w-16 h-3 bg-black/10 rounded-full blur-sm mx-auto mt-2"></div>
+            <SeekerAnimation 
+              width={100} 
+              height={100} 
+              mobileWidth={80}
+              mobileHeight={80}
+              showShadow={true}
+            />
           </div>
         </div>
         
-        {/* Add spacing to account for the character */}
+        {/* Add spacing to account for the Seeker */}
         <div className="mt-16"></div>
 
         <Card className="p-6 md:p-8 shadow-sm border border-neutral-200 bg-white w-full max-w-2xl mx-auto mt-12">
