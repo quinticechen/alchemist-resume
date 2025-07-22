@@ -82,7 +82,7 @@ const AlchemyRecords = () => {
       <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100">
         <div className="container mx-auto px-4 py-12">
           <div className="max-w-4xl mx-auto">
-            <h1 className="text-4xl font-bold mb-4 bg-gradient-primary text-transparent bg-clip-text">
+            <h1 className="text-center text-4xl font-bold mb-4 bg-gradient-primary text-transparent bg-clip-text">
               Alchemy Records
             </h1>
 
