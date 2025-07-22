@@ -15,7 +15,7 @@ const UserOnboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100 flex flex-col items-center justify-center p-4">
+    <div className="min-h-[calc(100vh-80px)] bg-gradient-to-b from-neutral-50 to-neutral-100 flex flex-col items-center justify-center p-4 pt-8">
       <div className="max-w-4xl w-full flex flex-col items-center">
         {/* OOze with speech bubble - centered on page */}
         <div className="relative mb-12 flex justify-center">
