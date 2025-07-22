@@ -11,7 +11,7 @@ import { useSubscriptionCheck } from "@/hooks/useSubscriptionCheck";
 import { getEnvironment } from "@/integrations/supabase/client";
 import Lottie from "react-lottie";
 import Loading from "@/animations/Loading.json";
-import { H1 } from "@/components/seo/StructuredHeadings";
+
 
 const AlchemistWorkshop = () => {
   const { session, isLoading } = useAuth();
@@ -298,9 +298,9 @@ const AlchemistWorkshop = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-4xl mx-auto space-y-8">
-        <H1 className="text-4xl font-bold mb-4 bg-gradient-primary text-transparent bg-clip-text">
+        <h1 className="text-4xl font-bold mb-4 bg-gradient-primary text-transparent bg-clip-text">
           Alchemist Workshop
-        </H1>
+        </h1>
 
         <ResumeUploader
           onUploadSuccess={handleFileUploadSuccess}
