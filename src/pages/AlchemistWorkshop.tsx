@@ -297,9 +297,9 @@ const AlchemistWorkshop = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-4xl mx-auto space-y-8">
-        <h1 className="text-3xl font-bold bg-gradient-primary text-transparent bg-clip-text text-center">
+        <H1 className="text-4xl font-bold mb-4 bg-gradient-primary text-transparent bg-clip-text">
           Alchemist Workshop
-        </h1>
+        </H1>
 
         <ResumeUploader
           onUploadSuccess={handleFileUploadSuccess}
