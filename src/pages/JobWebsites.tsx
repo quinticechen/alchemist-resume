@@ -185,7 +185,9 @@ const JobWebsites = () => {
       
       <div className="container mx-auto p-8">
         <div className="flex justify-between items-center mb-8">
-          <H1>Job Websites</H1>
+          <h1 className="text-4xl font-bold mb-4 bg-gradient-primary text-transparent bg-clip-text">
+              Supported Websites
+            </h1>
           {shouldShowSyncControls && (
             <Button
               onClick={triggerSync}
@@ -299,7 +301,6 @@ const JobWebsites = () => {
           </div>
         ) : platforms.length > 0 ? (
           <>
-            <H2 className="mb-6">Available Job Platforms</H2>
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {platforms.map((platform) => (
                 <PlatformCard
