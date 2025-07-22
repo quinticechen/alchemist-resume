@@ -185,7 +185,7 @@ const JobWebsites = () => {
       
       <div className="container mx-auto p-8">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-4xl font-bold mb-4 bg-gradient-primary text-transparent bg-clip-text">
+          <h1 className="text-center text-4xl font-bold mb-4 bg-gradient-primary text-transparent bg-clip-text">
               Supported Websites
           </h1>
           {shouldShowSyncControls && (
