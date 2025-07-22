@@ -55,7 +55,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             
             if (isFirstSignIn && newSession) {
               localStorage.setItem('hasSignedInBefore', 'true');
-              navigate('/user-onboard');
+              navigate('/onboard');
             }
           }
         }
