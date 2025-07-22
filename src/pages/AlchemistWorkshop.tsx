@@ -11,6 +11,7 @@ import { useSubscriptionCheck } from "@/hooks/useSubscriptionCheck";
 import { getEnvironment } from "@/integrations/supabase/client";
 import Lottie from "react-lottie";
 import Loading from "@/animations/Loading.json";
+import { H1 } from "@/components/seo/StructuredHeadings";
 
 const AlchemistWorkshop = () => {
   const { session, isLoading } = useAuth();
