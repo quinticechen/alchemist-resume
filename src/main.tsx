@@ -19,7 +19,9 @@ i18n
     
     // Language detection
     detection: {
-      order: ['localStorage', 'navigator', 'htmlTag'],
+      order: ['path', 'localStorage', 'navigator', 'htmlTag'],
+      lookupFromPathIndex: 0,
+      lookupFromSubdomainIndex: 0,
       caches: ['localStorage'],
       lookupLocalStorage: 'language'
     },

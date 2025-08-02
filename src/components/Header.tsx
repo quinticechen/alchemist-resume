@@ -9,7 +9,8 @@ import Logo from "./header/Logo";
 import Navigation from "./header/Navigation";
 import LanguageSwitcher from "./LanguageSwitcher";
 import UserMenu from "./header/UserMenu";
-import { Link } from "react-router-dom";
+import LanguageAwareLink from "./LanguageAwareLink";
+import { getLanguageFromPath, addLanguageToPath, getDefaultLanguage } from "@/utils/languageRouting";
 
 const Header = () => {
   const { session, signOut, isLoading } = useAuth();
@@ -30,10 +31,11 @@ const Header = () => {
   };
 
   const handleAuthClick = () => {
+    const currentLang = getLanguageFromPath(location.pathname) || getDefaultLanguage();
     if (session) {
-      navigate("/alchemist-workshop");
+      navigate(addLanguageToPath("/alchemist-workshop", currentLang as any));
     } else {
-      navigate("/login");
+      navigate(addLanguageToPath("/login", currentLang as any));
     }
   };
 

@@ -1,9 +1,11 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Session } from "@supabase/supabase-js";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import LanguageAwareLink from "../LanguageAwareLink";
+import { getLanguageFromPath, addLanguageToPath, getDefaultLanguage } from "@/utils/languageRouting";
 import { Sparkle, Hammer, ScrollText, Crown, Globe, HelpCircle, Wallet } from "lucide-react";
 
 interface NavigationProps {
@@ -14,6 +16,7 @@ interface NavigationProps {
 
 const Navigation = ({ session, onSupportedWebsitesClick, isHome }: NavigationProps) => {
   const { t } = useTranslation();
+  const location = useLocation();
   const [usageCount, setUsageCount] = useState(0);
   const [hasCompletedSurvey, setHasCompletedSurvey] = useState(false);
   const [freeTrialLimit, setFreeTrialLimit] = useState(3);
@@ -63,8 +66,10 @@ const Navigation = ({ session, onSupportedWebsitesClick, isHome }: NavigationPro
   const handleWorkshopClick = async (e: React.MouseEvent) => {
     e.preventDefault();
     
+    const currentLang = getLanguageFromPath(location.pathname) || getDefaultLanguage();
+    
     if (!session) {
-      navigate('/login');
+      navigate(addLanguageToPath('/login', currentLang as any));
       return;
     }
 
@@ -73,9 +78,9 @@ const Navigation = ({ session, onSupportedWebsitesClick, isHome }: NavigationPro
         title: "Free Trial Expired",
         description: "Please upgrade to continue using our services.",
       });
-      navigate('/pricing');
+      navigate(addLanguageToPath('/pricing', currentLang as any));
     } else {
-      navigate('/alchemist-workshop');
+      navigate(addLanguageToPath('/alchemist-workshop', currentLang as any));
     }
   };
 
@@ -95,61 +100,61 @@ const Navigation = ({ session, onSupportedWebsitesClick, isHome }: NavigationPro
               </a>
             </li>
             <li>
-              <Link
+        <LanguageAwareLink
                 to="/alchemy-records"
                 className="text-sm font-medium text-neutral-600 hover:text-primary transition-colors flex items-center gap-2"
               >
                 <ScrollText className="h-5 w-5" />
                 <span className="hidden sm:inline">{t('navigation.records')}</span>
-              </Link>
+        </LanguageAwareLink>
             </li>
             <li>
-              <Link
+        <LanguageAwareLink
                 to="/job-websites"
                 className="text-sm font-medium text-neutral-600 hover:text-primary transition-colors flex items-center gap-2"
               >
                 <Globe className="h-5 w-5" />
                 <span className="hidden sm:inline">{t('navigation.supportedWebsites')}</span>
-              </Link>
+        </LanguageAwareLink>
             </li>
             <li>
-              <Link
+        <LanguageAwareLink
                 to="/pricing"
                 className="text-sm font-medium text-neutral-600 hover:text-primary transition-colors flex items-center gap-2"
               >
                 <Crown className="h-5 w-5" />
                 <span className="hidden sm:inline">{t('navigation.pricing')}</span>
-              </Link>
+        </LanguageAwareLink>
             </li>
           </>
         ) : (
           <>
             <li>
-              <Link
+              <LanguageAwareLink
                 to="/job-websites"
                 className="text-sm font-medium text-neutral-600 hover:text-primary transition-colors flex items-center gap-2"
               >
                 <Globe className="h-5 w-5" />
                 <span className="hidden sm:inline">{t('navigation.supportedWebsites')}</span>
-              </Link>
+              </LanguageAwareLink>
             </li>
             <li>
-              <Link
+              <LanguageAwareLink
                 to="/pricing"
                 className="text-sm font-medium text-neutral-600 hover:text-primary transition-colors flex items-center gap-2"
               >
                 <Wallet className="h-5 w-5" />
                 <span className="hidden sm:inline">{t('navigation.pricing')}</span>
-              </Link>
+              </LanguageAwareLink>
             </li>
             <li>
-              <Link
+              <LanguageAwareLink
                 to="/faq"
                 className="text-sm font-medium text-neutral-600 hover:text-primary transition-colors flex items-center gap-2"
               >
                 <HelpCircle className="h-5 w-5" />
                 <span className="hidden sm:inline">{t('navigation.faq')}</span>
-              </Link>
+              </LanguageAwareLink>
             </li>
           </>
         )}

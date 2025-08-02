@@ -87,6 +87,8 @@ export const useLanguage = () => {
             fallback_language: 'en'
           });
       }
+      
+      // URL will be updated automatically by LanguageRouter component
     } catch (error) {
       console.error('Error changing language:', error);
     }
