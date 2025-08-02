@@ -49,6 +49,12 @@ i18n
     load: 'languageOnly',
     nonExplicitSupportedLngs: true,
     
+    // Preload all supported languages for better UX
+    preload: ['en', 'zh-CN', 'zh-TW', 'ja'],
+    
+    // Force reload of resources
+    initImmediate: false,
+    
     // Resources (fallback for when files can't be loaded)
     resources: {
       en: {
