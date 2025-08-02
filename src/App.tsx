@@ -133,20 +133,22 @@ function AppContent() {
 
 function App() {
   return (
-    <HelmetProvider>
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
+    <React.StrictMode>
+      <HelmetProvider>
+        <BrowserRouter>
+          <QueryClientProvider client={queryClient}>
             <AuthProvider>
-              <ScrollToTop />
-              <AppContent />
+              <TooltipProvider>
+                <ScrollToTop />
+                <AppContent />
+                <Toaster />
+                <Sonner />
+              </TooltipProvider>
             </AuthProvider>
-          </BrowserRouter>
-        </TooltipProvider>
-      </QueryClientProvider>
-    </HelmetProvider>
+          </QueryClientProvider>
+        </BrowserRouter>
+      </HelmetProvider>
+    </React.StrictMode>
   );
 }
 
