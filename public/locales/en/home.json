@@ -27,5 +27,81 @@
         "answer": "The optimization process typically takes 2-3 minutes."
       }
     ]
+  },
+  "features": {
+    "title": "The new way to build resumes",
+    "subtitle": "We understand the challenges of creating a resume that stands out. That's why we built Resume Alchemist, the AI-powered resume builder that helps you craft a resume that gets you hired.",
+    "items": {
+      "aiPowered": {
+        "title": "AI-Powered",
+        "description": "Our AI analyzes your experience and skills to craft a resume that highlights your strengths."
+      },
+      "atsOptimized": {
+        "title": "ATS Optimized",
+        "description": "We ensure your resume is optimized for applicant tracking systems (ATS) to increase your chances of getting an interview."
+      },
+      "jobSpecific": {
+        "title": "Job-Specific",
+        "description": "We tailor your resume to specific job postings, highlighting the skills and experience that match the job description."
+      },
+      "easyToUse": {
+        "title": "Easy to Use",
+        "description": "Our intuitive interface makes it easy to create a professional resume in minutes."
+      }
+    }
+  },
+  "howItWorks": {
+    "title": "How it works",
+    "subtitle": "Three simple steps to create a resume that gets you hired.",
+    "steps": {
+      "upload": {
+        "title": "Upload Your Resume",
+        "description": "Upload your existing resume in PDF format."
+      },
+      "enterJob": {
+        "title": "Enter Job Posting URL",
+        "description": "Paste the URL of the job posting you're applying for."
+      },
+      "getOptimized": {
+        "title": "Get Your Optimized Resume",
+        "description": "Our AI will analyze your resume and the job posting to create a tailored resume that highlights your skills and experience."
+      }
+    }
+  },
+  "companies": {
+    "title": "Optimize Your Resume for Top Companies"
+  },
+  "testimonials": {
+    "title": "What people are saying",
+    "subtitle": "Don't just take our word for it. See what others are saying about Resume Alchemist.",
+    "items": [
+      {
+        "quote": "\"Resume Alchemist helped me land my dream job. The AI-powered resume builder made it easy to create a resume that highlighted my skills and experience.\"",
+        "name": "Jane Doe",
+        "title": "Software Engineer"
+      },
+      {
+        "quote": "\"I was struggling to create a resume that stood out. Resume Alchemist made it easy to create a professional resume that highlighted my skills and experience.\"",
+        "name": "John Smith",
+        "title": "Marketing Manager"
+      },
+      {
+        "quote": "\"I was skeptical about using an AI-powered resume builder, but Resume Alchemist exceeded my expectations. The AI-powered resume builder made it easy to create a resume that highlighted my skills and experience.\"",
+        "name": "Emily Johnson",
+        "title": "Product Manager"
+      }
+    ]
+  },
+  "footer": {
+    "company": "ResumeAlchemist",
+    "quickLinks": "Quick Links",
+    "contact": "Contact Us",
+    "followUs": "Follow Us",
+    "links": {
+      "terms": "Terms of Service",
+      "privacy": "Privacy Policy",
+      "faq": "FAQ",
+      "pricing": "Pricing Plans"
+    }
   }
 }
