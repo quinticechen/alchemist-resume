@@ -202,15 +202,19 @@ const Home = () => {
             {t('faq.title', { ns: 'home' })}
           </h2>
           <div className="space-y-6">
-            {(t('faq.questions', { ns: 'home', returnObjects: true }) as Array<{question: string, answer: string}>).map((faq, index) => (
-              <div
-                key={index}
-                className="p-6 rounded-xl border border-neutral-200 bg-white hero-element"
-              >
-                <h3 className="text-xl font-semibold mb-2">{faq.question}</h3>
-                <p className="text-neutral-600">{faq.answer}</p>
-              </div>
-            ))}
+            {(() => {
+              const faqData = t('faq.questions', { ns: 'home', returnObjects: true });
+              const faqs = Array.isArray(faqData) ? faqData : [];
+              return faqs.map((faq: any, index: number) => (
+                <div
+                  key={index}
+                  className="p-6 rounded-xl border border-neutral-200 bg-white hero-element"
+                >
+                  <h3 className="text-xl font-semibold mb-2">{faq.question}</h3>
+                  <p className="text-neutral-600">{faq.answer}</p>
+                </div>
+              ));
+            })()}
             <div className="flex justify-center pt-4">
               <Button
                 onClick={() => navigate("/faq")}
