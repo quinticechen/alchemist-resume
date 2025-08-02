@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,10 +21,12 @@ import { CoreFeatures } from "@/components/home/CoreFeatures";
 import { TopCompanies } from "@/components/home/TopCompanies";
 import { ValueProposition } from "@/components/home/ValueProposition";
 import WebsitesSection from "@/components/WebsitesSection";
+import { getLanguageFromPath, addLanguageToPath, getDefaultLanguage } from "@/utils/languageRouting";
 
 
 const Home = () => {
   const { t } = useTranslation(['home', 'common']);
+  const location = useLocation();
   const loadingOptions = {
     loop: true,
     autoplay: true,
@@ -73,7 +75,8 @@ const Home = () => {
               title: "Successfully signed in",
               description: "Redirecting to workshop...",
             });
-            navigate("/alchemist-workshop");
+            const currentLang = getLanguageFromPath(location.pathname) || getDefaultLanguage();
+            navigate(addLanguageToPath("/alchemist-workshop", currentLang as any));
           }
         });
 
@@ -97,14 +100,15 @@ const Home = () => {
 
   const handleStartTrial = async () => {
     try {
+      const currentLang = getLanguageFromPath(location.pathname) || getDefaultLanguage();
       const {
         data: { session: currentSession },
       } = await supabase.auth.getSession();
 
       if (currentSession) {
-        navigate("/alchemist-workshop");
+        navigate(addLanguageToPath("/alchemist-workshop", currentLang as any));
       } else {
-        navigate("/login");
+        navigate(addLanguageToPath("/login", currentLang as any));
       }
     } catch (error) {
       toast({
@@ -203,21 +207,47 @@ const Home = () => {
           </h2>
           <div className="space-y-6">
             {(() => {
-              const faqData = t('faq.questions', { ns: 'home', returnObjects: true });
-              const faqs = Array.isArray(faqData) ? faqData : [];
-              return faqs.map((faq: any, index: number) => (
-                <div
-                  key={index}
-                  className="p-6 rounded-xl border border-neutral-200 bg-white hero-element"
-                >
-                  <h3 className="text-xl font-semibold mb-2">{faq.question}</h3>
-                  <p className="text-neutral-600">{faq.answer}</p>
-                </div>
-              ));
+              try {
+                const faqData = t('faq.questions', { ns: 'home', returnObjects: true });
+                
+                // If translation doesn't load, provide fallback data
+                const fallbackFaqs = [
+                  {
+                    question: "How many free uses do I get?",
+                    answer: "New users receive 3 free uses to try our service."
+                  },
+                  {
+                    question: "What file formats are supported?",
+                    answer: "Currently, we support PDF format for resume uploads."
+                  },
+                  {
+                    question: "How long does the process take?",
+                    answer: "The optimization process typically takes 2-3 minutes."
+                  }
+                ];
+                
+                const faqs = Array.isArray(faqData) ? faqData : fallbackFaqs;
+                
+                return faqs.map((faq: any, index: number) => (
+                  <div
+                    key={index}
+                    className="p-6 rounded-xl border border-neutral-200 bg-white hero-element"
+                  >
+                    <h3 className="text-xl font-semibold mb-2">{faq.question}</h3>
+                    <p className="text-neutral-600">{faq.answer}</p>
+                  </div>
+                ));
+              } catch (error) {
+                console.error('Error rendering FAQs:', error);
+                return null;
+              }
             })()}
             <div className="flex justify-center pt-4">
               <Button
-                onClick={() => navigate("/faq")}
+                onClick={() => {
+                  const currentLang = getLanguageFromPath(location.pathname) || getDefaultLanguage();
+                  navigate(addLanguageToPath("/faq", currentLang as any));
+                }}
                 size="lg"
                 variant="outline"
                 className="text-primary bg-white hover:bg-neutral-300 hero-element"
