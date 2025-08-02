@@ -147,13 +147,13 @@ const Home = () => {
       <section className="bg-gradient-primary py-20 px-4">
         <div className="max-w-6xl mx-auto justify-center text-center">
           <h1 className="text-6xl font-bold bg-white text-transparent bg-clip-text mb-6 hero-element">
-            {t('hero.title', { ns: 'home' })}
+            {t('hero.title', { ns: 'home', defaultValue: 'Transform Your Resume with AI Alchemy' })}
           </h1>
           <div className="w-full mx-auto flex items-center md:w-2/4 lg:w-1/3 xl:w-1/2">
             <Lottie options={defaultOptions} height={"100%"} width={"100%"} />
           </div>
           <p className="text-xl text-white mb-8 max-w-3xl mx-auto hero-element">
-            {t('hero.subtitle', { ns: 'home' })}
+            {t('hero.subtitle', { ns: 'home', defaultValue: 'Turn your ordinary resume into the perfect match for your dream job using our AI-powered optimization technology.' })}
           </p>
           <div className="flex gap-4 justify-center">
             <Button
@@ -164,14 +164,14 @@ const Home = () => {
               size="lg"
               className="bg-gradient-primary-light hover:opacity-90 transition-opacity hero-element"
             >
-              {t('hero.learnMore', { ns: 'home' })}
+              {t('hero.learnMore', { ns: 'home', defaultValue: 'Learn More' })}
             </Button>
             <Button
               onClick={handleStartTrial}
               size="lg"
               className="text-primary bg-white hover:bg-neutral-300 hero-element"
             >
-              {session ? t('hero.goToWorkshop', { ns: 'home' }) : t('hero.startFreeTrial', { ns: 'home' })}
+              {session ? t('hero.goToWorkshop', { ns: 'home', defaultValue: 'Go to Workshop' }) : t('hero.startFreeTrial', { ns: 'home', defaultValue: 'Start Free Trial' })}
             </Button>
           </div>
         </div>
@@ -183,9 +183,9 @@ const Home = () => {
       
       <section className="py-20 bg-gradient-primary text-white">
         <div className="max-w-4xl mx-auto px-4 text-center">
-          <h2 className="text-4xl font-bold mb-6 hero-element">{t('cta.title', { ns: 'home' })}</h2>
+          <h2 className="text-4xl font-bold mb-6 hero-element">{t('cta.title', { ns: 'home', defaultValue: 'Start with 3 Free Uses' })}</h2>
           <p className="text-xl mb-8 opacity-90 hero-element">
-            {t('cta.subtitle', { ns: 'home' })}
+            {t('cta.subtitle', { ns: 'home', defaultValue: 'Try our AI-powered resume optimization with no commitment.' })}
           </p>
           <Button
             onClick={handleStartTrial}
@@ -193,7 +193,7 @@ const Home = () => {
             variant="secondary"
             className="bg-secondary hover:bg-secondary/90 text-primary hero-element"
           >
-            {session ? t('hero.goToWorkshop', { ns: 'home' }) : t('hero.startFreeTrial', { ns: 'home' })}
+            {session ? t('hero.goToWorkshop', { ns: 'home', defaultValue: 'Go to Workshop' }) : t('hero.startFreeTrial', { ns: 'home', defaultValue: 'Start Free Trial' })}
           </Button>
         </div>
       </section>
@@ -203,7 +203,7 @@ const Home = () => {
       <section className="py-20 bg-neutral-50">
         <div className="max-w-4xl mx-auto px-4">
           <h2 className="text-4xl font-bold text-center mb-12 bg-gradient-primary text-transparent bg-clip-text">
-            {t('faq.title', { ns: 'home' })}
+            {t('faq.title', { ns: 'home', defaultValue: 'Frequently Asked Questions' })}
           </h2>
           <div className="space-y-6">
             {(() => {
@@ -252,7 +252,7 @@ const Home = () => {
                 variant="outline"
                 className="text-primary bg-white hover:bg-neutral-300 hero-element"
               >
-                {t('faq.more', { ns: 'home' })}
+                {t('faq.more', { ns: 'home', defaultValue: 'More' })}
               </Button>
             </div>
           </div>

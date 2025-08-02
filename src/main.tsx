@@ -29,6 +29,9 @@ i18n
     // Backend configuration for loading translations
     backend: {
       loadPath: '/locales/{{lng}}/{{ns}}.json',
+      requestOptions: {
+        cache: 'no-store'
+      }
     },
 
     // Namespaces
