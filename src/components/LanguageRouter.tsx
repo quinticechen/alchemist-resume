@@ -77,21 +77,13 @@ export const LanguageRouter: React.FC<LanguageRouterProps> = ({ children }) => {
       const currentPath = location.pathname;
       const currentLang = getLanguageFromPath(currentPath);
       
-      console.log('LanguageRouter: Language change event:', lng, 'Current path lang:', currentLang);
-      
       if (currentLang !== lng && SUPPORTED_LANGUAGES.includes(lng as any)) {
         const pathWithoutLang = removeLanguageFromPath(currentPath);
         const newPath = addLanguageToPath(pathWithoutLang, lng as any);
         navigate(newPath, { replace: true });
         
-        // Force reload resources for the new language
-        try {
-          await i18n.loadLanguages(lng);
-          await i18n.reloadResources(lng, ['common', 'home', 'hero']);
-          console.log('LanguageRouter: Successfully loaded resources for:', lng);
-        } catch (error) {
-          console.error('Error loading language resources:', error);
-        }
+        // Resources should already be preloaded, so this should be instant
+        console.log('LanguageRouter: Quick language switch to:', lng);
       }
     };
 
