@@ -25,7 +25,7 @@ import { getLanguageFromPath, addLanguageToPath, getDefaultLanguage } from "@/ut
 
 
 const Home = () => {
-  const { t } = useTranslation(['home', 'common']);
+  const { t, i18n } = useTranslation(['home', 'common']);
   const location = useLocation();
   const loadingOptions = {
     loop: true,
@@ -208,7 +208,10 @@ const Home = () => {
           <div className="space-y-6">
             {(() => {
               try {
+                console.log('Current language:', i18n.language);
+                console.log('Available resources:', i18n.services.resourceStore.data);
                 const faqData = t('faq.questions', { ns: 'home', returnObjects: true });
+                console.log('FAQ data from translation:', faqData);
                 
                 // If translation doesn't load, provide fallback data
                 const fallbackFaqs = [
