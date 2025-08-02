@@ -49,8 +49,8 @@ const Header = () => {
               isHome={isHome}
             />
           </div>
-          <div className="flex items-center gap-6">
-            {/* <LanguageSwitcher /> */}
+          <div className="flex items-center gap-4">
+            <LanguageSwitcher />
             
             {!isLoading && (
               session ? (
@@ -65,7 +65,7 @@ const Header = () => {
                   className="flex items-center gap-2 bg-gradient-primary hover:opacity-90 transition-opacity"
                 >
                   <LogIn className="h-4 w-4" />
-                  <span className="hidden sm:inline">{isHome ? "Start Free Trial" : "Sign In"}</span>
+                  <span className="hidden sm:inline">{isHome ? t('subscription.startFreeTrial') : t('auth.signIn')}</span>
                 </Button>
               )
             )}

@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Session } from "@supabase/supabase-js";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Sparkle, Hammer, ScrollText, Crown, Globe, HelpCircle, Wallet } from "lucide-react";
@@ -12,6 +13,7 @@ interface NavigationProps {
 }
 
 const Navigation = ({ session, onSupportedWebsitesClick, isHome }: NavigationProps) => {
+  const { t } = useTranslation();
   const [usageCount, setUsageCount] = useState(0);
   const [hasCompletedSurvey, setHasCompletedSurvey] = useState(false);
   const [freeTrialLimit, setFreeTrialLimit] = useState(3);
@@ -89,7 +91,7 @@ const Navigation = ({ session, onSupportedWebsitesClick, isHome }: NavigationPro
                 className="text-sm font-medium text-neutral-600 hover:text-primary transition-colors flex items-center gap-2"
               >
                 <Sparkle className="h-5 w-5" />
-                <span className="hidden sm:inline">Workshop</span>
+                <span className="hidden sm:inline">{t('navigation.workshop')}</span>
               </a>
             </li>
             <li>
@@ -98,7 +100,7 @@ const Navigation = ({ session, onSupportedWebsitesClick, isHome }: NavigationPro
                 className="text-sm font-medium text-neutral-600 hover:text-primary transition-colors flex items-center gap-2"
               >
                 <ScrollText className="h-5 w-5" />
-                <span className="hidden sm:inline">Records</span>
+                <span className="hidden sm:inline">{t('navigation.records')}</span>
               </Link>
             </li>
             <li>
@@ -107,7 +109,7 @@ const Navigation = ({ session, onSupportedWebsitesClick, isHome }: NavigationPro
                 className="text-sm font-medium text-neutral-600 hover:text-primary transition-colors flex items-center gap-2"
               >
                 <Globe className="h-5 w-5" />
-                <span className="hidden sm:inline">Supported Websites</span>
+                <span className="hidden sm:inline">{t('navigation.supportedWebsites')}</span>
               </Link>
             </li>
             <li>
@@ -116,7 +118,7 @@ const Navigation = ({ session, onSupportedWebsitesClick, isHome }: NavigationPro
                 className="text-sm font-medium text-neutral-600 hover:text-primary transition-colors flex items-center gap-2"
               >
                 <Crown className="h-5 w-5" />
-                <span className="hidden sm:inline">Upgrade</span>
+                <span className="hidden sm:inline">{t('navigation.pricing')}</span>
               </Link>
             </li>
           </>
@@ -128,7 +130,7 @@ const Navigation = ({ session, onSupportedWebsitesClick, isHome }: NavigationPro
                 className="text-sm font-medium text-neutral-600 hover:text-primary transition-colors flex items-center gap-2"
               >
                 <Globe className="h-5 w-5" />
-                <span className="hidden sm:inline">Supported Websites</span>
+                <span className="hidden sm:inline">{t('navigation.supportedWebsites')}</span>
               </Link>
             </li>
             <li>
@@ -137,7 +139,7 @@ const Navigation = ({ session, onSupportedWebsitesClick, isHome }: NavigationPro
                 className="text-sm font-medium text-neutral-600 hover:text-primary transition-colors flex items-center gap-2"
               >
                 <Wallet className="h-5 w-5" />
-                <span className="hidden sm:inline">Pricing</span>
+                <span className="hidden sm:inline">{t('navigation.pricing')}</span>
               </Link>
             </li>
             <li>
@@ -146,7 +148,7 @@ const Navigation = ({ session, onSupportedWebsitesClick, isHome }: NavigationPro
                 className="text-sm font-medium text-neutral-600 hover:text-primary transition-colors flex items-center gap-2"
               >
                 <HelpCircle className="h-5 w-5" />
-                <span className="hidden sm:inline">FAQ</span>
+                <span className="hidden sm:inline">{t('navigation.faq')}</span>
               </Link>
             </li>
           </>
