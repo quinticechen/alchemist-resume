@@ -1,10 +1,12 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import OozeAnimation from '@/components/OozeAnimation';
 
 export const HeroSection = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation('hero');
   
   return (
     <div className="overflow-hidden pt-32 sm:pt-40 pb-80">
@@ -22,20 +24,20 @@ export const HeroSection = () => {
         <div className="mx-auto max-w-2xl gap-x-14 lg:mx-0 lg:flex lg:max-w-none lg:items-center">
           <div className="w-full max-w-xl lg:shrink-0 xl:max-w-2xl">
             <h1 className="text-4xl font-bold tracking-tight text-neutral-900 sm:text-6xl hero-element">
-              Say Goodbye to Lost Resumes - Let Ooze and Seeker Open the Door to Your Dream Job!
+              {t('title')}
             </h1>
             <p className="relative mt-6 text-lg leading-8 text-neutral-600 sm:max-w-md lg:max-w-none hero-element">
-              Resume Alchemist is the AI-powered resume builder that helps you craft a resume that gets you hired.
+              {t('subtitle')}
             </p>
             <div className="mt-10 flex items-center gap-x-6">
               <a
                 href="/alchemist-workshop"
                 className="rounded-md bg-gradient-primary px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-primary-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500 hero-element"
               >
-                Get started
+                {t('getStarted')}
               </a>
               <a href="/faq" className="text-sm font-semibold leading-6 text-neutral-900 hero-element">
-                Learn more <span aria-hidden="true">→</span>
+                {t('learnMore')} <span aria-hidden="true">→</span>
               </a>
             </div>
           </div>

@@ -30,7 +30,7 @@ i18n
     },
 
     // Namespaces
-    ns: ['common'],
+    ns: ['common', 'home', 'hero'],
     defaultNS: 'common',
 
     interpolation: {

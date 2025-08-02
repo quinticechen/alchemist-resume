@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import {
   ArrowRight,
@@ -21,22 +22,9 @@ import { TopCompanies } from "@/components/home/TopCompanies";
 import { ValueProposition } from "@/components/home/ValueProposition";
 import WebsitesSection from "@/components/WebsitesSection";
 
-const faqs = [
-  {
-    question: "How many free uses do I get?",
-    answer: "New users receive 3 free uses to try our service.",
-  },
-  {
-    question: "What file formats are supported?",
-    answer: "Currently, we support PDF format for resume uploads.",
-  },
-  {
-    question: "How long does the process take?",
-    answer: "The optimization process typically takes 2-3 minutes.",
-  },
-];
 
 const Home = () => {
+  const { t } = useTranslation(['home', 'common']);
   const loadingOptions = {
     loop: true,
     autoplay: true,
@@ -155,14 +143,13 @@ const Home = () => {
       <section className="bg-gradient-primary py-20 px-4">
         <div className="max-w-6xl mx-auto justify-center text-center">
           <h1 className="text-6xl font-bold bg-white text-transparent bg-clip-text mb-6 hero-element">
-            Transform Your Resume with AI Alchemy
+            {t('hero.title', { ns: 'home' })}
           </h1>
           <div className="w-full mx-auto flex items-center md:w-2/4 lg:w-1/3 xl:w-1/2">
             <Lottie options={defaultOptions} height={"100%"} width={"100%"} />
           </div>
           <p className="text-xl text-white mb-8 max-w-3xl mx-auto hero-element">
-            Turn your ordinary resume into the perfect match for your dream job
-            using our AI-powered optimization technology.
+            {t('hero.subtitle', { ns: 'home' })}
           </p>
           <div className="flex gap-4 justify-center">
             <Button
@@ -173,14 +160,14 @@ const Home = () => {
               size="lg"
               className="bg-gradient-primary-light hover:opacity-90 transition-opacity hero-element"
             >
-              Learn More
+              {t('hero.learnMore', { ns: 'home' })}
             </Button>
             <Button
               onClick={handleStartTrial}
               size="lg"
               className="text-primary bg-white hover:bg-neutral-300 hero-element"
             >
-              {session ? "Go to Workshop" : "Start Free Trial"}
+              {session ? t('hero.goToWorkshop', { ns: 'home' }) : t('hero.startFreeTrial', { ns: 'home' })}
             </Button>
           </div>
         </div>
@@ -192,9 +179,9 @@ const Home = () => {
       
       <section className="py-20 bg-gradient-primary text-white">
         <div className="max-w-4xl mx-auto px-4 text-center">
-          <h2 className="text-4xl font-bold mb-6 hero-element">Start with 3 Free Uses</h2>
+          <h2 className="text-4xl font-bold mb-6 hero-element">{t('cta.title', { ns: 'home' })}</h2>
           <p className="text-xl mb-8 opacity-90 hero-element">
-            Try our AI-powered resume optimization with no commitment.
+            {t('cta.subtitle', { ns: 'home' })}
           </p>
           <Button
             onClick={handleStartTrial}
@@ -202,7 +189,7 @@ const Home = () => {
             variant="secondary"
             className="bg-secondary hover:bg-secondary/90 text-primary hero-element"
           >
-            {session ? "Go to Workshop" : "Start Free Trial"}
+            {session ? t('hero.goToWorkshop', { ns: 'home' }) : t('hero.startFreeTrial', { ns: 'home' })}
           </Button>
         </div>
       </section>
@@ -212,10 +199,10 @@ const Home = () => {
       <section className="py-20 bg-neutral-50">
         <div className="max-w-4xl mx-auto px-4">
           <h2 className="text-4xl font-bold text-center mb-12 bg-gradient-primary text-transparent bg-clip-text">
-            Frequently Asked Questions
+            {t('faq.title', { ns: 'home' })}
           </h2>
           <div className="space-y-6">
-            {faqs.map((faq, index) => (
+            {(t('faq.questions', { ns: 'home', returnObjects: true }) as Array<{question: string, answer: string}>).map((faq, index) => (
               <div
                 key={index}
                 className="p-6 rounded-xl border border-neutral-200 bg-white hero-element"
@@ -231,7 +218,7 @@ const Home = () => {
                 variant="outline"
                 className="text-primary bg-white hover:bg-neutral-300 hero-element"
               >
-                More
+                {t('faq.more', { ns: 'home' })}
               </Button>
             </div>
           </div>
