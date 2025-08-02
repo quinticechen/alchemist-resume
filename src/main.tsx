@@ -45,9 +45,9 @@ i18n
     // Language codes mapping
     supportedLngs: ['en', 'zh-CN', 'zh-TW', 'ja'],
     
-    // Map generic language codes to specific supported ones
-    load: 'languageOnly',
-    nonExplicitSupportedLngs: true,
+    // Don't map language codes - keep them as-is
+    load: 'all',
+    nonExplicitSupportedLngs: false,
     
     // Preload all supported languages for better UX
     preload: ['en', 'zh-CN', 'zh-TW', 'ja'],
@@ -76,7 +76,7 @@ i18n
           }
         }
       },
-      zh: {
+      'zh-CN': {
         common: {
           navigation: {
             workshop: '工作坊',
