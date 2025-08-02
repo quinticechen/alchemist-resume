@@ -40,6 +40,10 @@ i18n
     // Language codes mapping
     supportedLngs: ['en', 'zh-CN', 'zh-TW', 'ja'],
     
+    // Map generic language codes to specific supported ones
+    load: 'languageOnly',
+    nonExplicitSupportedLngs: true,
+    
     // Resources (fallback for when files can't be loaded)
     resources: {
       en: {
@@ -58,6 +62,25 @@ i18n
           subscription: {
             usesLeft: '{{count}} uses left',
             startFreeTrial: 'Start Free Trial'
+          }
+        }
+      },
+      zh: {
+        common: {
+          navigation: {
+            workshop: '工作坊',
+            records: '记录',
+            pricing: '价格',
+            faq: '常见问题',
+            supportedWebsites: '支持的网站'
+          },
+          auth: {
+            signIn: '登录',
+            signOut: '登出'
+          },
+          subscription: {
+            usesLeft: '剩余 {{count}} 次使用',
+            startFreeTrial: '开始免费试用'
           }
         }
       }
