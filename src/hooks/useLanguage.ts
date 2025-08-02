@@ -75,13 +75,19 @@ export const useLanguage = () => {
 
       // Save user preference if authenticated
       if (session?.user) {
-        await supabase
+        const { error } = await supabase
           .from('user_language_preferences')
           .upsert({
             user_id: session.user.id,
             preferred_language: languageCode,
             fallback_language: 'en'
+          }, {
+            onConflict: 'user_id'
           });
+        
+        if (error) {
+          console.error('Error saving language preference:', error);
+        }
       }
       
       // URL will be updated automatically by LanguageRouter component

@@ -31,7 +31,9 @@ i18n
       loadPath: '/locales/{{lng}}/{{ns}}.json',
       requestOptions: {
         cache: 'no-store'
-      }
+      },
+      allowMultiLoading: false,
+      crossDomain: false
     },
 
     // Namespaces
