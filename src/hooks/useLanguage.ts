@@ -40,10 +40,11 @@ export const useLanguage = () => {
     fetchLanguages();
   }, []);
 
-  // Load user language preference
+  // Load user language preference only if no language is set in URL
   useEffect(() => {
     const loadUserLanguagePreference = async () => {
-      if (!session?.user) return;
+      // Don't override if i18n already has a language set (from URL routing)
+      if (!session?.user || i18n.language !== 'en') return;
 
       try {
         const { data, error } = await supabase
@@ -52,18 +53,13 @@ export const useLanguage = () => {
           .eq('user_id', session.user.id)
           .single();
 
-        if (data && data.preferred_language) {
+        // Only change language if it's still on default 'en' and user has a preference
+        if (data && data.preferred_language && i18n.language === 'en') {
           i18n.changeLanguage(data.preferred_language);
         }
       } catch (error) {
-        // User preference not found, use browser detection or default
-        const browserLang = navigator.language.split('-')[0];
-        const supportedLang = availableLanguages.find(
-          lang => lang.language_code.startsWith(browserLang)
-        );
-        if (supportedLang) {
-          i18n.changeLanguage(supportedLang.language_code);
-        }
+        // User preference not found - don't change anything as URL routing handles it
+        console.log('No user language preference found, using URL-based language');
       }
     };
 
