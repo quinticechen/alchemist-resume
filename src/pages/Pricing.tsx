@@ -11,6 +11,8 @@ import { Session } from "@supabase/supabase-js";
 import { Badge } from "@/components/ui/badge";
 import { trackBeginCheckout } from "@/utils/gtm";
 import SeekerDialog from "@/components/SeekerDialog";
+import { useTranslation } from "react-i18next";
+import { SEO } from "@/components/SEO";
 
 interface SubscriptionInfo {
   subscription_status: "apprentice" | "alchemist" | "grandmaster";
@@ -21,6 +23,7 @@ interface SubscriptionInfo {
 }
 
 const Pricing = () => {
+  const { t } = useTranslation(['common', 'pricing']);
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isAnnual, setIsAnnual] = useState(false);
@@ -267,23 +270,29 @@ const Pricing = () => {
   }));
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100">
-      <div className="container mx-auto px-4 py-12">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold mb-4 bg-gradient-primary text-transparent bg-clip-text">
-              Choose Your Plan
-            </h1>
-            <p className="text-xl text-neutral-600 mb-4">
-              Select the perfect plan for your career growth
-            </p>
+    <>
+      <SEO
+        title={t('pricing:meta.title')}
+        description={t('pricing:meta.description')}
+        keywords={t('pricing:meta.keywords')}
+      />
+      <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100">
+        <div className="container mx-auto px-4 py-12">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center mb-12">
+              <h1 className="text-4xl font-bold mb-4 bg-gradient-primary text-transparent bg-clip-text">
+                {t('pricing:title')}
+              </h1>
+              <p className="text-xl text-neutral-600 mb-4">
+                {t('pricing:subtitle')}
+              </p>
             {isAuthenticated && usageInfo && (
               <div className="flex items-center justify-center gap-2 mb-8">
                 <Badge
                   variant="outline"
                   className="text-primary border-primary"
                 >
-                  Current Plan:{" "}
+                  {t('pricing:currentPlan')}:{" "}
                   {usageInfo.subscription_status.charAt(0).toUpperCase() +
                     usageInfo.subscription_status.slice(1)}
                   {usageInfo.payment_period && usageInfo.subscription_status !== 'apprentice' && 
@@ -293,7 +302,7 @@ const Pricing = () => {
                   variant="outline"
                   className="text-primary border-primary"
                 >
-                  Remaining Uses: {getRemainingUses()}
+                  {t('pricing:remainingUses')}: {getRemainingUses()}
                 </Badge>
               </div>
             )}
@@ -317,7 +326,8 @@ const Pricing = () => {
         </div>
       </div>
       {/* <SeekerDialog position="bottom" /> */}
-    </div>
+      </div>
+    </>
   );
 };
 

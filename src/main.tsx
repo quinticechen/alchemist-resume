@@ -37,7 +37,7 @@ i18n
     },
 
     // Namespaces
-    ns: ['common', 'home', 'hero'],
+    ns: ['common', 'home', 'hero', 'workshop', 'job-websites', 'pricing', 'records'],
     defaultNS: 'common',
 
     interpolation: {
