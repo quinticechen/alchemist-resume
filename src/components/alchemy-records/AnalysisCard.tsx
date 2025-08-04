@@ -11,6 +11,7 @@ import { useCoverLetter } from "@/hooks/use-cover-letter";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "react-i18next";
+import { useLanguage } from "@/hooks/useLanguage";
 
 interface Resume {
   file_name: string;
@@ -61,6 +62,7 @@ const AnalysisCard = ({
   const navigate = useNavigate();
   const { toast } = useToast();
   const { t } = useTranslation('records');
+  const { currentLanguage } = useLanguage();
   
   const { jobApplication, updateStatus } = useCoverLetter(id);
   const currentStatus = jobApplication?.status || "resume";
@@ -70,7 +72,7 @@ const AnalysisCard = ({
   const [isSavingJobUrl, setIsSavingJobUrl] = useState(false);
 
   const handleCreateCoverLetter = () => {
-    navigate("/cover-letter", {
+    navigate(`/${currentLanguage}/cover-letter`, {
       state: { analysisId: id }
     });
   };
@@ -287,7 +289,7 @@ const AnalysisCard = ({
           variant={getButtonVariant("golden")}
           size="sm"
           onClick={() =>
-            navigate("/resume-preview", {
+            navigate(`/${currentLanguage}/resume-preview`, {
               state: {
                 analysisId: id,
               },

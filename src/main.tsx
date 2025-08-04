@@ -225,7 +225,11 @@ i18n
           },
           sorting: {
             resumeGenerationLatest: 'Resume Generation Time (Latest to Earliest)',
-            lastEditLatest: 'Last Edit Time (Latest to Earliest)'
+            resumeGenerationEarliest: 'Resume Generation Time (Earliest to Latest)',
+            lastEditLatest: 'Last Edit Time (Latest to Earliest)',
+            lastEditEarliest: 'Last Edit Time (Earliest to Latest)',
+            statusAscending: 'Application Status (Ascending)',
+            statusDescending: 'Application Status (Descending)'
           },
           filters: {
             allStatuses: 'All Statuses',
@@ -233,12 +237,19 @@ i18n
             filtersSelected: 'filters selected'
           },
           status: {
-            resume: 'Resume'
+            resume: 'Resume',
+            coverLetter: 'Cover Letter',
+            applicationSubmitted: 'Application Submitted',
+            followingUp: 'Following Up',
+            interview: 'Interview',
+            rejected: 'Rejected',
+            accepted: 'Accepted'
           },
           actions: {
             viewGoldenResume: 'View Golden Resume',
             createCoverLetter: 'Create Cover Letter',
-            linkJD: 'Link JD'
+            linkJD: 'Link JD',
+            applyJob: 'Apply Job'
           }
         }
       },
@@ -542,7 +553,11 @@ i18n
           },
           sorting: {
             resumeGenerationLatest: '履歷生成時間（最新到最早）',
-            lastEditLatest: '最後編輯時間（最新到最早）'
+            resumeGenerationEarliest: '履歷生成時間（最早到最新）',
+            lastEditLatest: '最後編輯時間（最新到最早）',
+            lastEditEarliest: '最後編輯時間（最早到最新）',
+            statusAscending: '申請狀態（升序）',
+            statusDescending: '申請狀態（降序）'
           },
           filters: {
             allStatuses: '所有狀態',
@@ -550,12 +565,19 @@ i18n
             filtersSelected: '已選擇篩選器'
           },
           status: {
-            resume: '履歷'
+            resume: '履歷',
+            coverLetter: '求職信',
+            applicationSubmitted: '已提交申請',
+            followingUp: '跟進中',
+            interview: '面試',
+            rejected: '已拒絕',
+            accepted: '已接受'
           },
           actions: {
             viewGoldenResume: '查看黃金履歷',
             createCoverLetter: '建立求職信',
-            linkJD: '連結職缺'
+            linkJD: '連結職缺',
+            applyJob: '申請職位'
           }
         }
       },
