@@ -1,4 +1,4 @@
-export const SUPPORTED_LANGUAGES = ['en', 'zh-CN', 'zh-TW', 'ja'] as const;
+export const SUPPORTED_LANGUAGES = ['en', 'zh-CN', 'zh-TW', 'ja', 'es', 'ko'] as const;
 export type SupportedLanguage = typeof SUPPORTED_LANGUAGES[number];
 
 export const getLanguageFromPath = (pathname: string): SupportedLanguage | null => {
@@ -37,7 +37,11 @@ export const getDefaultLanguage = (): SupportedLanguage => {
     'zh-TW': 'zh-TW',
     'zh-Hant': 'zh-TW',
     'ja': 'ja',
-    'ja-JP': 'ja'
+    'ja-JP': 'ja',
+    'es': 'es',
+    'es-ES': 'es',
+    'ko': 'ko',
+    'ko-KR': 'ko'
   };
   
   // Check exact match first

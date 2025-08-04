@@ -45,12 +45,12 @@ i18n
     },
 
     // Language codes mapping - keep exact codes
-    supportedLngs: ['en', 'zh-CN', 'zh-TW', 'ja'],
+    supportedLngs: ['en', 'zh-CN', 'zh-TW', 'ja', 'es', 'ko'],
     load: 'all',
     nonExplicitSupportedLngs: false,
     
     // Preload all supported languages for instant switching
-    preload: ['en', 'zh-CN', 'zh-TW', 'ja'],
+    preload: ['en', 'zh-CN', 'zh-TW', 'ja', 'es', 'ko'],
     
     // Initialize immediately for better performance
     initImmediate: false,
@@ -583,6 +583,244 @@ i18n
           subtitle: '履歴書アルケミストは、採用される履歴書の作成をお手伝いするAI搭載の履歴書ビルダーです。',
           getStarted: '開始する',
           learnMore: '詳細を見る'
+        }
+      },
+      es: {
+        common: {
+          "loading": "Cargando...",
+          "error": "Error",
+          "success": "Éxito",
+          "cancel": "Cancelar",
+          "save": "Guardar",
+          "delete": "Eliminar",
+          "edit": "Editar",
+          "close": "Cerrar",
+          "back": "Atrás",
+          "next": "Siguiente",
+          "previous": "Anterior",
+          "submit": "Enviar",
+          "login": "Iniciar Sesión",
+          "logout": "Cerrar Sesión",
+          "signup": "Registrarse",
+          "email": "Correo Electrónico",
+          "password": "Contraseña",
+          "name": "Nombre",
+          "welcome": "Bienvenido"
+        },
+        home: {
+          "hero": {
+            "title": "¡Dile Adiós a los Currículums Perdidos - ¡Deja que Ooze y Seeker Abran la Puerta a Tu Trabajo Soñado!",
+            "subtitle": "Resume Alchemist es el generador de currículums impulsado por IA que te ayuda a crear un currículum que te consiga trabajo.",
+            "getStarted": "Comenzar",
+            "learnMore": "Saber más"
+          },
+          "cta": {
+            "title": "¡Obtén 5 Usos Gratuitos Ahora!",
+            "subtitle": "Únete a miles de candidatos exitosos que han transformado sus carreras con Resume Alchemist.",
+            "button": "Comenzar Gratis"
+          },
+          "features": {
+            "title": "La Nueva Forma de Construir Currículums",
+            "subtitle": "Entendemos los desafíos de crear un currículum que destaque. Por eso construimos Resume Alchemist, el generador de currículums impulsado por IA que te ayuda a crear un currículum que te consiga trabajo.",
+            "items": {
+              "aiPowered": {
+                "title": "Impulsado por IA",
+                "description": "Nuestra IA analiza tu experiencia y habilidades para crear un currículum que destaque tus fortalezas."
+              },
+              "atsOptimized": {
+                "title": "Optimizado para ATS",
+                "description": "Nos aseguramos de que tu currículum esté optimizado para sistemas de seguimiento de candidatos (ATS) para aumentar tus posibilidades de conseguir una entrevista."
+              },
+              "jobSpecific": {
+                "title": "Específico para el Trabajo",
+                "description": "Adaptamos tu currículum a ofertas de trabajo específicas, destacando las habilidades y experiencia que coinciden con la descripción del trabajo."
+              },
+              "easyToUse": {
+                "title": "Fácil de Usar",
+                "description": "Nuestra interfaz intuitiva hace que sea fácil crear un currículum profesional en minutos."
+              }
+            }
+          },
+          "howItWorks": {
+            "title": "Cómo funciona",
+            "subtitle": "Tres simples pasos para crear un currículum que te consiga trabajo.",
+            "steps": {
+              "upload": {
+                "title": "Sube Tu Currículum",
+                "description": "Sube tu currículum existente en formato PDF."
+              },
+              "enterJob": {
+                "title": "Ingresa la URL de la Oferta de Trabajo",
+                "description": "Pega la URL de la oferta de trabajo a la que estás aplicando."
+              },
+              "getOptimized": {
+                "title": "Obtén Tu Currículum Optimizado",
+                "description": "Nuestra IA analizará tu currículum y la oferta de trabajo para crear un currículum personalizado que destaque tus habilidades y experiencia."
+              }
+            }
+          },
+          "companies": {
+            "title": "Optimiza Tu Currículum para las Mejores Empresas"
+          },
+          "testimonials": {
+            "title": "Lo que dice la gente",
+            "subtitle": "No solo confíes en nuestra palabra. Mira lo que otros dicen sobre Resume Alchemist.",
+            "items": [
+              {
+                "quote": "Resume Alchemist me ayudó a conseguir el trabajo de mis sueños. El generador de currículums impulsado por IA hizo que fuera fácil crear un currículum que destacara mis habilidades y experiencia.",
+                "name": "María García",
+                "title": "Ingeniera de Software"
+              },
+              {
+                "quote": "Estaba luchando por crear un currículum que destacara. Resume Alchemist hizo que fuera fácil crear un currículum profesional que destacara mis habilidades y experiencia.",
+                "name": "Carlos Rodríguez",
+                "title": "Gerente de Marketing"
+              },
+              {
+                "quote": "Era escéptica sobre usar un generador de currículums impulsado por IA, pero Resume Alchemist superó mis expectativas. Hizo que fuera fácil crear un currículum que destacara mis habilidades y experiencia.",
+                "name": "Ana López",
+                "title": "Gerente de Producto"
+              }
+            ]
+          },
+          "footer": {
+            "company": "ResumeAlchemist",
+            "copyright": "2025 ResumeAlchemist",
+            "quickLinks": "Enlaces Rápidos",
+            "contact": "Contáctanos",
+            "followUs": "Síguenos",
+            "links": {
+              "terms": "Términos de Servicio",
+              "privacy": "Política de Privacidad",
+              "faq": "Preguntas Frecuentes",
+              "pricing": "Planes de Precios"
+            }
+          }
+        },
+        hero: {
+          "title": "¡Dile Adiós a los Currículums Perdidos - ¡Deja que Ooze y Seeker Abran la Puerta a Tu Trabajo Soñado!",
+          "subtitle": "Resume Alchemist es el generador de currículums impulsado por IA que te ayuda a crear un currículum que te consiga trabajo.",
+          "getStarted": "Comenzar",
+          "learnMore": "Saber más"
+        }
+      },
+      ko: {
+        common: {
+          "loading": "로딩 중...",
+          "error": "오류",
+          "success": "성공",
+          "cancel": "취소",
+          "save": "저장",
+          "delete": "삭제",
+          "edit": "편집",
+          "close": "닫기",
+          "back": "뒤로",
+          "next": "다음",
+          "previous": "이전",
+          "submit": "제출",
+          "login": "로그인",
+          "logout": "로그아웃",
+          "signup": "회원가입",
+          "email": "이메일",
+          "password": "비밀번호",
+          "name": "이름",
+          "welcome": "환영합니다"
+        },
+        home: {
+          "hero": {
+            "title": "잃어버린 이력서에 작별을 고하세요 - Ooze와 Seeker가 꿈의 직장으로 가는 문을 열어드립니다!",
+            "subtitle": "Resume Alchemist는 채용되는 이력서를 만들어주는 AI 기반 이력서 빌더입니다.",
+            "getStarted": "시작하기",
+            "learnMore": "더 알아보기"
+          },
+          "cta": {
+            "title": "지금 5번의 무료 사용 기회를 받으세요!",
+            "subtitle": "Resume Alchemist로 커리어를 변화시킨 수천 명의 성공적인 지원자들과 함께하세요.",
+            "button": "무료로 시작하기"
+          },
+          "features": {
+            "title": "이력서를 만드는 새로운 방법",
+            "subtitle": "돋보이는 이력서를 만드는 것의 어려움을 이해합니다. 그래서 채용되는 이력서를 만들어주는 AI 기반 이력서 빌더인 Resume Alchemist를 만들었습니다.",
+            "items": {
+              "aiPowered": {
+                "title": "AI 기반",
+                "description": "우리의 AI가 당신의 경험과 기술을 분석하여 강점을 부각시키는 이력서를 작성합니다."
+              },
+              "atsOptimized": {
+                "title": "ATS 최적화",
+                "description": "지원자 추적 시스템(ATS)에 최적화된 이력서로 면접 기회를 늘려드립니다."
+              },
+              "jobSpecific": {
+                "title": "맞춤형 작업",
+                "description": "특정 채용 공고에 맞춰 이력서를 조정하여 직무 설명과 일치하는 기술과 경험을 강조합니다."
+              },
+              "easyToUse": {
+                "title": "사용하기 쉬움",
+                "description": "직관적인 인터페이스로 몇 분 안에 전문적인 이력서를 쉽게 만들 수 있습니다."
+              }
+            }
+          },
+          "howItWorks": {
+            "title": "작동 방식",
+            "subtitle": "채용되는 이력서를 만드는 세 가지 간단한 단계.",
+            "steps": {
+              "upload": {
+                "title": "이력서 업로드",
+                "description": "기존 이력서를 PDF 형식으로 업로드하세요."
+              },
+              "enterJob": {
+                "title": "채용 공고 URL 입력",
+                "description": "지원하려는 채용 공고의 URL을 붙여넣으세요."
+              },
+              "getOptimized": {
+                "title": "최적화된 이력서 받기",
+                "description": "우리의 AI가 이력서와 채용 공고를 분석하여 기술과 경험을 강조하는 맞춤형 이력서를 만들어드립니다."
+              }
+            }
+          },
+          "companies": {
+            "title": "최고의 기업을 위한 이력서 최적화"
+          },
+          "testimonials": {
+            "title": "사람들의 말",
+            "subtitle": "우리 말만 믿지 마세요. Resume Alchemist에 대한 다른 사람들의 의견을 확인해보세요.",
+            "items": [
+              {
+                "quote": "Resume Alchemist가 제가 꿈의 직장을 얻는 데 도움이 되었습니다. AI 기반 이력서 빌더로 제 기술과 경험을 강조하는 이력서를 쉽게 만들 수 있었습니다.",
+                "name": "김지은",
+                "title": "소프트웨어 엔지니어"
+              },
+              {
+                "quote": "돋보이는 이력서를 만드는 데 어려움을 겪고 있었습니다. Resume Alchemist로 제 기술과 경험을 강조하는 전문적인 이력서를 쉽게 만들 수 있었습니다.",
+                "name": "박민수",
+                "title": "마케팅 매니저"
+              },
+              {
+                "quote": "AI 기반 이력서 빌더 사용에 대해 회의적이었지만, Resume Alchemist는 제 기대를 뛰어넘었습니다. 제 기술과 경험을 강조하는 이력서를 쉽게 만들 수 있었습니다.",
+                "name": "이수정",
+                "title": "제품 매니저"
+              }
+            ]
+          },
+          "footer": {
+            "company": "ResumeAlchemist",
+            "copyright": "2025 ResumeAlchemist",
+            "quickLinks": "빠른 링크",
+            "contact": "문의하기",
+            "followUs": "팔로우하기",
+            "links": {
+              "terms": "서비스 약관",
+              "privacy": "개인정보처리방침",
+              "faq": "자주 묻는 질문",
+              "pricing": "요금제"
+            }
+          }
+        },
+        hero: {
+          "title": "잃어버린 이력서에 작별을 고하세요 - Ooze와 Seeker가 꿈의 직장으로 가는 문을 열어드립니다!",
+          "subtitle": "Resume Alchemist는 채용되는 이력서를 만들어주는 AI 기반 이력서 빌더입니다.",
+          "getStarted": "시작하기",
+          "learnMore": "더 알아보기"
         }
       }
     }
