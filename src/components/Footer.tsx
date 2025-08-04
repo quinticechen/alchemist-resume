@@ -65,7 +65,7 @@ const Footer = () => {
                   className="text-sm text-neutral-600 hover:text-primary transition-colors flex items-center"
                 >
                   {/* <LinkIcon className="h-4 w-4 mr-2" /> */}
-                  Terms of Service
+                  {t('footer.termsOfService', { defaultValue: 'Terms of Service' })}
                 </Link>
               </li>
               <li>
@@ -74,7 +74,7 @@ const Footer = () => {
                   className="text-sm text-neutral-600 hover:text-primary transition-colors flex items-center"
                 >
                   {/* <LinkIcon className="h-4 w-4 mr-2" /> */}
-                  Privacy Policy
+                  {t('footer.privacyPolicy', { defaultValue: 'Privacy Policy' })}
                 </Link>
               </li>
               <li>
@@ -83,7 +83,7 @@ const Footer = () => {
                   className="text-sm text-neutral-600 hover:text-primary transition-colors flex items-center"
                 >
                   {/* <LinkIcon className="h-4 w-4 mr-2" /> */}
-                  FAQ
+                  {t('footer.faq', { defaultValue: 'FAQ' })}
                 </Link>
               </li>
               <li>
@@ -92,7 +92,7 @@ const Footer = () => {
                   className="text-sm text-neutral-600 hover:text-primary transition-colors flex items-center"
                 >
                   {/* <LinkIcon className="h-4 w-4 mr-2" /> */}
-                  Pricing Plans
+                  {t('footer.pricingPlans', { defaultValue: 'Pricing Plans' })}
                 </Link>
               </li>
             </ul>

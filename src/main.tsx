@@ -174,13 +174,19 @@ i18n
             quickLinks: 'Quick Links',
             contact: 'Contact Us',
             followUs: 'Follow Us',
-            links: {
-              terms: 'Terms of Service',
-              privacy: 'Privacy Policy',
-              faq: 'FAQ',
-              pricing: 'Pricing Plans'
-            }
+            termsOfService: 'Terms of Service',
+            privacyPolicy: 'Privacy Policy',
+            faq: 'FAQ',
+            pricingPlans: 'Pricing Plans'
           }
+        },
+        workshop: {
+          meta: {
+            title: 'Alchemist Workshop - Resume Optimization',
+            description: 'Transform your resume with AI-powered optimization. Upload your resume and job posting to get personalized recommendations.',
+            keywords: 'resume optimization, AI resume builder, job application, career development'
+          },
+          title: 'Alchemist Workshop'
         },
         hero: {
           title: 'Say Goodbye to Lost Resumes - Let Ooze and Seeker Open the Door to Your Dream Job!',
@@ -438,13 +444,19 @@ i18n
             quickLinks: '快速連結',
             contact: '聯繫我們',
             followUs: '關注我們',
-            links: {
-              terms: '服務條款',
-              privacy: '隱私政策',
-              faq: '常見問題',
-              pricing: '價格方案'
-            }
+            termsOfService: '服務條款',
+            privacyPolicy: '隱私政策',
+            faq: '常見問題',
+            pricingPlans: '價格方案'
           }
+        },
+        workshop: {
+          meta: {
+            title: '煉金師工作坊 - 履歷優化',
+            description: '透過 AI 驅動的優化轉化您的履歷。上傳您的履歷和職缺公告以獲得個人化建議。',
+            keywords: '履歷優化, AI履歷製作器, 求職申請, 職涯發展'
+          },
+          title: '煉金師工作坊'
         },
         hero: {
           title: '告別迷失的履歷 - 讓軟泥怪和探索者為您打開理想工作的大門！',

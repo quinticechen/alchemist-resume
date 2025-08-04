@@ -95,13 +95,11 @@
   "footer": {
     "company": "ResumeAlchemist",
     "quickLinks": "Quick Links",
+    "termsOfService": "Terms of Service",
+    "privacyPolicy": "Privacy Policy",
+    "faq": "FAQ",
+    "pricingPlans": "Pricing Plans",
     "contact": "Contact Us",
-    "followUs": "Follow Us",
-    "links": {
-      "terms": "Terms of Service",
-      "privacy": "Privacy Policy",
-      "faq": "FAQ",
-      "pricing": "Pricing Plans"
-    }
+    "followUs": "Follow Us"
   }
 }
