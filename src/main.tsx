@@ -186,7 +186,27 @@ i18n
             description: 'Transform your resume with AI-powered optimization. Upload your resume and job posting to get personalized recommendations.',
             keywords: 'resume optimization, AI resume builder, job application, career development'
           },
-          title: 'Alchemist Workshop'
+          title: 'Alchemist Workshop',
+          resumeUpload: {
+            title: 'Resume Upload',
+            uploadNew: 'Upload New Resume',
+            selectPrevious: 'Select Previous Resume',
+            dragDrop: 'Drag and drop your PDF resume here, or click to select a file',
+            maxFileSize: 'Maximum file size: 5MB',
+            loading: 'Loading',
+            previewResume: 'Preview Resume',
+            useSelected: 'Use Selected Resume',
+            remove: 'Remove',
+            previousSelected: 'Previous resume selected'
+          },
+          jobInfo: {
+            title: 'Job Information',
+            jobUrl: 'Job Posting URL',
+            jobDescription: 'Job Description Text',
+            urlPlaceholder: 'Paste job posting URL here. Remove all URL parameters from ?',
+            descriptionPlaceholder: 'Paste the job description text here...',
+            castAlchemy: 'Cast Alchemy'
+          }
         },
         hero: {
           title: 'Say Goodbye to Lost Resumes - Let Ooze and Seeker Open the Door to Your Dream Job!',
@@ -456,7 +476,27 @@ i18n
             description: '透過 AI 驅動的優化轉化您的履歷。上傳您的履歷和職缺公告以獲得個人化建議。',
             keywords: '履歷優化, AI履歷製作器, 求職申請, 職涯發展'
           },
-          title: '煉金師工作坊'
+          title: '煉金師工作坊',
+          resumeUpload: {
+            title: '履歷上傳',
+            uploadNew: '上傳新履歷',
+            selectPrevious: '選擇先前履歷',
+            dragDrop: '將您的 PDF 履歷拖放至此，或點擊選擇檔案',
+            maxFileSize: '最大檔案大小：5MB',
+            loading: '載入中',
+            previewResume: '預覽履歷',
+            useSelected: '使用選擇的履歷',
+            remove: '移除',
+            previousSelected: '已選擇先前履歷'
+          },
+          jobInfo: {
+            title: '職缺資訊',
+            jobUrl: '職缺公告 URL',
+            jobDescription: '職缺描述文字',
+            urlPlaceholder: '在此貼上職缺公告 URL。請移除 ? 後的所有 URL 參數',
+            descriptionPlaceholder: '在此貼上職缺描述文字...',
+            castAlchemy: '施展煉金術'
+          }
         },
         hero: {
           title: '告別迷失的履歷 - 讓軟泥怪和探索者為您打開理想工作的大門！',

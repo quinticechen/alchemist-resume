@@ -1,8 +1,28 @@
 {
   "meta": {
-    "title": "Alchemist Workshop - Resume Alchemist",
-    "description": "Upload your resume and job description to get AI-powered optimization. Transform your resume to match job requirements perfectly.",
-    "keywords": "resume optimization, AI resume builder, job matching, ATS optimization, resume analyzer"
+    "title": "Alchemist Workshop - Resume Optimization",
+    "description": "Transform your resume with AI-powered optimization. Upload your resume and job posting to get personalized recommendations.",
+    "keywords": "resume optimization, AI resume builder, job application, career development"
   },
-  "title": "Alchemist Workshop"
+  "title": "Alchemist Workshop",
+  "resumeUpload": {
+    "title": "Resume Upload",
+    "uploadNew": "Upload New Resume",
+    "selectPrevious": "Select Previous Resume",
+    "dragDrop": "Drag and drop your PDF resume here, or click to select a file",
+    "maxFileSize": "Maximum file size: 5MB",
+    "loading": "Loading",
+    "previewResume": "Preview Resume",
+    "useSelected": "Use Selected Resume",
+    "remove": "Remove",
+    "previousSelected": "Previous resume selected"
+  },
+  "jobInfo": {
+    "title": "Job Information",
+    "jobUrl": "Job Posting URL",
+    "jobDescription": "Job Description Text",
+    "urlPlaceholder": "Paste job posting URL here. Remove all URL parameters from ?",
+    "descriptionPlaceholder": "Paste the job description text here...",
+    "castAlchemy": "Cast Alchemy"
+  }
 }
