@@ -2,12 +2,14 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { FileText } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface UsageStatsProps {
   usageCount: number;
 }
 
 const UsageStats = ({ usageCount }: UsageStatsProps) => {
+  const { t } = useTranslation('records');
   const [subscriptionStatus, setSubscriptionStatus] = useState<string>('apprentice');
   const [remainingUses, setRemainingUses] = useState<string | number>(0);
   const [totalResumes, setTotalResumes] = useState<number>(0);
@@ -55,19 +57,19 @@ const UsageStats = ({ usageCount }: UsageStatsProps) => {
 
   return (
     <div className="bg-white rounded-xl p-6 shadow-apple mb-8">
-      <h2 className="text-xl font-semibold mb-4">Usage Statistics</h2>
+      <h2 className="text-xl font-semibold mb-4">{t('usageStats.title')}</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="flex items-center gap-2">
           <FileText className="h-5 w-5 text-primary" />
-          <span className="text-neutral-600">Total Golden Resumes Generated: <strong>{totalResumes}</strong></span>
+          <span className="text-neutral-600">{t('usageStats.totalGoldenResumes')}: <strong>{totalResumes}</strong></span>
         </div>
         <div className="text-neutral-600">
           {subscriptionStatus === 'apprentice' ? (
-            `Remaining Free Uses: ${remainingUses}`
+            `${t('usageStats.remainingFreeUses')}: ${remainingUses}`
           ) : subscriptionStatus === 'alchemist' ? (
-            `Remaining Monthly Uses: ${remainingUses}`
+            `${t('usageStats.remainingMonthlyUses')}: ${remainingUses}`
           ) : (
-            'Unlimited Uses Available'
+            t('usageStats.unlimitedUses')
           )}
         </div>
       </div>

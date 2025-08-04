@@ -63,12 +63,12 @@ const AlchemyRecords = () => {
 
   const getFilterDescription = () => {
     if (statusFilter.includes("all")) {
-      return "No resume analyses found.";
+      return t('records:messages.noAnalysesFound');
     }
     if (statusFilter.length === 1) {
-      return `No analyses found with status "${statusFilter[0]}".`;
+      return `${t('records:messages.noAnalysesWithStatus')} "${statusFilter[0]}".`;
     }
-    return `No analyses found with the selected status filters.`;
+    return t('records:messages.noAnalysesWithFilters');
   };
 
   return (

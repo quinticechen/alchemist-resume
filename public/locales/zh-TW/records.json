@@ -4,5 +4,52 @@
     "description": "查看和管理您的履歷分析歷史。通過AI驅動的洞察追蹤您的優化進度、反饋和改進。",
     "keywords": "履歷分析歷史, AI優化追蹤, 職業進展, 履歷改進, 求職申請記錄"
   },
-  "title": "煉金記錄"
+  "title": "煉金記錄",
+  "usageStats": {
+    "title": "使用統計",
+    "totalGoldenResumes": "生成的黃金履歷總數",
+    "remainingFreeUses": "剩餘免費使用次數",
+    "remainingMonthlyUses": "剩餘月度使用次數",
+    "unlimitedUses": "無限制使用"
+  },
+  "sorting": {
+    "resumeGenerationLatest": "履歷生成時間（最新到最早）",
+    "resumeGenerationEarliest": "履歷生成時間（最早到最新）",
+    "lastEditLatest": "最後編輯時間（最新到最早）",
+    "lastEditEarliest": "最後編輯時間（最早到最新）",
+    "statusAscending": "申請狀態（升序）",
+    "statusDescending": "申請狀態（降序）"
+  },
+  "filters": {
+    "allStatuses": "所有狀態",
+    "activeFilters": "啟用的篩選器",
+    "filtersSelected": "已選擇篩選器"
+  },
+  "status": {
+    "resume": "履歷",
+    "coverLetter": "求職信",
+    "applicationSubmitted": "已提交申請",
+    "followingUp": "跟進中",
+    "interview": "面試",
+    "rejected": "已拒絕",
+    "accepted": "已接受"
+  },
+  "actions": {
+    "viewGoldenResume": "查看黃金履歷",
+    "createCoverLetter": "建立求職信",
+    "linkJD": "連結職缺",
+    "applyJob": "申請職位"
+  },
+  "jobUrl": {
+    "cannotChange": "職缺URL在儲存後無法更改",
+    "enterUrl": "輸入職缺公告URL",
+    "save": "儲存",
+    "cancel": "取消",
+    "saving": "儲存中..."
+  },
+  "messages": {
+    "noAnalysesFound": "未找到履歷分析記錄",
+    "noAnalysesWithStatus": "未找到指定狀態的分析記錄",
+    "noAnalysesWithFilters": "未找到符合所選篩選條件的分析記錄"
+  }
 }

@@ -215,6 +215,31 @@ i18n
           subtitle: 'Resume Alchemist is the AI-powered resume builder that helps you craft a resume that gets you hired.',
           getStarted: 'Get started',
           learnMore: 'Learn more'
+        },
+        records: {
+          title: 'Alchemy Records',
+          usageStats: {
+            title: 'Usage Statistics',
+            totalGoldenResumes: 'Total Golden Resumes Generated',
+            unlimitedUses: 'Unlimited Uses Available'
+          },
+          sorting: {
+            resumeGenerationLatest: 'Resume Generation Time (Latest to Earliest)',
+            lastEditLatest: 'Last Edit Time (Latest to Earliest)'
+          },
+          filters: {
+            allStatuses: 'All Statuses',
+            activeFilters: 'Active filters',
+            filtersSelected: 'filters selected'
+          },
+          status: {
+            resume: 'Resume'
+          },
+          actions: {
+            viewGoldenResume: 'View Golden Resume',
+            createCoverLetter: 'Create Cover Letter',
+            linkJD: 'Link JD'
+          }
         }
       },
       'zh-CN': {
@@ -507,6 +532,31 @@ i18n
           subtitle: '履歷煉金術師是AI驅動的履歷構建器，幫助您製作能讓您被錄用的履歷。',
           getStarted: '開始使用',
           learnMore: '了解更多'
+        },
+        records: {
+          title: '煉金記錄',
+          usageStats: {
+            title: '使用統計',
+            totalGoldenResumes: '生成的黃金履歷總數',
+            unlimitedUses: '無限制使用'
+          },
+          sorting: {
+            resumeGenerationLatest: '履歷生成時間（最新到最早）',
+            lastEditLatest: '最後編輯時間（最新到最早）'
+          },
+          filters: {
+            allStatuses: '所有狀態',
+            activeFilters: '啟用的篩選器',
+            filtersSelected: '已選擇篩選器'
+          },
+          status: {
+            resume: '履歷'
+          },
+          actions: {
+            viewGoldenResume: '查看黃金履歷',
+            createCoverLetter: '建立求職信',
+            linkJD: '連結職缺'
+          }
         }
       },
       ja: {

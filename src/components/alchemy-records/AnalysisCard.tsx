@@ -10,6 +10,7 @@ import StatusSelector from "../cover-letter/StatusSelector";
 import { useCoverLetter } from "@/hooks/use-cover-letter";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useTranslation } from "react-i18next";
 
 interface Resume {
   file_name: string;
@@ -59,6 +60,7 @@ const AnalysisCard = ({
   const companyName = job?.company_name || "Unknown Company";
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t } = useTranslation('records');
   
   const { jobApplication, updateStatus } = useCoverLetter(id);
   const currentStatus = jobApplication?.status || "resume";
@@ -171,21 +173,21 @@ const AnalysisCard = ({
   const getStatusLabel = (status: string) => {
     switch (status) {
       case "resume":
-        return "Resume";
+        return t('status.resume');
       case "cover_letter":
-        return "Cover Letter";
+        return t('status.coverLetter');
       case "application_submitted":
-        return "Application Submitted";
+        return t('status.applicationSubmitted');
       case "following_up":
-        return "Following Up";
+        return t('status.followingUp');
       case "interview":
-        return "Interview";
+        return t('status.interview');
       case "rejected":
-        return "Rejected";
+        return t('status.rejected');
       case "accepted":
-        return "Accepted";
+        return t('status.accepted');
       default:
-        return "Resume";
+        return t('status.resume');
     }
   };
 
@@ -250,11 +252,11 @@ const AnalysisCard = ({
         <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
           <div className="mb-2">
             <p className="text-sm text-yellow-800 font-medium mb-2">
-              The job URL cannot be changed after saving.
+              {t('jobUrl.cannotChange')}
             </p>
             <Input
               type="url"
-              placeholder="Enter job posting URL"
+              placeholder={t('jobUrl.enterUrl')}
               value={jobUrl}
               onChange={(e) => setJobUrl(e.target.value)}
               className="mb-3"
@@ -266,7 +268,7 @@ const AnalysisCard = ({
               onClick={handleSaveJobUrl}
               disabled={isSavingJobUrl || !jobUrl.trim()}
             >
-              {isSavingJobUrl ? "Saving..." : "Save"}
+              {isSavingJobUrl ? t('jobUrl.saving') : t('jobUrl.save')}
             </Button>
             <Button
               size="sm"
@@ -274,7 +276,7 @@ const AnalysisCard = ({
               onClick={handleCancelJobUrl}
               disabled={isSavingJobUrl}
             >
-              Cancel
+              {t('jobUrl.cancel')}
             </Button>
           </div>
         </div>
@@ -294,7 +296,7 @@ const AnalysisCard = ({
           className={getButtonClassName("golden")}
         >
           <Crown className="h-4 w-4 mr-2" />
-          View Golden Resume
+          {t('actions.viewGoldenResume')}
         </Button>
 
         <Button
@@ -304,7 +306,7 @@ const AnalysisCard = ({
           className={getButtonClassName("cover")}
         >
           <FileEdit className="h-4 w-4 mr-2" />
-          Create Cover Letter
+          {t('actions.createCoverLetter')}
         </Button>
 
         {job?.job_url ? (
@@ -315,7 +317,7 @@ const AnalysisCard = ({
             className="flex items-center gap-2"
           >
             <LinkIcon className="h-4 w-4" />
-            Apply Job
+            {t('actions.applyJob')}
           </Button>
         ) : (
           !isAddingJobUrl && (
@@ -326,7 +328,7 @@ const AnalysisCard = ({
               className="flex items-center gap-2"
             >
               <ExternalLink className="h-4 w-4" />
-              Link JD
+              {t('actions.linkJD')}
             </Button>
           )
         )}
