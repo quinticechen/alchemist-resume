@@ -164,7 +164,7 @@ const JobDescriptionInput = ({
                   Processing
                 </>
               ) : (
-                "{t('jobInfo.castAlchemy')}"
+                t('jobInfo.castAlchemy')
               )}
             </Button>
           </form>

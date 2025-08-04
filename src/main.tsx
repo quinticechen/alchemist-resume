@@ -197,7 +197,9 @@ i18n
             previewResume: 'Preview Resume',
             useSelected: 'Use Selected Resume',
             remove: 'Remove',
-            previousSelected: 'Previous resume selected'
+            previousSelected: 'Previous resume selected',
+            selectResume: 'Select a resume',
+            uploading: 'Uploading...'
           },
           jobInfo: {
             title: 'Job Information',
@@ -487,7 +489,9 @@ i18n
             previewResume: '預覽履歷',
             useSelected: '使用選擇的履歷',
             remove: '移除',
-            previousSelected: '已選擇先前履歷'
+            previousSelected: '已選擇先前履歷',
+            selectResume: '選擇履歷',
+            uploading: '上傳中...'
           },
           jobInfo: {
             title: '職缺資訊',

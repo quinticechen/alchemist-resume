@@ -15,7 +15,9 @@
     "previewResume": "Preview Resume",
     "useSelected": "Use Selected Resume",
     "remove": "Remove",
-    "previousSelected": "Previous resume selected"
+    "previousSelected": "Previous resume selected",
+    "selectResume": "Select a resume",
+    "uploading": "Uploading..."
   },
   "jobInfo": {
     "title": "Job Information",
