@@ -1,0 +1,52 @@
+{
+  "meta": {
+    "title": "履歷精煉 - 履歷煉金師",
+    "description": "使用AI建議精煉和優化您的履歷。",
+    "keywords": "履歷精煉, AI建議, 履歷優化, 履歷編輯器"
+  },
+  "navigation": {
+    "back": "返回"
+  },
+  "jobDescription": {
+    "title": "職位描述",
+    "fields": {
+      "title": "職稱",
+      "language": "語言",
+      "keywords": "關鍵字",
+      "responsibilities": "職責",
+      "requiredQualifications": "必要資格",
+      "preferredQualifications": "優先資格"
+    }
+  },
+  "sections": {
+    "personalInfo": "個人資訊",
+    "professionalSummary": "專業摘要",
+    "professionalExperience": "專業經歷",
+    "education": "教育背景",
+    "skills": "技能",
+    "projects": "專案",
+    "volunteerExperience": "志工經驗",
+    "certifications": "證書"
+  },
+  "aiChat": {
+    "greeting": "嗨！您的履歷現在已經很棒了，但我們要不要探索一下還能增強什麼呢？我有一些神奇的技巧可以分享！",
+    "suggestions": {
+      "highlights": "這份履歷中最吸引人的亮點是什麼？",
+      "keywords": "我們可以加強哪些關鍵字？",
+      "experience": "如何讓您的經歷更有說服力？",
+      "interview": "面試官可能會問什麼問題？"
+    },
+    "placeholder": "詢問履歷優化建議..."
+  },
+  "editor": {
+    "jsonEditor": "JSON編輯器",
+    "save": "儲存",
+    "finish": "完成"
+  },
+  "unsavedChanges": {
+    "title": "未儲存的變更",
+    "description": "您有未儲存的變更。確定要在未儲存的情況下離開嗎？",
+    "cancel": "取消",
+    "leave": "不儲存離開"
+  }
+}

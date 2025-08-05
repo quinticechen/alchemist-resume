@@ -7,5 +7,19 @@
   "title": "Choose Your Plan",
   "subtitle": "Select the perfect plan for your career growth",
   "currentPlan": "Current Plan",
-  "remainingUses": "Remaining Uses"
+  "remainingUses": "Remaining Uses",
+  "toggle": {
+    "monthly": "Monthly",
+    "annual": "Annual",
+    "saveDiscount": "Save 25%",
+    "switchToAnnual": "Switch to annual plan to save 25%"
+  },
+  "plans": {
+    "apprentice": "Apprentice",
+    "alchemist": "Alchemist",
+    "grandmaster": "Grandmaster",
+    "mostPopular": "Most Popular",
+    "getCurrentPlan": "Current Plan",
+    "getButton": "Get {{plan}}"
+  }
 }

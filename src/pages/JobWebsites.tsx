@@ -187,7 +187,7 @@ const JobWebsites = () => {
       <div className="container mx-auto p-8">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-center text-4xl font-bold mb-4 bg-gradient-primary text-transparent bg-clip-text">
-              {t('job-websites:title')}
+              {t('job-websites:title', 'Supported Job Websites')}
           </h1>
           {shouldShowSyncControls && (
             <Button

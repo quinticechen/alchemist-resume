@@ -251,6 +251,122 @@ i18n
             linkJD: 'Link JD',
             applyJob: 'Apply Job'
           }
+        },
+        'job-websites': {
+          title: 'Supported Job Websites',
+          meta: {
+            title: 'Supported Job Websites - Resume Alchemist',
+            description: 'Browse our list of supported job websites for seamless resume optimization and application.',
+            keywords: 'job websites, supported platforms, job search, resume optimization'
+          }
+        },
+        'resume-preview': {
+          meta: {
+            title: 'Resume Preview - Resume Alchemist',
+            description: 'Preview your optimized golden resume with AI-powered enhancements.',
+            keywords: 'resume preview, golden resume, AI optimization, resume viewer'
+          },
+          buttons: {
+            editResume: 'Edit Resume',
+            changeStyle: 'Change Style',
+            exportPDF: 'Export PDF',
+            originalResume: 'Original Resume',
+            editWithGoogleDoc: 'Edit with Google Doc'
+          },
+          sections: {
+            personalInfo: 'Personal Information',
+            professionalSummary: 'Professional Summary',
+            professionalExperience: 'Professional Experience',
+            education: 'Education',
+            skills: 'Skills',
+            projects: 'Projects',
+            volunteerExperience: 'Volunteer Experience',
+            certifications: 'Certifications'
+          },
+          styles: {
+            classic: 'Classic',
+            modern: 'Modern',
+            minimal: 'Minimal',
+            professional: 'Professional',
+            creative: 'Creative'
+          }
+        },
+        'resume-refine': {
+          meta: {
+            title: 'Resume Refine - Resume Alchemist',
+            description: 'Refine and optimize your resume with AI-powered suggestions.',
+            keywords: 'resume refine, AI suggestions, resume optimization, resume editor'
+          },
+          navigation: {
+            back: 'Back'
+          },
+          jobDescription: {
+            title: 'Job Description',
+            fields: {
+              title: 'Title',
+              language: 'Language',
+              keywords: 'Keywords',
+              responsibilities: 'Responsibilities',
+              requiredQualifications: 'Required Qualifications',
+              preferredQualifications: 'Preferred Qualifications'
+            }
+          },
+          sections: {
+            personalInfo: 'Personal Information',
+            professionalSummary: 'Professional Summary',
+            professionalExperience: 'Professional Experience',
+            education: 'Education',
+            skills: 'Skills',
+            projects: 'Projects',
+            volunteerExperience: 'Volunteer Experience',
+            certifications: 'Certifications'
+          },
+          aiChat: {
+            greeting: 'Hey there! Your resume is glowing now, but shall we explore what else we can enhance? I\'ve got some magical tricks up my tentacles!',
+            suggestions: {
+              highlights: 'What are the most attractive highlights in this resume?',
+              keywords: 'Which keywords could we strengthen?',
+              experience: 'How can we make your experience more compelling?',
+              interview: 'What questions might interviewers ask?'
+            },
+            placeholder: 'Ask for resume optimization suggestions...'
+          },
+          editor: {
+            jsonEditor: 'JSON Editor',
+            save: 'Save',
+            finish: 'Finish'
+          },
+          unsavedChanges: {
+            title: 'Unsaved Changes',
+            description: 'You have unsaved changes. Are you sure you want to leave without saving?',
+            cancel: 'Cancel',
+            leave: 'Leave without saving'
+          }
+        },
+        pricing: {
+          meta: {
+            title: 'Pricing Plans - Resume Alchemist',
+            description: 'Choose the perfect plan for your career growth. Affordable AI-powered resume optimization with flexible pricing options.',
+            keywords: 'pricing plans, resume optimization pricing, AI resume builder cost, subscription plans, career growth'
+          },
+          title: 'Choose Your Plan',
+          subtitle: 'Select the perfect plan for your career growth',
+          currentPlan: 'Current Plan',
+          remainingUses: 'Remaining Uses',
+          toggle: {
+            monthly: 'Monthly',
+            annual: 'Annual',
+            saveDiscount: 'Save 25%',
+            switchToAnnual: 'Switch to annual plan to save 25%'
+          },
+          plans: {
+            apprentice: 'Apprentice',
+            alchemist: 'Alchemist',
+            grandmaster: 'Grandmaster',
+            mostPopular: 'Most Popular',
+            getCurrentPlan: 'Current Plan',
+            getButton: 'Get {{plan}}'
+          }
         }
       },
       'zh-CN': {
@@ -578,6 +694,122 @@ i18n
             createCoverLetter: '建立求職信',
             linkJD: '連結職缺',
             applyJob: '申請職位'
+          }
+        },
+        'job-websites': {
+          title: '支援的求職網站',
+          meta: {
+            title: '支援的求職網站 - 履歷煉金師',
+            description: '瀏覽我們支援的求職網站清單，實現無縫履歷優化和申請。',
+            keywords: '求職網站, 支援平台, 求職, 履歷優化'
+          }
+        },
+        'resume-preview': {
+          meta: {
+            title: '履歷預覽 - 履歷煉金師',
+            description: '預覽您經過AI優化的黃金履歷。',
+            keywords: '履歷預覽, 黃金履歷, AI優化, 履歷檢視器'
+          },
+          buttons: {
+            editResume: '編輯履歷',
+            changeStyle: '更改樣式',
+            exportPDF: '匯出PDF',
+            originalResume: '原始履歷',
+            editWithGoogleDoc: '使用Google文件編輯'
+          },
+          sections: {
+            personalInfo: '個人資訊',
+            professionalSummary: '專業摘要',
+            professionalExperience: '專業經歷',
+            education: '教育背景',
+            skills: '技能',
+            projects: '專案',
+            volunteerExperience: '志工經驗',
+            certifications: '證書'
+          },
+          styles: {
+            classic: '經典',
+            modern: '現代',
+            minimal: '簡約',
+            professional: '專業',
+            creative: '創意'
+          }
+        },
+        'resume-refine': {
+          meta: {
+            title: '履歷精煉 - 履歷煉金師',
+            description: '使用AI建議精煉和優化您的履歷。',
+            keywords: '履歷精煉, AI建議, 履歷優化, 履歷編輯器'
+          },
+          navigation: {
+            back: '返回'
+          },
+          jobDescription: {
+            title: '職位描述',
+            fields: {
+              title: '職稱',
+              language: '語言',
+              keywords: '關鍵字',
+              responsibilities: '職責',
+              requiredQualifications: '必要資格',
+              preferredQualifications: '優先資格'
+            }
+          },
+          sections: {
+            personalInfo: '個人資訊',
+            professionalSummary: '專業摘要',
+            professionalExperience: '專業經歷',
+            education: '教育背景',
+            skills: '技能',
+            projects: '專案',
+            volunteerExperience: '志工經驗',
+            certifications: '證書'
+          },
+          aiChat: {
+            greeting: '嗨！您的履歷現在已經很棒了，但我們要不要探索一下還能增強什麼呢？我有一些神奇的技巧可以分享！',
+            suggestions: {
+              highlights: '這份履歷中最吸引人的亮點是什麼？',
+              keywords: '我們可以加強哪些關鍵字？',
+              experience: '如何讓您的經歷更有說服力？',
+              interview: '面試官可能會問什麼問題？'
+            },
+            placeholder: '詢問履歷優化建議...'
+          },
+          editor: {
+            jsonEditor: 'JSON編輯器',
+            save: '儲存',
+            finish: '完成'
+          },
+          unsavedChanges: {
+            title: '未儲存的變更',
+            description: '您有未儲存的變更。確定要在未儲存的情況下離開嗎？',
+            cancel: '取消',
+            leave: '不儲存離開'
+          }
+        },
+        pricing: {
+          meta: {
+            title: '價格方案 - 履歷煉金師',
+            description: '為您的職業成長選擇完美的方案。價格實惠的AI驅動履歷優化，靈活的價格選擇。',
+            keywords: '價格方案, 履歷優化價格, AI履歷生成器費用, 訂閱方案, 職業成長'
+          },
+          title: '選擇您的方案',
+          subtitle: '為您的職業成長選擇完美的方案',
+          currentPlan: '目前方案',
+          remainingUses: '剩餘使用次數',
+          toggle: {
+            monthly: '月付',
+            annual: '年付',
+            saveDiscount: '節省 25%',
+            switchToAnnual: '切換至年付方案可節省 25%'
+          },
+          plans: {
+            apprentice: '學徒',
+            alchemist: '煉金師',
+            grandmaster: '大師',
+            mostPopular: '最受歡迎',
+            getCurrentPlan: '目前方案',
+            getButton: '選擇 {{plan}}'
           }
         }
       },

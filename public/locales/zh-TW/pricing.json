@@ -7,5 +7,19 @@
   "title": "選擇您的方案",
   "subtitle": "為您的職業成長選擇完美的方案",
   "currentPlan": "目前方案",
-  "remainingUses": "剩餘使用次數"
+  "remainingUses": "剩餘使用次數",
+  "toggle": {
+    "monthly": "月付",
+    "annual": "年付",
+    "saveDiscount": "節省 25%",
+    "switchToAnnual": "切換至年付方案可節省 25%"
+  },
+  "plans": {
+    "apprentice": "學徒",
+    "alchemist": "煉金師",
+    "grandmaster": "大師",
+    "mostPopular": "最受歡迎",
+    "getCurrentPlan": "目前方案",
+    "getButton": "選擇 {{plan}}"
+  }
 }

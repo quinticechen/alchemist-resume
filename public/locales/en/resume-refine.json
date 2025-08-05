@@ -1,0 +1,52 @@
+{
+  "meta": {
+    "title": "Resume Refine - Resume Alchemist",
+    "description": "Refine and optimize your resume with AI-powered suggestions.",
+    "keywords": "resume refine, AI suggestions, resume optimization, resume editor"
+  },
+  "navigation": {
+    "back": "Back"
+  },
+  "jobDescription": {
+    "title": "Job Description",
+    "fields": {
+      "title": "Title",
+      "language": "Language", 
+      "keywords": "Keywords",
+      "responsibilities": "Responsibilities",
+      "requiredQualifications": "Required Qualifications",
+      "preferredQualifications": "Preferred Qualifications"
+    }
+  },
+  "sections": {
+    "personalInfo": "Personal Information",
+    "professionalSummary": "Professional Summary",
+    "professionalExperience": "Professional Experience", 
+    "education": "Education",
+    "skills": "Skills",
+    "projects": "Projects",
+    "volunteerExperience": "Volunteer Experience",
+    "certifications": "Certifications"
+  },
+  "aiChat": {
+    "greeting": "Hey there! Your resume is glowing now, but shall we explore what else we can enhance? I've got some magical tricks up my tentacles!",
+    "suggestions": {
+      "highlights": "What are the most attractive highlights in this resume?",
+      "keywords": "Which keywords could we strengthen?",
+      "experience": "How can we make your experience more compelling?",
+      "interview": "What questions might interviewers ask?"
+    },
+    "placeholder": "Ask for resume optimization suggestions..."
+  },
+  "editor": {
+    "jsonEditor": "JSON Editor",
+    "save": "Save",
+    "finish": "Finish"
+  },
+  "unsavedChanges": {
+    "title": "Unsaved Changes",
+    "description": "You have unsaved changes. Are you sure you want to leave without saving?",
+    "cancel": "Cancel",
+    "leave": "Leave without saving"
+  }
+}
