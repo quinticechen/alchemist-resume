@@ -133,7 +133,7 @@ export type Database = {
           swot_threats: string | null
           swot_weaknesses: string | null
           updated_at: string
-          user_id: string
+          user_id: string | null
           work_environment: string | null
         }
         Insert: {
@@ -166,7 +166,7 @@ export type Database = {
           swot_threats?: string | null
           swot_weaknesses?: string | null
           updated_at?: string
-          user_id: string
+          user_id?: string | null
           work_environment?: string | null
         }
         Update: {
@@ -199,7 +199,7 @@ export type Database = {
           swot_threats?: string | null
           swot_weaknesses?: string | null
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
           work_environment?: string | null
         }
         Relationships: [
