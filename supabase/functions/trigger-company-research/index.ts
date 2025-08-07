@@ -48,7 +48,7 @@ serve(async (req) => {
     const isProduction = Deno.env.get('ENVIRONMENT') === 'production'
     const webhookUrl = isProduction 
       ? 'https://n8n.qwizai.com/webhook/bb306a40-e545-48f7-9c17-f6c01d6b222b'
-      : 'https://n8n.qwizai.com/webhook/bb306a40-e545-48f7-9c17-f6c01d6b222b'
+      : 'https://n8n.qwizai.com/webhook-test/bb306a40-e545-48f7-9c17-f6c01d6b222b'
 
     // Send job data to n8n webhook
     const response = await fetch(webhookUrl, {
