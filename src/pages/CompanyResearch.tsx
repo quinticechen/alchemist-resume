@@ -89,7 +89,6 @@ const CompanyResearch = () => {
         .from('companies')
         .select('*')
         .eq('job_id', jobId)
-        .eq('user_id', session?.user?.id)
         .maybeSingle();
 
       if (fetchError) {
@@ -102,7 +101,6 @@ const CompanyResearch = () => {
           .from('companies')
           .insert({
             job_id: jobId,
-            user_id: session?.user?.id,
             status: 'pending'
           });
 
@@ -164,7 +162,6 @@ const CompanyResearch = () => {
           .from('companies')
           .select('*')
           .eq('job_id', jobId)
-          .eq('user_id', session?.user?.id)
           .maybeSingle();
 
         if (fetchError) {
