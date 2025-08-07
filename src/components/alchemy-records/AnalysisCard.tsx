@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "react-i18next";
 import { useLanguage } from "@/hooks/useLanguage";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Resume {
   file_name: string;
@@ -63,6 +64,7 @@ const AnalysisCard = ({
   const { toast } = useToast();
   const { t } = useTranslation('records');
   const { currentLanguage } = useLanguage();
+  const { session } = useAuth();
   
   const { jobApplication, updateStatus } = useCoverLetter(id);
   const currentStatus = jobApplication?.status || "resume";
@@ -176,7 +178,25 @@ const AnalysisCard = ({
         return;
       }
 
-      // Call our edge function to trigger company research
+      // First check if company data already exists
+      const { data: existingCompany, error: companyError } = await supabase
+        .from('companies')
+        .select('*')
+        .eq('job_id', analysisData.job_id)
+        .eq('user_id', session?.user?.id)
+        .maybeSingle();
+
+      if (companyError && companyError.code !== 'PGRST116') {
+        throw companyError;
+      }
+
+      // If company data exists and is completed, navigate directly
+      if (existingCompany && existingCompany.status === 'completed') {
+        navigate(`/${currentLanguage}/company-research/${analysisData.job_id}`);
+        return;
+      }
+
+      // If no data or pending, trigger the research
       const { error } = await supabase.functions.invoke('trigger-company-research', {
         body: { jobId: analysisData.job_id }
       });
