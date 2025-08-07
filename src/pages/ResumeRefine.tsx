@@ -346,7 +346,7 @@ const ResumeRefine = () => {
               {t('resume-refine:unsavedChanges.description')}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
+          <div className="flex justify-end gap-2 mt-6">
             <AlertDialogCancel onClick={() => setShowUnsavedDialog(false)}>
               {t('resume-refine:unsavedChanges.cancel')}
             </AlertDialogCancel>
@@ -356,7 +356,7 @@ const ResumeRefine = () => {
             >
               {t('resume-refine:unsavedChanges.leave')}
             </AlertDialogAction>
-          </AlertDialogFooter>
+          </div>
         </AlertDialogContent>
       </AlertDialog>
     </div>

@@ -187,7 +187,7 @@ const ExperienceSection = ({ data, onChange, showAddForm = true }: ExperienceSec
               variant="outline"
               type="button"
             >
-              <PlusCircle className="h-4 w-4 mr-2" />{t('resume-refine:experience.addExperience')}
+              <PlusCircle className="h-4 w-4 mr-2" />{t('experience.addExperience')}
             </Button>
           )}
           
@@ -195,10 +195,10 @@ const ExperienceSection = ({ data, onChange, showAddForm = true }: ExperienceSec
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>{t('resume-refine:experience.position')}</TableHead>
-                  <TableHead>{t('resume-refine:experience.company')}</TableHead>
-                  <TableHead>{t('resume-refine:experience.duration')}</TableHead>
-                  <TableHead>{t('resume-refine:experience.actions')}</TableHead>
+                  <TableHead>{t('experience.position')}</TableHead>
+                  <TableHead>{t('experience.company')}</TableHead>
+                  <TableHead>{t('experience.duration')}</TableHead>
+                  <TableHead>{t('experience.actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -217,7 +217,7 @@ const ExperienceSection = ({ data, onChange, showAddForm = true }: ExperienceSec
                           onClick={() => initEditForm(idx)}
                           type="button"
                         >
-                          {t('resume-refine:experience.edit')}
+                          {t('experience.edit')}
                         </Button>
                         <Button 
                           variant="ghost" 
@@ -261,13 +261,13 @@ const ExperienceSection = ({ data, onChange, showAddForm = true }: ExperienceSec
         <Card>
           <CardHeader>
             <CardTitle>
-              {activeExpIndex >= 0 ? t('resume-refine:experience.editExperience') : t('resume-refine:experience.addExperience')}
+              {activeExpIndex >= 0 ? t('experience.editExperience') : t('experience.addExperience')}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="jobTitle">{t('resume-refine:experience.jobTitle')}</Label>
+                <Label htmlFor="jobTitle">{t('experience.jobTitle')}</Label>
                 <Input 
                   id="jobTitle" 
                   value={editing.jobTitle} 
@@ -275,7 +275,7 @@ const ExperienceSection = ({ data, onChange, showAddForm = true }: ExperienceSec
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="companyName">{t('resume-refine:experience.company')}</Label>
+                <Label htmlFor="companyName">{t('experience.company')}</Label>
                 <Input 
                   id="companyName" 
                   value={editing.companyName} 
@@ -285,7 +285,7 @@ const ExperienceSection = ({ data, onChange, showAddForm = true }: ExperienceSec
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="location">{t('resume-refine:experience.location')}</Label>
+              <Label htmlFor="location">{t('experience.location')}</Label>
               <Input 
                 id="location" 
                 value={editing.location} 
@@ -294,47 +294,47 @@ const ExperienceSection = ({ data, onChange, showAddForm = true }: ExperienceSec
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="companyIntroduction">{t('resume-refine:experience.companyIntroduction')}</Label>
+              <Label htmlFor="companyIntroduction">{t('experience.companyIntroduction')}</Label>
               <Textarea 
                 id="companyIntroduction"
                 value={editing.companyIntroduction} 
                 onChange={(e) => handleEditingChange('companyIntroduction', e.target.value)}
-                placeholder={t('resume-refine:experience.companyIntroductionPlaceholder')}
+                placeholder={t('experience.companyIntroductionPlaceholder')}
                 className="min-h-[100px]"
               />
             </div>
             
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="startDate">{t('resume-refine:experience.startDate')}</Label>
+                <Label htmlFor="startDate">{t('experience.startDate')}</Label>
                 <Input 
                   id="startDate" 
                   value={editing.startDate} 
                   onChange={(e) => handleEditingChange('startDate', e.target.value)}
-                  placeholder={t('resume-refine:experience.startDatePlaceholder')}
+                  placeholder={t('experience.startDatePlaceholder')}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="endDate">{t('resume-refine:experience.endDate')}</Label>
+                <Label htmlFor="endDate">{t('experience.endDate')}</Label>
                 <Input 
                   id="endDate" 
                   value={editing.endDate} 
                   onChange={(e) => handleEditingChange('endDate', e.target.value)}
-                  placeholder={t('resume-refine:experience.endDatePlaceholder')}
+                  placeholder={t('experience.endDatePlaceholder')}
                 />
               </div>
             </div>
             
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label>{t('resume-refine:experience.achievements')}</Label>
+                <Label>{t('experience.achievements')}</Label>
                 <Button 
                   onClick={handleAddAchievement} 
                   variant="outline" 
                   size="sm"
                   type="button"
                 >
-                  <PlusCircle className="h-4 w-4 mr-1" /> {t('resume-refine:experience.add')}
+                  <PlusCircle className="h-4 w-4 mr-1" /> {t('experience.add')}
                 </Button>
               </div>
               
@@ -346,7 +346,7 @@ const ExperienceSection = ({ data, onChange, showAddForm = true }: ExperienceSec
                         value={achievement}
                         onChange={(e) => handleUpdateAchievement(idx, e.target.value)}
                         className="flex-1"
-                        placeholder={t('resume-refine:experience.achievementPlaceholder')}
+                        placeholder={t('experience.achievementPlaceholder')}
                       />
                       <Button 
                         variant="ghost" 
@@ -362,7 +362,7 @@ const ExperienceSection = ({ data, onChange, showAddForm = true }: ExperienceSec
                 </div>
               ) : (
                 <div className="text-center p-4 bg-gray-50 rounded-md">
-                  {t('resume-refine:experience.noAchievements')}
+                  {t('experience.noAchievements')}
                 </div>
               )}
             </div>
@@ -373,13 +373,13 @@ const ExperienceSection = ({ data, onChange, showAddForm = true }: ExperienceSec
               onClick={() => setActiveExpIndex(null)}
               type="button"
             >
-              {t('resume-refine:experience.cancel')}
+              {t('experience.cancel')}
             </Button>
             <Button 
               onClick={handleSaveExperience}
               type="button"
             >
-              {t('resume-refine:experience.saveExperience')}
+              {t('experience.saveExperience')}
             </Button>
           </CardFooter>
         </Card>
