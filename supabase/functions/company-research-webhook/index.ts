@@ -92,15 +92,18 @@ serve(async (req) => {
     // Update or insert the company data
     const { data, error } = await supabaseClient
       .from('companies')
-      .upsert(companyData, {
-        onConflict: 'job_id,user_id'
-      })
+      .upsert(companyData)
       .select()
 
     if (error) {
       console.error('Error updating company data:', error)
+      console.error('Company data being inserted:', companyData)
       return new Response(
-        JSON.stringify({ error: 'Failed to update company data' }),
+        JSON.stringify({ 
+          error: 'Failed to update company data', 
+          details: error.message,
+          hint: error.hint 
+        }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
