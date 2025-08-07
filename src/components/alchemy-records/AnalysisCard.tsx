@@ -155,6 +155,9 @@ const AnalysisCard = ({
   };
 
   const handleCompanyResearch = async () => {
+    // Prevent multiple simultaneous research requests
+    if (isResearchingCompany) return;
+    
     try {
       setIsResearchingCompany(true);
       
@@ -205,10 +208,13 @@ const AnalysisCard = ({
       // If no data exists, trigger the research and create pending record
       const { error: insertError } = await supabase
         .from('companies')
-        .insert({
+        .upsert({
           job_id: analysisData.job_id,
           user_id: session?.user?.id,
           status: 'pending'
+        }, {
+          onConflict: 'job_id,user_id',
+          ignoreDuplicates: false
         });
 
       if (insertError) {

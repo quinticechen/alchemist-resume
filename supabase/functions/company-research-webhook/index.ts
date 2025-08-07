@@ -92,10 +92,13 @@ serve(async (req) => {
     // Add user_id to company data
     companyData.user_id = jobData.user_id
 
-    // Update or insert the company data
+    // Update or insert the company data based on job_id and user_id
     const { data, error } = await supabaseClient
       .from('companies')
-      .upsert(companyData)
+      .upsert(companyData, { 
+        onConflict: 'job_id,user_id',
+        ignoreDuplicates: false 
+      })
       .select()
 
     if (error) {
