@@ -30,6 +30,7 @@ import FAQ from "./pages/FAQ";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import CoverLetter from "./pages/CoverLetter";
+import CompanyResearch from "./pages/CompanyResearch";
 
 const queryClient = new QueryClient();
 
@@ -121,6 +122,14 @@ const AppContent = () => {
               element={
                 <ProtectedRoute>
                   <PaymentSuccess />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/company-research/:jobId"
+              element={
+                <ProtectedRoute>
+                  <CompanyResearch />
                 </ProtectedRoute>
               }
             />

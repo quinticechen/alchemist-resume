@@ -38,7 +38,9 @@
     "viewGoldenResume": "查看黃金履歷",
     "createCoverLetter": "建立求職信",
     "linkJD": "連結職缺",
-    "applyJob": "申請職位"
+    "applyJob": "申請職位",
+    "companyResearch": "公司研究",
+    "researching": "研究中..."
   },
   "jobUrl": {
     "cannotChange": "職缺URL在儲存後無法更改",

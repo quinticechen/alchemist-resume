@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Link as LinkIcon, Crown, FileEdit, ExternalLink } from "lucide-react";
+import { Link as LinkIcon, Crown, FileEdit, ExternalLink, Building2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import AnalysisTitle from "./AnalysisTitle";
 import StatusSelector from "../cover-letter/StatusSelector";
@@ -70,6 +70,7 @@ const AnalysisCard = ({
   const [isAddingJobUrl, setIsAddingJobUrl] = useState(false);
   const [jobUrl, setJobUrl] = useState("");
   const [isSavingJobUrl, setIsSavingJobUrl] = useState(false);
+  const [isResearchingCompany, setIsResearchingCompany] = useState(false);
 
   const handleCreateCoverLetter = () => {
     navigate(`/${currentLanguage}/cover-letter`, {
@@ -149,6 +150,71 @@ const AnalysisCard = ({
   const handleCancelJobUrl = () => {
     setIsAddingJobUrl(false);
     setJobUrl("");
+  };
+
+  const handleCompanyResearch = async () => {
+    try {
+      setIsResearchingCompany(true);
+      
+      // Get the job_id from the resume_analyses table
+      const { data: analysisData, error: analysisError } = await supabase
+        .from('resume_analyses')
+        .select('job_id')
+        .eq('id', id)
+        .single();
+
+      if (analysisError) {
+        throw analysisError;
+      }
+
+      if (!analysisData.job_id) {
+        toast({
+          title: "Error",
+          description: "No job information found for this analysis",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Check environment and set webhook URL
+      const isProduction = window.location.hostname === 'qwizai.com';
+      const webhookUrl = isProduction 
+        ? 'https://n8n.qwizai.com/webhook/bb306a40-e545-48f7-9c17-f6c01d6b222b'
+        : 'https://n8n.qwizai.com/webhook-test/bb306a40-e545-48f7-9c17-f6c01d6b222b';
+
+      // Send job ID to webhook
+      const response = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          jobId: analysisData.job_id
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to start company research');
+      }
+
+      toast({
+        title: "Company Research Started",
+        description: "We're analyzing the company information. You'll be redirected to the results page shortly.",
+      });
+
+      // Navigate to company research page
+      navigate(`/${currentLanguage}/company-research/${analysisData.job_id}`);
+
+    } catch (error) {
+      console.error('Company research error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to start company research. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsResearchingCompany(false);
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -309,6 +375,17 @@ const AnalysisCard = ({
         >
           <FileEdit className="h-4 w-4 mr-2" />
           {t('actions.createCoverLetter')}
+        </Button>
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleCompanyResearch}
+          disabled={isResearchingCompany}
+          className="flex items-center gap-2"
+        >
+          <Building2 className="h-4 w-4" />
+          {isResearchingCompany ? t('actions.researching') : t('actions.companyResearch')}
         </Button>
 
         {job?.job_url ? (

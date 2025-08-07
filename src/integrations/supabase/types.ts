@@ -102,6 +102,116 @@ export type Database = {
           },
         ]
       }
+      companies: {
+        Row: {
+          business_overview: string | null
+          career_page: string | null
+          ceo: string | null
+          company_name: string | null
+          company_website: string | null
+          competitive_advantages: string | null
+          core_values: string | null
+          created_at: string
+          employee_benefits: string | null
+          founded: string | null
+          growth_rate: string | null
+          headquarters: string | null
+          id: string
+          industry: string | null
+          job_id: string | null
+          key_products_services: Json | null
+          main_competitors: string | null
+          market_share: string | null
+          number_of_employees: string | null
+          pe_ratio: string | null
+          recent_news: Json | null
+          revenue: string | null
+          status: string
+          stock_performance: string | null
+          swot_opportunities: string | null
+          swot_strengths: string | null
+          swot_threats: string | null
+          swot_weaknesses: string | null
+          updated_at: string
+          user_id: string
+          work_environment: string | null
+        }
+        Insert: {
+          business_overview?: string | null
+          career_page?: string | null
+          ceo?: string | null
+          company_name?: string | null
+          company_website?: string | null
+          competitive_advantages?: string | null
+          core_values?: string | null
+          created_at?: string
+          employee_benefits?: string | null
+          founded?: string | null
+          growth_rate?: string | null
+          headquarters?: string | null
+          id?: string
+          industry?: string | null
+          job_id?: string | null
+          key_products_services?: Json | null
+          main_competitors?: string | null
+          market_share?: string | null
+          number_of_employees?: string | null
+          pe_ratio?: string | null
+          recent_news?: Json | null
+          revenue?: string | null
+          status?: string
+          stock_performance?: string | null
+          swot_opportunities?: string | null
+          swot_strengths?: string | null
+          swot_threats?: string | null
+          swot_weaknesses?: string | null
+          updated_at?: string
+          user_id: string
+          work_environment?: string | null
+        }
+        Update: {
+          business_overview?: string | null
+          career_page?: string | null
+          ceo?: string | null
+          company_name?: string | null
+          company_website?: string | null
+          competitive_advantages?: string | null
+          core_values?: string | null
+          created_at?: string
+          employee_benefits?: string | null
+          founded?: string | null
+          growth_rate?: string | null
+          headquarters?: string | null
+          id?: string
+          industry?: string | null
+          job_id?: string | null
+          key_products_services?: Json | null
+          main_competitors?: string | null
+          market_share?: string | null
+          number_of_employees?: string | null
+          pe_ratio?: string | null
+          recent_news?: Json | null
+          revenue?: string | null
+          status?: string
+          stock_performance?: string | null
+          swot_opportunities?: string | null
+          swot_strengths?: string | null
+          swot_threats?: string | null
+          swot_weaknesses?: string | null
+          updated_at?: string
+          user_id?: string
+          work_environment?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "companies_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       job_apply: {
         Row: {
           analysis_id: string
