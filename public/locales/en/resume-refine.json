@@ -9,6 +9,7 @@
   },
   "jobDescription": {
     "title": "Job Description",
+    "companyWebsite": "Company Website",
     "fields": {
       "title": "Title",
       "language": "Language", 
@@ -28,8 +29,51 @@
     "volunteerExperience": "Volunteer Experience",
     "certifications": "Certifications"
   },
+  "personalInfo": {
+    "firstName": "First Name",
+    "firstNamePlaceholder": "Enter your first name",
+    "lastName": "Last Name",
+    "lastNamePlaceholder": "Enter your last name",
+    "email": "Email",
+    "emailPlaceholder": "Enter your email",
+    "phone": "Phone",
+    "phonePlaceholder": "Enter your phone number",
+    "location": "Location",
+    "locationPlaceholder": "Enter your location",
+    "linkedIn": "LinkedIn",
+    "linkedInPlaceholder": "Enter your LinkedIn profile URL",
+    "website": "Website",
+    "websitePlaceholder": "Enter your website URL"
+  },
+  "professionalSummary": {
+    "title": "Professional Summary",
+    "placeholder": "Write a concise summary of your professional background, skills, and career objectives..."
+  },
+  "experience": {
+    "addExperience": "Add Experience",
+    "editExperience": "Edit Experience",
+    "position": "Position",
+    "company": "Company",
+    "duration": "Duration",
+    "actions": "Actions",
+    "edit": "Edit",
+    "jobTitle": "Job Title",
+    "location": "Location",
+    "companyIntroduction": "Company Introduction",
+    "companyIntroductionPlaceholder": "Briefly describe the company...",
+    "startDate": "Start Date (YYYY-MM)",
+    "startDatePlaceholder": "YYYY-MM",
+    "endDate": "End Date (YYYY-MM or blank for current)",
+    "endDatePlaceholder": "YYYY-MM",
+    "achievements": "Achievements",
+    "add": "Add",
+    "noAchievements": "No achievements added. Click \"Add\" to include achievements.",
+    "achievementPlaceholder": "Describe your achievement...",
+    "cancel": "Cancel",
+    "saveExperience": "Save Experience"
+  },
   "aiChat": {
-    "greeting": "Hey there! Your resume is glowing now, but shall we explore what else we can enhance? I've got some magical tricks up my tentacles!",
+    "greeting": "My tentacles sense there's still some hidden potential in your resume! Want to explore together!",
     "suggestions": {
       "highlights": "What are the most attractive highlights in this resume?",
       "keywords": "Which keywords could we strengthen?",

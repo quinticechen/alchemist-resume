@@ -9,6 +9,7 @@
   },
   "jobDescription": {
     "title": "職位描述",
+    "companyWebsite": "公司網站",
     "fields": {
       "title": "職稱",
       "language": "語言",
@@ -28,8 +29,51 @@
     "volunteerExperience": "志工經驗",
     "certifications": "證書"
   },
+  "personalInfo": {
+    "firstName": "名字",
+    "firstNamePlaceholder": "輸入您的名字",
+    "lastName": "姓氏",
+    "lastNamePlaceholder": "輸入您的姓氏",
+    "email": "電子郵件",
+    "emailPlaceholder": "輸入您的電子郵件",
+    "phone": "電話",
+    "phonePlaceholder": "輸入您的電話號碼",
+    "location": "地點",
+    "locationPlaceholder": "輸入您的地點",
+    "linkedIn": "LinkedIn",
+    "linkedInPlaceholder": "輸入您的LinkedIn個人檔案網址",
+    "website": "網站",
+    "websitePlaceholder": "輸入您的網站網址"
+  },
+  "professionalSummary": {
+    "title": "專業摘要",
+    "placeholder": "撰寫您的專業背景、技能和職業目標的簡潔摘要..."
+  },
+  "experience": {
+    "addExperience": "新增經歷",
+    "editExperience": "編輯經歷",
+    "position": "職位",
+    "company": "公司",
+    "duration": "期間",
+    "actions": "操作",
+    "edit": "編輯",
+    "jobTitle": "職稱",
+    "location": "地點",
+    "companyIntroduction": "公司介紹",
+    "companyIntroductionPlaceholder": "簡要描述公司...",
+    "startDate": "開始日期 (YYYY-MM)",
+    "startDatePlaceholder": "YYYY-MM",
+    "endDate": "結束日期 (YYYY-MM 或空白表示目前)",
+    "endDatePlaceholder": "YYYY-MM",
+    "achievements": "成就",
+    "add": "新增",
+    "noAchievements": "尚未新增任何成就。點擊「新增」來包含成就。",
+    "achievementPlaceholder": "描述您的成就...",
+    "cancel": "取消",
+    "saveExperience": "儲存經歷"
+  },
   "aiChat": {
-    "greeting": "嗨！您的履歷現在已經很棒了，但我們要不要探索一下還能增強什麼呢？我有一些神奇的技巧可以分享！",
+    "greeting": "我的觸手感應到您的履歷中還有一些隱藏的潛力！想要一起探索嗎！",
     "suggestions": {
       "highlights": "這份履歷中最吸引人的亮點是什麼？",
       "keywords": "我們可以加強哪些關鍵字？",

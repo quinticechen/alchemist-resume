@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { FileJson, Eye, Save, Check } from "lucide-react";
 import Lottie from "react-lottie";
 import Loading from "@/animations/Loading.json";
+import { useTranslation } from "react-i18next";
 
 interface EditorToolbarProps {
   viewMode: "visual" | "json";
@@ -24,6 +25,7 @@ const EditorToolbar: React.FC<EditorToolbarProps> = ({
   isSaving,
   hasUnsavedChanges
 }) => {
+  const { t } = useTranslation(['resume-refine']);
   return (
     <div className="flex items-center justify-between p-3 border-t bg-white shadow-sm sticky bottom-0">
       <div className="flex gap-2">
@@ -34,7 +36,7 @@ const EditorToolbar: React.FC<EditorToolbarProps> = ({
           className="flex items-center gap-1"
         >
           <FileJson className="h-4 w-4" />
-          {viewMode === 'visual' ? 'JSON Editor' : 'Visual Editor'}
+          {viewMode === 'visual' ? t('resume-refine:editor.jsonEditor') : 'Visual Editor'}
         </Button>
       </div>
       <div className="flex items-center">
@@ -79,7 +81,7 @@ const EditorToolbar: React.FC<EditorToolbarProps> = ({
             ) : (
               <>
                 <Save className="h-4 w-4" />
-                Save
+                {t('resume-refine:editor.save')}
               </>
             )}
           </Button>
@@ -90,7 +92,7 @@ const EditorToolbar: React.FC<EditorToolbarProps> = ({
             className="flex items-center gap-1"
           >
             <Check className="h-4 w-4" />
-            Finish
+            {t('resume-refine:editor.finish')}
           </Button>
         </div>
       </div>

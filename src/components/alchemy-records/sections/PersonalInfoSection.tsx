@@ -2,6 +2,7 @@
 import React from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useTranslation } from "react-i18next";
 
 interface PersonalInfo {
   firstName?: string;
@@ -19,6 +20,7 @@ interface PersonalInfoSectionProps {
 }
 
 const PersonalInfoSection = ({ data, onChange }: PersonalInfoSectionProps) => {
+  const { t } = useTranslation(['resume-refine']);
   // Extract personalInfo from the data
   const personalInfo: PersonalInfo = data?.personalInfo || {};
   
@@ -52,73 +54,73 @@ const PersonalInfoSection = ({ data, onChange }: PersonalInfoSectionProps) => {
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="firstName" className="text-gray-700 font-medium">First Name</Label>
+          <Label htmlFor="firstName" className="text-gray-700 font-medium">{t('resume-refine:personalInfo.firstName')}</Label>
           <Input
             id="firstName"
             value={personalInfo.firstName || ''}
             onChange={(e) => handleFieldChange('firstName', e.target.value)}
-            placeholder="Enter your first name"
+            placeholder={t('resume-refine:personalInfo.firstNamePlaceholder')}
             className="mt-1 text-gray-900 placeholder-gray-400 bg-white border-gray-300"
           />
         </div>
         <div>
-          <Label htmlFor="lastName" className="text-gray-700 font-medium">Last Name</Label>
+          <Label htmlFor="lastName" className="text-gray-700 font-medium">{t('resume-refine:personalInfo.lastName')}</Label>
           <Input
             id="lastName"
             value={personalInfo.lastName || ''}
             onChange={(e) => handleFieldChange('lastName', e.target.value)}
-            placeholder="Enter your last name"
+            placeholder={t('resume-refine:personalInfo.lastNamePlaceholder')}
             className="mt-1 text-gray-900 placeholder-gray-400 bg-white border-gray-300"
           />
         </div>
         <div>
-          <Label htmlFor="email" className="text-gray-700 font-medium">Email</Label>
+          <Label htmlFor="email" className="text-gray-700 font-medium">{t('resume-refine:personalInfo.email')}</Label>
           <Input
             id="email"
             type="email"
             value={personalInfo.email || ''}
             onChange={(e) => handleFieldChange('email', e.target.value)}
-            placeholder="Enter your email"
+            placeholder={t('resume-refine:personalInfo.emailPlaceholder')}
             className="mt-1 text-gray-900 placeholder-gray-400 bg-white border-gray-300"
           />
         </div>
         <div>
-          <Label htmlFor="phone" className="text-gray-700 font-medium">Phone</Label>
+          <Label htmlFor="phone" className="text-gray-700 font-medium">{t('resume-refine:personalInfo.phone')}</Label>
           <Input
             id="phone"
             value={personalInfo.phone || ''}
             onChange={(e) => handleFieldChange('phone', e.target.value)}
-            placeholder="Enter your phone number"
+            placeholder={t('resume-refine:personalInfo.phonePlaceholder')}
             className="mt-1 text-gray-900 placeholder-gray-400 bg-white border-gray-300"
           />
         </div>
         <div>
-          <Label htmlFor="location" className="text-gray-700 font-medium">Location</Label>
+          <Label htmlFor="location" className="text-gray-700 font-medium">{t('resume-refine:personalInfo.location')}</Label>
           <Input
             id="location"
             value={personalInfo.location || ''}
             onChange={(e) => handleFieldChange('location', e.target.value)}
-            placeholder="Enter your location"
+            placeholder={t('resume-refine:personalInfo.locationPlaceholder')}
             className="mt-1 text-gray-900 placeholder-gray-400 bg-white border-gray-300"
           />
         </div>
         <div>
-          <Label htmlFor="linkedIn" className="text-gray-700 font-medium">LinkedIn</Label>
+          <Label htmlFor="linkedIn" className="text-gray-700 font-medium">{t('resume-refine:personalInfo.linkedIn')}</Label>
           <Input
             id="linkedIn"
             value={personalInfo.linkedIn || ''}
             onChange={(e) => handleFieldChange('linkedIn', e.target.value)}
-            placeholder="Enter your LinkedIn profile URL"
+            placeholder={t('resume-refine:personalInfo.linkedInPlaceholder')}
             className="mt-1 text-gray-900 placeholder-gray-400 bg-white border-gray-300"
           />
         </div>
         <div className="md:col-span-2">
-          <Label htmlFor="website" className="text-gray-700 font-medium">Website</Label>
+          <Label htmlFor="website" className="text-gray-700 font-medium">{t('resume-refine:personalInfo.website')}</Label>
           <Input
             id="website"
             value={personalInfo.website || ''}
             onChange={(e) => handleFieldChange('website', e.target.value)}
-            placeholder="Enter your website URL"
+            placeholder={t('resume-refine:personalInfo.websitePlaceholder')}
             className="mt-1 text-gray-900 placeholder-gray-400 bg-white border-gray-300"
           />
         </div>
