@@ -25,12 +25,14 @@ serve(async (req) => {
     )
 
     const requestData = await req.json()
-    console.log('Received company research data:', requestData)
+    console.log('Received company research data:', JSON.stringify(requestData, null, 2))
 
     // Extract job ID from the request
     const jobId = requestData.jobId || requestData.job_id
+    console.log('Extracted jobId:', jobId)
 
     if (!jobId) {
+      console.error('Missing jobId in request')
       return new Response(
         JSON.stringify({ error: 'Job ID is required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -39,6 +41,7 @@ serve(async (req) => {
 
     // Extract company profile data
     const companyProfile = requestData.companyProfile || requestData
+    console.log('Company profile keys:', Object.keys(companyProfile || {}))
 
     // Prepare the data for database insertion
     const companyData = {
@@ -124,8 +127,14 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Error processing company research webhook:', error)
+    console.error('Error stack:', error.stack)
+    console.error('Error message:', error.message)
     return new Response(
-      JSON.stringify({ error: 'Internal server error' }),
+      JSON.stringify({ 
+        error: 'Internal server error',
+        details: error.message,
+        stack: error.stack 
+      }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }
