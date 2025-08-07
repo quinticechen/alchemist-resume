@@ -34,13 +34,13 @@ import CoverLetter from "./pages/CoverLetter";
 const queryClient = new QueryClient();
 
 // Language-aware route wrapper
-const LanguageRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+const LanguageRoute: React.FC<{ children: React.ReactNode; hideHeaderFooter?: boolean }> = ({ children, hideHeaderFooter = false }) => (
   <div className="min-h-screen flex flex-col">
-    <Header />
+    {!hideHeaderFooter && <Header />}
     <main className="flex-1">
       {children}
     </main>
-    <Footer />
+    {!hideHeaderFooter && <Footer />}
   </div>
 );
 
@@ -77,9 +77,11 @@ const AppContent = () => {
             <Route
               path="/resume-refine/:analysisId"
               element={
-                <ProtectedRoute>
-                  <ResumeRefine />
-                </ProtectedRoute>
+                <div className="min-h-screen">
+                  <ProtectedRoute>
+                    <ResumeRefine />
+                  </ProtectedRoute>
+                </div>
               }
             />
             <Route

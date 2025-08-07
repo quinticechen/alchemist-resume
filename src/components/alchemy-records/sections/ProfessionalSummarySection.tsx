@@ -26,13 +26,13 @@ const ProfessionalSummarySection = ({ data, onChange }: ProfessionalSummarySecti
   return (
     <div className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="professionalSummary">{t('resume-refine:professionalSummary.title')}</Label>
+        <Label htmlFor="professionalSummary">{t('professionalSummary.title')}</Label>
         <Textarea 
           id="professionalSummary"
           rows={8}
           value={professionalSummary}
           onChange={(e) => handleChange(e.target.value)}
-          placeholder={t('resume-refine:professionalSummary.placeholder')}
+          placeholder={t('professionalSummary.placeholder')}
           className="min-h-[200px]"
         />
       </div>

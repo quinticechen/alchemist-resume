@@ -36,13 +36,13 @@ const EditorToolbar: React.FC<EditorToolbarProps> = ({
           className="flex items-center gap-1"
         >
           <FileJson className="h-4 w-4" />
-          {viewMode === 'visual' ? t('resume-refine:editor.jsonEditor') : 'Visual Editor'}
+          {viewMode === 'visual' ? t('editor.jsonEditor') : 'Visual Editor'}
         </Button>
       </div>
       <div className="flex items-center">
         {hasUnsavedChanges && (
           <span className="mr-4 text-amber-600 text-sm">
-            {t('resume-refine:toolbar.unsavedChanges')}
+            {t('toolbar.unsavedChanges')}
           </span>
         )}
         <div className="flex gap-2">
@@ -81,7 +81,7 @@ const EditorToolbar: React.FC<EditorToolbarProps> = ({
             ) : (
               <>
                 <Save className="h-4 w-4" />
-                {t('resume-refine:editor.save')}
+                {t('editor.save')}
               </>
             )}
           </Button>
@@ -92,7 +92,7 @@ const EditorToolbar: React.FC<EditorToolbarProps> = ({
             className="flex items-center gap-1"
           >
             <Check className="h-4 w-4" />
-            {t('resume-refine:editor.finish')}
+            {t('editor.finish')}
           </Button>
         </div>
       </div>
