@@ -373,7 +373,7 @@ const AnalysisCard = ({
           className="flex items-center gap-2"
         >
           <Building2 className="h-4 w-4" />
-          {isResearchingCompany ? t('records:actions.researching') : t('records:actions.companyResearch')}
+          {isResearchingCompany ? t('actions.researching') : t('actions.companyResearch')}
         </Button>
 
         {job?.job_url ? (
