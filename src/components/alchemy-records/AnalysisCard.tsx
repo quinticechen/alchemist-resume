@@ -196,7 +196,26 @@ const AnalysisCard = ({
         return;
       }
 
-      // If no data or pending, trigger the research
+      // If pending data exists, just navigate to the page
+      if (existingCompany && existingCompany.status === 'pending') {
+        navigate(`/${currentLanguage}/company-research/${analysisData.job_id}`);
+        return;
+      }
+
+      // If no data exists, trigger the research and create pending record
+      const { error: insertError } = await supabase
+        .from('companies')
+        .insert({
+          job_id: analysisData.job_id,
+          user_id: session?.user?.id,
+          status: 'pending'
+        });
+
+      if (insertError) {
+        throw insertError;
+      }
+
+      // Trigger the research
       const { error } = await supabase.functions.invoke('trigger-company-research', {
         body: { jobId: analysisData.job_id }
       });
@@ -207,7 +226,7 @@ const AnalysisCard = ({
 
       toast({
         title: "Company Research Started",
-        description: "We're analyzing the company information. You'll be redirected to the results page shortly.",
+        description: "We're analyzing the company information. You'll be redirected to the results page.",
       });
 
       // Navigate to company research page

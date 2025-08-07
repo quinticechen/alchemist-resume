@@ -49,7 +49,8 @@ const CompanyResearch = () => {
   const { jobId } = useParams<{ jobId: string }>();
   const { session, isLoading } = useAuth();
   const navigate = useNavigate();
-  const { t } = useTranslation(['common', 'company-research']);
+  const { t } = useTranslation('company-research');
+  const { t: tCommon } = useTranslation('common');
   const { currentLanguage } = useLanguage();
   
   const [companyData, setCompanyData] = useState<CompanyData | null>(null);
@@ -150,7 +151,7 @@ const CompanyResearch = () => {
       }
     } catch (err) {
       console.error('Error fetching company data:', err);
-      setError(t('company-research:error.fetchFailed'));
+      setError(t('error.fetchFailed'));
     } finally {
       setLoading(false);
     }
@@ -204,11 +205,11 @@ const CompanyResearch = () => {
     return (
       <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100 flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-red-600 mb-4">{t('company-research:error.title')}</h2>
+          <h2 className="text-2xl font-bold text-red-600 mb-4">{t('error.title')}</h2>
           <p className="text-gray-600 mb-4">{error}</p>
           <Button onClick={() => navigate(-1)}>
             <ArrowLeft className="h-4 w-4 mr-2" />
-            {t('common:goBack')}
+            {tCommon('goBack')}
           </Button>
         </div>
       </div>
@@ -220,9 +221,9 @@ const CompanyResearch = () => {
       <div className="w-32 h-32 mx-auto mb-6">
         <Lottie options={loadingOptions} />
       </div>
-      <h2 className="text-2xl font-bold mb-4">{t('company-research:pending.title')}</h2>
-      <p className="text-gray-600 mb-4">{t('company-research:pending.description')}</p>
-      <p className="text-sm text-gray-500">{t('company-research:pending.waitTime')}</p>
+      <h2 className="text-2xl font-bold mb-4">{t('pending.title')}</h2>
+      <p className="text-gray-600 mb-4">{t('pending.description')}</p>
+      <p className="text-sm text-gray-500">{t('pending.waitTime')}</p>
     </div>
   );
 
@@ -240,7 +241,7 @@ const CompanyResearch = () => {
               <div>
                 <CardTitle className="text-2xl flex items-center gap-2">
                   <Building2 className="h-6 w-6" />
-                  {companyData.company_name || t('company-research:unknown.company')}
+                  {companyData.company_name || t('unknown.company')}
                 </CardTitle>
                 <p className="text-gray-600 mt-1">{companyData.industry}</p>
               </div>
@@ -251,14 +252,14 @@ const CompanyResearch = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="flex items-center gap-2">
                 <Users className="h-4 w-4 text-gray-500" />
-                <span className="text-sm">{companyData.number_of_employees} {t('company-research:employees')}</span>
+                <span className="text-sm">{companyData.number_of_employees} {t('employees')}</span>
               </div>
               <div className="flex items-center gap-2">
                 <TrendingUp className="h-4 w-4 text-gray-500" />
                 <span className="text-sm">{companyData.revenue}</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-sm">{t('company-research:ceo')}: {companyData.ceo}</span>
+                <span className="text-sm">{t('ceo')}: {companyData.ceo}</span>
               </div>
             </div>
             
@@ -266,7 +267,7 @@ const CompanyResearch = () => {
               <div className="mt-4">
                 <Button variant="outline" size="sm" onClick={() => window.open(companyData.company_website, '_blank')}>
                   <ExternalLink className="h-4 w-4 mr-2" />
-                  {t('company-research:visitWebsite')}
+                  {t('visitWebsite')}
                 </Button>
               </div>
             )}
@@ -277,7 +278,7 @@ const CompanyResearch = () => {
         {companyData.business_overview && (
           <Card>
             <CardHeader>
-              <CardTitle>{t('company-research:sections.businessOverview')}</CardTitle>
+              <CardTitle>{t('sections.businessOverview')}</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-gray-700">{companyData.business_overview}</p>
@@ -289,7 +290,7 @@ const CompanyResearch = () => {
         {companyData.key_products_services && companyData.key_products_services.length > 0 && (
           <Card>
             <CardHeader>
-              <CardTitle>{t('company-research:sections.keyProducts')}</CardTitle>
+              <CardTitle>{t('sections.keyProducts')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -307,31 +308,31 @@ const CompanyResearch = () => {
         {/* SWOT Analysis */}
         <Card>
           <CardHeader>
-            <CardTitle>{t('company-research:sections.swotAnalysis')}</CardTitle>
+            <CardTitle>{t('sections.swotAnalysis')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {companyData.swot_strengths && (
                 <div>
-                  <h4 className="font-semibold text-green-700 mb-2">{t('company-research:swot.strengths')}</h4>
+                  <h4 className="font-semibold text-green-700 mb-2">{t('swot.strengths')}</h4>
                   <p className="text-sm text-gray-700">{companyData.swot_strengths}</p>
                 </div>
               )}
               {companyData.swot_weaknesses && (
                 <div>
-                  <h4 className="font-semibold text-red-700 mb-2">{t('company-research:swot.weaknesses')}</h4>
+                  <h4 className="font-semibold text-red-700 mb-2">{t('swot.weaknesses')}</h4>
                   <p className="text-sm text-gray-700">{companyData.swot_weaknesses}</p>
                 </div>
               )}
               {companyData.swot_opportunities && (
                 <div>
-                  <h4 className="font-semibold text-blue-700 mb-2">{t('company-research:swot.opportunities')}</h4>
+                  <h4 className="font-semibold text-blue-700 mb-2">{t('swot.opportunities')}</h4>
                   <p className="text-sm text-gray-700">{companyData.swot_opportunities}</p>
                 </div>
               )}
               {companyData.swot_threats && (
                 <div>
-                  <h4 className="font-semibold text-orange-700 mb-2">{t('company-research:swot.threats')}</h4>
+                  <h4 className="font-semibold text-orange-700 mb-2">{t('swot.threats')}</h4>
                   <p className="text-sm text-gray-700">{companyData.swot_threats}</p>
                 </div>
               )}
@@ -343,7 +344,7 @@ const CompanyResearch = () => {
         {companyData.recent_news && companyData.recent_news.length > 0 && (
           <Card>
             <CardHeader>
-              <CardTitle>{t('company-research:sections.recentNews')}</CardTitle>
+              <CardTitle>{t('sections.recentNews')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -360,7 +361,7 @@ const CompanyResearch = () => {
                           className="p-0 h-auto"
                           onClick={() => window.open(news.newsUrl, '_blank')}
                         >
-                          {t('company-research:readMore')}
+                          {t('readMore')}
                         </Button>
                       )}
                     </div>
@@ -377,9 +378,9 @@ const CompanyResearch = () => {
   return (
     <>
       <SEO
-        title={t('company-research:meta.title')}
-        description={t('company-research:meta.description')}
-        keywords={t('company-research:meta.keywords')}
+        title={t('meta.title')}
+        description={t('meta.description')}
+        keywords={t('meta.keywords')}
         noIndex={true}
       />
       
@@ -393,10 +394,10 @@ const CompanyResearch = () => {
                 onClick={() => navigate(`/${currentLanguage}/alchemy-records`)}
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
-                {t('common:back')}
+                {tCommon('goBack')}
               </Button>
               <h1 className="text-3xl font-bold bg-gradient-primary text-transparent bg-clip-text">
-                {t('company-research:title')}
+                {t('title')}
               </h1>
             </div>
 
