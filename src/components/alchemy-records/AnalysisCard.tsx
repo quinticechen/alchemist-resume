@@ -176,25 +176,13 @@ const AnalysisCard = ({
         return;
       }
 
-      // Check environment and set webhook URL
-      const isProduction = window.location.hostname === 'qwizai.com';
-      const webhookUrl = isProduction 
-        ? 'https://n8n.qwizai.com/webhook/bb306a40-e545-48f7-9c17-f6c01d6b222b'
-        : 'https://n8n.qwizai.com/webhook-test/bb306a40-e545-48f7-9c17-f6c01d6b222b';
-
-      // Send job ID to webhook
-      const response = await fetch(webhookUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          jobId: analysisData.job_id
-        }),
+      // Call our edge function to trigger company research
+      const { error } = await supabase.functions.invoke('trigger-company-research', {
+        body: { jobId: analysisData.job_id }
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to start company research');
+      if (error) {
+        throw error;
       }
 
       toast({
@@ -385,7 +373,7 @@ const AnalysisCard = ({
           className="flex items-center gap-2"
         >
           <Building2 className="h-4 w-4" />
-          {isResearchingCompany ? t('actions.researching') : t('actions.companyResearch')}
+          {isResearchingCompany ? t('records:actions.researching') : t('records:actions.companyResearch')}
         </Button>
 
         {job?.job_url ? (
