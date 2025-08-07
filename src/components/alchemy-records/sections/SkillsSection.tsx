@@ -4,6 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, X } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useTranslation } from "react-i18next";
 
 interface SkillsSectionProps {
   data: any;
@@ -12,6 +13,7 @@ interface SkillsSectionProps {
 }
 
 const SkillsSection = ({ data, onChange, showAddForm = true }: SkillsSectionProps) => {
+  const { t } = useTranslation(['resume-refine']);
   const [newTechnicalSkill, setNewTechnicalSkill] = useState('');
   const [newSoftSkill, setNewSoftSkill] = useState('');
   
@@ -83,7 +85,7 @@ const SkillsSection = ({ data, onChange, showAddForm = true }: SkillsSectionProp
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Technical Skills</CardTitle>
+          <CardTitle>{t('resume-refine:skills.technicalSkills')}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {showAddForm && (
@@ -91,7 +93,7 @@ const SkillsSection = ({ data, onChange, showAddForm = true }: SkillsSectionProp
               <Input 
                 value={newTechnicalSkill} 
                 onChange={(e) => setNewTechnicalSkill(e.target.value)}
-                placeholder="Add a technical skill..."
+                placeholder={t('resume-refine:skills.addTechnicalSkill')}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     e.preventDefault();
@@ -103,7 +105,7 @@ const SkillsSection = ({ data, onChange, showAddForm = true }: SkillsSectionProp
                 onClick={handleAddTechnicalSkill}
                 disabled={!newTechnicalSkill.trim()}
               >
-                <PlusCircle className="h-4 w-4 mr-2" />Add
+                <PlusCircle className="h-4 w-4 mr-2" />{t('resume-refine:skills.add')}
               </Button>
             </div>
           )}
@@ -135,7 +137,7 @@ const SkillsSection = ({ data, onChange, showAddForm = true }: SkillsSectionProp
       
       <Card>
         <CardHeader>
-          <CardTitle>Soft Skills</CardTitle>
+          <CardTitle>{t('resume-refine:skills.softSkills')}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {showAddForm && (
@@ -143,7 +145,7 @@ const SkillsSection = ({ data, onChange, showAddForm = true }: SkillsSectionProp
               <Input 
                 value={newSoftSkill} 
                 onChange={(e) => setNewSoftSkill(e.target.value)}
-                placeholder="Add a soft skill..."
+                placeholder={t('resume-refine:skills.addSoftSkill')}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     e.preventDefault();
@@ -155,7 +157,7 @@ const SkillsSection = ({ data, onChange, showAddForm = true }: SkillsSectionProp
                 onClick={handleAddSoftSkill}
                 disabled={!newSoftSkill.trim()}
               >
-                <PlusCircle className="h-4 w-4 mr-2" />Add
+                <PlusCircle className="h-4 w-4 mr-2" />{t('resume-refine:skills.add')}
               </Button>
             </div>
           )}

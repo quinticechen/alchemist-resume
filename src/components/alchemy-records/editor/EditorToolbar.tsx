@@ -42,7 +42,7 @@ const EditorToolbar: React.FC<EditorToolbarProps> = ({
       <div className="flex items-center">
         {hasUnsavedChanges && (
           <span className="mr-4 text-amber-600 text-sm">
-            You have unsaved changes
+            {t('resume-refine:toolbar.unsavedChanges')}
           </span>
         )}
         <div className="flex gap-2">

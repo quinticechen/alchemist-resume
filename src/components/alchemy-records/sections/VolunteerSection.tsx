@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { PlusCircle, MinusCircle, MoveUp, MoveDown } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { useTranslation } from "react-i18next";
 
 interface VolunteerSectionProps {
   data: any;
@@ -14,6 +15,7 @@ interface VolunteerSectionProps {
 }
 
 const VolunteerSection = ({ data, onChange, showAddForm = true }: VolunteerSectionProps) => {
+  const { t } = useTranslation(['resume-refine']);
   const [activeVolunteerIndex, setActiveVolunteerIndex] = useState<number | null>(null);
   const [editing, setEditing] = useState<{ [key: string]: string }>({});
   const [achievements, setAchievements] = useState<string[]>([]);
@@ -154,7 +156,7 @@ const VolunteerSection = ({ data, onChange, showAddForm = true }: VolunteerSecti
               variant="outline"
               type="button"
             >
-              <PlusCircle className="h-4 w-4 mr-2" />Add Volunteer Experience
+              <PlusCircle className="h-4 w-4 mr-2" />{t('resume-refine:volunteer.addVolunteer')}
             </Button>
           )}
           
@@ -162,9 +164,9 @@ const VolunteerSection = ({ data, onChange, showAddForm = true }: VolunteerSecti
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Organization</TableHead>
-                  <TableHead>Duration</TableHead>
-                  <TableHead>Actions</TableHead>
+                  <TableHead>{t('resume-refine:volunteer.organization')}</TableHead>
+                  <TableHead>{t('resume-refine:volunteer.duration')}</TableHead>
+                  <TableHead>{t('resume-refine:volunteer.actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -181,7 +183,7 @@ const VolunteerSection = ({ data, onChange, showAddForm = true }: VolunteerSecti
                           size="sm" 
                           onClick={() => initEditForm(idx)}
                         >
-                          Edit
+                          {t('resume-refine:volunteer.edit')}
                         </Button>
                         <Button 
                           variant="ghost" 
@@ -214,7 +216,7 @@ const VolunteerSection = ({ data, onChange, showAddForm = true }: VolunteerSecti
             </Table>
           ) : (
             <div className="text-center p-4 bg-gray-50 rounded-md">
-              No volunteer experience added yet. Click "Add Volunteer Experience" to get started.
+              {t('resume-refine:volunteer.noVolunteer')}
             </div>
           )}
         </>
@@ -222,12 +224,12 @@ const VolunteerSection = ({ data, onChange, showAddForm = true }: VolunteerSecti
         <Card>
           <CardHeader>
             <CardTitle>
-              {activeVolunteerIndex >= 0 ? 'Edit Volunteer Experience' : 'Add Volunteer Experience'}
+              {activeVolunteerIndex >= 0 ? t('resume-refine:volunteer.editVolunteer') : t('resume-refine:volunteer.addVolunteer')}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Organization Name</Label>
+              <Label htmlFor="name">{t('resume-refine:volunteer.organizationName')}</Label>
               <Input 
                 id="name" 
                 value={editing.name} 
@@ -237,34 +239,34 @@ const VolunteerSection = ({ data, onChange, showAddForm = true }: VolunteerSecti
             
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="startDate">Start Date (YYYY-MM)</Label>
+                <Label htmlFor="startDate">{t('resume-refine:volunteer.startDate')}</Label>
                 <Input 
                   id="startDate" 
                   value={editing.startDate} 
                   onChange={(e) => handleEditingChange('startDate', e.target.value)}
-                  placeholder="YYYY-MM"
+                  placeholder={t('resume-refine:volunteer.startDatePlaceholder')}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="endDate">End Date (YYYY-MM or blank for current)</Label>
+                <Label htmlFor="endDate">{t('resume-refine:volunteer.endDate')}</Label>
                 <Input 
                   id="endDate" 
                   value={editing.endDate} 
                   onChange={(e) => handleEditingChange('endDate', e.target.value)}
-                  placeholder="YYYY-MM"
+                  placeholder={t('resume-refine:volunteer.endDatePlaceholder')}
                 />
               </div>
             </div>
             
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label>Achievements</Label>
+                <Label>{t('resume-refine:volunteer.achievements')}</Label>
                 <Button 
                   onClick={handleAddAchievement} 
                   variant="outline" 
                   size="sm"
                 >
-                  <PlusCircle className="h-4 w-4 mr-1" /> Add
+                  <PlusCircle className="h-4 w-4 mr-1" /> {t('resume-refine:skills.add')}
                 </Button>
               </div>
               
@@ -276,7 +278,7 @@ const VolunteerSection = ({ data, onChange, showAddForm = true }: VolunteerSecti
                         value={achievement}
                         onChange={(e) => handleUpdateAchievement(idx, e.target.value)}
                         className="flex-1"
-                        placeholder="Describe your achievement..."
+                        placeholder={t('resume-refine:volunteer.achievementPlaceholder')}
                       />
                       <Button 
                         variant="ghost" 
@@ -291,7 +293,7 @@ const VolunteerSection = ({ data, onChange, showAddForm = true }: VolunteerSecti
                 </div>
               ) : (
                 <div className="text-center p-4 bg-gray-50 rounded-md">
-                  No achievements added. Click "Add" to include achievements.
+                  {t('resume-refine:volunteer.noAchievements')}
                 </div>
               )}
             </div>
@@ -301,12 +303,12 @@ const VolunteerSection = ({ data, onChange, showAddForm = true }: VolunteerSecti
               variant="outline" 
               onClick={() => setActiveVolunteerIndex(null)}
             >
-              Cancel
+              {t('resume-refine:volunteer.cancel')}
             </Button>
             <Button 
               onClick={handleSaveVolunteer}
             >
-              Save Volunteer Experience
+              {t('resume-refine:volunteer.saveVolunteer')}
             </Button>
           </CardFooter>
         </Card>
