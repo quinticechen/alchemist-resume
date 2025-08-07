@@ -186,7 +186,6 @@ const AnalysisCard = ({
         .from('companies')
         .select('*')
         .eq('job_id', analysisData.job_id)
-        .eq('user_id', session?.user?.id)
         .maybeSingle();
 
       if (companyError && companyError.code !== 'PGRST116') {
@@ -210,11 +209,9 @@ const AnalysisCard = ({
         .from('companies')
         .upsert({
           job_id: analysisData.job_id,
-          user_id: session?.user?.id,
           status: 'pending'
         }, {
-          onConflict: 'job_id,user_id',
-          ignoreDuplicates: false
+          onConflict: 'job_id'
         });
 
       if (insertError) {

@@ -74,30 +74,11 @@ serve(async (req) => {
       swot_threats: companyProfile.swotAnalysis?.threats || ''
     }
 
-    // First, find the user_id for this job
-    const { data: jobData, error: jobError } = await supabaseClient
-      .from('jobs')
-      .select('user_id')
-      .eq('id', jobId)
-      .single()
-
-    if (jobError) {
-      console.error('Error finding job:', jobError)
-      return new Response(
-        JSON.stringify({ error: 'Job not found' }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
-    }
-
-    // Add user_id to company data
-    companyData.user_id = jobData.user_id
-
-    // Update or insert the company data based on job_id and user_id
+    // Update or insert the company data based on job_id only (1:1 relationship)
     const { data, error } = await supabaseClient
       .from('companies')
       .upsert(companyData, { 
-        onConflict: 'job_id,user_id',
-        ignoreDuplicates: false 
+        onConflict: 'job_id'
       })
       .select()
 

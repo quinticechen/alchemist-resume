@@ -118,7 +118,7 @@ export type Database = {
           headquarters: string | null
           id: string
           industry: string | null
-          job_id: string | null
+          job_id: string
           key_products_services: Json | null
           main_competitors: string | null
           market_share: string | null
@@ -151,7 +151,7 @@ export type Database = {
           headquarters?: string | null
           id?: string
           industry?: string | null
-          job_id?: string | null
+          job_id: string
           key_products_services?: Json | null
           main_competitors?: string | null
           market_share?: string | null
@@ -184,7 +184,7 @@ export type Database = {
           headquarters?: string | null
           id?: string
           industry?: string | null
-          job_id?: string | null
+          job_id?: string
           key_products_services?: Json | null
           main_competitors?: string | null
           market_share?: string | null
@@ -206,7 +206,7 @@ export type Database = {
           {
             foreignKeyName: "companies_job_id_fkey"
             columns: ["job_id"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "jobs"
             referencedColumns: ["id"]
           },
