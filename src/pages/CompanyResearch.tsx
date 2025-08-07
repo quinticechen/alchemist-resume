@@ -201,20 +201,20 @@ const CompanyResearch = () => {
     return null;
   }
 
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100 flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-red-600 mb-4">{t('error.title')}</h2>
-          <p className="text-gray-600 mb-4">{error}</p>
-          <Button onClick={() => navigate(-1)}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            {tCommon('goBack')}
-          </Button>
-        </div>
-      </div>
-    );
-  }
+  // if (error) {
+  //   return (
+  //     <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100 flex items-center justify-center">
+  //       <div className="text-center">
+  //         <h2 className="text-2xl font-bold text-red-600 mb-4">{t('error.title')}</h2>
+  //         <p className="text-gray-600 mb-4">{error}</p>
+  //         <Button onClick={() => navigate(-1)}>
+  //           <ArrowLeft className="h-4 w-4 mr-2" />
+  //           {tCommon('goBack')}
+  //         </Button>
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   const renderPendingState = () => (
     <div className="text-center py-12">
