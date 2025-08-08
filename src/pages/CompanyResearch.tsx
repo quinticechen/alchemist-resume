@@ -260,6 +260,25 @@ const CompanyResearch = () => {
               </div>
             </div>
             
+            {(companyData.headquarters || companyData.career_page) && (
+              <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                {companyData.headquarters && (
+                  <div>
+                    <span className="text-sm text-gray-500">Headquarters: </span>
+                    <span className="text-sm">{companyData.headquarters}</span>
+                  </div>
+                )}
+                {companyData.career_page && (
+                  <div>
+                    <Button variant="outline" size="sm" onClick={() => window.open(companyData.career_page, '_blank')}>
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      Career Page
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+            
             {companyData.company_website && (
               <div className="mt-4">
                 <Button variant="outline" size="sm" onClick={() => window.open(companyData.company_website, '_blank')}>
@@ -302,40 +321,135 @@ const CompanyResearch = () => {
           </Card>
         )}
 
+        {/* Market Position */}
+        {(companyData.main_competitors || companyData.market_share || companyData.competitive_advantages) && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Market Position</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {companyData.main_competitors && (
+                  <div>
+                    <h4 className="font-semibold mb-2">Main Competitors</h4>
+                    <p className="text-gray-700">{companyData.main_competitors}</p>
+                  </div>
+                )}
+                {companyData.market_share && (
+                  <div>
+                    <h4 className="font-semibold mb-2">Market Share</h4>
+                    <p className="text-gray-700">{companyData.market_share}</p>
+                  </div>
+                )}
+                {companyData.competitive_advantages && (
+                  <div>
+                    <h4 className="font-semibold mb-2">Competitive Advantages</h4>
+                    <p className="text-gray-700">{companyData.competitive_advantages}</p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Financial Performance */}
+        {(companyData.stock_performance || companyData.pe_ratio || companyData.growth_rate) && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Financial Performance</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {companyData.stock_performance && (
+                  <div>
+                    <h4 className="font-semibold mb-2">Stock Performance</h4>
+                    <p className="text-sm text-gray-700">{companyData.stock_performance}</p>
+                  </div>
+                )}
+                {companyData.pe_ratio && (
+                  <div>
+                    <h4 className="font-semibold mb-2">P/E Ratio</h4>
+                    <p className="text-sm text-gray-700">{companyData.pe_ratio}</p>
+                  </div>
+                )}
+                {companyData.growth_rate && (
+                  <div>
+                    <h4 className="font-semibold mb-2">Growth Rate</h4>
+                    <p className="text-sm text-gray-700">{companyData.growth_rate}</p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Company Culture */}
+        {(companyData.core_values || companyData.work_environment || companyData.employee_benefits) && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Company Culture</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {companyData.core_values && (
+                  <div>
+                    <h4 className="font-semibold mb-2">Core Values</h4>
+                    <p className="text-gray-700">{companyData.core_values}</p>
+                  </div>
+                )}
+                {companyData.work_environment && (
+                  <div>
+                    <h4 className="font-semibold mb-2">Work Environment</h4>
+                    <p className="text-gray-700">{companyData.work_environment}</p>
+                  </div>
+                )}
+                {companyData.employee_benefits && (
+                  <div>
+                    <h4 className="font-semibold mb-2">Employee Benefits</h4>
+                    <p className="text-gray-700">{companyData.employee_benefits}</p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* SWOT Analysis */}
-        <Card>
-          <CardHeader>
-            <CardTitle>{t('sections.swotAnalysis')}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {companyData.swot_strengths && (
-                <div>
-                  <h4 className="font-semibold text-green-700 mb-2">{t('swot.strengths')}</h4>
-                  <p className="text-sm text-gray-700">{companyData.swot_strengths}</p>
-                </div>
-              )}
-              {companyData.swot_weaknesses && (
-                <div>
-                  <h4 className="font-semibold text-red-700 mb-2">{t('swot.weaknesses')}</h4>
-                  <p className="text-sm text-gray-700">{companyData.swot_weaknesses}</p>
-                </div>
-              )}
-              {companyData.swot_opportunities && (
-                <div>
-                  <h4 className="font-semibold text-blue-700 mb-2">{t('swot.opportunities')}</h4>
-                  <p className="text-sm text-gray-700">{companyData.swot_opportunities}</p>
-                </div>
-              )}
-              {companyData.swot_threats && (
-                <div>
-                  <h4 className="font-semibold text-orange-700 mb-2">{t('swot.threats')}</h4>
-                  <p className="text-sm text-gray-700">{companyData.swot_threats}</p>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+        {(companyData.swot_strengths || companyData.swot_weaknesses || companyData.swot_opportunities || companyData.swot_threats) && (
+          <Card>
+            <CardHeader>
+              <CardTitle>{t('sections.swotAnalysis')}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {companyData.swot_strengths && (
+                  <div>
+                    <h4 className="font-semibold text-green-700 mb-2">{t('swot.strengths')}</h4>
+                    <p className="text-sm text-gray-700">{companyData.swot_strengths}</p>
+                  </div>
+                )}
+                {companyData.swot_weaknesses && (
+                  <div>
+                    <h4 className="font-semibold text-red-700 mb-2">{t('swot.weaknesses')}</h4>
+                    <p className="text-sm text-gray-700">{companyData.swot_weaknesses}</p>
+                  </div>
+                )}
+                {companyData.swot_opportunities && (
+                  <div>
+                    <h4 className="font-semibold text-blue-700 mb-2">{t('swot.opportunities')}</h4>
+                    <p className="text-sm text-gray-700">{companyData.swot_opportunities}</p>
+                  </div>
+                )}
+                {companyData.swot_threats && (
+                  <div>
+                    <h4 className="font-semibold text-orange-700 mb-2">{t('swot.threats')}</h4>
+                    <p className="text-sm text-gray-700">{companyData.swot_threats}</p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Recent News */}
         {companyData.recent_news && companyData.recent_news.length > 0 && (
