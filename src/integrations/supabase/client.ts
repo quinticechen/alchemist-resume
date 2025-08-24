@@ -64,13 +64,13 @@ export const getEnvironment = () => {
 // Get the appropriate redirect URL for OAuth
 const getRedirectTo = () => {
   if (typeof window === 'undefined') {
-    return 'https://resumealchemist.qwizai.com/auth/callback';
+    return 'https://resumealchemist.qwizai.com/alchemist-workshop';
   }
   
   const origin = window.location.origin;
   
-  // Always redirect to the OAuth callback handler
-  return `${origin}/auth/callback`;
+  // Always redirect to the alchemist-workshop page after OAuth
+  return `${origin}/alchemist-workshop`;
 };
 
 // Create the Supabase client with customized configuration
