@@ -21,6 +21,13 @@ export const LanguageRouter: React.FC<LanguageRouterProps> = ({ children }) => {
         
         console.log('LanguageRouter: Current path:', currentPath, 'Language from path:', langFromPath);
         
+        // Skip language routing for OAuth callback paths
+        if (currentPath.includes('/auth/callback') || location.hash.includes('access_token')) {
+          console.log('LanguageRouter: Skipping language routing for OAuth callback');
+          setIsInitialized(true);
+          return;
+        }
+        
         // If we're at the root path without language, redirect to default language
         if (currentPath === '/') {
           const defaultLang = getDefaultLanguage();
@@ -52,7 +59,9 @@ export const LanguageRouter: React.FC<LanguageRouterProps> = ({ children }) => {
             : getDefaultLanguage();
           
           const newPath = addLanguageToPath(currentPath, currentLang as any);
-          navigate(newPath, { replace: true });
+          // Preserve query parameters and hash from the original URL
+          const fullNewPath = newPath + location.search + location.hash;
+          navigate(fullNewPath, { replace: true });
           if (i18n.language !== currentLang) {
             await i18n.changeLanguage(currentLang);
             console.log('LanguageRouter: Redirected and changed to:', currentLang);
