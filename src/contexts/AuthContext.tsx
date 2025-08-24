@@ -45,19 +45,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setSession(newSession);
         
         if (event === 'SIGNED_IN') {
-          // Check for redirect after login
-          const redirectPath = localStorage.getItem('redirectAfterLogin');
-          if (redirectPath) {
-            localStorage.removeItem('redirectAfterLogin');
-            navigate(redirectPath);
-          } else {
-            const isFirstSignIn = !localStorage.getItem('hasSignedInBefore');
-            
-            if (isFirstSignIn && newSession) {
-              localStorage.setItem('hasSignedInBefore', 'true');
-              navigate('/onboard');
+          console.log('Auth: User signed in, processing redirect');
+          // Use setTimeout to avoid conflicts with LanguageRouter
+          setTimeout(() => {
+            const redirectPath = localStorage.getItem('redirectAfterLogin');
+            if (redirectPath) {
+              localStorage.removeItem('redirectAfterLogin');
+              navigate(redirectPath);
+            } else {
+              const isFirstSignIn = !localStorage.getItem('hasSignedInBefore');
+              
+              if (isFirstSignIn && newSession) {
+                localStorage.setItem('hasSignedInBefore', 'true');
+                navigate('/en/user-onboard');
+              } else {
+                // Navigate to alchemist-workshop with language prefix
+                navigate('/en/alchemist-workshop');
+              }
             }
-          }
+          }, 100);
         }
       }
     );
