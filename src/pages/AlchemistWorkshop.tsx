@@ -11,9 +11,12 @@ import { useSubscriptionCheck } from "@/hooks/useSubscriptionCheck";
 import { getEnvironment } from "@/integrations/supabase/client";
 import Lottie from "react-lottie";
 import Loading from "@/animations/Loading.json";
+import { useTranslation } from "react-i18next";
+import { SEO } from "@/components/SEO";
 
 
 const AlchemistWorkshop = () => {
+  const { t } = useTranslation(['common', 'workshop']);
   const { session, isLoading } = useAuth();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [filePath, setFilePath] = useState<string>("");
@@ -296,11 +299,17 @@ const AlchemistWorkshop = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-4xl mx-auto space-y-8">
-        <h1 className="text-center text-4xl font-bold mb-4 bg-gradient-primary text-transparent bg-clip-text">
-          Alchemist Workshop
-        </h1>
+    <>
+      <SEO
+        title={t('workshop:meta.title')}
+        description={t('workshop:meta.description')}
+        keywords={t('workshop:meta.keywords')}
+      />
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto space-y-8">
+          <h1 className="text-center text-4xl font-bold mb-4 bg-gradient-primary text-transparent bg-clip-text">
+            {t('workshop:title')}
+          </h1>
 
         <ResumeUploader
           onUploadSuccess={handleFileUploadSuccess}
@@ -328,8 +337,9 @@ const AlchemistWorkshop = () => {
             isTimeout={isTimeout}
           />
         )}
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 

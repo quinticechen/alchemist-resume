@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAlchemyRecords } from "@/hooks/use-alchemy-records";
 import { SEO } from "@/components/SEO";
+import { useTranslation } from "react-i18next";
 
 import UsageStats from "@/components/alchemy-records/UsageStats";
 import AnalysisCard from "@/components/alchemy-records/AnalysisCard";
@@ -12,6 +13,7 @@ import Lottie from "react-lottie";
 import Loading from "@/animations/Loading.json";
 
 const AlchemyRecords = () => {
+  const { t } = useTranslation(['common', 'records']);
   const { session, isLoading } = useAuth();
   const navigate = useNavigate();
   const {
@@ -61,21 +63,20 @@ const AlchemyRecords = () => {
 
   const getFilterDescription = () => {
     if (statusFilter.includes("all")) {
-      return "No resume analyses found.";
+      return t('records:messages.noAnalysesFound');
     }
     if (statusFilter.length === 1) {
-      return `No analyses found with status "${statusFilter[0]}".`;
+      return `${t('records:messages.noAnalysesWithStatus')} "${statusFilter[0]}".`;
     }
-    return `No analyses found with the selected status filters.`;
+    return t('records:messages.noAnalysesWithFilters');
   };
 
   return (
     <>
       <SEO
-        title="Alchemy Records - Resume Analysis History"
-        description="View and manage your resume analysis history. Track your optimization progress, feedback, and improvements with AI-powered insights."
-        keywords="resume analysis history, AI optimization tracking, career progress, resume improvements, job application records"
-        canonicalUrl="https://resumealchemist.qwizai.com/alchemy-records"
+        title={t('records:meta.title')}
+        description={t('records:meta.description')}
+        keywords={t('records:meta.keywords')}
         noIndex={true}
       />
       
@@ -83,7 +84,7 @@ const AlchemyRecords = () => {
         <div className="container mx-auto px-4 py-12">
           <div className="max-w-4xl mx-auto">
             <h1 className="text-center text-4xl font-bold mb-4 bg-gradient-primary text-transparent bg-clip-text">
-              Alchemy Records
+              {t('records:title')}
             </h1>
 
             <UsageStats usageCount={usageCount} />

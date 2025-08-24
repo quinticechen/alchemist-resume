@@ -9,7 +9,8 @@ import Logo from "./header/Logo";
 import Navigation from "./header/Navigation";
 import LanguageSwitcher from "./LanguageSwitcher";
 import UserMenu from "./header/UserMenu";
-import { Link } from "react-router-dom";
+import LanguageAwareLink from "./LanguageAwareLink";
+import { getLanguageFromPath, addLanguageToPath, getDefaultLanguage } from "@/utils/languageRouting";
 
 const Header = () => {
   const { session, signOut, isLoading } = useAuth();
@@ -30,10 +31,11 @@ const Header = () => {
   };
 
   const handleAuthClick = () => {
+    const currentLang = getLanguageFromPath(location.pathname) || getDefaultLanguage();
     if (session) {
-      navigate("/alchemist-workshop");
+      navigate(addLanguageToPath("/alchemist-workshop", currentLang as any));
     } else {
-      navigate("/login");
+      navigate(addLanguageToPath("/login", currentLang as any));
     }
   };
 
@@ -49,8 +51,8 @@ const Header = () => {
               isHome={isHome}
             />
           </div>
-          <div className="flex items-center gap-6">
-            {/* <LanguageSwitcher /> */}
+          <div className="flex items-center gap-4">
+            <LanguageSwitcher />
             
             {!isLoading && (
               session ? (
@@ -65,7 +67,7 @@ const Header = () => {
                   className="flex items-center gap-2 bg-gradient-primary hover:opacity-90 transition-opacity"
                 >
                   <LogIn className="h-4 w-4" />
-                  <span className="hidden sm:inline">{isHome ? "Start Free Trial" : "Sign In"}</span>
+                  <span className="hidden sm:inline">{isHome ? t('subscription.startFreeTrial') : t('auth.signIn')}</span>
                 </Button>
               )
             )}

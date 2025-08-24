@@ -1,20 +1,19 @@
-
 import React from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { HelmetProvider } from 'react-helmet-async';
-import { AuthProvider } from "@/contexts/AuthContext";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import ScrollToTop from "@/components/ScrollToTop";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import LanguageRouter from "@/components/LanguageRouter";
+import { AuthProvider } from "@/contexts/AuthContext";
+import ScrollToTop from "@/components/ScrollToTop";
 
 // Pages
 import Index from "./pages/Index";
-import Home from "./pages/Home";
 import HomeV2 from "./pages/HomeV2";
 import Login from "./pages/Login";
 import AlchemistWorkshop from "./pages/AlchemistWorkshop";
@@ -31,122 +30,139 @@ import FAQ from "./pages/FAQ";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import CoverLetter from "./pages/CoverLetter";
+import CompanyResearch from "./pages/CompanyResearch";
 
 const queryClient = new QueryClient();
 
-function AppContent() {
-  const location = useLocation();
-  const hideFooter = location.pathname.includes('/resume-refine');
+// Language-aware route wrapper
+const LanguageRoute: React.FC<{ children: React.ReactNode; hideHeaderFooter?: boolean }> = ({ children, hideHeaderFooter = false }) => (
+  <div className="min-h-screen flex flex-col">
+    {!hideHeaderFooter && <Header />}
+    <main className="flex-1">
+      {children}
+    </main>
+    {!hideHeaderFooter && <Footer />}
+  </div>
+);
 
+const AppContent = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100 flex flex-col">
-      <Header />
-      <main className="flex-grow">
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/home" element={<Home />} />
-          <Route path="/home-v2" element={<HomeV2 />} />
-          <Route path="/login" element={<Login />} />
-          <Route
-            path="/alchemist-workshop"
-            element={
-              <ProtectedRoute>
-                <AlchemistWorkshop />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/resume-refine/:analysisId"
-            element={
-              <ProtectedRoute>
-                <ResumeRefine />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/alchemy-records"
-            element={
-              <ProtectedRoute>
-                <AlchemyRecords />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/resume-preview/:analysisId?"
-            element={
-              <ProtectedRoute>
-                <ResumePreview />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/cover-letter"
-            element={
-              <ProtectedRoute>
-                <CoverLetter />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/account"
-            element={
-              <ProtectedRoute>
-                <Account />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/onboard"
-            element={
-              <ProtectedRoute>
-                <UserOnboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/survey"
-            element={
-              <ProtectedRoute>
-                <SurveyPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route path="/job-websites" element={<JobWebsites />} />
-          <Route path="/pricing" element={<Pricing />} />
-          <Route
-            path="/payment-success"
-            element={
-              <ProtectedRoute>
-                <PaymentSuccess />
-              </ProtectedRoute>
-            }
-          />
-          <Route path="/faq" element={<FAQ />} />
-          <Route path="/privacy" element={<Privacy />} />
-          <Route path="/terms" element={<Terms />} />
-        </Routes>
-      </main>
-      {!hideFooter && <Footer />}
-    </div>
+    <Routes>
+      {/* Root redirect to default language */}
+      <Route path="/" element={<Navigate to="/en" replace />} />
+      
+      {/* Language-prefixed routes */}
+      <Route path="/:lang/*" element={
+        <LanguageRoute>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/home" element={<HomeV2 />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/user-onboard" element={<UserOnboard />} />
+            <Route path="/survey" element={<SurveyPage />} />
+            <Route path="/pricing" element={<Pricing />} />
+            <Route path="/faq" element={<FAQ />} />
+            <Route path="/job-websites" element={<JobWebsites />} />
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/privacy" element={<Privacy />} />
+            
+            {/* Protected routes */}
+            <Route
+              path="/alchemist-workshop"
+              element={
+                <ProtectedRoute>
+                  <AlchemistWorkshop />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/resume-refine/:analysisId"
+              element={
+                <div className="min-h-screen">
+                  <ProtectedRoute>
+                    <ResumeRefine />
+                  </ProtectedRoute>
+                </div>
+              }
+            />
+            <Route
+              path="/alchemy-records"
+              element={
+                <ProtectedRoute>
+                  <AlchemyRecords />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/cover-letter"
+              element={
+                <ProtectedRoute>
+                  <CoverLetter />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/account"
+              element={
+                <ProtectedRoute>
+                  <Account />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/resume-preview/:analysisId?"
+              element={
+                <ProtectedRoute>
+                  <ResumePreview />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/payment-success"
+              element={
+                <ProtectedRoute>
+                  <PaymentSuccess />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/company-research/:jobId"
+              element={
+                <ProtectedRoute>
+                  <CompanyResearch />
+                </ProtectedRoute>
+              }
+            />
+          </Routes>
+        </LanguageRoute>
+      } />
+      
+      {/* Catch-all redirect to default language */}
+      <Route path="*" element={<Navigate to="/en" replace />} />
+    </Routes>
   );
-}
+};
 
 function App() {
   return (
-    <HelmetProvider>
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
+    <React.StrictMode>
+      <HelmetProvider>
+        <BrowserRouter>
+          <QueryClientProvider client={queryClient}>
             <AuthProvider>
-              <ScrollToTop />
-              <AppContent />
+              <TooltipProvider>
+                <LanguageRouter>
+                  <ScrollToTop />
+                  <AppContent />
+                </LanguageRouter>
+                <Toaster />
+                <Sonner />
+              </TooltipProvider>
             </AuthProvider>
-          </BrowserRouter>
-        </TooltipProvider>
-      </QueryClientProvider>
-    </HelmetProvider>
+          </QueryClientProvider>
+        </BrowserRouter>
+      </HelmetProvider>
+    </React.StrictMode>
   );
 }
 

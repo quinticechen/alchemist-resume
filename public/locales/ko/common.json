@@ -1,0 +1,21 @@
+{
+  "loading": "로딩 중...",
+  "error": "오류",
+  "success": "성공",
+  "cancel": "취소",
+  "save": "저장",
+  "delete": "삭제",
+  "edit": "편집",
+  "close": "닫기",
+  "back": "뒤로",
+  "next": "다음",
+  "previous": "이전",
+  "submit": "제출",
+  "login": "로그인",
+  "logout": "로그아웃",
+  "signup": "회원가입",
+  "email": "이메일",
+  "password": "비밀번호",
+  "name": "이름",
+  "welcome": "환영합니다"
+}

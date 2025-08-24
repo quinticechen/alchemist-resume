@@ -1,5 +1,6 @@
 
 import { FC } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface PricingToggleProps {
   isAnnual: boolean;
@@ -7,10 +8,12 @@ interface PricingToggleProps {
 }
 
 export const PricingToggle: FC<PricingToggleProps> = ({ isAnnual, setIsAnnual }) => {
+  const { t } = useTranslation('pricing');
+
   return (
     <div className="flex items-center justify-center gap-4 mb-8">
       <span className={`text-lg ${!isAnnual ? 'text-primary font-semibold' : 'text-neutral-600'}`}>
-        Monthly
+        {t('toggle.monthly')}
       </span>
       <button
         onClick={() => setIsAnnual(!isAnnual)}
@@ -25,15 +28,15 @@ export const PricingToggle: FC<PricingToggleProps> = ({ isAnnual, setIsAnnual })
         />
       </button>
       <span className={`text-lg ${isAnnual ? 'text-primary font-semibold' : 'text-neutral-600'}`}>
-        Annual
+        {t('toggle.annual')}
       </span>
       {isAnnual ? (
         <span className="ml-2 px-2 py-1 bg-green-100 text-green-800 text-sm font-medium rounded">
-          Save 25%
+          {t('toggle.saveDiscount')}
         </span>
       ) : (
         <span className="ml-2 px-2 py-1 bg-green-100 text-green-800 text-sm font-medium rounded">
-          Switch to annual plan to save 25%
+          {t('toggle.switchToAnnual')}
         </span>
       )}
     </div>

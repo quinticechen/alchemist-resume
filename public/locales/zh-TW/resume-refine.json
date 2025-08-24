@@ -1,0 +1,185 @@
+{
+  "meta": {
+    "title": "履歷精煉 - 履歷煉金師",
+    "description": "使用AI建議精煉和優化您的履歷。",
+    "keywords": "履歷精煉, AI建議, 履歷優化, 履歷編輯器"
+  },
+  "navigation": {
+    "back": "返回"
+  },
+  "jobDescription": {
+    "title": "職位描述",
+    "companyWebsite": "公司網站",
+    "fields": {
+      "title": "職稱",
+      "language": "語言",
+      "keywords": "關鍵字",
+      "responsibilities": "職責",
+      "requiredQualifications": "必要資格",
+      "preferredQualifications": "優先資格"
+    }
+  },
+  "sections": {
+    "personalInfo": "個人資訊",
+    "professionalSummary": "專業摘要",
+    "professionalExperience": "專業經歷",
+    "education": "教育背景",
+    "skills": "技能",
+    "projects": "專案",
+    "volunteerExperience": "志工經驗",
+    "certifications": "證書"
+  },
+  "personalInfo": {
+    "firstName": "名字",
+    "firstNamePlaceholder": "輸入您的名字",
+    "lastName": "姓氏",
+    "lastNamePlaceholder": "輸入您的姓氏",
+    "email": "電子郵件",
+    "emailPlaceholder": "輸入您的電子郵件",
+    "phone": "電話",
+    "phonePlaceholder": "輸入您的電話號碼",
+    "location": "地點",
+    "locationPlaceholder": "輸入您的地點",
+    "linkedIn": "LinkedIn",
+    "linkedInPlaceholder": "輸入您的LinkedIn個人檔案網址",
+    "website": "網站",
+    "websitePlaceholder": "輸入您的網站網址"
+  },
+  "professionalSummary": {
+    "title": "專業摘要",
+    "placeholder": "撰寫您的專業背景、技能和職業目標的簡潔摘要..."
+  },
+  "experience": {
+    "addExperience": "新增經歷",
+    "editExperience": "編輯經歷",
+    "position": "職位",
+    "company": "公司",
+    "duration": "期間",
+    "actions": "操作",
+    "edit": "編輯",
+    "jobTitle": "職稱",
+    "location": "地點",
+    "companyIntroduction": "公司介紹",
+    "companyIntroductionPlaceholder": "簡要描述公司...",
+    "startDate": "開始日期 (YYYY-MM)",
+    "startDatePlaceholder": "YYYY-MM",
+    "endDate": "結束日期 (YYYY-MM 或空白表示目前)",
+    "endDatePlaceholder": "YYYY-MM",
+    "achievements": "成就",
+    "add": "新增",
+    "noAchievements": "尚未新增任何成就。點擊「新增」來包含成就。",
+    "achievementPlaceholder": "描述您的成就...",
+    "cancel": "取消",
+    "saveExperience": "儲存經歷"
+  },
+  "aiChat": {
+    "greeting": "我的觸手感應到您的履歷中還有一些隱藏的潛力！想要一起探索嗎！",
+    "suggestions": {
+      "highlights": "這份履歷中最吸引人的亮點是什麼？",
+      "keywords": "我們可以加強哪些關鍵字？",
+      "experience": "如何讓您的經歷更有說服力？",
+      "interview": "面試官可能會問什麼問題？"
+    },
+    "placeholder": "詢問履歷優化建議..."
+  },
+  "editor": {
+    "jsonEditor": "JSON編輯器",
+    "save": "儲存",
+    "finish": "完成"
+  },
+  "unsavedChanges": {
+    "title": "未儲存的變更",
+    "description": "您有未儲存的變更。確定要在未儲存的情況下離開嗎？",
+    "cancel": "取消",
+    "leave": "不儲存離開"
+  },
+  "education": {
+    "title": "教育背景",
+    "addEducation": "新增教育背景",
+    "editEducation": "編輯教育背景",
+    "degree": "學位",
+    "institution": "學校",
+    "dates": "日期",
+    "actions": "操作",
+    "edit": "編輯",
+    "degreeName": "學位名稱",
+    "enrollmentDate": "入學日期 (YYYY-MM)",
+    "enrollmentDatePlaceholder": "YYYY-MM",
+    "graduationDate": "畢業日期 (YYYY-MM)",
+    "graduationDatePlaceholder": "YYYY-MM",
+    "gpa": "GPA（選填）",
+    "gpaPlaceholder": "例如 3.8",
+    "cancel": "取消",
+    "saveEducation": "儲存教育背景",
+    "noEducation": "尚未新增任何教育背景。點擊「新增教育背景」開始。"
+  },
+  "skills": {
+    "title": "技能",
+    "technicalSkills": "技術技能",
+    "softSkills": "軟技能",
+    "addTechnicalSkill": "新增技術技能...",
+    "addSoftSkill": "新增軟技能...",
+    "add": "新增"
+  },
+  "projects": {
+    "title": "專案",
+    "addProject": "新增專案",
+    "editProject": "編輯專案",
+    "projectName": "專案名稱",
+    "duration": "期間",
+    "actions": "操作",
+    "edit": "編輯",
+    "name": "專案名稱",
+    "startDate": "開始日期 (YYYY-MM)",
+    "startDatePlaceholder": "YYYY-MM",
+    "endDate": "結束日期 (YYYY-MM 或空白表示目前)",
+    "endDatePlaceholder": "YYYY-MM",
+    "achievements": "成就",
+    "achievementPlaceholder": "描述您的成就...",
+    "noAchievements": "尚未新增任何成就。點擊「新增」來包含成就。",
+    "cancel": "取消",
+    "saveProject": "儲存專案",
+    "noProjects": "尚未新增任何專案。點擊「新增專案」開始。"
+  },
+  "volunteer": {
+    "title": "志工經驗",
+    "addVolunteer": "新增志工經驗",
+    "editVolunteer": "編輯志工經驗",
+    "organization": "組織",
+    "duration": "期間",
+    "actions": "操作",
+    "edit": "編輯",
+    "organizationName": "組織名稱",
+    "startDate": "開始日期 (YYYY-MM)",
+    "startDatePlaceholder": "YYYY-MM",
+    "endDate": "結束日期 (YYYY-MM 或空白表示目前)",
+    "endDatePlaceholder": "YYYY-MM",
+    "achievements": "成就",
+    "achievementPlaceholder": "描述您的成就...",
+    "noAchievements": "尚未新增任何成就。點擊「新增」來包含成就。",
+    "cancel": "取消",
+    "saveVolunteer": "儲存志工經驗",
+    "noVolunteer": "尚未新增任何志工經驗。點擊「新增志工經驗」開始。"
+  },
+  "certifications": {
+    "title": "證書",
+    "addCertification": "新增證書",
+    "editCertification": "編輯證書",
+    "certificationName": "證書名稱",
+    "dateAchieved": "取得日期",
+    "expirationDate": "到期日期",
+    "actions": "操作",
+    "edit": "編輯",
+    "name": "證書名稱",
+    "dateAchievedInput": "取得日期 (YYYY-MM)",
+    "dateAchievedPlaceholder": "YYYY-MM",
+    "expirationDateInput": "到期日期 (YYYY-MM)",
+    "expirationDatePlaceholder": "YYYY-MM",
+    "cancel": "取消",
+    "saveCertification": "儲存證書",
+    "noCertifications": "尚未新增任何證書。點擊「新增證書」開始。"
+  },
+  "toolbar": {
+    "unsavedChanges": "您有未儲存的變更"
+  }
+}

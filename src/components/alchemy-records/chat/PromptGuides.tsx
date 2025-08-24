@@ -2,10 +2,11 @@
 import React from 'react';
 import { Lightbulb, Search, MessageSquare, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "react-i18next";
 
 interface PromptGuide {
-  text: string;
-  shortText: string;
+  textKey: string;
+  shortTextKey: string;
   icon: React.ReactNode;
 }
 
@@ -16,28 +17,30 @@ interface PromptGuidesProps {
 
 const promptGuides: PromptGuide[] = [
   {
-    text: "What are the most attractive highlights in this resume?",
-    shortText: "Resume highlights?",
+    textKey: "aiChat.suggestions.highlights",
+    shortTextKey: "Resume highlights?",
     icon: <Lightbulb className="h-4 w-4" />
   },
   {
-    text: "Which keywords could we strengthen?",
-    shortText: "Keywords to strengthen?",
+    textKey: "aiChat.suggestions.keywords",
+    shortTextKey: "Keywords to strengthen?",
     icon: <Search className="h-4 w-4" />
   },
   {
-    text: "How can we make your experience more compelling?",
-    shortText: "Improve experience?",
+    textKey: "aiChat.suggestions.experience",
+    shortTextKey: "Improve experience?",
     icon: <MessageSquare className="h-4 w-4" />
   },
   {
-    text: "What questions might interviewers ask?",
-    shortText: "Interview questions?",
+    textKey: "aiChat.suggestions.interview",
+    shortTextKey: "Interview questions?",
     icon: <HelpCircle className="h-4 w-4" />
   }
 ];
 
 const PromptGuides: React.FC<PromptGuidesProps> = ({ onPromptSelect, isDisabled }) => {
+  const { t } = useTranslation(['resume-refine']);
+  
   return (
     <div className="mb-3 flex flex-wrap gap-2">
       {promptGuides.map((prompt, index) => (
@@ -46,12 +49,12 @@ const PromptGuides: React.FC<PromptGuidesProps> = ({ onPromptSelect, isDisabled 
           variant="outline"
           size="sm"
           className="text-xs flex-shrink-0"
-          onClick={() => onPromptSelect(prompt.text)}
+          onClick={() => onPromptSelect(t(prompt.textKey))}
           disabled={isDisabled}
         >
           {prompt.icon}
-          <span className="ml-1 hidden sm:inline">{prompt.text}</span>
-          <span className="ml-1 sm:hidden">{prompt.shortText}</span>
+          <span className="ml-1 hidden sm:inline">{t(prompt.textKey)}</span>
+          <span className="ml-1 sm:hidden">{prompt.shortTextKey}</span>
         </Button>
       ))}
     </div>

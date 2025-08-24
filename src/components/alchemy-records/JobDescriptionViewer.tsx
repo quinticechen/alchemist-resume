@@ -3,12 +3,15 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ExternalLink } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useTranslation } from "react-i18next";
 
 interface JobDescriptionViewerProps {
   jobData: any;
 }
 
 const JobDescriptionViewer = ({ jobData }: JobDescriptionViewerProps) => {
+  const { t } = useTranslation(['resume-refine']);
+  
   if (!jobData) {
     return <div className="text-center p-4">No job information available</div>;
   }
@@ -16,7 +19,7 @@ const JobDescriptionViewer = ({ jobData }: JobDescriptionViewerProps) => {
   return (
     <Card className="h-full overflow-hidden flex flex-col">
       <CardHeader className="pb-2 flex-shrink-0">
-        <CardTitle className="text-lg">Job Description</CardTitle>
+        <CardTitle className="text-lg">{t('resume-refine:jobDescription.title')}</CardTitle>
         <CardDescription>
           {jobData.company?.name && (
             <span className="block font-medium text-base">{jobData.company.name}</span>
@@ -24,7 +27,7 @@ const JobDescriptionViewer = ({ jobData }: JobDescriptionViewerProps) => {
           {jobData.company?.url && (
             <a href={jobData.company.url} target="_blank" rel="noopener noreferrer" 
                className="text-blue-500 hover:underline flex items-center gap-1 text-sm mt-1">
-              Company Website <ExternalLink className="h-3 w-3" />
+              {t('resume-refine:jobDescription.companyWebsite')} <ExternalLink className="h-3 w-3" />
             </a>
           )}
         </CardDescription>
@@ -33,14 +36,14 @@ const JobDescriptionViewer = ({ jobData }: JobDescriptionViewerProps) => {
         <CardContent className="space-y-4 pt-0 pb-6">
           {jobData.job?.title && (
             <div>
-              <h3 className="font-medium text-gray-900">Title</h3>
+              <h3 className="font-medium text-gray-900">{t('resume-refine:jobDescription.fields.title')}</h3>
               <p className="text-sm text-gray-700">{jobData.job.title}</p>
             </div>
           )}
 
           {jobData.job?.language && (
             <div>
-              <h3 className="font-medium text-gray-900">Language</h3>
+              <h3 className="font-medium text-gray-900">{t('resume-refine:jobDescription.fields.language')}</h3>
               <p className="text-sm text-gray-700">{jobData.job.language}</p>
             </div>
           )}
@@ -48,7 +51,7 @@ const JobDescriptionViewer = ({ jobData }: JobDescriptionViewerProps) => {
           {/* Display 10keywords if available */}
           {jobData.job?.["10keywords"] && (
             <div>
-              <h3 className="font-medium text-gray-900">Keywords</h3>
+              <h3 className="font-medium text-gray-900">{t('resume-refine:jobDescription.fields.keywords')}</h3>
               <div className="flex flex-wrap gap-1 mt-1">
                 {jobData.job["10keywords"].split(', ').map((keyword: string, idx: number) => (
                   <span key={idx} className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
@@ -62,7 +65,7 @@ const JobDescriptionViewer = ({ jobData }: JobDescriptionViewerProps) => {
           {/* Also display keywords if available (fallback) */}
           {!jobData.job?.["10keywords"] && jobData.job?.keywords && jobData.job.keywords.length > 0 && (
             <div>
-              <h3 className="font-medium text-gray-900">Keywords</h3>
+              <h3 className="font-medium text-gray-900">{t('resume-refine:jobDescription.fields.keywords')}</h3>
               <div className="flex flex-wrap gap-1 mt-1">
                 {jobData.job.keywords.map((keyword: string, idx: number) => (
                   <span key={idx} className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
@@ -84,7 +87,7 @@ const JobDescriptionViewer = ({ jobData }: JobDescriptionViewerProps) => {
           {/* Responsibilities */}
           {jobData.job?.description?.responsibilities && jobData.job.description.responsibilities.length > 0 && (
             <div>
-              <h3 className="font-medium text-gray-900">Responsibilities</h3>
+              <h3 className="font-medium text-gray-900">{t('resume-refine:jobDescription.fields.responsibilities')}</h3>
               <ul className="list-disc pl-5 space-y-1 text-sm text-gray-700">
                 {jobData.job.description.responsibilities.map((item: string, idx: number) => (
                   <li key={idx}>{item}</li>
@@ -96,7 +99,7 @@ const JobDescriptionViewer = ({ jobData }: JobDescriptionViewerProps) => {
           {/* Required Qualifications */}
           {jobData.job?.description?.requiredQualifications && jobData.job.description.requiredQualifications.length > 0 && (
             <div>
-              <h3 className="font-medium text-gray-900">Required Qualifications</h3>
+              <h3 className="font-medium text-gray-900">{t('resume-refine:jobDescription.fields.requiredQualifications')}</h3>
               <ul className="list-disc pl-5 space-y-1 text-sm text-gray-700">
                 {jobData.job.description.requiredQualifications.map((item: string, idx: number) => (
                   <li key={idx}>{item}</li>
@@ -108,7 +111,7 @@ const JobDescriptionViewer = ({ jobData }: JobDescriptionViewerProps) => {
           {/* Preferred Qualifications */}
           {jobData.job?.description?.preferredQualifications && jobData.job.description.preferredQualifications.length > 0 && (
             <div>
-              <h3 className="font-medium text-gray-900">Preferred Qualifications</h3>
+              <h3 className="font-medium text-gray-900">{t('resume-refine:jobDescription.fields.preferredQualifications')}</h3>
               <ul className="list-disc pl-5 space-y-1 text-sm text-gray-700">
                 {jobData.job.description.preferredQualifications.map((item: string, idx: number) => (
                   <li key={idx}>{item}</li>

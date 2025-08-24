@@ -18,12 +18,14 @@ import {
 } from "@/components/ui/alert-dialog";
 import Lottie from "react-lottie";
 import Loading from "@/animations/Loading.json";
+import { useTranslation } from "react-i18next";
 
 interface JobData {
   job_title?: string;
 }
 
 const ResumeRefine = () => {
+  const { t } = useTranslation(['common', 'resume-refine']);
   const loadingOptions = {
     loop: true,
     autoplay: true,
@@ -314,7 +316,7 @@ const ResumeRefine = () => {
           className="absolute left-4 flex items-center gap-2" // left-4 將按鈕固定在左側
         >
           <ArrowLeft className="h-4 w-4" />
-          Back
+          {t('resume-refine:navigation.back')}
         </Button>
         
         <h1 className="text-2xl font-bold bg-gradient-primary text-transparent bg-clip-text">
@@ -339,23 +341,22 @@ const ResumeRefine = () => {
       <AlertDialog open={showUnsavedDialog} onOpenChange={setShowUnsavedDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Unsaved Changes</AlertDialogTitle>
+            <AlertDialogTitle>{t('resume-refine:unsavedChanges.title')}</AlertDialogTitle>
             <AlertDialogDescription>
-              You have unsaved changes. Are you sure you want to leave without
-              saving?
+              {t('resume-refine:unsavedChanges.description')}
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
+          <div className="flex justify-end gap-2 mt-6">
             <AlertDialogCancel onClick={() => setShowUnsavedDialog(false)}>
-              Cancel
+              {t('resume-refine:unsavedChanges.cancel')}
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={() => navigate("/alchemy-records")}
               className="bg-red-500 hover:bg-red-600"
             >
-              Leave without saving
+              {t('resume-refine:unsavedChanges.leave')}
             </AlertDialogAction>
-          </AlertDialogFooter>
+          </div>
         </AlertDialogContent>
       </AlertDialog>
     </div>

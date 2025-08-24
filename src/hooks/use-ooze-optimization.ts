@@ -5,9 +5,9 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
 const resumeAlchemistMessages = [
-  "Hey there! Your resume is glowing now, but shall we explore what else we can enhance? I've got some magical tricks up my tentacles!",
-  "Curious about how I transformed your resume? Let's chat about my secrets and see if we've missed any important points!",
-  "My tentacles sense there's still some hidden potential in your resume! Want to explore together!"
+  "aiChat.greeting",
+  "aiChat.welcomeMessage1",
+  "aiChat.welcomeMessage2"
 ];
 
 export const useOozeOptimization = (analysisId?: string) => {

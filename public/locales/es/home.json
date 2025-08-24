@@ -1,0 +1,86 @@
+{
+  "hero": {
+    "title": "¡Dile Adiós a los Currículums Perdidos - ¡Deja que Ooze y Seeker Abran la Puerta a Tu Trabajo Soñado!",
+    "subtitle": "Resume Alchemist es el generador de currículums impulsado por IA que te ayuda a crear un currículum que te consiga trabajo.",
+    "getStarted": "Comenzar",
+    "learnMore": "Saber más"
+  },
+  "cta": {
+    "title": "¡Obtén 5 Usos Gratuitos Ahora!",
+    "subtitle": "Únete a miles de candidatos exitosos que han transformado sus carreras con Resume Alchemist.",
+    "button": "Comenzar Gratis"
+  },
+  "features": {
+    "title": "La Nueva Forma de Construir Currículums",
+    "subtitle": "Entendemos los desafíos de crear un currículum que destaque. Por eso construimos Resume Alchemist, el generador de currículums impulsado por IA que te ayuda a crear un currículum que te consiga trabajo.",
+    "aiPowered": {
+      "title": "Impulsado por IA",
+      "description": "Nuestra IA analiza tu experiencia y habilidades para crear un currículum que destaque tus fortalezas."
+    },
+    "atsOptimized": {
+      "title": "Optimizado para ATS",
+      "description": "Nos aseguramos de que tu currículum esté optimizado para sistemas de seguimiento de candidatos (ATS) para aumentar tus posibilidades de conseguir una entrevista."
+    },
+    "jobSpecific": {
+      "title": "Específico para el Trabajo",
+      "description": "Adaptamos tu currículum a ofertas de trabajo específicas, destacando las habilidades y experiencia que coinciden con la descripción del trabajo."
+    },
+    "easyToUse": {
+      "title": "Fácil de Usar",
+      "description": "Nuestra interfaz intuitiva hace que sea fácil crear un currículum profesional en minutos."
+    }
+  },
+  "howItWorks": {
+    "title": "Cómo funciona",
+    "subtitle": "Tres simples pasos para crear un currículum que te consiga trabajo.",
+    "steps": {
+      "upload": {
+        "title": "Sube Tu Currículum",
+        "description": "Sube tu currículum existente en formato PDF."
+      },
+      "enterUrl": {
+        "title": "Ingresa la URL de la Oferta de Trabajo",
+        "description": "Pega la URL de la oferta de trabajo a la que estás aplicando."
+      },
+      "getOptimized": {
+        "title": "Obtén Tu Currículum Optimizado",
+        "description": "Nuestra IA analizará tu currículum y la oferta de trabajo para crear un currículum personalizado que destaque tus habilidades y experiencia."
+      }
+    }
+  },
+  "companies": {
+    "title": "Optimiza Tu Currículum para las Mejores Empresas"
+  },
+  "testimonials": {
+    "title": "Lo que dice la gente",
+    "subtitle": "No solo confíes en nuestra palabra. Mira lo que otros dicen sobre Resume Alchemist.",
+    "items": [
+      {
+        "quote": "Resume Alchemist me ayudó a conseguir el trabajo de mis sueños. El generador de currículums impulsado por IA hizo que fuera fácil crear un currículum que destacara mis habilidades y experiencia.",
+        "name": "María García",
+        "title": "Ingeniera de Software"
+      },
+      {
+        "quote": "Estaba luchando por crear un currículum que destacara. Resume Alchemist hizo que fuera fácil crear un currículum profesional que destacara mis habilidades y experiencia.",
+        "name": "Carlos Rodríguez",
+        "title": "Gerente de Marketing"
+      },
+      {
+        "quote": "Era escéptica sobre usar un generador de currículums impulsado por IA, pero Resume Alchemist superó mis expectativas. Hizo que fuera fácil crear un currículum que destacara mis habilidades y experiencia.",
+        "name": "Ana López",
+        "title": "Gerente de Producto"
+      }
+    ]
+  },
+  "footer": {
+    "company": "ResumeAlchemist",
+    "copyright": "2025 ResumeAlchemist",
+    "quickLinks": "Enlaces Rápidos",
+    "terms": "Términos de Servicio",
+    "privacy": "Política de Privacidad",
+    "faq": "Preguntas Frecuentes",
+    "pricing": "Planes de Precios",
+    "contact": "Contáctanos",
+    "followUs": "Síguenos"
+  }
+}
