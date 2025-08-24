@@ -31,6 +31,7 @@ import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import CoverLetter from "./pages/CoverLetter";
 import CompanyResearch from "./pages/CompanyResearch";
+import OAuthCallback from "./components/OAuthCallback";
 
 const queryClient = new QueryClient();
 
@@ -48,6 +49,9 @@ const LanguageRoute: React.FC<{ children: React.ReactNode; hideHeaderFooter?: bo
 const AppContent = () => {
   return (
     <Routes>
+      {/* OAuth callback route - bypasses language routing */}
+      <Route path="/auth/callback" element={<OAuthCallback />} />
+      
       {/* Root redirect to default language */}
       <Route path="/" element={<Navigate to="/en" replace />} />
       
