@@ -585,19 +585,9 @@ const ResumePreview = () => {
             </div>
           </div>
 
-          {/* A4 Page Indicator */}
-          <div className="relative max-w-[794px] mx-auto mb-4">
-            <div className="absolute -right-12 top-0 flex items-center gap-2 text-sm text-gray-500">
-              <div className="text-right">
-                <div className="text-xs text-red-500 font-medium">1 page A4</div>
-                <div className="w-16 border-t border-dotted border-gray-400 mt-1"></div>
-              </div>
-            </div>
-          </div>
-
           <div
             ref={resumeRef}
-            className={`bg-white rounded-xl p-8 shadow-apple relative min-h-[1122px] max-w-[794px] mx-auto ${
+            className={`bg-white rounded-xl p-8 shadow-apple relative ${
               style === "modern"
                 ? "bg-blue-50"
                 : style === "minimal"
@@ -608,17 +598,7 @@ const ResumePreview = () => {
                 ? "bg-purple-50"
                 : "bg-white"
             }`}
-            style={{
-              /* A4 dimensions in pixels at 96 DPI */
-              width: '794px',
-              minHeight: '1122px',
-              border: '1px solid #e5e7eb'
-            }}
           >
-            {/* A4 page boundary indicator */}
-            <div className="absolute -right-12 top-0 bottom-0 pointer-events-none">
-              <div className="h-full border-r border-dotted border-gray-400"></div>
-            </div>
             <div
               className={`mb-6 pb-4 relative group ${
                 style === "modern"
@@ -778,10 +758,10 @@ const ResumePreview = () => {
                             </p>
                           )}
                           {exp.achievements && (
-                            <ul className="list-disc ml-4 mt-2 text-gray-700 space-y-1">
+                            <ul className="list-disc ml-5 mt-2 text-gray-700">
                               {exp.achievements.map(
                                 (achievement: string, i: number) => (
-                                  <li key={i} className="leading-relaxed">{achievement}</li>
+                                  <li key={i}>{achievement}</li>
                                 )
                               )}
                             </ul>
@@ -911,10 +891,10 @@ const ResumePreview = () => {
                             <h3 className="font-bold text-gray-700 mb-1">
                               Technical Skills
                             </h3>
-                            <ul className="list-disc ml-4 text-gray-700 space-y-1">
+                            <ul className="list-disc ml-5 text-gray-700">
                               {skillsData.technical.map(
                                 (skill: string, i: number) => (
-                                  <li key={i} className="leading-relaxed">{skill}</li>
+                                  <li key={i}>{skill}</li>
                                 )
                               )}
                             </ul>
@@ -926,10 +906,10 @@ const ResumePreview = () => {
                             <h3 className="font-bold text-gray-700 mb-1">
                               Soft Skills
                             </h3>
-                            <ul className="list-disc ml-4 text-gray-700 space-y-1">
+                            <ul className="list-disc ml-5 text-gray-700">
                               {skillsData.soft.map(
                                 (skill: string, i: number) => (
-                                  <li key={i} className="leading-relaxed">{skill}</li>
+                                  <li key={i}>{skill}</li>
                                 )
                               )}
                             </ul>
@@ -986,10 +966,10 @@ const ResumePreview = () => {
                             )}
                           </div>
                           {project.achievements && (
-                            <ul className="list-disc ml-4 mt-2 text-gray-700 space-y-1">
+                            <ul className="list-disc ml-5 mt-2 text-gray-700">
                               {project.achievements.map(
                                 (achievement: string, i: number) => (
-                                  <li key={i} className="leading-relaxed">{achievement}</li>
+                                  <li key={i}>{achievement}</li>
                                 )
                               )}
                             </ul>
@@ -1030,10 +1010,10 @@ const ResumePreview = () => {
                     >
                       {t('resume-preview:sections.certifications')}
                     </h2>
-                    <ul className="list-disc ml-4 text-gray-700 space-y-1">
+                    <ul className="list-disc ml-5 text-gray-700">
                       {resumeData.resume.certifications.map(
                         (cert: any, i: number) => (
-                          <li key={i} className="leading-relaxed">
+                          <li key={i}>
                             {cert.name}
                             {cert.dateAchieved && (
                               <span className="text-gray-500">
@@ -1100,10 +1080,10 @@ const ResumePreview = () => {
                             )}
                           </div>
                           {vol.achievements && (
-                            <ul className="list-disc ml-4 mt-2 text-gray-700 space-y-1">
+                            <ul className="list-disc ml-5 mt-2 text-gray-700">
                               {vol.achievements.map(
                                 (achievement: string, i: number) => (
-                                  <li key={i} className="leading-relaxed">{achievement}</li>
+                                  <li key={i}>{achievement}</li>
                                 )
                               )}
                             </ul>
