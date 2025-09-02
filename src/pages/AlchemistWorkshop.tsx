@@ -172,39 +172,28 @@ const AlchemistWorkshop = () => {
         throw resumeError;
       }
 
+      // Generate the public URL for all scenarios
+      const { data: publicUrlData } = supabase.storage
+        .from("resumes")
+        .getPublicUrl(resumeData.file_path);
+
       // Prepare webhook data based on the scenario
       let webhookData: any = {
         analysisId: analysisRecord.id,
         fileName: resumeData.file_name,
+        resumeUrl: publicUrlData.publicUrl, // Always include resumeUrl
       };
 
-      // Scenario 1: Previous resume + job description
-      if (isFromPreviousResume && data.jobContent) {
-        webhookData.resumeContent = resumeData.formatted_resume || "";
+      // Add job information based on input type
+      if (data.jobUrl) {
+        webhookData.jobUrl = data.jobUrl;
+      } else if (data.jobContent) {
         webhookData.jobContent = data.jobContent;
       }
-      // Scenario 2: Previous resume + job URL  
-      else if (isFromPreviousResume && data.jobUrl) {
-        webhookData.resumeContent = resumeData.formatted_resume || "";
-        webhookData.jobUrl = data.jobUrl;
-      }
-      // Scenario 3: New resume + job URL
-      else if (!isFromPreviousResume && data.jobUrl) {
-        // Generate the full public URL for the resume file
-        const { data: publicUrlData } = supabase.storage
-          .from("resumes")
-          .getPublicUrl(resumeData.file_path);
-        webhookData.resumeUrl = publicUrlData.publicUrl;
-        webhookData.jobUrl = data.jobUrl;
-      }
-      // Scenario 4: New resume + job description
-      else if (!isFromPreviousResume && data.jobContent) {
-        // Generate the full public URL for the resume file
-        const { data: publicUrlData } = supabase.storage
-          .from("resumes")
-          .getPublicUrl(resumeData.file_path);
-        webhookData.resumeUrl = publicUrlData.publicUrl;
-        webhookData.jobContent = data.jobContent;
+
+      // For previous resumes, also include resumeContent if available
+      if (isFromPreviousResume && resumeData.formatted_resume) {
+        webhookData.resumeContent = resumeData.formatted_resume;
       }
 
       const currentEnv = getEnvironment();
