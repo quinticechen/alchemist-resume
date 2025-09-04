@@ -58,6 +58,14 @@ function extractRichText(richTextArray: any[]): { text: string, annotations: any
   return { text: combinedText, annotations, links };
 }
 
+// Function to generate a hash for image content detection
+async function generateImageHash(imageBlob: Blob): Promise<string> {
+  const arrayBuffer = await imageBlob.arrayBuffer();
+  const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
 // Function to download image and upload to Supabase Storage
 async function backupImageToStorage(imageUrl: string, platformTitle: string, imageType = 'image'): Promise<string | null> {
   if (!imageUrl) return null;
@@ -65,39 +73,55 @@ async function backupImageToStorage(imageUrl: string, platformTitle: string, ima
   try {
     console.log(`Downloading ${imageType}: ${imageUrl.substring(0, 50)}...`);
     
-    // Create sanitized filename from URL
-    const fileName = `${Date.now()}_${imageType}_${Math.random().toString(36).substring(2, 10)}`;
-    const extension = imageUrl.includes('.') ? 
-      imageUrl.split('.').pop()?.split('?')[0].toLowerCase() : 'jpg';
+    // Initialize Supabase client
+    const supabase = createClient(supabaseUrl, supabaseKey);
     
     // Create sanitized platform name for folder structure
     const sanitizedPlatformName = platformTitle
       .replace(/[^a-zA-Z0-9]/g, '_')
       .toLowerCase();
     
-    const folderPath = `notion-media/${sanitizedPlatformName}`;
-    const filePath = `${folderPath}/${fileName}.${extension}`;
-    
-    // Fetch the image content
+    // Fetch the image content first to check if it has changed
     const imageResponse = await fetch(imageUrl);
     if (!imageResponse.ok) {
       throw new Error(`Failed to download image: ${imageResponse.status}`);
     }
     
     const imageBlob = await imageResponse.blob();
+    const imageHash = await generateImageHash(imageBlob);
     
-    // Initialize Supabase client
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    // Check if we already have this image by looking for existing files with this hash
+    const bucketName = 'notion-media';
+    const folderPath = `notion-media/${sanitizedPlatformName}`;
+    
+    // Check existing files in the platform folder
+    const { data: existingFiles } = await supabase.storage
+      .from(bucketName)
+      .list(sanitizedPlatformName, { limit: 100 });
+    
+    // Look for existing file with same type and hash in metadata
+    if (existingFiles) {
+      for (const file of existingFiles) {
+        if (file.name.includes(`_${imageType}_`) && file.metadata?.hash === imageHash) {
+          // File with same content already exists, return existing URL
+          const { data: publicUrlData } = supabase.storage
+            .from(bucketName)
+            .getPublicUrl(`${sanitizedPlatformName}/${file.name}`);
+          
+          console.log(`Image already exists with same content, using existing: ${publicUrlData.publicUrl}`);
+          return publicUrlData.publicUrl;
+        }
+      }
+    }
     
     // Ensure the bucket exists (create if it doesn't)
-    const bucketName = 'notion-media';
     const { data: buckets } = await supabase.storage.listBuckets();
     
     if (!buckets?.some(bucket => bucket.name === bucketName)) {
       console.log(`Creating bucket: ${bucketName}`);
       const { error: bucketError } = await supabase.storage.createBucket(bucketName, { 
         public: true,
-        fileSizeLimit: 100 * 1024 * 1024 // 100MB limit
+        fileSizeLimit: 50 * 1024 * 1024 // 50MB limit
       });
       
       if (bucketError) {
@@ -106,12 +130,24 @@ async function backupImageToStorage(imageUrl: string, platformTitle: string, ima
       }
     }
     
-    // Upload the image to Supabase storage
+    // Create filename with hash to prevent duplicates
+    const extension = imageUrl.includes('.') ? 
+      imageUrl.split('.').pop()?.split('?')[0].toLowerCase() : 'jpg';
+    const fileName = `${imageType}_${imageHash.substring(0, 12)}`;
+    const filePath = `${sanitizedPlatformName}/${fileName}.${extension}`;
+    
+    // Upload the image to Supabase storage with hash in metadata
     const { data, error } = await supabase.storage
       .from(bucketName)
       .upload(filePath, imageBlob, {
         contentType: imageBlob.type,
-        upsert: true
+        upsert: true,
+        metadata: {
+          hash: imageHash,
+          originalUrl: imageUrl,
+          platform: platformTitle,
+          imageType: imageType
+        }
       });
       
     if (error) {
