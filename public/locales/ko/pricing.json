@@ -1,0 +1,25 @@
+{
+  "meta": {
+    "title": "가격 정책 - Resume Alchemist",
+    "description": "경력 성장을 위한 완벽한 요금제를 선택하세요. 유연한 가격 옵션으로 합리적인 AI 기반 이력서 최적화.",
+    "keywords": "가격 정책, 이력서 최적화 가격, AI 이력서 빌더 비용, 구독 요금제, 경력 성장"
+  },
+  "title": "요금제 선택",
+  "subtitle": "경력 성장을 위한 완벽한 요금제를 선택하세요",
+  "currentPlan": "현재 요금제",
+  "remainingUses": "남은 사용 횟수",
+  "toggle": {
+    "monthly": "월간",
+    "annual": "연간",
+    "saveDiscount": "25% 할인",
+    "switchToAnnual": "연간 요금제로 전환하여 25% 할인 받으세요"
+  },
+  "plans": {
+    "apprentice": "견습생",
+    "alchemist": "연금술사",
+    "grandmaster": "그랜드마스터",
+    "mostPopular": "가장 인기 있는",
+    "getCurrentPlan": "현재 요금제",
+    "getButton": "{{plan}} 선택하기"
+  }
+}
