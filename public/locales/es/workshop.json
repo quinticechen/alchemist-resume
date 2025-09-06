@@ -1,0 +1,30 @@
+{
+  "meta": {
+    "title": "Taller de Alquimia - Optimización de Currículum",
+    "description": "Transforma tu currículum con optimización impulsada por IA. Sube tu currículum y la oferta de empleo para obtener recomendaciones personalizadas.",
+    "keywords": "optimización de currículum, creador de currículum IA, solicitud de empleo, desarrollo profesional"
+  },
+  "title": "Taller de Alquimia",
+  "resumeUpload": {
+    "title": "Carga de Currículum",
+    "uploadNew": "Cargar Nuevo Currículum",
+    "selectPrevious": "Seleccionar Currículum Anterior",
+    "dragDrop": "Arrastra y suelta tu currículum en PDF aquí, o haz clic para seleccionar un archivo",
+    "maxFileSize": "Tamaño máximo de archivo: 5MB",
+    "loading": "Cargando",
+    "previewResume": "Vista Previa del Currículum",
+    "useSelected": "Usar Currículum Seleccionado",
+    "remove": "Eliminar",
+    "previousSelected": "Currículum anterior seleccionado",
+    "selectResume": "Selecciona un currículum",
+    "uploading": "Subiendo..."
+  },
+  "jobInfo": {
+    "title": "Información del Puesto",
+    "jobUrl": "URL de la Oferta de Empleo",
+    "jobDescription": "Texto de la Descripción del Puesto",
+    "urlPlaceholder": "Pega la URL de la oferta de empleo aquí. Elimina todas las ? de la URL",
+    "descriptionPlaceholder": "Pega el texto de la descripción del puesto aquí...",
+    "castAlchemy": "Lanzar Alquimia"
+  }
+}
