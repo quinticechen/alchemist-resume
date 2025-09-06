@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AlertCircle, Lock, Mail, LogIn } from "lucide-react";
+import { Link } from "react-router-dom";
 
 interface EmailFormProps {
   email: string;
@@ -63,7 +64,7 @@ const EmailForm = ({
         <LogIn className="w-5 h-5 mr-2" />
         {isLoading ? "Loading..." : isSignUp ? "Sign up" : "Sign in"}
       </Button>
-      <div className="text-center">
+      <div className="text-center space-y-2">
         <button
           type="button"
           onClick={onToggleMode}
@@ -73,6 +74,17 @@ const EmailForm = ({
             ? "Already have an account? Sign in"
             : "Don't have an account? Sign up"}
         </button>
+        
+        {!isSignUp && (
+          <div>
+            <Link 
+              to="/en/forgot-password"
+              className="text-sm text-gray-600 hover:text-gray-800"
+            >
+              Forgot your password?
+            </Link>
+          </div>
+        )}
       </div>
     </form>
   );

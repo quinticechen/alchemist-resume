@@ -48,6 +48,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           console.log('Auth: User signed in, processing redirect');
           // Use setTimeout to avoid conflicts with LanguageRouter
           setTimeout(() => {
+            // Check if this is a password reset flow
+            const urlParams = new URLSearchParams(window.location.search);
+            const isPasswordReset = urlParams.get('type') === 'recovery';
+            
+            if (isPasswordReset) {
+              // For password reset, stay on the reset password page
+              return;
+            }
+            
             const redirectPath = localStorage.getItem('redirectAfterLogin');
             if (redirectPath) {
               localStorage.removeItem('redirectAfterLogin');
