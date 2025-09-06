@@ -32,8 +32,8 @@ const UserOnboard = () => {
           {/* Seeker animation */}
           <div className="absolute top-full -mt-2">
             <OozeQQAnimation 
-              width={200} 
-              height={200} 
+              width={100} 
+              height={100} 
               mobileWidth={80}
               mobileHeight={80}
               showShadow={true}
