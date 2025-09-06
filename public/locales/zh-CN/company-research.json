@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "title": "公司研究 - 人工智能驱动的公司见解",
+    "description": "获取由人工智能驱动的全面公司研究和见解，以增强您的求职策略。",
+    "keywords": "公司研究, 公司分析, 求职, 职业见解, 商业智能"
+  },
+  "title": "公司研究",
+  "employees": "员工",
+  "ceo": "首席执行官",
+  "visitWebsite": "访问网站",
+  "readMore": "阅读更多",
+  "unknown": {
+    "company": "未知公司"
+  },
+  "sections": {
+    "businessOverview": "业务概述",
+    "keyProducts": "主要产品与服务",
+    "swotAnalysis": "SWOT 分析",
+    "recentNews": "近期新闻"
+  },
+  "swot": {
+    "strengths": "优势",
+    "weaknesses": "劣势",
+    "opportunities": "机会",
+    "threats": "威胁"
+  },
+  "pending": {
+    "title": "正在研究公司...",
+    "description": "我们的人工智能正在分析公司信息并为您收集全面的见解。",
+    "waitTime": "这通常需要 2-3 分钟。请稍候，我们正在整理研究报告。"
+  },
+  "error": {
+    "title": "研究错误",
+    "fetchFailed": "未能获取公司研究数据。请稍后再试。"
+  }
+}
