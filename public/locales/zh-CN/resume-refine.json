@@ -1,0 +1,185 @@
+{
+  "meta": {
+    "title": "简历优化 - Resume Alchemist",
+    "description": "通过 AI 建议优化和完善您的简历。",
+    "keywords": "简历优化, AI 建议, 简历优化, 简历编辑器"
+  },
+  "navigation": {
+    "back": "返回"
+  },
+  "jobDescription": {
+    "title": "职位描述",
+    "companyWebsite": "公司网站",
+    "fields": {
+      "title": "标题",
+      "language": "语言",
+      "keywords": "关键词",
+      "responsibilities": "职责",
+      "requiredQualifications": "必需资质",
+      "preferredQualifications": "优先资质"
+    }
+  },
+  "sections": {
+    "personalInfo": "个人信息",
+    "professionalSummary": "职业概述",
+    "professionalExperience": "工作经历",
+    "education": "教育背景",
+    "skills": "技能",
+    "projects": "项目",
+    "volunteerExperience": "志愿者经历",
+    "certifications": "证书"
+  },
+  "personalInfo": {
+    "firstName": "名字",
+    "firstNamePlaceholder": "输入你的名字",
+    "lastName": "姓氏",
+    "lastNamePlaceholder": "输入你的姓氏",
+    "email": "邮箱",
+    "emailPlaceholder": "输入你的邮箱",
+    "phone": "电话",
+    "phonePlaceholder": "输入你的电话号码",
+    "location": "地点",
+    "locationPlaceholder": "输入你的地点",
+    "linkedIn": "领英",
+    "linkedInPlaceholder": "输入你的领英个人资料 URL",
+    "website": "网站",
+    "websitePlaceholder": "输入你的网站 URL"
+  },
+  "professionalSummary": {
+    "title": "职业概述",
+    "placeholder": "撰写一份简洁的职业背景、技能和职业目标的总结..."
+  },
+  "experience": {
+    "addExperience": "添加工作经历",
+    "editExperience": "编辑工作经历",
+    "position": "职位",
+    "company": "公司",
+    "duration": "任职时间",
+    "actions": "操作",
+    "edit": "编辑",
+    "jobTitle": "职位名称",
+    "location": "地点",
+    "companyIntroduction": "公司简介",
+    "companyIntroductionPlaceholder": "简要描述公司...",
+    "startDate": "开始日期 (YYYY-MM)",
+    "startDatePlaceholder": "YYYY-MM",
+    "endDate": "结束日期 (YYYY-MM 或留空表示当前)",
+    "endDatePlaceholder": "YYYY-MM",
+    "achievements": "成就",
+    "add": "添加",
+    "noAchievements": "尚未添加成就。点击“添加”以包含成就。",
+    "achievementPlaceholder": "描述你的成就...",
+    "cancel": "取消",
+    "saveExperience": "保存工作经历"
+  },
+  "aiChat": {
+    "greeting": "我的触手感觉到你的简历还有一些隐藏的潜力！想一起探索吗！",
+    "suggestions": {
+      "highlights": "这份简历中最吸引人的亮点是什么？",
+      "keywords": "哪些关键词可以加强？",
+      "experience": "如何让你的经历更具说服力？",
+      "interview": "面试官可能会问什么问题？"
+    },
+    "placeholder": "请求简历优化建议..."
+  },
+  "editor": {
+    "jsonEditor": "JSON 编辑器",
+    "save": "保存",
+    "finish": "完成"
+  },
+  "unsavedChanges": {
+    "title": "未保存的更改",
+    "description": "您有未保存的更改。确定要离开而不保存吗？",
+    "cancel": "取消",
+    "leave": "不保存离开"
+  },
+  "education": {
+    "title": "教育背景",
+    "addEducation": "添加教育背景",
+    "editEducation": "编辑教育背景",
+    "degree": "学位",
+    "institution": "学校",
+    "dates": "日期",
+    "actions": "操作",
+    "edit": "编辑",
+    "degreeName": "学位名称",
+    "enrollmentDate": "入学日期 (YYYY-MM)",
+    "enrollmentDatePlaceholder": "YYYY-MM",
+    "graduationDate": "毕业日期 (YYYY-MM)",
+    "graduationDatePlaceholder": "YYYY-MM",
+    "gpa": "GPA (可选)",
+    "gpaPlaceholder": "例如 3.8",
+    "cancel": "取消",
+    "saveEducation": "保存教育背景",
+    "noEducation": "还没有教育背景记录。点击“添加教育背景”开始。"
+  },
+  "skills": {
+    "title": "技能",
+    "technicalSkills": "技术技能",
+    "softSkills": "软技能",
+    "addTechnicalSkill": "添加一项技术技能...",
+    "addSoftSkill": "添加一项软技能...",
+    "add": "添加"
+  },
+  "projects": {
+    "title": "项目",
+    "addProject": "添加项目",
+    "editProject": "编辑项目",
+    "projectName": "项目名称",
+    "duration": "持续时间",
+    "actions": "操作",
+    "edit": "编辑",
+    "name": "项目名称",
+    "startDate": "开始日期 (YYYY-MM)",
+    "startDatePlaceholder": "YYYY-MM",
+    "endDate": "结束日期 (YYYY-MM 或留空表示当前)",
+    "endDatePlaceholder": "YYYY-MM",
+    "achievements": "成就",
+    "achievementPlaceholder": "描述你的成就...",
+    "noAchievements": "尚未添加成就。点击“添加”以包含成就。",
+    "cancel": "取消",
+    "saveProject": "保存项目",
+    "noProjects": "还没有项目记录。点击“添加项目”开始。"
+  },
+  "volunteer": {
+    "title": "志愿者经历",
+    "addVolunteer": "添加志愿者经历",
+    "editVolunteer": "编辑志愿者经历",
+    "organization": "组织",
+    "duration": "任职时间",
+    "actions": "操作",
+    "edit": "编辑",
+    "organizationName": "组织名称",
+    "startDate": "开始日期 (YYYY-MM)",
+    "startDatePlaceholder": "YYYY-MM",
+    "endDate": "结束日期 (YYYY-MM 或留空表示当前)",
+    "endDatePlaceholder": "YYYY-MM",
+    "achievements": "成就",
+    "achievementPlaceholder": "描述你的成就...",
+    "noAchievements": "尚未添加成就。点击“添加”以包含成就。",
+    "cancel": "取消",
+    "saveVolunteer": "保存志愿者经历",
+    "noVolunteer": "还没有志愿者经历记录。点击“添加志愿者经历”开始。"
+  },
+  "certifications": {
+    "title": "证书",
+    "addCertification": "添加证书",
+    "editCertification": "编辑证书",
+    "certificationName": "证书名称",
+    "dateAchieved": "获得日期",
+    "expirationDate": "到期日期",
+    "actions": "操作",
+    "edit": "编辑",
+    "name": "证书名称",
+    "dateAchievedInput": "获得日期 (YYYY-MM)",
+    "dateAchievedPlaceholder": "YYYY-MM",
+    "expirationDateInput": "到期日期 (YYYY-MM)",
+    "expirationDatePlaceholder": "YYYY-MM",
+    "cancel": "取消",
+    "saveCertification": "保存证书",
+    "noCertifications": "还没有证书记录。点击“添加证书”开始。"
+  },
+  "toolbar": {
+    "unsavedChanges": "您有未保存的更改"
+  }
+}
