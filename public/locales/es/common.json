@@ -1,21 +1,47 @@
 {
-  "loading": "Cargando...",
-  "error": "Error",
-  "success": "Éxito",
-  "cancel": "Cancelar",
-  "save": "Guardar",
-  "delete": "Eliminar",
-  "edit": "Editar",
-  "close": "Cerrar",
-  "back": "Atrás",
-  "next": "Siguiente",
-  "previous": "Anterior",
-  "submit": "Enviar",
-  "login": "Iniciar Sesión",
-  "logout": "Cerrar Sesión",
-  "signup": "Registrarse",
-  "email": "Correo Electrónico",
-  "password": "Contraseña",
-  "name": "Nombre",
-  "welcome": "Bienvenido"
+  "navigation": {
+    "workshop": "Taller",
+    "records": "Registros",
+    "pricing": "Precios",
+    "faq": "Preguntas Frecuentes",
+    "supportedWebsites": "Sitios Web Soportados"
+  },
+  "auth": {
+    "signIn": "Iniciar Sesión",
+    "signOut": "Cerrar Sesión",
+    "signUp": "Registrarse",
+    "email": "Correo Electrónico",
+    "password": "Contraseña",
+    "forgotPassword": "¿Olvidaste tu contraseña?",
+    "createAccount": "Crear Cuenta",
+    "alreadyHaveAccount": "¿Ya tienes cuenta?",
+    "dontHaveAccount": "¿No tienes cuenta?"
+  },
+  "actions": {
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "upload": "Subir",
+    "download": "Descargar",
+    "submit": "Enviar",
+    "continue": "Continuar",
+    "back": "Atrás",
+    "next": "Siguiente"
+  },
+  "status": {
+    "loading": "Cargando...",
+    "saving": "Guardando...",
+    "success": "Éxito",
+    "error": "Error",
+    "pending": "Pendiente",
+    "complete": "Completo"
+  },
+  "subscription": {
+    "usesLeft": "{{count}} usos restantes",
+    "startFreeTrial": "Iniciar Prueba Gratuita",
+    "upgradeNow": "Actualizar Ahora",
+    "currentPlan": "Plan Actual"
+  },
+  "goBack": "Volver"
 }
