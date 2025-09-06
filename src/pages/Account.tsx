@@ -43,7 +43,7 @@ const Account = () => {
 
   useEffect(() => {
     if (!authLoading && !session) {
-      navigate('/login', { state: { from: '/account' } });
+      navigate('/en/login', { state: { from: '/en/account' } });
     }
   }, [session, authLoading, navigate]);
 
@@ -157,7 +157,7 @@ const Account = () => {
   };
 
   const handleSubscribe = () => {
-    navigate("/pricing");
+    navigate("/en/pricing");
   };
 
   // Updated free uses calculation using up-to-date profile data

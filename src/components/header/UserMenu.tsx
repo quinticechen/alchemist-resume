@@ -46,7 +46,7 @@ const UserMenu = ({ session, onLogout }: UserMenuProps) => {
         </DropdownMenuItem> */}
         
         <DropdownMenuItem asChild>
-          <a href="/account">My Account</a>
+          <a href="/en/account">My Account</a>
         </DropdownMenuItem>
         {/* <DropdownMenuSeparator /> */}
         <DropdownMenuItem onClick={onLogout}>
