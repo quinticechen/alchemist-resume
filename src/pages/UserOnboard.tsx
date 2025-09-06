@@ -2,7 +2,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import OOzeQQ from "@/animations/OOze.QQ.json";
+import OOzeQQ from "@/animations/OOze.QQ";
 import { Card } from "@/components/ui/card";
 import { useIsMobile } from "@/hooks/use-mobile";
 
