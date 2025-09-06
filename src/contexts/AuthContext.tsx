@@ -53,15 +53,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               localStorage.removeItem('redirectAfterLogin');
               navigate(redirectPath);
             } else {
+              // Only redirect on first sign-in to onboarding, otherwise don't force redirect
               const isFirstSignIn = !localStorage.getItem('hasSignedInBefore');
               
               if (isFirstSignIn && newSession) {
                 localStorage.setItem('hasSignedInBefore', 'true');
                 navigate('/en/user-onboard');
-              } else {
-                // Navigate to alchemist-workshop with language prefix
-                navigate('/en/alchemist-workshop');
               }
+              // Don't force redirect to alchemist-workshop - let user stay where they are
             }
           }, 100);
         }

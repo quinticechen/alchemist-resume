@@ -98,7 +98,7 @@ export const useSubscriptionCheck = () => {
             title: "Monthly Limit Reached",
             description: "You've reached your monthly usage limit.",
           });
-          navigate("/account");
+          navigate("/en/account");
           return;
         } else {
           // console.log("Alchemist user within monthly limit");
@@ -129,14 +129,14 @@ export const useSubscriptionCheck = () => {
               description:
                 "Please complete the survey to continue using our services.",
             });
-            navigate("/survey-page");
+            navigate("/en/survey-page");
             return;
           } else {
             toast({
               title: "Free Trial Completed",
               description: "Please upgrade to continue using our services.",
             });
-            navigate("/pricing");
+            navigate("/en/pricing");
             return;
           }
         }
@@ -161,7 +161,7 @@ export const useSubscriptionCheck = () => {
         title: "Error",
         description: "There was an error checking your subscription status.",
       });
-      navigate("/login");
+      navigate("/en/login");
     }
   };
 

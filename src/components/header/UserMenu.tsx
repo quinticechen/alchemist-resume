@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { LogIn } from "lucide-react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import Logo from "../Logo";
 import Navigation from "./Navigation";
 import { useAuth } from "@/contexts/AuthContext";
@@ -46,7 +46,7 @@ const UserMenu = ({ session, onLogout }: UserMenuProps) => {
         </DropdownMenuItem> */}
         
         <DropdownMenuItem asChild>
-          <a href="/en/account">My Account</a>
+          <Link to="/en/account">My Account</Link>
         </DropdownMenuItem>
         {/* <DropdownMenuSeparator /> */}
         <DropdownMenuItem onClick={onLogout}>

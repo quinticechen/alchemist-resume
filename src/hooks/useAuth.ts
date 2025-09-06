@@ -92,8 +92,8 @@ export const useAuth = () => {
             }));
           }
 
-          // Redirect to account page after successful login
-          window.location.href = '/en/account';
+          // Just store redirect path, let AuthContext handle the redirect
+          localStorage.setItem('redirectAfterLogin', '/en/account');
         }
       }
     } catch (error: any) {
