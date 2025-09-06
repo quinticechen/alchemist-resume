@@ -1,0 +1,57 @@
+{
+  "meta": {
+    "title": "연금술 기록 - 이력서 분석 기록",
+    "description": "이력서 분석 기록을 보고 관리하세요. AI 기반 인사이트로 최적화 진행 상황, 피드백 및 개선 사항을 추적하세요.",
+    "keywords": "이력서 분석 기록, AI 최적화 추적, 경력 진행 상황, 이력서 개선, 지원 기록"
+  },
+  "title": "연금술 기록",
+  "usageStats": {
+    "title": "사용 통계",
+    "totalGoldenResumes": "생성된 총 황금 이력서 수",
+    "remainingFreeUses": "남은 무료 사용 횟수",
+    "remainingMonthlyUses": "남은 월별 사용 횟수",
+    "unlimitedUses": "무제한 사용 가능"
+  },
+  "sorting": {
+    "resumeGenerationLatest": "이력서 생성 시간 (최신순)",
+    "resumeGenerationEarliest": "이력서 생성 시간 (오래된순)",
+    "lastEditLatest": "마지막 수정 시간 (최신순)",
+    "lastEditEarliest": "마지막 수정 시간 (오래된순)",
+    "statusAscending": "지원 상태 (오름차순)",
+    "statusDescending": "지원 상태 (내림차순)"
+  },
+  "filters": {
+    "allStatuses": "모든 상태",
+    "activeFilters": "활성 필터",
+    "filtersSelected": "필터 선택됨"
+  },
+  "status": {
+    "resume": "이력서",
+    "coverLetter": "커버레터",
+    "applicationSubmitted": "지원서 제출됨",
+    "followingUp": "후속 조치 중",
+    "interview": "인터뷰",
+    "rejected": "거절됨",
+    "accepted": "수락됨"
+  },
+  "actions": {
+    "viewGoldenResume": "황금 이력서 보기",
+    "createCoverLetter": "커버레터 생성",
+    "linkJD": "직무 설명 링크",
+    "applyJob": "직무 지원",
+    "companyResearch": "회사 조사",
+    "researching": "조사 중..."
+  },
+  "jobUrl": {
+    "cannotChange": "저장 후 직무 URL을 변경할 수 없습니다.",
+    "enterUrl": "직무 공고 URL 입력",
+    "save": "저장",
+    "cancel": "취소",
+    "saving": "저장 중..."
+  },
+  "messages": {
+    "noAnalysesFound": "분석 기록을 찾을 수 없습니다.",
+    "noAnalysesWithStatus": "해당 상태의 분석 기록이 없습니다.",
+    "noAnalysesWithFilters": "선택한 상태 필터로 분석 기록을 찾을 수 없습니다."
+  }
+}
