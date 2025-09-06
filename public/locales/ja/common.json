@@ -1,20 +1,20 @@
 {
   "navigation": {
-    "workshop": "ワークショップ",
-    "records": "記録", 
+    "workshop": "工房",
+    "records": "記録",
     "pricing": "料金",
     "faq": "よくある質問",
-    "supportedWebsites": "対応サイト"
+    "supportedWebsites": "対応ウェブサイト"
   },
   "auth": {
-    "signIn": "ログイン",
-    "signOut": "ログアウト",
-    "signUp": "アカウント作成",
+    "signIn": "サインイン",
+    "signOut": "サインアウト",
+    "signUp": "サインアップ",
     "email": "メールアドレス",
     "password": "パスワード",
-    "forgotPassword": "パスワードをお忘れですか？",
-    "createAccount": "アカウント作成",
-    "alreadyHaveAccount": "すでにアカウントをお持ちですか？",
+    "forgotPassword": "パスワードを忘れましたか？",
+    "createAccount": "アカウントを作成",
+    "alreadyHaveAccount": "既にお持ちのアカウント？",
     "dontHaveAccount": "アカウントをお持ちでないですか？"
   },
   "actions": {
@@ -34,13 +34,14 @@
     "saving": "保存中...",
     "success": "成功",
     "error": "エラー",
-    "pending": "待機中",
+    "pending": "保留中",
     "complete": "完了"
   },
   "subscription": {
-    "usesLeft": "残り{{count}}回",
-    "startFreeTrial": "無料トライアル開始",
+    "usesLeft": "{{count}} 回利用可能",
+    "startFreeTrial": "無料トライアルを開始",
     "upgradeNow": "今すぐアップグレード",
     "currentPlan": "現在のプラン"
-  }
+  },
+  "goBack": "戻る"
 }
