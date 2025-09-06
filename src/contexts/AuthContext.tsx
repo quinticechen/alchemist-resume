@@ -48,20 +48,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           console.log('Auth: User signed in, processing redirect');
           // Use setTimeout to avoid conflicts with LanguageRouter
           setTimeout(() => {
+            // Check if this is a password reset flow
+            const urlParams = new URLSearchParams(window.location.search);
+            const isPasswordReset = urlParams.get('type') === 'recovery';
+            
+            if (isPasswordReset) {
+              // For password reset, stay on the reset password page
+              return;
+            }
+            
             const redirectPath = localStorage.getItem('redirectAfterLogin');
             if (redirectPath) {
               localStorage.removeItem('redirectAfterLogin');
               navigate(redirectPath);
             } else {
+              // Only redirect on first sign-in to onboarding, otherwise don't force redirect
               const isFirstSignIn = !localStorage.getItem('hasSignedInBefore');
               
               if (isFirstSignIn && newSession) {
                 localStorage.setItem('hasSignedInBefore', 'true');
                 navigate('/en/user-onboard');
-              } else {
-                // Navigate to alchemist-workshop with language prefix
-                navigate('/en/alchemist-workshop');
               }
+              // Don't force redirect to alchemist-workshop - let user stay where they are
             }
           }, 100);
         }

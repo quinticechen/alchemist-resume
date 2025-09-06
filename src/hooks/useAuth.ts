@@ -21,7 +21,7 @@ export const useAuth = () => {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}/alchemist-workshop`,
+          redirectTo: `${window.location.origin}/en/account`,
           queryParams: {
             prompt: 'consent'
           }
@@ -60,7 +60,7 @@ export const useAuth = () => {
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/alchemist-workshop`,
+            emailRedirectTo: `${window.location.origin}/en/account`,
             data: {
               email: email,
             }
@@ -92,7 +92,8 @@ export const useAuth = () => {
             }));
           }
 
-          await checkSubscriptionAndRedirect(data.user.id);
+          // Just store redirect path, let AuthContext handle the redirect
+          localStorage.setItem('redirectAfterLogin', '/en/account');
         }
       }
     } catch (error: any) {

@@ -1,0 +1,57 @@
+{
+  "meta": {
+    "title": "Registros de Alquimia - Historial de Análisis de CV",
+    "description": "Vea y administre su historial de análisis de currículum. Rastree su progreso de optimización, comentarios y mejoras con información impulsada por IA.",
+    "keywords": "historial de análisis de CV, seguimiento de optimización de IA, progreso profesional, mejoras de CV, registros de solicitudes de empleo"
+  },
+  "title": "Registros de Alquimia",
+  "usageStats": {
+    "title": "Estadísticas de Uso",
+    "totalGoldenResumes": "CV Dorados Generados en Total",
+    "remainingFreeUses": "Usos Gratuitos Restantes",
+    "remainingMonthlyUses": "Usos Mensuales Restantes", 
+    "unlimitedUses": "Usos Ilimitados Disponibles"
+  },
+  "sorting": {
+    "resumeGenerationLatest": "Hora de Generación de CV (De Último a Primero)",
+    "resumeGenerationEarliest": "Hora de Generación de CV (De Primero a Último)",
+    "lastEditLatest": "Hora de Última Edición (De Última a Primera)",
+    "lastEditEarliest": "Hora de Última Edición (De Primera a Última)",
+    "statusAscending": "Estado de la Solicitud (Ascendente)",
+    "statusDescending": "Estado de la Solicitud (Descendente)"
+  },
+  "filters": {
+    "allStatuses": "Todos los Estados",
+    "activeFilters": "Filtros Activos",
+    "filtersSelected": "filtros seleccionados"
+  },
+  "status": {
+    "resume": "CV",
+    "coverLetter": "Carta de Presentación", 
+    "applicationSubmitted": "Solicitud Enviada",
+    "followingUp": "Haciendo Seguimiento",
+    "interview": "Entrevista",
+    "rejected": "Rechazado",
+    "accepted": "Aceptado"
+  },
+  "actions": {
+    "viewGoldenResume": "Ver CV Dorado",
+    "createCoverLetter": "Crear Carta de Presentación",
+    "linkJD": "Vincular Descripción del Puesto",
+    "applyJob": "Solicitar Puesto",
+    "companyResearch": "Investigación de Empresa",
+    "researching": "Investigando..."
+  },
+  "jobUrl": {
+    "cannotChange": "La URL del puesto no se puede cambiar después de guardar",
+    "enterUrl": "Introduce la URL de la oferta de empleo",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "saving": "Guardando..."
+  },
+  "messages": {
+    "noAnalysesFound": "No se encontraron análisis de CV",
+    "noAnalysesWithStatus": "No se encontraron análisis con el estado",
+    "noAnalysesWithFilters": "No se encontraron análisis con los filtros de estado seleccionados"
+  }
+}

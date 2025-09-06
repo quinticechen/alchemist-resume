@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "title": "회사 조사 - AI 기반 회사 통찰력",
+    "description": "AI 기반의 포괄적인 회사 조사 및 통찰력을 얻어 지원 전략을 강화하세요.",
+    "keywords": "회사 조사, 회사 분석, 지원, 경력 통찰력, 비즈니스 인텔리전스"
+  },
+  "title": "회사 조사",
+  "employees": "명",
+  "ceo": "CEO",
+  "visitWebsite": "웹사이트 방문",
+  "readMore": "더 읽기",
+  "unknown": {
+    "company": "알 수 없는 회사"
+  },
+  "sections": {
+    "businessOverview": "사업 개요",
+    "keyProducts": "주요 제품 및 서비스",
+    "swotAnalysis": "SWOT 분석",
+    "recentNews": "최신 뉴스"
+  },
+  "swot": {
+    "strengths": "강점",
+    "weaknesses": "약점",
+    "opportunities": "기회",
+    "threats": "위협"
+  },
+  "pending": {
+    "title": "회사 조사 중...",
+    "description": "AI가 회사 정보를 분석하고 포괄적인 통찰력을 수집하고 있습니다.",
+    "waitTime": "보통 2-3분 정도 소요됩니다. 조사가 완료될 때까지 기다려 주세요."
+  },
+  "error": {
+    "title": "조사 오류",
+    "fetchFailed": "회사 조사 데이터를 가져오는 데 실패했습니다. 나중에 다시 시도해 주세요."
+  }
+}

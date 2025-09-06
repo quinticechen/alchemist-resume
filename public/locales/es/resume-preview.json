@@ -1,0 +1,31 @@
+{
+  "meta": {
+    "title": "Vista Previa del Currículum - Resume Alchemist",
+    "description": "Previsualiza tu currículum dorado optimizado con mejoras impulsadas por IA.",
+    "keywords": "vista previa currículum, currículum dorado, optimización IA, visor currículum"
+  },
+  "buttons": {
+    "editResume": "Editar Currículum",
+    "changeStyle": "Cambiar Estilo",
+    "exportPDF": "Exportar PDF",
+    "originalResume": "Currículum Original",
+    "editWithGoogleDoc": "Editar con Google Docs"
+  },
+  "sections": {
+    "personalInfo": "Información Personal",
+    "professionalSummary": "Resumen Profesional",
+    "professionalExperience": "Experiencia Profesional",
+    "education": "Educación",
+    "skills": "Habilidades",
+    "projects": "Proyectos",
+    "volunteerExperience": "Experiencia Voluntaria",
+    "certifications": "Certificaciones"
+  },
+  "styles": {
+    "classic": "Clásico",
+    "modern": "Moderno",
+    "minimal": "Minimalista",
+    "professional": "Profesional",
+    "creative": "Creativo"
+  }
+}

@@ -1,85 +1,104 @@
 {
   "hero": {
-    "title": "잃어버린 이력서에 작별을 고하세요 - Ooze와 Seeker가 꿈의 직장으로 가는 문을 열어드립니다!",
-    "subtitle": "Resume Alchemist는 채용되는 이력서를 만들어주는 AI 기반 이력서 빌더입니다.",
-    "getStarted": "시작하기",
-    "learnMore": "더 알아보기"
+    "title": "AI 연금술로 이력서 변환하기",
+    "subtitle": "AI 기반 최적화 기술을 사용하여 평범한 이력서를 꿈꾸던 직업에 완벽하게 맞춰보세요.",
+    "learnMore": "더 알아보기",
+    "startFreeTrial": "무료 체험 시작",
+    "goToWorkshop": "워크샵으로 가기"
   },
   "cta": {
-    "title": "지금 5번의 무료 사용 기회를 받으세요!",
-    "subtitle": "Resume Alchemist로 커리어를 변화시킨 수천 명의 성공적인 지원자들과 함께하세요.",
-    "button": "무료로 시작하기"
+    "title": "무료 사용 3회로 시작하세요",
+    "subtitle": "지금 바로 AI 기반 이력서 최적화를 경험해보세요. 부담 없이 사용하실 수 있습니다."
+  },
+  "faq": {
+    "title": "자주 묻는 질문",
+    "more": "더 보기",
+    "questions": [
+      {
+        "question": "무료 사용 횟수는 몇 회인가요?",
+        "answer": "신규 사용자에게는 서비스 체험을 위한 3회의 무료 사용 기회가 제공됩니다."
+      },
+      {
+        "question": "어떤 파일 형식을 지원하나요?",
+        "answer": "현재 이력서 업로드에는 PDF 형식을 지원합니다."
+      },
+      {
+        "question": "프로세스는 얼마나 걸리나요?",
+        "answer": "최적화 프로세스는 일반적으로 2-3분이 소요됩니다."
+      }
+    ]
   },
   "features": {
-    "title": "이력서를 만드는 새로운 방법",
-    "subtitle": "돋보이는 이력서를 만드는 것의 어려움을 이해합니다. 그래서 채용되는 이력서를 만들어주는 AI 기반 이력서 빌더인 Resume Alchemist를 만들었습니다.",
-    "aiPowered": {
-      "title": "AI 기반",
-      "description": "우리의 AI가 당신의 경험과 기술을 분석하여 강점을 부각시키는 이력서를 작성합니다."
-    },
-    "atsOptimized": {
-      "title": "ATS 최적화",
-      "description": "지원자 추적 시스템(ATS)에 최적화된 이력서로 면접 기회를 늘려드립니다."
-    },
-    "jobSpecific": {
-      "title": "맞춤형 작업",
-      "description": "특정 채용 공고에 맞춰 이력서를 조정하여 직무 설명과 일치하는 기술과 경험을 강조합니다."
-    },
-    "easyToUse": {
-      "title": "사용하기 쉬움",
-      "description": "직관적인 인터페이스로 몇 분 안에 전문적인 이력서를 쉽게 만들 수 있습니다."
+    "title": "이력서 작성의 새로운 방법",
+    "subtitle": "눈에 띄는 이력서를 만드는 데 따르는 어려움을 잘 알고 있습니다. 그렇기 때문에 Resume Alchemist를 만들었습니다. Resume Alchemist는 AI 기반 이력서 작성기로, 채용될 수 있는 이력서를 작성하는 데 도움을 줍니다.",
+    "items": {
+      "aiPowered": {
+        "title": "AI 기반",
+        "description": "당사의 AI는 귀하의 경험과 기술을 분석하여 강점을 강조하는 이력서를 작성합니다."
+      },
+      "atsOptimized": {
+        "title": "ATS 최적화",
+        "description": "지원자 추적 시스템(ATS)에 최적화된 이력서를 제공하여 면접 기회를 높여드립니다."
+      },
+      "jobSpecific": {
+        "title": "직무별 맞춤",
+        "description": "특정 채용 공고에 맞춰 이력서를 작성하고, 직무 설명과 일치하는 기술 및 경험을 강조합니다."
+      },
+      "easyToUse": {
+        "title": "사용하기 쉬움",
+        "description": "직관적인 인터페이스를 통해 몇 분 안에 전문적인 이력서를 쉽게 작성할 수 있습니다."
+      }
     }
   },
   "howItWorks": {
     "title": "작동 방식",
-    "subtitle": "채용되는 이력서를 만드는 세 가지 간단한 단계.",
+    "subtitle": "채용될 수 있는 이력서를 만드는 세 가지 간단한 단계.",
     "steps": {
       "upload": {
         "title": "이력서 업로드",
         "description": "기존 이력서를 PDF 형식으로 업로드하세요."
       },
-      "enterUrl": {
+      "enterJob": {
         "title": "채용 공고 URL 입력",
         "description": "지원하려는 채용 공고의 URL을 붙여넣으세요."
       },
       "getOptimized": {
         "title": "최적화된 이력서 받기",
-        "description": "우리의 AI가 이력서와 채용 공고를 분석하여 기술과 경험을 강조하는 맞춤형 이력서를 만들어드립니다."
+        "description": "당사의 AI가 이력서와 채용 공고를 분석하여 귀하의 기술과 경험을 강조하는 맞춤 이력서를 만듭니다."
       }
     }
   },
   "companies": {
-    "title": "최고의 기업을 위한 이력서 최적화"
+    "title": "주요 기업을 위한 이력서 최적화"
   },
   "testimonials": {
-    "title": "사람들의 말",
-    "subtitle": "우리 말만 믿지 마세요. Resume Alchemist에 대한 다른 사람들의 의견을 확인해보세요.",
+    "title": "사람들의 평가",
+    "subtitle": "저희의 말만 믿지 마세요. 다른 사람들이 Resume Alchemist에 대해 어떻게 말하는지 확인해보세요.",
     "items": [
       {
-        "quote": "Resume Alchemist가 제가 꿈의 직장을 얻는 데 도움이 되었습니다. AI 기반 이력서 빌더로 제 기술과 경험을 강조하는 이력서를 쉽게 만들 수 있었습니다.",
-        "name": "김지은",
+        "quote": "\"Resume Alchemist 덕분에 꿈에 그리던 직업을 얻을 수 있었습니다. AI 기반 이력서 작성기로 제 기술과 경험을 강조하는 이력서를 쉽게 만들 수 있었습니다.\"",
+        "name": "Jane Doe",
         "title": "소프트웨어 엔지니어"
       },
       {
-        "quote": "돋보이는 이력서를 만드는 데 어려움을 겪고 있었습니다. Resume Alchemist로 제 기술과 경험을 강조하는 전문적인 이력서를 쉽게 만들 수 있었습니다.",
-        "name": "박민수",
+        "quote": "\"눈에 띄는 이력서를 만드는 데 어려움을 겪고 있었습니다. Resume Alchemist 덕분에 제 기술과 경험을 강조하는 전문적인 이력서를 쉽게 만들 수 있었습니다.\"",
+        "name": "John Smith",
         "title": "마케팅 매니저"
       },
       {
-        "quote": "AI 기반 이력서 빌더 사용에 대해 회의적이었지만, Resume Alchemist는 제 기대를 뛰어넘었습니다. 제 기술과 경험을 강조하는 이력서를 쉽게 만들 수 있었습니다.",
-        "name": "이수정",
-        "title": "제품 매니저"
+        "quote": "\"AI 기반 이력서 작성기 사용에 회의적이었지만, Resume Alchemist는 기대 이상이었습니다. AI 기반 이력서 작성기로 제 기술과 경험을 강조하는 이력서를 쉽게 만들 수 있었습니다.\"",
+        "name": "Emily Johnson",
+        "title": "제품 관리자"
       }
     ]
   },
   "footer": {
     "company": "ResumeAlchemist",
-    "copyright": "2025 ResumeAlchemist",
     "quickLinks": "빠른 링크",
-    "terms": "서비스 약관",
-    "privacy": "개인정보처리방침",
+    "termsOfService": "이용 약관",
+    "privacyPolicy": "개인정보 처리방침",
     "faq": "자주 묻는 질문",
-    "pricing": "요금제",
+    "pricingPlans": "가격 플랜",
     "contact": "문의하기",
     "followUs": "팔로우하기"
   }

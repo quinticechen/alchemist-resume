@@ -1,0 +1,31 @@
+{
+  "meta": {
+    "title": "履歴書のプレビュー - Resume Alchemist",
+    "description": "AIによる強化で最適化されたゴールデン履歴書をプレビューします。",
+    "keywords": "履歴書プレビュー, ゴールデン履歴書, AI最適化, 履歴書ビューア"
+  },
+  "buttons": {
+    "editResume": "履歴書の編集",
+    "changeStyle": "スタイルの変更",
+    "exportPDF": "PDFをエクスポート",
+    "originalResume": "元の履歴書",
+    "editWithGoogleDoc": "Googleドキュメントで編集"
+  },
+  "sections": {
+    "personalInfo": "個人情報",
+    "professionalSummary": "職務経歴の要約",
+    "professionalExperience": "職務経歴",
+    "education": "学歴",
+    "skills": "スキル",
+    "projects": "プロジェクト",
+    "volunteerExperience": "ボランティア経験",
+    "certifications": "資格・認定"
+  },
+  "styles": {
+    "classic": "クラシック",
+    "modern": "モダン",
+    "minimal": "ミニマル",
+    "professional": "プロフェッショナル",
+    "creative": "クリエイティブ"
+  }
+}

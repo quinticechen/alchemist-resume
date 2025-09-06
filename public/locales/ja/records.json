@@ -1,8 +1,57 @@
 {
   "meta": {
-    "title": "アルケミー記録 - 履歴書分析履歴",
-    "description": "履歴書分析履歴を表示・管理します。AI駆動のインサイトで最適化の進捗、フィードバック、改善を追跡しましょう。",
-    "keywords": "履歴書分析履歴, AI最適化追跡, キャリア進捗, 履歴書改善, 求職応募記録"
+    "title": "アルケミーレコード - 履歴書分析履歴",
+    "description": "履歴書分析履歴を表示・管理します。AIによる洞察で、最適化の進捗、フィードバック、改善を追跡します。",
+    "keywords": "履歴書分析履歴, AI最適化追跡, キャリア進捗, 履歴書改善, 応募記録"
   },
-  "title": "アルケミー記録"
+  "title": "アルケミーレコード",
+  "usageStats": {
+    "title": "利用統計",
+    "totalGoldenResumes": "生成されたゴールデン履歴書の合計",
+    "remainingFreeUses": "無料利用可能回数残り",
+    "remainingMonthlyUses": "月間利用可能回数残り",
+    "unlimitedUses": "無制限利用可能"
+  },
+  "sorting": {
+    "resumeGenerationLatest": "履歴書生成時間（新しい順）",
+    "resumeGenerationEarliest": "履歴書生成時間（古い順）",
+    "lastEditLatest": "最終編集時間（新しい順）",
+    "lastEditEarliest": "最終編集時間（古い順）",
+    "statusAscending": "応募ステータス（昇順）",
+    "statusDescending": "応募ステータス（降順）"
+  },
+  "filters": {
+    "allStatuses": "すべてのステータス",
+    "activeFilters": "アクティブなフィルター",
+    "filtersSelected": "フィルターが選択されました"
+  },
+  "status": {
+    "resume": "履歴書",
+    "coverLetter": "カバーレター",
+    "applicationSubmitted": "応募済み",
+    "followingUp": "フォローアップ中",
+    "interview": "面接",
+    "rejected": "不採用",
+    "accepted": "採用"
+  },
+  "actions": {
+    "viewGoldenResume": "ゴールデン履歴書を表示",
+    "createCoverLetter": "カバーレターを作成",
+    "linkJD": "職務記述書をリンク",
+    "applyJob": "求人に応募",
+    "companyResearch": "企業調査",
+    "researching": "調査中..."
+  },
+  "jobUrl": {
+    "cannotChange": "保存後の求人URLは変更できません",
+    "enterUrl": "求人情報のURLを入力",
+    "save": "保存",
+    "cancel": "キャンセル",
+    "saving": "保存中..."
+  },
+  "messages": {
+    "noAnalysesFound": "履歴書分析が見つかりませんでした",
+    "noAnalysesWithStatus": "指定されたステータスの分析が見つかりませんでした",
+    "noAnalysesWithFilters": "選択されたステータスフィルターに一致する分析が見つかりませんでした"
+  }
 }

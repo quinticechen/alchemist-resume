@@ -1,21 +1,47 @@
 {
-  "loading": "로딩 중...",
-  "error": "오류",
-  "success": "성공",
-  "cancel": "취소",
-  "save": "저장",
-  "delete": "삭제",
-  "edit": "편집",
-  "close": "닫기",
-  "back": "뒤로",
-  "next": "다음",
-  "previous": "이전",
-  "submit": "제출",
-  "login": "로그인",
-  "logout": "로그아웃",
-  "signup": "회원가입",
-  "email": "이메일",
-  "password": "비밀번호",
-  "name": "이름",
-  "welcome": "환영합니다"
+  "navigation": {
+    "workshop": "워크숍",
+    "records": "기록",
+    "pricing": "가격",
+    "faq": "자주 묻는 질문",
+    "supportedWebsites": "지원되는 웹사이트"
+  },
+  "auth": {
+    "signIn": "로그인",
+    "signOut": "로그아웃",
+    "signUp": "가입",
+    "email": "이메일",
+    "password": "비밀번호",
+    "forgotPassword": "비밀번호를 잊으셨나요?",
+    "createAccount": "계정 만들기",
+    "alreadyHaveAccount": "이미 계정이 있으신가요?",
+    "dontHaveAccount": "계정이 없으신가요?"
+  },
+  "actions": {
+    "save": "저장",
+    "cancel": "취소",
+    "delete": "삭제",
+    "edit": "편집",
+    "upload": "업로드",
+    "download": "다운로드",
+    "submit": "제출",
+    "continue": "계속",
+    "back": "뒤로",
+    "next": "다음"
+  },
+  "status": {
+    "loading": "로드 중...",
+    "saving": "저장 중...",
+    "success": "성공",
+    "error": "오류",
+    "pending": "대기 중",
+    "complete": "완료"
+  },
+  "subscription": {
+    "usesLeft": "남은 횟수 {{count}}회",
+    "startFreeTrial": "무료 평가판 시작",
+    "upgradeNow": "지금 업그레이드",
+    "currentPlan": "현재 요금제"
+  },
+  "goBack": "뒤로 가기"
 }

@@ -1,11 +1,25 @@
 {
   "meta": {
-    "title": "价格方案 - 简历炼金师",
-    "description": "为您的职业成长选择完美的方案。价格实惠的AI驱动简历优化，灵活的价格选择。",
-    "keywords": "价格方案, 简历优化价格, AI简历生成器费用, 订阅方案, 职业成长"
+    "title": "定价计划 - Resume Alchemist",
+    "description": "选择适合您职业发展的完美计划。经济实惠的 AI 驱动简历优化，提供灵活的定价选项。",
+    "keywords": "定价计划, 简历优化定价, AI 简历构建器成本, 订阅计划, 职业发展"
   },
-  "title": "选择您的方案",
-  "subtitle": "为您的职业成长选择完美的方案",
-  "currentPlan": "当前方案",
-  "remainingUses": "剩余使用次数"
+  "title": "选择您的计划",
+  "subtitle": "选择适合您职业发展的完美计划",
+  "currentPlan": "当前计划",
+  "remainingUses": "剩余使用次数",
+  "toggle": {
+    "monthly": "每月",
+    "annual": "每年",
+    "saveDiscount": "节省 25%",
+    "switchToAnnual": "切换到年度计划可节省 25%"
+  },
+  "plans": {
+    "apprentice": "学徒",
+    "alchemist": "炼金术士",
+    "grandmaster": "宗师",
+    "mostPopular": "最受欢迎",
+    "getCurrentPlan": "当前计划",
+    "getButton": "获取 {{plan}}"
+  }
 }

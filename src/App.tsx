@@ -31,6 +31,8 @@ import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import CoverLetter from "./pages/CoverLetter";
 import CompanyResearch from "./pages/CompanyResearch";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 
 const queryClient = new QueryClient();
 
@@ -58,6 +60,8 @@ const AppContent = () => {
             <Route path="/" element={<Index />} />
             <Route path="/home" element={<HomeV2 />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/user-onboard" element={<UserOnboard />} />
             <Route path="/survey" element={<SurveyPage />} />
             <Route path="/pricing" element={<Pricing />} />

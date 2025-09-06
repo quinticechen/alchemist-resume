@@ -1,0 +1,31 @@
+{
+  "meta": {
+    "title": "이력서 미리보기 - Resume Alchemist",
+    "description": "AI 기반 향상 기능으로 최적화된 골든 이력서를 미리 확인하세요.",
+    "keywords": "이력서 미리보기, 골든 이력서, AI 최적화, 이력서 뷰어"
+  },
+  "buttons": {
+    "editResume": "이력서 수정",
+    "changeStyle": "스타일 변경",
+    "exportPDF": "PDF 내보내기",
+    "originalResume": "원본 이력서",
+    "editWithGoogleDoc": "Google Docs로 수정"
+  },
+  "sections": {
+    "personalInfo": "개인 정보",
+    "professionalSummary": "전문 요약",
+    "professionalExperience": "경력 사항",
+    "education": "학력",
+    "skills": "기술",
+    "projects": "프로젝트",
+    "volunteerExperience": "자원 봉사 경력",
+    "certifications": "자격증"
+  },
+  "styles": {
+    "classic": "클래식",
+    "modern": "모던",
+    "minimal": "미니멀",
+    "professional": "전문",
+    "creative": "창의적"
+  }
+}

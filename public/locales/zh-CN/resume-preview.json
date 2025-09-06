@@ -1,0 +1,31 @@
+{
+  "meta": {
+    "title": "简历预览 - Resume Alchemist",
+    "description": "预览经过 AI 增强的优化版“黄金简历”。",
+    "keywords": "简历预览, 黄金简历, AI 优化, 简历查看器"
+  },
+  "buttons": {
+    "editResume": "编辑简历",
+    "changeStyle": "更改样式",
+    "exportPDF": "导出 PDF",
+    "originalResume": "原始简历",
+    "editWithGoogleDoc": "使用 Google Doc 编辑"
+  },
+  "sections": {
+    "personalInfo": "个人信息",
+    "professionalSummary": "职业概述",
+    "professionalExperience": "工作经历",
+    "education": "教育背景",
+    "skills": "技能",
+    "projects": "项目",
+    "volunteerExperience": "志愿者经历",
+    "certifications": "证书"
+  },
+  "styles": {
+    "classic": "经典",
+    "modern": "现代",
+    "minimal": "简约",
+    "professional": "专业",
+    "creative": "创意"
+  }
+}
