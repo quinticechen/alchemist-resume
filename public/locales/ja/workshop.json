@@ -1,8 +1,30 @@
 {
   "meta": {
-    "title": "アルケミストワークショップ - 履歴書アルケミスト",
-    "description": "履歴書と求人説明をアップロードして、AIパワードの最適化を受けましょう。求人要件に完璧にマッチするよう履歴書を変換します。",
-    "keywords": "履歴書最適化, AI履歴書ビルダー, 求人マッチング, ATS最適化, 履歴書アナライザー"
+    "title": "錬金術ワークショップ - レジュメ最適化",
+    "description": "AIによる最適化で履歴書を変革しましょう。履歴書と求人情報をアップロードして、パーソナライズされた推奨事項を入手。",
+    "keywords": "履歴書最適化, AI履歴書作成ツール, 就職活動, キャリア開発"
   },
-  "title": "アルケミストワークショップ"
+  "title": "錬金術ワークショップ",
+  "resumeUpload": {
+    "title": "履歴書アップロード",
+    "uploadNew": "新しい履歴書をアップロード",
+    "selectPrevious": "以前の履歴書を選択",
+    "dragDrop": "PDF履歴書をここにドラッグ＆ドロップするか、クリックしてファイルを選択してください",
+    "maxFileSize": "最大ファイルサイズ: 5MB",
+    "loading": "読み込み中",
+    "previewResume": "履歴書をプレビュー",
+    "useSelected": "選択した履歴書を使用",
+    "remove": "削除",
+    "previousSelected": "以前の履歴書が選択されました",
+    "selectResume": "履歴書を選択してください",
+    "uploading": "アップロード中..."
+  },
+  "jobInfo": {
+    "title": "求人情報",
+    "jobUrl": "求人投稿URL",
+    "jobDescription": "求人説明テキスト",
+    "urlPlaceholder": "求人投稿URLをここに貼り付けます。?以降のURLパラメータを削除してください。",
+    "descriptionPlaceholder": "求人説明テキストをここに貼り付けます...",
+    "castAlchemy": "錬金術をかける"
+  }
 }
