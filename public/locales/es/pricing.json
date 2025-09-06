@@ -1,0 +1,25 @@
+{
+  "meta": {
+    "title": "Planes de Precios - Resume Alchemist",
+    "description": "Elige el plan perfecto para el crecimiento de tu carrera. Optimización de currículum asequible impulsada por IA con opciones de precios flexibles.",
+    "keywords": "planes de precios, precios de optimización de currículum, costo del creador de currículum con IA, planes de suscripción, crecimiento profesional"
+  },
+  "title": "Elige Tu Plan",
+  "subtitle": "Selecciona el plan perfecto para el crecimiento de tu carrera",
+  "currentPlan": "Plan Actual",
+  "remainingUses": "Usos Restantes",
+  "toggle": {
+    "monthly": "Mensual",
+    "annual": "Anual",
+    "saveDiscount": "Ahorra 25%",
+    "switchToAnnual": "Cambia al plan anual para ahorrar un 25%"
+  },
+  "plans": {
+    "apprentice": "Aprendiz",
+    "alchemist": "Alquimista",
+    "grandmaster": "Gran Maestro",
+    "mostPopular": "Más Popular",
+    "getCurrentPlan": "Plan Actual",
+    "getButton": "Obtener {{plan}}"
+  }
+}
