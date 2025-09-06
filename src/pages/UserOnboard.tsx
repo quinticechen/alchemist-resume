@@ -2,7 +2,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import SeekerAnimation from "@/components/SeekerAnimation";
+import OOzeQQ from "@/animations/OOze.QQ.json";
 import { Card } from "@/components/ui/card";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -31,9 +31,9 @@ const UserOnboard = () => {
           
           {/* Seeker animation */}
           <div className="absolute top-full -mt-2">
-            <SeekerAnimation 
-              width={100} 
-              height={100} 
+            <OOzeQQ 
+              width={200} 
+              height={200} 
               mobileWidth={80}
               mobileHeight={80}
               showShadow={true}
