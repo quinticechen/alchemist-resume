@@ -1,8 +1,30 @@
 {
   "meta": {
-    "title": "炼金师工作坊 - 简历炼金师",
-    "description": "上传您的简历和职位描述，获得AI驱动的优化。完美匹配工作要求，转换您的简历。",
-    "keywords": "简历优化, AI简历生成器, 职位匹配, ATS优化, 简历分析器"
+    "title": "煉金工坊 - 履歷優化",
+    "description": "透過 AI 動力優化轉變您的履歷。上傳您的履歷和職位描述，獲得個人化建議。",
+    "keywords": "履歷優化, AI 履歷構建器, 工作申請, 職業發展"
   },
-  "title": "炼金师工作坊"
+  "title": "煉金工坊",
+  "resumeUpload": {
+    "title": "履歷上傳",
+    "uploadNew": "上傳新履歷",
+    "selectPrevious": "選擇先前履歷",
+    "dragDrop": "將您的 PDF 履歷拖曳至此處，或點擊以選擇檔案",
+    "maxFileSize": "最大檔案大小：5MB",
+    "loading": "載入中",
+    "previewResume": "預覽履歷",
+    "useSelected": "使用選定的履歷",
+    "remove": "移除",
+    "previousSelected": "已選定先前履歷",
+    "selectResume": "選擇履歷",
+    "uploading": "正在上傳..."
+  },
+  "jobInfo": {
+    "title": "職位資訊",
+    "jobUrl": "職位發佈 URL",
+    "jobDescription": "職位描述文字",
+    "urlPlaceholder": "在此貼上職位發佈 URL。移除所有 URL ? 後的內容",
+    "descriptionPlaceholder": "在此貼上職位描述文字...",
+    "castAlchemy": "施展煉金術"
+  }
 }
