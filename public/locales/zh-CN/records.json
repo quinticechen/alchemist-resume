@@ -1,8 +1,57 @@
 {
   "meta": {
     "title": "炼金记录 - 简历分析历史",
-    "description": "查看和管理您的简历分析历史。通过AI驱动的洞察跟踪您的优化进度、反馈和改进。",
-    "keywords": "简历分析历史, AI优化跟踪, 职业进展, 简历改进, 求职申请记录"
+    "description": "查看和管理您的简历分析历史。通过人工智能洞察跟踪您的优化进度、反馈和改进。",
+    "keywords": "简历分析历史, AI优化跟踪, 职业进展, 简历改进, 求职记录"
   },
-  "title": "炼金记录"
+  "title": "炼金记录",
+  "usageStats": {
+    "title": "使用统计",
+    "totalGoldenResumes": "生成的黄金简历总数",
+    "remainingFreeUses": "剩余免费使用次数",
+    "remainingMonthlyUses": "剩余月度使用次数",
+    "unlimitedUses": "可用无限次使用"
+  },
+  "sorting": {
+    "resumeGenerationLatest": "简历生成时间（从最新到最早）",
+    "resumeGenerationEarliest": "简历生成时间（从最早到最新）",
+    "lastEditLatest": "上次编辑时间（从最新到最早）",
+    "lastEditEarliest": "上次编辑时间（从最早到最新）",
+    "statusAscending": "申请状态（升序）",
+    "statusDescending": "申请状态（降序）"
+  },
+  "filters": {
+    "allStatuses": "所有状态",
+    "activeFilters": "活动筛选器",
+    "filtersSelected": "个筛选器已选"
+  },
+  "status": {
+    "resume": "简历",
+    "coverLetter": "求职信",
+    "applicationSubmitted": "已提交申请",
+    "followingUp": "正在跟进",
+    "interview": "面试",
+    "rejected": "已拒绝",
+    "accepted": "已接受"
+  },
+  "actions": {
+    "viewGoldenResume": "查看黄金简历",
+    "createCoverLetter": "创建求职信",
+    "linkJD": "关联职位描述",
+    "applyJob": "申请职位",
+    "companyResearch": "公司研究",
+    "researching": "正在研究..."
+  },
+  "jobUrl": {
+    "cannotChange": "保存后无法更改职位链接",
+    "enterUrl": "请输入职位发布链接",
+    "save": "保存",
+    "cancel": "取消",
+    "saving": "正在保存..."
+  },
+  "messages": {
+    "noAnalysesFound": "未找到简历分析记录",
+    "noAnalysesWithStatus": "未找到该状态的简历分析记录",
+    "noAnalysesWithFilters": "未找到符合所选状态筛选条件的简历分析记录"
+  }
 }
