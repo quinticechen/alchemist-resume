@@ -249,7 +249,9 @@ i18n
             viewGoldenResume: 'View Golden Resume',
             createCoverLetter: 'Create Cover Letter',
             linkJD: 'Link JD',
-            applyJob: 'Apply Job'
+            applyJob: 'Apply Job',
+            companyResearch: 'Company Research',
+            researching: 'Researching...'
           }
         },
         'job-websites': {
