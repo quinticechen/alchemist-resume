@@ -42,7 +42,7 @@ const SortFilterControls = ({
   onSortChange, 
   onFilterChange
 }: SortFilterControlsProps) => {
-  const { t } = useTranslation('records');
+  const { t, ready } = useTranslation('records');
 
   const sortOptions = [
     { value: "created_at_desc" as SortOption, label: t('sorting.resumeGenerationLatest') },

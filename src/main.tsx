@@ -15,7 +15,7 @@ i18n
   .use(initReactI18next)
   .init({
     fallbackLng: 'en',
-    debug: process.env.NODE_ENV === 'development',
+    debug: true, // Enable debug for better visibility
     
     // Language detection
     detection: {
@@ -30,14 +30,34 @@ i18n
     backend: {
       loadPath: '/locales/{{lng}}/{{ns}}.json',
       requestOptions: {
-        cache: 'force-cache'
+        cache: 'no-cache' // Disable cache for debugging
       },
-      allowMultiLoading: true, // Enable loading multiple files at once
-      crossDomain: false
+      allowMultiLoading: true,
+      crossDomain: false,
+      // Add request interceptor for debugging
+      request: (options: any, url: string, payload: any, callback: any) => {
+        console.log('i18n loading:', url);
+        fetch(url)
+          .then(response => {
+            console.log('i18n response status:', response.status, 'for', url);
+            if (!response.ok) {
+              throw new Error(`HTTP ${response.status}`);
+            }
+            return response.json();
+          })
+          .then(data => {
+            console.log('i18n loaded successfully:', url, data);
+            callback(null, { status: 200, data });
+          })
+          .catch(error => {
+            console.error('i18n loading failed:', url, error);
+            callback(error, null);
+          });
+      }
     },
 
     // Namespaces
-    ns: ['common', 'home', 'hero', 'workshop', 'job-websites', 'pricing', 'records'],
+    ns: ['common', 'home', 'hero', 'workshop', 'job-websites', 'pricing', 'records', 'company-research'],
     defaultNS: 'common',
 
     interpolation: {
@@ -54,6 +74,16 @@ i18n
     
     // Initialize immediately for better performance
     initImmediate: false,
+    
+    // Wait for all resources to load before initialization
+    react: {
+      useSuspense: false,
+      bindI18n: 'languageChanged loaded',
+      bindI18nStore: 'added removed',
+      transEmptyNodeValue: '',
+      transSupportBasicHtmlNodes: true,
+      transKeepBasicHtmlNodesFor: ['br', 'strong', 'i', 'p'],
+    },
     
     // Comprehensive fallback resources (embedded for instant loading)
     resources: {
@@ -216,44 +246,7 @@ i18n
           getStarted: 'Get started',
           learnMore: 'Learn more'
         },
-        records: {
-          title: 'Alchemy Records',
-          usageStats: {
-            title: 'Usage Statistics',
-            totalGoldenResumes: 'Total Golden Resumes Generated',
-            unlimitedUses: 'Unlimited Uses Available'
-          },
-          sorting: {
-            resumeGenerationLatest: 'Resume Generation Time (Latest to Earliest)',
-            resumeGenerationEarliest: 'Resume Generation Time (Earliest to Latest)',
-            lastEditLatest: 'Last Edit Time (Latest to Earliest)',
-            lastEditEarliest: 'Last Edit Time (Earliest to Latest)',
-            statusAscending: 'Application Status (Ascending)',
-            statusDescending: 'Application Status (Descending)'
-          },
-          filters: {
-            allStatuses: 'All Statuses',
-            activeFilters: 'Active filters',
-            filtersSelected: 'filters selected'
-          },
-          status: {
-            resume: 'Resume',
-            coverLetter: 'Cover Letter',
-            applicationSubmitted: 'Application Submitted',
-            followingUp: 'Following Up',
-            interview: 'Interview',
-            rejected: 'Rejected',
-            accepted: 'Accepted'
-          },
-          actions: {
-            viewGoldenResume: 'View Golden Resume',
-            createCoverLetter: 'Create Cover Letter',
-            linkJD: 'Link JD',
-            applyJob: 'Apply Job',
-            companyResearch: 'Company Research',
-            researching: 'Researching...'
-          }
-        },
+        // Remove embedded records - let external files handle it
         'job-websites': {
           title: 'Supported Job Websites',
           meta: {
@@ -1188,7 +1181,20 @@ i18n
     }
   });
 
+// Initialize the React app after i18n is configured
+i18n.on('initialized', () => {
+  console.log('i18n initialized successfully');
+  console.log('Available namespaces:', i18n.options.ns);
+  console.log('Loaded resources:', Object.keys(i18n.services.resourceStore.data));
+});
+
+i18n.on('failedLoading', (lng, ns, msg) => {
+  console.error('Failed to load namespace:', ns, 'for language:', lng, msg);
+});
+
+i18n.on('loaded', (loaded) => {
+  console.log('i18n resources loaded:', loaded);
+});
+
 const root = createRoot(document.getElementById("root")!);
-root.render(
-  <App />
-);
+root.render(<App />);

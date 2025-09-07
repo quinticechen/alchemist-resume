@@ -13,7 +13,7 @@ import Lottie from "react-lottie";
 import Loading from "@/animations/Loading.json";
 
 const AlchemyRecords = () => {
-  const { t } = useTranslation(['common', 'records']);
+  const { t, ready } = useTranslation(['common', 'records']);
   const { session, isLoading } = useAuth();
   const navigate = useNavigate();
   const {
