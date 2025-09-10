@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useAlchemyRecords } from "@/hooks/use-alchemy-records";
 import { SEO } from "@/components/SEO";
 import { useTranslation } from "react-i18next";
+import i18n from "i18next";
 
 import UsageStats from "@/components/alchemy-records/UsageStats";
 import AnalysisCard from "@/components/alchemy-records/AnalysisCard";
@@ -14,6 +15,11 @@ import Loading from "@/animations/Loading.json";
 
 const AlchemyRecords = () => {
   const { t, ready } = useTranslation(['common', 'records']);
+  
+  // Debug: Log translation readiness
+  console.log('Translation ready:', ready, 'Language:', i18n?.language);
+  console.log('Available namespaces:', i18n?.options?.ns);
+  console.log('Loaded resources:', Object.keys(i18n?.store?.data || {}));
   const { session, isLoading } = useAuth();
   const navigate = useNavigate();
   const {
@@ -49,7 +55,7 @@ const AlchemyRecords = () => {
     }
   }, [session, isLoading, navigate]);
 
-  if (isLoading || loading) {
+  if (isLoading || loading || !ready) {
     return (
       <div className="w-64 h-64 mx-auto">
         <Lottie options={loadingOptions} />
