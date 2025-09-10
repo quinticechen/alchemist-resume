@@ -28,7 +28,7 @@ i18n
 
     // Backend configuration for loading translations
     backend: {
-      loadPath: '/locales/{{lng}}/{{ns}}.json',
+      loadPath: '/public/locales/{{lng}}/{{ns}}.json',
       requestOptions: {
         cache: 'no-cache' // Disable cache for debugging
       },
