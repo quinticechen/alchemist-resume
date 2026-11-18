@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { SUPPORTED_JOB_SITES } from "./JobUrlInput";
+import { useTranslation } from "react-i18next";
 
 interface JobDescriptionInputProps {
   onSubmit: (data: { jobUrl?: string; jobContent?: string }) => Promise<void>;
@@ -20,6 +21,7 @@ const JobDescriptionInput = ({
   isProcessing = false,
   isGenerationComplete = false,
 }: JobDescriptionInputProps) => {
+  const { t } = useTranslation('workshop');
   const [activeTab, setActiveTab] = useState<"url" | "text">("url");
   const [jobUrl, setJobUrl] = useState("");
   const [jobContent, setJobContent] = useState("");
@@ -122,13 +124,13 @@ const JobDescriptionInput = ({
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle>Job Information</CardTitle>
+        <CardTitle>{t('jobInfo.title')}</CardTitle>
       </CardHeader>
       <CardContent>
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "url" | "text")}>
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="url">Job Posting URL</TabsTrigger>
-            <TabsTrigger value="text">Job Description Text</TabsTrigger>
+            <TabsTrigger value="url">{t('jobInfo.jobUrl')}</TabsTrigger>
+            <TabsTrigger value="text">{t('jobInfo.jobDescription')}</TabsTrigger>
           </TabsList>
 
           <form onSubmit={handleSubmit} className="mt-4">
@@ -136,7 +138,7 @@ const JobDescriptionInput = ({
               <div className="flex gap-2">
                 <Input
                   type="url"
-                  placeholder="Paste job posting URL here. Remove all URL parameters from ?"
+                  placeholder={t('jobInfo.urlPlaceholder')}
                   value={jobUrl}
                   onChange={(e) => setJobUrl(e.target.value)}
                   className="flex-1"
@@ -147,7 +149,7 @@ const JobDescriptionInput = ({
 
             <TabsContent value="text" className="space-y-4">
               <Textarea
-                placeholder="Paste the job description text here..."
+                placeholder={t('jobInfo.descriptionPlaceholder')}
                 value={jobContent}
                 onChange={(e) => setJobContent(e.target.value)}
                 className="min-h-[120px]"
@@ -162,7 +164,7 @@ const JobDescriptionInput = ({
                   Processing
                 </>
               ) : (
-                "Cast Alchemy"
+                t('jobInfo.castAlchemy')
               )}
             </Button>
           </form>

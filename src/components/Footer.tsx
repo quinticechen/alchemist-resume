@@ -1,9 +1,11 @@
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useToast } from "@/hooks/use-toast";
 import { Mail, Facebook, Twitter, Instagram, Linkedin, Copyright } from "lucide-react";
 import Logo from "./header/Logo";
 
 const Footer = () => {
+  const { t } = useTranslation('home');
   const { toast } = useToast();
   const supportEmail = "resumealchemist.qwizai@gmail.com";
 
@@ -49,13 +51,13 @@ const Footer = () => {
             <Logo />
             <div className="flex items-center text-sm text-neutral-600">
               <Copyright className="h-4 w-4 mr-2" />
-              <span>{new Date().getFullYear()} ResumeAlchemist</span>
+              <span>{new Date().getFullYear()} {t('footer.company', { defaultValue: 'ResumeAlchemist' })}</span>
             </div>
           </div>
 
           {/* Quick Links */}
           <div>
-            <h3 className="font-semibold mb-4">Quick Links</h3>
+            <h3 className="font-semibold mb-4">{t('footer.quickLinks', { defaultValue: 'Quick Links' })}</h3>
             <ul className="space-y-2">
               <li>
                 <Link
@@ -63,7 +65,7 @@ const Footer = () => {
                   className="text-sm text-neutral-600 hover:text-primary transition-colors flex items-center"
                 >
                   {/* <LinkIcon className="h-4 w-4 mr-2" /> */}
-                  Terms of Service
+                  {t('footer.termsOfService', { defaultValue: 'Terms of Service' })}
                 </Link>
               </li>
               <li>
@@ -72,7 +74,7 @@ const Footer = () => {
                   className="text-sm text-neutral-600 hover:text-primary transition-colors flex items-center"
                 >
                   {/* <LinkIcon className="h-4 w-4 mr-2" /> */}
-                  Privacy Policy
+                  {t('footer.privacyPolicy', { defaultValue: 'Privacy Policy' })}
                 </Link>
               </li>
               <li>
@@ -81,7 +83,7 @@ const Footer = () => {
                   className="text-sm text-neutral-600 hover:text-primary transition-colors flex items-center"
                 >
                   {/* <LinkIcon className="h-4 w-4 mr-2" /> */}
-                  FAQ
+                  {t('footer.faq', { defaultValue: 'FAQ' })}
                 </Link>
               </li>
               <li>
@@ -90,7 +92,7 @@ const Footer = () => {
                   className="text-sm text-neutral-600 hover:text-primary transition-colors flex items-center"
                 >
                   {/* <LinkIcon className="h-4 w-4 mr-2" /> */}
-                  Pricing Plans
+                  {t('footer.pricingPlans', { defaultValue: 'Pricing Plans' })}
                 </Link>
               </li>
             </ul>
@@ -98,7 +100,7 @@ const Footer = () => {
 
           {/* Contact Info */}
           <div>
-            <h3 className="font-semibold mb-4">Contact Us</h3>
+            <h3 className="font-semibold mb-4">{t('footer.contact', { defaultValue: 'Contact Us' })}</h3>
             <div className="space-y-2">
               <a
                 href={`mailto:${supportEmail}`}
@@ -113,7 +115,7 @@ const Footer = () => {
 
           {/* Social Links */}
           <div>
-            <h3 className="font-semibold mb-4">Follow Us</h3>
+            <h3 className="font-semibold mb-4">{t('footer.followUs', { defaultValue: 'Follow Us' })}</h3>
             <div className="flex space-x-4">
               {socialLinks.map((social) => (
                 <a

@@ -2,7 +2,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import SeekerAnimation from "@/components/SeekerAnimation";
+import OozeQQAnimation from "@/components/OozeQQAnimation";
 import { Card } from "@/components/ui/card";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -31,7 +31,7 @@ const UserOnboard = () => {
           
           {/* Seeker animation */}
           <div className="absolute top-full -mt-2">
-            <SeekerAnimation 
+            <OozeQQAnimation 
               width={100} 
               height={100} 
               mobileWidth={80}
@@ -40,6 +40,7 @@ const UserOnboard = () => {
             />
           </div>
         </div>
+
         
         {/* Add spacing to account for the Seeker */}
         <div className="mt-16"></div>

@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { ChevronDown, Filter, ArrowUpDown, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export type SortOption = 
   | "created_at_desc" 
@@ -35,53 +36,54 @@ interface SortFilterControlsProps {
   onFilterChange: (filter: StatusFilter[]) => void;
 }
 
-const sortOptions = [
-  { value: "created_at_desc" as SortOption, label: "Resume Generation Time (Latest to Earliest)" },
-  { value: "created_at_asc" as SortOption, label: "Resume Generation Time (Earliest to Latest)" },
-  { value: "last_edit_desc" as SortOption, label: "Last Edit Time (Latest to Earliest)" },
-  { value: "last_edit_asc" as SortOption, label: "Last Edit Time (Earliest to Latest)" },
-  { value: "status_asc" as SortOption, label: "Application Status (Ascending)" },
-  { value: "status_desc" as SortOption, label: "Application Status (Descending)" },
-];
-
-const filterOptions = [
-  { value: "all" as StatusFilter, label: "All Statuses" },
-  { value: "resume" as StatusFilter, label: "Resume" },
-  { value: "cover_letter" as StatusFilter, label: "Cover Letter" },
-  { value: "application_submitted" as StatusFilter, label: "Application Submitted" },
-  { value: "following_up" as StatusFilter, label: "Following Up" },
-  { value: "interview" as StatusFilter, label: "Interview" },
-  { value: "rejected" as StatusFilter, label: "Rejected" },
-  { value: "accepted" as StatusFilter, label: "Accepted" },
-];
-
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case "resume":
-      return "bg-blue-100 text-blue-800";
-    case "cover_letter":
-      return "bg-green-100 text-green-800";
-    case "application_submitted":
-      return "bg-purple-100 text-purple-800";
-    case "following_up":
-      return "bg-yellow-100 text-yellow-800";
-    case "interview":
-      return "bg-orange-100 text-orange-800";
-    case "rejected":
-      return "bg-red-100 text-red-800";
-    case "accepted":
-      return "bg-emerald-100 text-emerald-800";
-    default:
-      return "bg-gray-100 text-gray-800";
-  }
-};
-
 const SortFilterControls = ({ 
   currentSort, 
   currentFilter, 
   onSortChange, 
-  onFilterChange 
+  onFilterChange
 }: SortFilterControlsProps) => {
+  const { t } = useTranslation('records');
+
+  const sortOptions = [
+    { value: "created_at_desc" as SortOption, label: t('sorting.resumeGenerationLatest') },
+    { value: "created_at_asc" as SortOption, label: t('sorting.resumeGenerationEarliest') },
+    { value: "last_edit_desc" as SortOption, label: t('sorting.lastEditLatest') },
+    { value: "last_edit_asc" as SortOption, label: t('sorting.lastEditEarliest') },
+    { value: "status_asc" as SortOption, label: t('sorting.statusAscending') },
+    { value: "status_desc" as SortOption, label: t('sorting.statusDescending') },
+  ];
+  
+  const filterOptions = [
+    { value: "all" as StatusFilter, label: t('filters.allStatuses') },
+    { value: "resume" as StatusFilter, label: t('status.resume') },
+    { value: "cover_letter" as StatusFilter, label: t('status.coverLetter') },
+    { value: "application_submitted" as StatusFilter, label: t('status.applicationSubmitted') },
+    { value: "following_up" as StatusFilter, label: t('status.followingUp') },
+    { value: "interview" as StatusFilter, label: t('status.interview') },
+    { value: "rejected" as StatusFilter, label: t('status.rejected') },
+    { value: "accepted" as StatusFilter, label: t('status.accepted') },
+  ];
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "resume":
+        return "bg-blue-100 text-blue-800";
+      case "cover_letter":
+        return "bg-green-100 text-green-800";
+      case "application_submitted":
+        return "bg-purple-100 text-purple-800";
+      case "following_up":
+        return "bg-yellow-100 text-yellow-800";
+      case "interview":
+        return "bg-orange-100 text-orange-800";
+      case "rejected":
+        return "bg-red-100 text-red-800";
+      case "accepted":
+        return "bg-emerald-100 text-emerald-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
   const getCurrentSortLabel = () => {
     return sortOptions.find(option => option.value === currentSort)?.label || "Sort by";
   };
@@ -125,13 +127,13 @@ const SortFilterControls = ({
 
   const getFilterButtonLabel = () => {
     if (currentFilter.includes("all")) {
-      return "All Statuses";
+      return t('filters.allStatuses');
     }
     if (currentFilter.length === 1) {
       const option = filterOptions.find(opt => opt.value === currentFilter[0]);
       return option?.label || "Filter";
     }
-    return `${currentFilter.length} filters selected`;
+    return `${currentFilter.length} ${t('filters.filtersSelected')}`;
   };
 
   return (
@@ -196,7 +198,7 @@ const SortFilterControls = ({
       {/* Selected Filters Display */}
       {!currentFilter.includes("all") && currentFilter.length > 0 && (
         <div className="flex flex-wrap gap-2">
-          <span className="text-sm text-gray-600 flex items-center">Active filters:</span>
+          <span className="text-sm text-gray-600 flex items-center">{t('filters.activeFilters')}:</span>
           {currentFilter.map((filter) => {
             const option = filterOptions.find(opt => opt.value === filter);
             return (

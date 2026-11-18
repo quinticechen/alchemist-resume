@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "title": "Investigación de Empresas - Perspectivas de Empresas con IA",
+    "description": "Obtenga investigaciones y perspectivas completas de empresas impulsadas por IA para mejorar su estrategia de solicitud de empleo.",
+    "keywords": "investigación de empresas, análisis de empresas, solicitud de empleo, perspectivas de carrera, inteligencia de negocios"
+  },
+  "title": "Investigación de Empresas",
+  "employees": "empleados",
+  "ceo": "CEO",
+  "visitWebsite": "Visitar Sitio Web",
+  "readMore": "Leer Más",
+  "unknown": {
+    "company": "Empresa Desconocida"
+  },
+  "sections": {
+    "businessOverview": "Resumen del Negocio",
+    "keyProducts": "Productos y Servicios Clave",
+    "swotAnalysis": "Análisis FODA",
+    "recentNews": "Noticias Recientes"
+  },
+  "swot": {
+    "strengths": "Fortalezas",
+    "weaknesses": "Debilidades",
+    "opportunities": "Oportunidades",
+    "threats": "Amenazas"
+  },
+  "pending": {
+    "title": "Investigando Empresa...",
+    "description": "Nuestra IA está analizando la información de la empresa y recopilando perspectivas completas para usted.",
+    "waitTime": "Esto suele tardar entre 2 y 3 minutos. Espere mientras compilamos la investigación."
+  },
+  "error": {
+    "title": "Error de Investigación",
+    "fetchFailed": "No se pudieron obtener los datos de investigación de la empresa. Por favor, inténtelo de nuevo más tarde."
+  }
+}

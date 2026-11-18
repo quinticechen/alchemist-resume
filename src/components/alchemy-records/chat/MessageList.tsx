@@ -4,6 +4,7 @@ import { User } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { AlertCircle } from "lucide-react";
 import { ChatMessage, MessageListProps } from './types';
+import { useTranslation } from "react-i18next";
 
 const MessageList: React.FC<MessageListProps> = ({ 
   messages, 
@@ -11,6 +12,16 @@ const MessageList: React.FC<MessageListProps> = ({
   messagesEndRef,
   className = "" 
 }) => {
+  const { t } = useTranslation(['resume-refine']);
+  
+  const getMessageContent = (message: ChatMessage): string => {
+    // Check if the message content is a translation key
+    if (message.content.startsWith('aiChat.')) {
+      return t(message.content);
+    }
+    return message.content;
+  };
+  
   return (
     <ScrollArea className={`flex-1 pr-2 ${className}`}>
       <div className="space-y-4 mb-4">
@@ -27,7 +38,7 @@ const MessageList: React.FC<MessageListProps> = ({
               }`}
             >
               <div className="flex gap-2 items-start">
-                <p className="whitespace-pre-wrap text-sm">{message.content}</p>
+                <p className="whitespace-pre-wrap text-sm">{getMessageContent(message)}</p>
                 {message.role === 'user' && <User className="h-4 w-4 flex-shrink-0 mt-1" />}
               </div>
             </div>

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   ArrowRight,
   Upload,
@@ -10,14 +11,16 @@ import {
 } from "lucide-react";
 
 export const CoreFeatures = () => {
+  const { t } = useTranslation('home');
+  
   return (
     <div className="mx-auto mt-32 max-w-7xl px-6 sm:mt-56 lg:px-8">
       <div className="mx-auto max-w-2xl text-center">
         <h2 className="text-4xl font-bold text-center bg-gradient-primary text-transparent bg-clip-text">
-          The new way to build resumes
+          {t('features.title', { defaultValue: 'The new way to build resumes' })}
         </h2>
         <p className="mt-6 text-lg leading-8 text-neutral-600">
-          We understand the challenges of creating a resume that stands out. That&apos;s why we built Resume Alchemist, the AI-powered resume builder that helps you craft a resume that gets you hired.
+          {t('features.subtitle', { defaultValue: 'We understand the challenges of creating a resume that stands out. That\'s why we built Resume Alchemist, the AI-powered resume builder that helps you craft a resume that gets you hired.' })}
         </p>
       </div>
       <div className="mt-16 grid grid-cols-1 gap-x-6 gap-y-12 sm:grid-cols-2 lg:mt-20 lg:grid-cols-4 lg:gap-x-8">
@@ -26,10 +29,10 @@ export const CoreFeatures = () => {
             <Bot className="h-6 w-6 text-white" />
           </div>
           <h3 className="mt-4 text-base font-semibold leading-7">
-            AI-Powered
+            {t('features.items.aiPowered.title', { defaultValue: 'AI-Powered' })}
           </h3>
           <p className="mt-2 text-sm leading-6 text-neutral-600">
-            Our AI analyzes your experience and skills to craft a resume that highlights your strengths.
+            {t('features.items.aiPowered.description', { defaultValue: 'Our AI analyzes your experience and skills to craft a resume that highlights your strengths.' })}
           </p>
         </div>
         <div className="text-center md:text-left">
@@ -37,10 +40,10 @@ export const CoreFeatures = () => {
             <Crosshair className="h-6 w-6 text-white" />
           </div>
           <h3 className="mt-4 text-base font-semibold leading-7 text-neutral-900">
-            ATS Optimized
+            {t('features.items.atsOptimized.title', { defaultValue: 'ATS Optimized' })}
           </h3>
           <p className="mt-2 text-sm leading-6 text-neutral-600">
-            We ensure your resume is optimized for applicant tracking systems (ATS) to increase your chances of getting an interview.
+            {t('features.items.atsOptimized.description', { defaultValue: 'We ensure your resume is optimized for applicant tracking systems (ATS) to increase your chances of getting an interview.' })}
           </p>
         </div>
         <div className="text-center md:text-left">
@@ -48,10 +51,10 @@ export const CoreFeatures = () => {
             <Unlink2 className="h-6 w-6 text-white" />
           </div>
           <h3 className="mt-4 text-base font-semibold leading-7 text-neutral-900">
-            Job-Specific
+            {t('features.items.jobSpecific.title', { defaultValue: 'Job-Specific' })}
           </h3>
           <p className="mt-2 text-sm leading-6 text-neutral-600">
-            We tailor your resume to specific job postings, highlighting the skills and experience that match the job description.
+            {t('features.items.jobSpecific.description', { defaultValue: 'We tailor your resume to specific job postings, highlighting the skills and experience that match the job description.' })}
           </p>
         </div>
         <div className="text-center md:text-left">
@@ -59,10 +62,10 @@ export const CoreFeatures = () => {
             <Laugh className="h-6 w-6 text-white" />     
           </div>
           <h3 className="mt-4 text-base font-semibold leading-7 text-neutral-900">
-            Easy to Use
+            {t('features.items.easyToUse.title', { defaultValue: 'Easy to Use' })}
           </h3>
           <p className="mt-2 text-sm leading-6 text-neutral-600">
-            Our intuitive interface makes it easy to create a professional resume in minutes.
+            {t('features.items.easyToUse.description', { defaultValue: 'Our intuitive interface makes it easy to create a professional resume in minutes.' })}
           </p>
         </div>
       </div>
@@ -72,10 +75,10 @@ export const CoreFeatures = () => {
         <div className="mx-auto px-6 lg:px-8">
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="text-4xl font-bold text-center bg-gradient-primary text-transparent bg-clip-text">
-              How it works
+              {t('howItWorks.title', { defaultValue: 'How it works' })}
             </h2>
             <p className="mt-6 text-lg leading-8 text-neutral-600">
-              Three simple steps to create a resume that gets you hired.
+              {t('howItWorks.subtitle', { defaultValue: 'Three simple steps to create a resume that gets you hired.' })}
             </p>
           </div>
           <div className="mt-16 flow-root sm:mt-24">
@@ -88,10 +91,10 @@ export const CoreFeatures = () => {
                         <Upload className="h-6 w-6 text-white" />
                       </div>
                       <h3 className="mt-4 text-base font-semibold leading-7 text-neutral-900">
-                        Upload Your Resume
+                        {t('howItWorks.steps.upload.title', { defaultValue: 'Upload Your Resume' })}
                       </h3>
                       <p className="mt-2 text-sm leading-6 text-neutral-600">
-                        Upload your existing resume in PDF format.
+                        {t('howItWorks.steps.upload.description', { defaultValue: 'Upload your existing resume in PDF format.' })}
                       </p>
                     </div>
                     <div className="text-center md:text-left">
@@ -99,10 +102,10 @@ export const CoreFeatures = () => {
                         <ArrowRight className="h-6 w-6 text-white" />
                       </div>
                       <h3 className="mt-4 text-base font-semibold leading-7 text-neutral-900">
-                        Enter Job Posting URL
+                        {t('howItWorks.steps.enterJob.title', { defaultValue: 'Enter Job Posting URL' })}
                       </h3>
                       <p className="mt-2 text-sm leading-6 text-neutral-600">
-                        Paste the URL of the job posting you're applying for.
+                        {t('howItWorks.steps.enterJob.description', { defaultValue: 'Paste the URL of the job posting you\'re applying for.' })}
                       </p>
                     </div>
                     <div className="text-center md:text-left">
@@ -110,10 +113,10 @@ export const CoreFeatures = () => {
                         <Zap className="h-6 w-6 text-white" />
                       </div>
                       <h3 className="mt-4 text-base font-semibold leading-7 text-neutral-900">
-                        Get Your Optimized Resume
+                        {t('howItWorks.steps.getOptimized.title', { defaultValue: 'Get Your Optimized Resume' })}
                       </h3>
                       <p className="mt-2 text-sm leading-6 text-neutral-600">
-                        Our AI will analyze your resume and the job posting to create a tailored resume that highlights your skills and experience.
+                        {t('howItWorks.steps.getOptimized.description', { defaultValue: 'Our AI will analyze your resume and the job posting to create a tailored resume that highlights your skills and experience.' })}
                       </p>
                     </div>
                   </div>

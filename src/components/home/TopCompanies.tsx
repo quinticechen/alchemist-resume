@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 const companies = [
   {
@@ -30,6 +31,8 @@ const companies = [
 ];
 
 export const TopCompanies = () => {
+  const { t } = useTranslation('home');
+  
   const handleCompanyClick = (jobsUrl: string, companyName: string) => {
     window.open(jobsUrl, '_blank', 'noopener,noreferrer');
   };
@@ -38,7 +41,7 @@ export const TopCompanies = () => {
     <section className="py-16 bg-neutral-50">
       <div className="max-w-6xl mt-32 mb-32 mx-auto px-4 text-center">
         <h2 className="text-4xl font-bold text-center mb-12 bg-gradient-primary text-transparent bg-clip-text">
-          Optimize Your Resume for Top Companies
+          {t('companies.title', { defaultValue: 'Optimize Your Resume for Top Companies' })}
         </h2>
         <div className="flex flex-wrap justify-center gap-8 items-center">
           {companies.map((company) => (

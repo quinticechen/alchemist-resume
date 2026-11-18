@@ -1,0 +1,47 @@
+{
+  "navigation": {
+    "workshop": "Workshop",
+    "records": "Records", 
+    "pricing": "Pricing",
+    "faq": "FAQ",
+    "supportedWebsites": "Supported Websites"
+  },
+  "auth": {
+    "signIn": "Sign In",
+    "signOut": "Sign Out",
+    "signUp": "Sign Up",
+    "email": "Email",
+    "password": "Password",
+    "forgotPassword": "Forgot Password?",
+    "createAccount": "Create Account",
+    "alreadyHaveAccount": "Already have an account?",
+    "dontHaveAccount": "Don't have an account?"
+  },
+  "actions": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "upload": "Upload",
+    "download": "Download",
+    "submit": "Submit",
+    "continue": "Continue",
+    "back": "Back",
+    "next": "Next"
+  },
+  "status": {
+    "loading": "Loading...",
+    "saving": "Saving...",
+    "success": "Success",
+    "error": "Error",
+    "pending": "Pending",
+    "complete": "Complete"
+  },
+  "subscription": {
+    "usesLeft": "{{count}} uses left",
+    "startFreeTrial": "Start Free Trial",
+    "upgradeNow": "Upgrade Now",
+    "currentPlan": "Current Plan"
+  },
+  "goBack": "Go Back"
+}

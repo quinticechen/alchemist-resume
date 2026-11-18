@@ -11,8 +11,12 @@ import { useSubscriptionCheck } from "@/hooks/useSubscriptionCheck";
 import { getEnvironment } from "@/integrations/supabase/client";
 import Lottie from "react-lottie";
 import Loading from "@/animations/Loading.json";
+import { useTranslation } from "react-i18next";
+import { SEO } from "@/components/SEO";
+
 
 const AlchemistWorkshop = () => {
+  const { t } = useTranslation(['common', 'workshop']);
   const { session, isLoading } = useAuth();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [filePath, setFilePath] = useState<string>("");
@@ -168,39 +172,28 @@ const AlchemistWorkshop = () => {
         throw resumeError;
       }
 
+      // Generate the public URL for all scenarios
+      const { data: publicUrlData } = supabase.storage
+        .from("resumes")
+        .getPublicUrl(resumeData.file_path);
+
       // Prepare webhook data based on the scenario
       let webhookData: any = {
         analysisId: analysisRecord.id,
         fileName: resumeData.file_name,
+        resumeUrl: publicUrlData.publicUrl, // Always include resumeUrl
       };
 
-      // Scenario 1: Previous resume + job description
-      if (isFromPreviousResume && data.jobContent) {
-        webhookData.resumeContent = resumeData.formatted_resume || "";
+      // Add job information based on input type
+      if (data.jobUrl) {
+        webhookData.jobUrl = data.jobUrl;
+      } else if (data.jobContent) {
         webhookData.jobContent = data.jobContent;
       }
-      // Scenario 2: Previous resume + job URL  
-      else if (isFromPreviousResume && data.jobUrl) {
-        webhookData.resumeContent = resumeData.formatted_resume || "";
-        webhookData.jobUrl = data.jobUrl;
-      }
-      // Scenario 3: New resume + job URL
-      else if (!isFromPreviousResume && data.jobUrl) {
-        // Generate the full public URL for the resume file
-        const { data: publicUrlData } = supabase.storage
-          .from("resumes")
-          .getPublicUrl(resumeData.file_path);
-        webhookData.resumeUrl = publicUrlData.publicUrl;
-        webhookData.jobUrl = data.jobUrl;
-      }
-      // Scenario 4: New resume + job description
-      else if (!isFromPreviousResume && data.jobContent) {
-        // Generate the full public URL for the resume file
-        const { data: publicUrlData } = supabase.storage
-          .from("resumes")
-          .getPublicUrl(resumeData.file_path);
-        webhookData.resumeUrl = publicUrlData.publicUrl;
-        webhookData.jobContent = data.jobContent;
+
+      // For previous resumes, also include resumeContent if available
+      if (isFromPreviousResume && resumeData.formatted_resume) {
+        webhookData.resumeContent = resumeData.formatted_resume;
       }
 
       const currentEnv = getEnvironment();
@@ -295,11 +288,17 @@ const AlchemistWorkshop = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-4xl mx-auto space-y-8">
-        <h1 className="text-3xl font-bold bg-gradient-primary text-transparent bg-clip-text text-center">
-          Alchemist Workshop
-        </h1>
+    <>
+      <SEO
+        title={t('workshop:meta.title')}
+        description={t('workshop:meta.description')}
+        keywords={t('workshop:meta.keywords')}
+      />
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto space-y-8">
+          <h1 className="text-center text-4xl font-bold mb-4 bg-gradient-primary text-transparent bg-clip-text">
+            {t('workshop:title')}
+          </h1>
 
         <ResumeUploader
           onUploadSuccess={handleFileUploadSuccess}
@@ -327,8 +326,9 @@ const AlchemistWorkshop = () => {
             isTimeout={isTimeout}
           />
         )}
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 

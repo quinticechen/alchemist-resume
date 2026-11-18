@@ -1,0 +1,46 @@
+{
+  "navigation": {
+    "workshop": "工作坊",
+    "records": "记录", 
+    "pricing": "价格",
+    "faq": "常见问题",
+    "supportedWebsites": "支持的网站"
+  },
+  "auth": {
+    "signIn": "登录",
+    "signOut": "登出",
+    "signUp": "注册",
+    "email": "邮箱",
+    "password": "密码",
+    "forgotPassword": "忘记密码？",
+    "createAccount": "创建账户",
+    "alreadyHaveAccount": "已有账户？",
+    "dontHaveAccount": "没有账户？"
+  },
+  "actions": {
+    "save": "保存",
+    "cancel": "取消",
+    "delete": "删除",
+    "edit": "编辑",
+    "upload": "上传",
+    "download": "下载",
+    "submit": "提交",
+    "continue": "继续",
+    "back": "返回",
+    "next": "下一步"
+  },
+  "status": {
+    "loading": "加载中...",
+    "saving": "保存中...",
+    "success": "成功",
+    "error": "错误",
+    "pending": "等待中",
+    "complete": "完成"
+  },
+  "subscription": {
+    "usesLeft": "剩余 {{count}} 次使用",
+    "startFreeTrial": "开始免费试用",
+    "upgradeNow": "立即升级",
+    "currentPlan": "当前计划"
+  }
+}

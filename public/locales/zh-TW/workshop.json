@@ -1,0 +1,30 @@
+{
+  "meta": {
+    "title": "煉金師工作坊 - 履歷優化",
+    "description": "透過 AI 驅動的優化轉化您的履歷。上傳您的履歷和職缺公告以獲得個人化建議。",
+    "keywords": "履歷優化, AI履歷製作器, 求職申請, 職涯發展"
+  },
+  "title": "煉金師工作坊",
+  "resumeUpload": {
+    "title": "履歷上傳",
+    "uploadNew": "上傳新履歷",
+    "selectPrevious": "選擇先前履歷",
+    "dragDrop": "將您的 PDF 履歷拖放至此，或點擊選擇檔案",
+    "maxFileSize": "最大檔案大小：5MB",
+    "loading": "載入中",
+    "previewResume": "預覽履歷",
+    "useSelected": "使用選擇的履歷",
+    "remove": "移除",
+    "previousSelected": "已選擇先前履歷",
+    "selectResume": "選擇履歷",
+    "uploading": "上傳中..."
+  },
+  "jobInfo": {
+    "title": "職缺資訊",
+    "jobUrl": "職缺公告 URL",
+    "jobDescription": "職缺描述文字",
+    "urlPlaceholder": "在此貼上職缺公告 URL。請移除 ? 後的所有 URL 參數",
+    "descriptionPlaceholder": "在此貼上職缺描述文字...",
+    "castAlchemy": "施展煉金術"
+  }
+}

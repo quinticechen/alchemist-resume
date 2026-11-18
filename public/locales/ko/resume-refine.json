@@ -1,0 +1,185 @@
+{
+  "meta": {
+    "title": "이력서 다듬기 - Resume Alchemist",
+    "description": "AI 기반 제안으로 이력서를 다듬고 최적화하세요.",
+    "keywords": "이력서 다듬기, AI 제안, 이력서 최적화, 이력서 편집기"
+  },
+  "navigation": {
+    "back": "뒤로"
+  },
+  "jobDescription": {
+    "title": "직무 설명",
+    "companyWebsite": "회사 웹사이트",
+    "fields": {
+      "title": "제목",
+      "language": "언어",
+      "keywords": "키워드",
+      "responsibilities": "책임",
+      "requiredQualifications": "필수 자격 요건",
+      "preferredQualifications": "우대 자격 요건"
+    }
+  },
+  "sections": {
+    "personalInfo": "개인 정보",
+    "professionalSummary": "직무 요약",
+    "professionalExperience": "직무 경력",
+    "education": "학력",
+    "skills": "기술",
+    "projects": "프로젝트",
+    "volunteerExperience": "자원봉사 경력",
+    "certifications": "자격증"
+  },
+  "personalInfo": {
+    "firstName": "이름",
+    "firstNamePlaceholder": "이름을 입력하세요",
+    "lastName": "성",
+    "lastNamePlaceholder": "성을 입력하세요",
+    "email": "이메일",
+    "emailPlaceholder": "이메일을 입력하세요",
+    "phone": "전화번호",
+    "phonePlaceholder": "전화번호를 입력하세요",
+    "location": "지역",
+    "locationPlaceholder": "지역을 입력하세요",
+    "linkedIn": "LinkedIn",
+    "linkedInPlaceholder": "LinkedIn 프로필 URL을 입력하세요",
+    "website": "웹사이트",
+    "websitePlaceholder": "웹사이트 URL을 입력하세요"
+  },
+  "professionalSummary": {
+    "title": "직무 요약",
+    "placeholder": "직무 배경, 기술 및 경력 목표에 대한 간결한 요약을 작성하세요..."
+  },
+  "experience": {
+    "addExperience": "경력 추가",
+    "editExperience": "경력 수정",
+    "position": "직책",
+    "company": "회사",
+    "duration": "기간",
+    "actions": "작업",
+    "edit": "수정",
+    "jobTitle": "직책",
+    "location": "위치",
+    "companyIntroduction": "회사 소개",
+    "companyIntroductionPlaceholder": "회사를 간략하게 설명하세요...",
+    "startDate": "시작일 (YYYY-MM)",
+    "startDatePlaceholder": "YYYY-MM",
+    "endDate": "종료일 (YYYY-MM 또는 현재)",
+    "endDatePlaceholder": "YYYY-MM",
+    "achievements": "성과",
+    "add": "추가",
+    "noAchievements": "성과가 추가되지 않았습니다. \"추가\"를 클릭하여 성과를 포함하세요.",
+    "achievementPlaceholder": "성과를 설명하세요...",
+    "cancel": "취소",
+    "saveExperience": "경력 저장"
+  },
+  "aiChat": {
+    "greeting": "제 촉수가 이력서에 숨겨진 잠재력이 여전히 남아있다는 것을 감지했습니다! 함께 탐험해 보시겠어요!",
+    "suggestions": {
+      "highlights": "이 이력서에서 가장 매력적인 하이라이트는 무엇인가요?",
+      "keywords": "어떤 키워드를 강화할 수 있을까요?",
+      "experience": "어떻게 하면 당신의 경험을 더 매력적으로 만들 수 있을까요?",
+      "interview": "면접관이 어떤 질문을 할 수 있을까요?"
+    },
+    "placeholder": "이력서 최적화 제안을 요청하세요..."
+  },
+  "editor": {
+    "jsonEditor": "JSON 편집기",
+    "save": "저장",
+    "finish": "완료"
+  },
+  "unsavedChanges": {
+    "title": "저장되지 않은 변경 사항",
+    "description": "저장되지 않은 변경 사항이 있습니다. 저장하지 않고 종료하시겠습니까?",
+    "cancel": "취소",
+    "leave": "저장하지 않고 나가기"
+  },
+  "education": {
+    "title": "학력",
+    "addEducation": "학력 추가",
+    "editEducation": "학력 수정",
+    "degree": "학위",
+    "institution": "기관",
+    "dates": "기간",
+    "actions": "작업",
+    "edit": "수정",
+    "degreeName": "학위명",
+    "enrollmentDate": "입학일 (YYYY-MM)",
+    "enrollmentDatePlaceholder": "YYYY-MM",
+    "graduationDate": "졸업일 (YYYY-MM)",
+    "graduationDatePlaceholder": "YYYY-MM",
+    "gpa": "GPA (선택 사항)",
+    "gpaPlaceholder": "예: 3.8",
+    "cancel": "취소",
+    "saveEducation": "학력 저장",
+    "noEducation": "아직 학력 항목이 없습니다. \"학력 추가\"를 클릭하여 시작하세요."
+  },
+  "skills": {
+    "title": "기술",
+    "technicalSkills": "기술적 기술",
+    "softSkills": "소프트 스킬",
+    "addTechnicalSkill": "기술적 기술 추가...",
+    "addSoftSkill": "소프트 스킬 추가...",
+    "add": "추가"
+  },
+  "projects": {
+    "title": "프로젝트",
+    "addProject": "프로젝트 추가",
+    "editProject": "프로젝트 수정",
+    "projectName": "프로젝트 이름",
+    "duration": "기간",
+    "actions": "작업",
+    "edit": "수정",
+    "name": "프로젝트 이름",
+    "startDate": "시작일 (YYYY-MM)",
+    "startDatePlaceholder": "YYYY-MM",
+    "endDate": "종료일 (YYYY-MM 또는 현재)",
+    "endDatePlaceholder": "YYYY-MM",
+    "achievements": "성과",
+    "achievementPlaceholder": "성과를 설명하세요...",
+    "noAchievements": "성과가 추가되지 않았습니다. \"추가\"를 클릭하여 성과를 포함하세요.",
+    "cancel": "취소",
+    "saveProject": "프로젝트 저장",
+    "noProjects": "아직 프로젝트가 없습니다. \"프로젝트 추가\"를 클릭하여 시작하세요."
+  },
+  "volunteer": {
+    "title": "자원봉사 경력",
+    "addVolunteer": "자원봉사 경력 추가",
+    "editVolunteer": "자원봉사 경력 수정",
+    "organization": "기관",
+    "duration": "기간",
+    "actions": "작업",
+    "edit": "수정",
+    "organizationName": "기관명",
+    "startDate": "시작일 (YYYY-MM)",
+    "startDatePlaceholder": "YYYY-MM",
+    "endDate": "종료일 (YYYY-MM 또는 현재)",
+    "endDatePlaceholder": "YYYY-MM",
+    "achievements": "성과",
+    "achievementPlaceholder": "성과를 설명하세요...",
+    "noAchievements": "성과가 추가되지 않았습니다. \"추가\"를 클릭하여 성과를 포함하세요.",
+    "cancel": "취소",
+    "saveVolunteer": "자원봉사 경력 저장",
+    "noVolunteer": "아직 자원봉사 경력이 없습니다. \"자원봉사 경력 추가\"를 클릭하여 시작하세요."
+  },
+  "certifications": {
+    "title": "자격증",
+    "addCertification": "자격증 추가",
+    "editCertification": "자격증 수정",
+    "certificationName": "자격증명",
+    "dateAchieved": "취득일",
+    "expirationDate": "만료일",
+    "actions": "작업",
+    "edit": "수정",
+    "name": "자격증명",
+    "dateAchievedInput": "취득일 (YYYY-MM)",
+    "dateAchievedPlaceholder": "YYYY-MM",
+    "expirationDateInput": "만료일 (YYYY-MM)",
+    "expirationDatePlaceholder": "YYYY-MM",
+    "cancel": "취소",
+    "saveCertification": "자격증 저장",
+    "noCertifications": "아직 자격증이 없습니다. \"자격증 추가\"를 클릭하여 시작하세요."
+  },
+  "toolbar": {
+    "unsavedChanges": "저장되지 않은 변경 사항이 있습니다."
+  }
+}

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { PlusCircle, MinusCircle, MoveUp, MoveDown } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { useTranslation } from "react-i18next";
 
 interface CertificationsSectionProps {
   data: any;
@@ -13,6 +14,7 @@ interface CertificationsSectionProps {
 }
 
 const CertificationsSection = ({ data, onChange, showAddForm = true }: CertificationsSectionProps) => {
+  const { t } = useTranslation(['resume-refine']);
   const [activeCertIndex, setActiveCertIndex] = useState<number | null>(null);
   const [editing, setEditing] = useState<{ [key: string]: string }>({
     name: '',
@@ -143,7 +145,7 @@ const CertificationsSection = ({ data, onChange, showAddForm = true }: Certifica
               variant="outline"
               type="button"
             >
-              <PlusCircle className="h-4 w-4 mr-2" />Add Certification
+              <PlusCircle className="h-4 w-4 mr-2" />{t('resume-refine:certifications.addCertification')}
             </Button>
           )}
           
@@ -151,10 +153,10 @@ const CertificationsSection = ({ data, onChange, showAddForm = true }: Certifica
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Certification Name</TableHead>
-                  <TableHead>Date Achieved</TableHead>
-                  <TableHead>Expiration Date</TableHead>
-                  <TableHead>Actions</TableHead>
+                  <TableHead>{t('resume-refine:certifications.certificationName')}</TableHead>
+                  <TableHead>{t('resume-refine:certifications.dateAchieved')}</TableHead>
+                  <TableHead>{t('resume-refine:certifications.expirationDate')}</TableHead>
+                  <TableHead>{t('resume-refine:certifications.actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -171,7 +173,7 @@ const CertificationsSection = ({ data, onChange, showAddForm = true }: Certifica
                           onClick={() => initEditForm(idx)}
                           type="button"
                         >
-                          Edit
+                          {t('resume-refine:certifications.edit')}
                         </Button>
                         <Button 
                           variant="ghost" 
@@ -207,7 +209,7 @@ const CertificationsSection = ({ data, onChange, showAddForm = true }: Certifica
             </Table>
           ) : (
             <div className="text-center p-4 bg-gray-50 rounded-md">
-              No certifications added yet. Click "Add Certification" to get started.
+              {t('resume-refine:certifications.noCertifications')}
             </div>
           )}
         </>
@@ -215,12 +217,12 @@ const CertificationsSection = ({ data, onChange, showAddForm = true }: Certifica
         <Card>
           <CardHeader>
             <CardTitle>
-              {activeCertIndex >= 0 ? 'Edit Certification' : 'Add Certification'}
+              {activeCertIndex >= 0 ? t('resume-refine:certifications.editCertification') : t('resume-refine:certifications.addCertification')}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Certification Name</Label>
+              <Label htmlFor="name">{t('resume-refine:certifications.name')}</Label>
               <Input 
                 id="name" 
                 value={editing.name} 
@@ -230,22 +232,22 @@ const CertificationsSection = ({ data, onChange, showAddForm = true }: Certifica
             
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="dateAchieved">Date Achieved (YYYY-MM)</Label>
+                <Label htmlFor="dateAchieved">{t('resume-refine:certifications.dateAchievedInput')}</Label>
                 <Input 
                   id="dateAchieved" 
                   value={editing.dateAchieved} 
                   onChange={(e) => handleEditingChange('dateAchieved', e.target.value)}
-                  placeholder="YYYY-MM"
+                  placeholder={t('resume-refine:certifications.dateAchievedPlaceholder')}
                 />
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="expiredDate">Expiration Date (YYYY-MM)</Label>
+                <Label htmlFor="expiredDate">{t('resume-refine:certifications.expirationDateInput')}</Label>
                 <Input 
                   id="expiredDate" 
                   value={editing.expiredDate} 
                   onChange={(e) => handleEditingChange('expiredDate', e.target.value)}
-                  placeholder="YYYY-MM"
+                  placeholder={t('resume-refine:certifications.expirationDatePlaceholder')}
                 />
               </div>
             </div>
@@ -256,13 +258,13 @@ const CertificationsSection = ({ data, onChange, showAddForm = true }: Certifica
               onClick={() => setActiveCertIndex(null)}
               type="button"
             >
-              Cancel
+              {t('resume-refine:certifications.cancel')}
             </Button>
             <Button 
               onClick={handleSaveCertification}
               type="button"
             >
-              Save Certification
+              {t('resume-refine:certifications.saveCertification')}
             </Button>
           </CardFooter>
         </Card>

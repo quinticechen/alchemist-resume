@@ -1,0 +1,57 @@
+{
+  "meta": {
+    "title": "Alchemy Records - Resume Analysis History",
+    "description": "View and manage your resume analysis history. Track your optimization progress, feedback, and improvements with AI-powered insights.",
+    "keywords": "resume analysis history, AI optimization tracking, career progress, resume improvements, job application records"
+  },
+  "title": "Alchemy Records",
+  "usageStats": {
+    "title": "Usage Statistics",
+    "totalGoldenResumes": "Total Golden Resumes Generated",
+    "remainingFreeUses": "Remaining Free Uses",
+    "remainingMonthlyUses": "Remaining Monthly Uses", 
+    "unlimitedUses": "Unlimited Uses Available"
+  },
+  "sorting": {
+    "resumeGenerationLatest": "Resume Generation Time (Latest to Earliest)",
+    "resumeGenerationEarliest": "Resume Generation Time (Earliest to Latest)",
+    "lastEditLatest": "Last Edit Time (Latest to Earliest)",
+    "lastEditEarliest": "Last Edit Time (Earliest to Latest)",
+    "statusAscending": "Application Status (Ascending)",
+    "statusDescending": "Application Status (Descending)"
+  },
+  "filters": {
+    "allStatuses": "All Statuses",
+    "activeFilters": "Active filters",
+    "filtersSelected": "filters selected"
+  },
+  "status": {
+    "resume": "Resume",
+    "coverLetter": "Cover Letter", 
+    "applicationSubmitted": "Application Submitted",
+    "followingUp": "Following Up",
+    "interview": "Interview",
+    "rejected": "Rejected",
+    "accepted": "Accepted"
+  },
+  "actions": {
+    "viewGoldenResume": "View Golden Resume",
+    "createCoverLetter": "Create Cover Letter",
+    "linkJD": "Link JD",
+    "applyJob": "Apply Job",
+    "companyResearch": "Company Research",
+    "researching": "Researching..."
+  },
+  "jobUrl": {
+    "cannotChange": "The job URL cannot be changed after saving",
+    "enterUrl": "Enter job posting URL",
+    "save": "Save",
+    "cancel": "Cancel",
+    "saving": "Saving..."
+  },
+  "messages": {
+    "noAnalysesFound": "No resume analyses found",
+    "noAnalysesWithStatus": "No analyses found with status",
+    "noAnalysesWithFilters": "No analyses found with the selected status filters"
+  }
+}

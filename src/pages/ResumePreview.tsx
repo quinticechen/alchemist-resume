@@ -18,6 +18,7 @@ import { ResumeSection } from "@/utils/resumeUtils";
 import Lottie from "react-lottie";
 import Loading from "@/animations/Loading.json";
 import FeedbackButtons from "@/components/alchemy-records/FeedbackButtons";
+import { useTranslation } from "react-i18next";
 
 const loadingOptions = {
   loop: true,
@@ -28,12 +29,12 @@ const loadingOptions = {
   },
 };
 
-const RESUME_STYLES = [
-  { id: "classic", name: "Classic", color: "bg-white" },
-  { id: "modern", name: "Modern", color: "bg-blue-50" },
-  { id: "minimal", name: "Minimal", color: "bg-gray-50" },
-  { id: "professional", name: "Professional", color: "bg-amber-50" },
-  { id: "creative", name: "Creative", color: "bg-purple-50" },
+const getResumeStyles = (t: any) => [
+  { id: "classic", name: t('resume-preview:styles.classic'), color: "bg-white" },
+  { id: "modern", name: t('resume-preview:styles.modern'), color: "bg-blue-50" },
+  { id: "minimal", name: t('resume-preview:styles.minimal'), color: "bg-gray-50" },
+  { id: "professional", name: t('resume-preview:styles.professional'), color: "bg-amber-50" },
+  { id: "creative", name: t('resume-preview:styles.creative'), color: "bg-purple-50" },
 ];
 
 interface ResumeData {
@@ -164,6 +165,7 @@ const normalizeResumeData = (data: any): EditorContent => {
 };
 
 const ResumePreview = () => {
+  const { t } = useTranslation(['common', 'resume-preview']);
   const { session, isLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -502,6 +504,7 @@ const ResumePreview = () => {
         };
 
   const orderedSections = resumeData.sectionOrder || DEFAULT_SECTION_ORDER;
+  const RESUME_STYLES = getResumeStyles(t);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100">
@@ -524,7 +527,7 @@ const ResumePreview = () => {
                 className="flex items-center gap-2"
               >
                 <Pencil className="h-4 w-4" />
-                Edit Resume
+                {t('resume-preview:buttons.editResume')}
               </Button>
 
               <Button
@@ -533,7 +536,7 @@ const ResumePreview = () => {
                 className="flex items-center gap-2"
               >
                 <FileText className="h-4 w-4" />
-                Change Style
+                {t('resume-preview:buttons.changeStyle')}
               </Button>
 
               <Button
@@ -542,7 +545,7 @@ const ResumePreview = () => {
                 className="bg-gradient-primary-light text-white hover:opacity-90 transition-opacity"
               >
                 <Download className="h-4 w-4" />
-                Export PDF
+                {t('resume-preview:buttons.exportPDF')}
               </Button>
 
               <Button
@@ -559,7 +562,7 @@ const ResumePreview = () => {
                 className="flex items-center gap-2"
               >
                 <FileText className="h-4 w-4" />
-                Original Resume
+                {t('resume-preview:buttons.originalResume')}
               </Button>
 
               {resumeData.googleDocUrl && (
@@ -570,7 +573,7 @@ const ResumePreview = () => {
                   className="flex items-center gap-2"
                 >
                   <Edit className="h-4 w-4" />
-                  Edit with Google Doc
+                  {t('resume-preview:buttons.editWithGoogleDoc')}
                 </Button>
               )}
 
@@ -692,7 +695,7 @@ const ResumePreview = () => {
                             : "text-gray-800"
                         }`}
                       >
-                        Professional Summary
+                        {t('resume-preview:sections.professionalSummary')}
                       </h2>
                       <p className="text-gray-700">{summaryText}</p>
                     </div>
@@ -730,7 +733,7 @@ const ResumePreview = () => {
                           : "text-gray-800"
                       }`}
                     >
-                      Professional Experience
+                      {t('resume-preview:sections.professionalExperience')}
                     </h2>
                     {resumeData.resume.professionalExperience.map(
                       (exp: any, index: number) => (
@@ -794,7 +797,7 @@ const ResumePreview = () => {
                           : "text-gray-800"
                       }`}
                     >
-                      Education
+                      {t('resume-preview:sections.education')}
                     </h2>
 
                     {Array.isArray(resumeData.resume.education) ? (
@@ -880,7 +883,7 @@ const ResumePreview = () => {
                             : "text-gray-800"
                         }`}
                       >
-                        Skills
+                        {t('resume-preview:sections.skills')}
                       </h2>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {hasTechnical && (
@@ -946,7 +949,7 @@ const ResumePreview = () => {
                           : "text-gray-800"
                       }`}
                     >
-                      Projects
+                      {t('resume-preview:sections.projects')}
                     </h2>
                     {resumeData.resume.projects.map(
                       (project: any, index: number) => (
@@ -1005,7 +1008,7 @@ const ResumePreview = () => {
                           : "text-gray-800"
                       }`}
                     >
-                      Certifications
+                      {t('resume-preview:sections.certifications')}
                     </h2>
                     <ul className="list-disc ml-5 text-gray-700">
                       {resumeData.resume.certifications.map(
@@ -1061,7 +1064,7 @@ const ResumePreview = () => {
                           : "text-gray-800"
                       }`}
                     >
-                      Volunteer Experience
+                      {t('resume-preview:sections.volunteerExperience')}
                     </h2>
                     {resumeData.resume.volunteer.map(
                       (vol: any, index: number) => (

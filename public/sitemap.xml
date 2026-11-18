@@ -1,32 +1,20 @@
-
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:xhtml="http://www.w3.org/1999/xhtml">
-  
   <!-- Homepage -->
   <url>
     <loc>https://resumealchemist.qwizai.com/</loc>
-    <lastmod>2025-06-12</lastmod>
+    <lastmod>2025-06-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
     <xhtml:link rel="alternate" hreflang="en" href="https://resumealchemist.qwizai.com/" />
     <xhtml:link rel="alternate" hreflang="zh" href="https://resumealchemist.qwizai.com/zh" />
   </url>
   
-  <!-- Home V2 -->
-  <url>
-    <loc>https://resumealchemist.qwizai.com/home-v2</loc>
-    <lastmod>2025-06-12</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://resumealchemist.qwizai.com/home-v2" />
-    <xhtml:link rel="alternate" hreflang="zh" href="https://resumealchemist.qwizai.com/zh/home-v2" />
-  </url>
-  
   <!-- Pricing -->
   <url>
     <loc>https://resumealchemist.qwizai.com/pricing</loc>
-    <lastmod>2025-06-12</lastmod>
+    <lastmod>2025-06-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
     <xhtml:link rel="alternate" hreflang="en" href="https://resumealchemist.qwizai.com/pricing" />
@@ -36,7 +24,7 @@
   <!-- Job Websites -->
   <url>
     <loc>https://resumealchemist.qwizai.com/job-websites</loc>
-    <lastmod>2025-06-12</lastmod>
+    <lastmod>2025-06-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
     <xhtml:link rel="alternate" hreflang="en" href="https://resumealchemist.qwizai.com/job-websites" />
@@ -46,27 +34,17 @@
   <!-- FAQ -->
   <url>
     <loc>https://resumealchemist.qwizai.com/faq</loc>
-    <lastmod>2025-06-12</lastmod>
+    <lastmod>2025-06-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
     <xhtml:link rel="alternate" hreflang="en" href="https://resumealchemist.qwizai.com/faq" />
     <xhtml:link rel="alternate" hreflang="zh" href="https://resumealchemist.qwizai.com/zh/faq" />
   </url>
   
-  <!-- Login -->
-  <url>
-    <loc>https://resumealchemist.qwizai.com/login</loc>
-    <lastmod>2025-06-12</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://resumealchemist.qwizai.com/login" />
-    <xhtml:link rel="alternate" hreflang="zh" href="https://resumealchemist.qwizai.com/zh/login" />
-  </url>
-  
   <!-- Alchemist Workshop -->
   <url>
     <loc>https://resumealchemist.qwizai.com/alchemist-workshop</loc>
-    <lastmod>2025-06-12</lastmod>
+    <lastmod>2025-06-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
     <xhtml:link rel="alternate" hreflang="en" href="https://resumealchemist.qwizai.com/alchemist-workshop" />
@@ -76,7 +54,7 @@
   <!-- Alchemy Records -->
   <url>
     <loc>https://resumealchemist.qwizai.com/alchemy-records</loc>
-    <lastmod>2025-06-12</lastmod>
+    <lastmod>2025-06-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
     <xhtml:link rel="alternate" hreflang="en" href="https://resumealchemist.qwizai.com/alchemy-records" />
@@ -86,7 +64,7 @@
   <!-- Resume Refine -->
   <url>
     <loc>https://resumealchemist.qwizai.com/resume-refine</loc>
-    <lastmod>2025-06-12</lastmod>
+    <lastmod>2025-06-19</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
     <xhtml:link rel="alternate" hreflang="en" href="https://resumealchemist.qwizai.com/resume-refine" />
@@ -96,7 +74,7 @@
   <!-- Resume Preview -->
   <url>
     <loc>https://resumealchemist.qwizai.com/resume-preview</loc>
-    <lastmod>2025-06-12</lastmod>
+    <lastmod>2025-06-19</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.7</priority>
     <xhtml:link rel="alternate" hreflang="en" href="https://resumealchemist.qwizai.com/resume-preview" />
@@ -106,27 +84,17 @@
   <!-- Cover Letter -->
   <url>
     <loc>https://resumealchemist.qwizai.com/cover-letter</loc>
-    <lastmod>2025-06-12</lastmod>
+    <lastmod>2025-06-19</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.7</priority>
     <xhtml:link rel="alternate" hreflang="en" href="https://resumealchemist.qwizai.com/cover-letter" />
     <xhtml:link rel="alternate" hreflang="zh" href="https://resumealchemist.qwizai.com/zh/cover-letter" />
   </url>
   
-  <!-- Account -->
-  <url>
-    <loc>https://resumealchemist.qwizai.com/account</loc>
-    <lastmod>2025-06-12</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://resumealchemist.qwizai.com/account" />
-    <xhtml:link rel="alternate" hreflang="zh" href="https://resumealchemist.qwizai.com/zh/account" />
-  </url>
-  
   <!-- Onboarding -->
   <url>
     <loc>https://resumealchemist.qwizai.com/onboard</loc>
-    <lastmod>2025-06-12</lastmod>
+    <lastmod>2025-06-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
     <xhtml:link rel="alternate" hreflang="en" href="https://resumealchemist.qwizai.com/onboard" />
@@ -136,27 +104,17 @@
   <!-- Survey -->
   <url>
     <loc>https://resumealchemist.qwizai.com/survey</loc>
-    <lastmod>2025-06-12</lastmod>
+    <lastmod>2025-06-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
     <xhtml:link rel="alternate" hreflang="en" href="https://resumealchemist.qwizai.com/survey" />
     <xhtml:link rel="alternate" hreflang="zh" href="https://resumealchemist.qwizai.com/zh/survey" />
   </url>
   
-  <!-- Payment Success -->
-  <url>
-    <loc>https://resumealchemist.qwizai.com/payment-success</loc>
-    <lastmod>2025-06-12</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://resumealchemist.qwizai.com/payment-success" />
-    <xhtml:link rel="alternate" hreflang="zh" href="https://resumealchemist.qwizai.com/zh/payment-success" />
-  </url>
-  
   <!-- Privacy Policy -->
   <url>
     <loc>https://resumealchemist.qwizai.com/privacy</loc>
-    <lastmod>2025-06-12</lastmod>
+    <lastmod>2025-06-19</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
     <xhtml:link rel="alternate" hreflang="en" href="https://resumealchemist.qwizai.com/privacy" />
@@ -166,7 +124,7 @@
   <!-- Terms of Service -->
   <url>
     <loc>https://resumealchemist.qwizai.com/terms</loc>
-    <lastmod>2025-06-12</lastmod>
+    <lastmod>2025-06-19</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
     <xhtml:link rel="alternate" hreflang="en" href="https://resumealchemist.qwizai.com/terms" />

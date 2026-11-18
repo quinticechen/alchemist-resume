@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { PlusCircle, MinusCircle, MoveUp, MoveDown } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { useTranslation } from "react-i18next";
 
 interface EducationSectionProps {
   data: any;
@@ -13,6 +14,7 @@ interface EducationSectionProps {
 }
 
 const EducationSection = ({ data, onChange, showAddForm = true }: EducationSectionProps) => {
+  const { t } = useTranslation(['resume-refine']);
   const [activeEduIndex, setActiveEduIndex] = useState<number | null>(null);
   const [editing, setEditing] = useState<{ [key: string]: string }>({
     degreeName: '',
@@ -154,7 +156,7 @@ const EducationSection = ({ data, onChange, showAddForm = true }: EducationSecti
               variant="outline"
               type="button"
             >
-              <PlusCircle className="h-4 w-4 mr-2" />Add Education
+              <PlusCircle className="h-4 w-4 mr-2" />{t('resume-refine:education.addEducation')}
             </Button>
           )}
           
@@ -162,10 +164,10 @@ const EducationSection = ({ data, onChange, showAddForm = true }: EducationSecti
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Degree</TableHead>
-                  <TableHead>Institution</TableHead>
-                  <TableHead>Dates</TableHead>
-                  <TableHead>Actions</TableHead>
+                  <TableHead>{t('resume-refine:education.degree')}</TableHead>
+                  <TableHead>{t('resume-refine:education.institution')}</TableHead>
+                  <TableHead>{t('resume-refine:education.dates')}</TableHead>
+                  <TableHead>{t('resume-refine:education.actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -186,7 +188,7 @@ const EducationSection = ({ data, onChange, showAddForm = true }: EducationSecti
                           onClick={() => initEditForm(idx)}
                           type="button"
                         >
-                          Edit
+                          {t('resume-refine:education.edit')}
                         </Button>
                         <Button 
                           variant="ghost" 
@@ -222,7 +224,7 @@ const EducationSection = ({ data, onChange, showAddForm = true }: EducationSecti
             </Table>
           ) : (
             <div className="text-center p-4 bg-gray-50 rounded-md">
-              No education entries yet. Click "Add Education" to get started.
+              {t('resume-refine:education.noEducation')}
             </div>
           )}
         </>
@@ -230,12 +232,12 @@ const EducationSection = ({ data, onChange, showAddForm = true }: EducationSecti
         <Card>
           <CardHeader>
             <CardTitle>
-              {activeEduIndex >= 0 ? 'Edit Education' : 'Add Education'}
+              {activeEduIndex >= 0 ? t('resume-refine:education.editEducation') : t('resume-refine:education.addEducation')}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="degreeName">Degree Name</Label>
+              <Label htmlFor="degreeName">{t('resume-refine:education.degreeName')}</Label>
               <Input 
                 id="degreeName" 
                 value={editing.degreeName} 
@@ -244,7 +246,7 @@ const EducationSection = ({ data, onChange, showAddForm = true }: EducationSecti
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="institution">Institution</Label>
+              <Label htmlFor="institution">{t('resume-refine:education.institution')}</Label>
               <Input 
                 id="institution" 
                 value={editing.institution} 
@@ -254,32 +256,32 @@ const EducationSection = ({ data, onChange, showAddForm = true }: EducationSecti
             
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="enrollmentDate">Enrollment Date (YYYY-MM)</Label>
+                <Label htmlFor="enrollmentDate">{t('resume-refine:education.enrollmentDate')}</Label>
                 <Input 
                   id="enrollmentDate" 
                   value={editing.enrollmentDate} 
                   onChange={(e) => handleEditingChange('enrollmentDate', e.target.value)}
-                  placeholder="YYYY-MM"
+                  placeholder={t('resume-refine:education.enrollmentDatePlaceholder')}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="graduationDate">Graduation Date (YYYY-MM)</Label>
+                <Label htmlFor="graduationDate">{t('resume-refine:education.graduationDate')}</Label>
                 <Input 
                   id="graduationDate" 
                   value={editing.graduationDate} 
                   onChange={(e) => handleEditingChange('graduationDate', e.target.value)}
-                  placeholder="YYYY-MM"
+                  placeholder={t('resume-refine:education.graduationDatePlaceholder')}
                 />
               </div>
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="gpa">GPA (Optional)</Label>
+              <Label htmlFor="gpa">{t('resume-refine:education.gpa')}</Label>
               <Input 
                 id="gpa" 
                 value={editing.gpa} 
                 onChange={(e) => handleEditingChange('gpa', e.target.value)}
-                placeholder="e.g. 3.8"
+                placeholder={t('resume-refine:education.gpaPlaceholder')}
               />
             </div>
           </CardContent>
@@ -289,13 +291,13 @@ const EducationSection = ({ data, onChange, showAddForm = true }: EducationSecti
               onClick={() => setActiveEduIndex(null)}
               type="button"
             >
-              Cancel
+              {t('resume-refine:education.cancel')}
             </Button>
             <Button 
               onClick={handleSaveEducation}
               type="button"
             >
-              Save Education
+              {t('resume-refine:education.saveEducation')}
             </Button>
           </CardFooter>
         </Card>

@@ -1,0 +1,185 @@
+{
+  "meta": {
+    "title": "Resume Refine - Resume Alchemist",
+    "description": "Refine and optimize your resume with AI-powered suggestions.",
+    "keywords": "perfeccionar currículum, sugerencias de IA, optimización de currículum, editor de currículum"
+  },
+  "navigation": {
+    "back": "Atrás"
+  },
+  "jobDescription": {
+    "title": "Descripción del Puesto",
+    "companyWebsite": "Página web de la empresa",
+    "fields": {
+      "title": "Título",
+      "language": "Idioma",
+      "keywords": "Palabras clave",
+      "responsibilities": "Responsabilidades",
+      "requiredQualifications": "Cualificaciones requeridas",
+      "preferredQualifications": "Cualificaciones preferidas"
+    }
+  },
+  "sections": {
+    "personalInfo": "Información Personal",
+    "professionalSummary": "Resumen Profesional",
+    "professionalExperience": "Experiencia Profesional",
+    "education": "Educación",
+    "skills": "Habilidades",
+    "projects": "Proyectos",
+    "volunteerExperience": "Experiencia de Voluntariado",
+    "certifications": "Certificaciones"
+  },
+  "personalInfo": {
+    "firstName": "Nombre",
+    "firstNamePlaceholder": "Introduce tu nombre",
+    "lastName": "Apellido",
+    "lastNamePlaceholder": "Introduce tu apellido",
+    "email": "Correo electrónico",
+    "emailPlaceholder": "Introduce tu correo electrónico",
+    "phone": "Teléfono",
+    "phonePlaceholder": "Introduce tu número de teléfono",
+    "location": "Ubicación",
+    "locationPlaceholder": "Introduce tu ubicación",
+    "linkedIn": "LinkedIn",
+    "linkedInPlaceholder": "Introduce la URL de tu perfil de LinkedIn",
+    "website": "Página web",
+    "websitePlaceholder": "Introduce la URL de tu página web"
+  },
+  "professionalSummary": {
+    "title": "Resumen Profesional",
+    "placeholder": "Escribe un resumen conciso de tu experiencia profesional, habilidades y objetivos de carrera..."
+  },
+  "experience": {
+    "addExperience": "Añadir Experiencia",
+    "editExperience": "Editar Experiencia",
+    "position": "Puesto",
+    "company": "Empresa",
+    "duration": "Duración",
+    "actions": "Acciones",
+    "edit": "Editar",
+    "jobTitle": "Título del Puesto",
+    "location": "Ubicación",
+    "companyIntroduction": "Introducción de la Empresa",
+    "companyIntroductionPlaceholder": "Describe brevemente la empresa...",
+    "startDate": "Fecha de Inicio (AAAA-MM)",
+    "startDatePlaceholder": "AAAA-MM",
+    "endDate": "Fecha de Fin (AAAA-MM o dejar en blanco para actual)",
+    "endDatePlaceholder": "AAAA-MM",
+    "achievements": "Logros",
+    "add": "Añadir",
+    "noAchievements": "No se han añadido logros. Haz clic en \"Añadir\" para incluir logros.",
+    "achievementPlaceholder": "Describe tu logro...",
+    "cancel": "Cancelar",
+    "saveExperience": "Guardar Experiencia"
+  },
+  "aiChat": {
+    "greeting": "¡Mis tentáculos sienten que todavía hay un potencial oculto en tu currículum! ¿Quieres que lo exploremos juntos?",
+    "suggestions": {
+      "highlights": "¿Cuáles son los puntos fuertes más atractivos de este currículum?",
+      "keywords": "¿Qué palabras clave podríamos reforzar?",
+      "experience": "¿Cómo podemos hacer que tu experiencia sea más convincente?",
+      "interview": "¿Qué preguntas podrían hacerme en una entrevista?"
+    },
+    "placeholder": "Pide sugerencias para optimizar tu currículum..."
+  },
+  "editor": {
+    "jsonEditor": "Editor JSON",
+    "save": "Guardar",
+    "finish": "Finalizar"
+  },
+  "unsavedChanges": {
+    "title": "Cambios sin guardar",
+    "description": "Tienes cambios sin guardar. ¿Estás seguro de que quieres salir sin guardar?",
+    "cancel": "Cancelar",
+    "leave": "Salir sin guardar"
+  },
+  "education": {
+    "title": "Educación",
+    "addEducation": "Añadir Educación",
+    "editEducation": "Editar Educación",
+    "degree": "Título",
+    "institution": "Institución",
+    "dates": "Fechas",
+    "actions": "Acciones",
+    "edit": "Editar",
+    "degreeName": "Nombre del Título",
+    "enrollmentDate": "Fecha de Inscripción (AAAA-MM)",
+    "enrollmentDatePlaceholder": "AAAA-MM",
+    "graduationDate": "Fecha de Graduación (AAAA-MM)",
+    "graduationDatePlaceholder": "AAAA-MM",
+    "gpa": "GPA (Opcional)",
+    "gpaPlaceholder": "ej. 3.8",
+    "cancel": "Cancelar",
+    "saveEducation": "Guardar Educación",
+    "noEducation": "Aún no hay entradas de educación. Haz clic en \"Añadir Educación\" para empezar."
+  },
+  "skills": {
+    "title": "Habilidades",
+    "technicalSkills": "Habilidades Técnicas",
+    "softSkills": "Habilidades Sociales",
+    "addTechnicalSkill": "Añadir una habilidad técnica...",
+    "addSoftSkill": "Añadir una habilidad social...",
+    "add": "Añadir"
+  },
+  "projects": {
+    "title": "Proyectos",
+    "addProject": "Añadir Proyecto",
+    "editProject": "Editar Proyecto",
+    "projectName": "Nombre del Proyecto",
+    "duration": "Duración",
+    "actions": "Acciones",
+    "edit": "Editar",
+    "name": "Nombre del Proyecto",
+    "startDate": "Fecha de Inicio (AAAA-MM)",
+    "startDatePlaceholder": "AAAA-MM",
+    "endDate": "Fecha de Fin (AAAA-MM o dejar en blanco para actual)",
+    "endDatePlaceholder": "AAAA-MM",
+    "achievements": "Logros",
+    "achievementPlaceholder": "Describe tu logro...",
+    "noAchievements": "No se han añadido logros. Haz clic en \"Añadir\" para incluir logros.",
+    "cancel": "Cancelar",
+    "saveProject": "Guardar Proyecto",
+    "noProjects": "Aún no se han añadido proyectos. Haz clic en \"Añadir Proyecto\" para empezar."
+  },
+  "volunteer": {
+    "title": "Experiencia de Voluntariado",
+    "addVolunteer": "Añadir Experiencia de Voluntariado",
+    "editVolunteer": "Editar Experiencia de Voluntariado",
+    "organization": "Organización",
+    "duration": "Duración",
+    "actions": "Acciones",
+    "edit": "Editar",
+    "organizationName": "Nombre de la Organización",
+    "startDate": "Fecha de Inicio (AAAA-MM)",
+    "startDatePlaceholder": "AAAA-MM",
+    "endDate": "Fecha de Fin (AAAA-MM o dejar en blanco para actual)",
+    "endDatePlaceholder": "AAAA-MM",
+    "achievements": "Logros",
+    "achievementPlaceholder": "Describe tu logro...",
+    "noAchievements": "No se han añadido logros. Haz clic en \"Añadir\" para incluir logros.",
+    "cancel": "Cancelar",
+    "saveVolunteer": "Guardar Experiencia de Voluntariado",
+    "noVolunteer": "Aún no se ha añadido experiencia de voluntariado. Haz clic en \"Añadir Experiencia de Voluntariado\" para empezar."
+  },
+  "certifications": {
+    "title": "Certificaciones",
+    "addCertification": "Añadir Certificación",
+    "editCertification": "Editar Certificación",
+    "certificationName": "Nombre de la Certificación",
+    "dateAchieved": "Fecha de Obtención",
+    "expirationDate": "Fecha de Caducidad",
+    "actions": "Acciones",
+    "edit": "Editar",
+    "name": "Nombre de la Certificación",
+    "dateAchievedInput": "Fecha de Obtención (AAAA-MM)",
+    "dateAchievedPlaceholder": "AAAA-MM",
+    "expirationDateInput": "Fecha de Caducidad (AAAA-MM)",
+    "expirationDatePlaceholder": "AAAA-MM",
+    "cancel": "Cancelar",
+    "saveCertification": "Guardar Certificación",
+    "noCertifications": "Aún no se han añadido certificaciones. Haz clic en \"Añadir Certificación\" para empezar."
+  },
+  "toolbar": {
+    "unsavedChanges": "Tienes cambios sin guardar"
+  }
+}

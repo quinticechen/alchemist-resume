@@ -61,10 +61,16 @@ export const getEnvironment = () => {
   return cachedEnvironment;
 };
 
-// Get the current URL for redirect
+// Get the appropriate redirect URL for OAuth
 const getRedirectTo = () => {
-  // Get the complete current URL or fallback to the site URL
-  return typeof window !== 'undefined' ? window.location.href : 'https://resumealchemist.qwizai.com';
+  if (typeof window === 'undefined') {
+    return 'https://resumealchemist.qwizai.com/alchemist-workshop';
+  }
+  
+  const origin = window.location.origin;
+  
+  // Always redirect to the alchemist-workshop page after OAuth
+  return `${origin}/alchemist-workshop`;
 };
 
 // Create the Supabase client with customized configuration

@@ -1,5 +1,6 @@
 import React, { useCallback } from "react";
 import { Upload, Loader2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface UploadZoneProps {
   isUploading: boolean;
@@ -7,6 +8,7 @@ interface UploadZoneProps {
 }
 
 const UploadZone = ({ isUploading, onFileSelect }: UploadZoneProps) => {
+  const { t } = useTranslation('workshop');
   const handleFileDrop = useCallback(
     (e: React.DragEvent<HTMLDivElement>) => {
       e.preventDefault();
@@ -49,12 +51,12 @@ const UploadZone = ({ isUploading, onFileSelect }: UploadZoneProps) => {
       )}
       <p className="mt-4 text-sm text-neutral-600">
         {isUploading 
-          ? "Uploading..."
-          : "Drag and drop your PDF resume here, or click to select a file"
+          ? t('resumeUpload.uploading')
+          : t('resumeUpload.dragDrop')
         }
       </p>
       <p className="mt-2 text-xs text-neutral-500">
-        Maximum file size: 5MB
+        {t('resumeUpload.maxFileSize')}
       </p>
       <input
         id="fileInput"

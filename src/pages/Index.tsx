@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import {
   ArrowRight,
@@ -20,23 +21,12 @@ import { CoreFeatures } from "@/components/home/CoreFeatures";
 import { TopCompanies } from "@/components/home/TopCompanies";
 import { ValueProposition } from "@/components/home/ValueProposition";
 import WebsitesSection from "@/components/WebsitesSection";
+import { getLanguageFromPath, addLanguageToPath, getDefaultLanguage } from "@/utils/languageRouting";
 
-const faqs = [
-  {
-    question: "How many free uses do I get?",
-    answer: "New users receive 3 free uses to try our service.",
-  },
-  {
-    question: "What file formats are supported?",
-    answer: "Currently, we support PDF format for resume uploads.",
-  },
-  {
-    question: "How long does the process take?",
-    answer: "The optimization process typically takes 2-3 minutes.",
-  },
-];
 
 const Home = () => {
+  const { t, i18n } = useTranslation(['home', 'common']);
+  const location = useLocation();
   const loadingOptions = {
     loop: true,
     autoplay: true,
@@ -85,7 +75,8 @@ const Home = () => {
               title: "Successfully signed in",
               description: "Redirecting to workshop...",
             });
-            navigate("/alchemist-workshop");
+            const currentLang = getLanguageFromPath(location.pathname) || getDefaultLanguage();
+            navigate(addLanguageToPath("/alchemist-workshop", currentLang as any));
           }
         });
 
@@ -109,14 +100,15 @@ const Home = () => {
 
   const handleStartTrial = async () => {
     try {
+      const currentLang = getLanguageFromPath(location.pathname) || getDefaultLanguage();
       const {
         data: { session: currentSession },
       } = await supabase.auth.getSession();
 
       if (currentSession) {
-        navigate("/alchemist-workshop");
+        navigate(addLanguageToPath("/alchemist-workshop", currentLang as any));
       } else {
-        navigate("/login");
+        navigate(addLanguageToPath("/login", currentLang as any));
       }
     } catch (error) {
       toast({
@@ -155,14 +147,13 @@ const Home = () => {
       <section className="bg-gradient-primary py-20 px-4">
         <div className="max-w-6xl mx-auto justify-center text-center">
           <h1 className="text-6xl font-bold bg-white text-transparent bg-clip-text mb-6 hero-element">
-            Transform Your Resume with AI Alchemy
+            {t('hero.title', { ns: 'home', defaultValue: 'Transform Your Resume with AI Alchemy' })}
           </h1>
           <div className="w-full mx-auto flex items-center md:w-2/4 lg:w-1/3 xl:w-1/2">
             <Lottie options={defaultOptions} height={"100%"} width={"100%"} />
           </div>
           <p className="text-xl text-white mb-8 max-w-3xl mx-auto hero-element">
-            Turn your ordinary resume into the perfect match for your dream job
-            using our AI-powered optimization technology.
+            {t('hero.subtitle', { ns: 'home', defaultValue: 'Turn your ordinary resume into the perfect match for your dream job using our AI-powered optimization technology.' })}
           </p>
           <div className="flex gap-4 justify-center">
             <Button
@@ -173,14 +164,14 @@ const Home = () => {
               size="lg"
               className="bg-gradient-primary-light hover:opacity-90 transition-opacity hero-element"
             >
-              Learn More
+              {t('hero.learnMore', { ns: 'home', defaultValue: 'Learn More' })}
             </Button>
             <Button
               onClick={handleStartTrial}
               size="lg"
               className="text-primary bg-white hover:bg-neutral-300 hero-element"
             >
-              {session ? "Go to Workshop" : "Start Free Trial"}
+              {session ? t('hero.goToWorkshop', { ns: 'home', defaultValue: 'Go to Workshop' }) : t('hero.startFreeTrial', { ns: 'home', defaultValue: 'Start Free Trial' })}
             </Button>
           </div>
         </div>
@@ -192,9 +183,9 @@ const Home = () => {
       
       <section className="py-20 bg-gradient-primary text-white">
         <div className="max-w-4xl mx-auto px-4 text-center">
-          <h2 className="text-4xl font-bold mb-6 hero-element">Start with 3 Free Uses</h2>
+          <h2 className="text-4xl font-bold mb-6 hero-element">{t('cta.title', { ns: 'home', defaultValue: 'Start with 3 Free Uses' })}</h2>
           <p className="text-xl mb-8 opacity-90 hero-element">
-            Try our AI-powered resume optimization with no commitment.
+            {t('cta.subtitle', { ns: 'home', defaultValue: 'Try our AI-powered resume optimization with no commitment.' })}
           </p>
           <Button
             onClick={handleStartTrial}
@@ -202,7 +193,7 @@ const Home = () => {
             variant="secondary"
             className="bg-secondary hover:bg-secondary/90 text-primary hero-element"
           >
-            {session ? "Go to Workshop" : "Start Free Trial"}
+            {session ? t('hero.goToWorkshop', { ns: 'home', defaultValue: 'Go to Workshop' }) : t('hero.startFreeTrial', { ns: 'home', defaultValue: 'Start Free Trial' })}
           </Button>
         </div>
       </section>
@@ -212,26 +203,56 @@ const Home = () => {
       <section className="py-20 bg-neutral-50">
         <div className="max-w-4xl mx-auto px-4">
           <h2 className="text-4xl font-bold text-center mb-12 bg-gradient-primary text-transparent bg-clip-text">
-            Frequently Asked Questions
+            {t('faq.title', { ns: 'home', defaultValue: 'Frequently Asked Questions' })}
           </h2>
           <div className="space-y-6">
-            {faqs.map((faq, index) => (
-              <div
-                key={index}
-                className="p-6 rounded-xl border border-neutral-200 bg-white hero-element"
-              >
-                <h3 className="text-xl font-semibold mb-2">{faq.question}</h3>
-                <p className="text-neutral-600">{faq.answer}</p>
-              </div>
-            ))}
+            {(() => {
+              try {
+                const faqData = t('faq.questions', { ns: 'home', returnObjects: true });
+                
+                // If translation doesn't load, provide fallback data
+                const fallbackFaqs = [
+                  {
+                    question: "How many free uses do I get?",
+                    answer: "New users receive 3 free uses to try our service."
+                  },
+                  {
+                    question: "What file formats are supported?",
+                    answer: "Currently, we support PDF format for resume uploads."
+                  },
+                  {
+                    question: "How long does the process take?",
+                    answer: "The optimization process typically takes 2-3 minutes."
+                  }
+                ];
+                
+                const faqs = Array.isArray(faqData) ? faqData : fallbackFaqs;
+                
+                return faqs.map((faq: any, index: number) => (
+                  <div
+                    key={index}
+                    className="p-6 rounded-xl border border-neutral-200 bg-white hero-element"
+                  >
+                    <h3 className="text-xl font-semibold mb-2">{faq.question}</h3>
+                    <p className="text-neutral-600">{faq.answer}</p>
+                  </div>
+                ));
+              } catch (error) {
+                console.error('Error rendering FAQs:', error);
+                return null;
+              }
+            })()}
             <div className="flex justify-center pt-4">
               <Button
-                onClick={() => navigate("/faq")}
+                onClick={() => {
+                  const currentLang = getLanguageFromPath(location.pathname) || getDefaultLanguage();
+                  navigate(addLanguageToPath("/faq", currentLang as any));
+                }}
                 size="lg"
                 variant="outline"
                 className="text-primary bg-white hover:bg-neutral-300 hero-element"
               >
-                More
+                {t('faq.more', { ns: 'home', defaultValue: 'More' })}
               </Button>
             </div>
           </div>

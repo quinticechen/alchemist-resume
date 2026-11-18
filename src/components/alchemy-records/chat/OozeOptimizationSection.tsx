@@ -9,8 +9,10 @@ import MessageList from './MessageList';
 import ChatStateDisplay from './ChatStateDisplay';
 import PromptGuides from './PromptGuides';
 import { OptimizationProps } from './types';
+import { useTranslation } from "react-i18next";
 
 const OozeOptimizationSection: React.FC<OptimizationProps> = ({ optimizationData, analysisId }) => {
+  const { t } = useTranslation(['resume-refine']);
   const {
     messages,
     input,

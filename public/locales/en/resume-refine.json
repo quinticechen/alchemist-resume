@@ -1,0 +1,185 @@
+{
+  "meta": {
+    "title": "Resume Refine - Resume Alchemist",
+    "description": "Refine and optimize your resume with AI-powered suggestions.",
+    "keywords": "resume refine, AI suggestions, resume optimization, resume editor"
+  },
+  "navigation": {
+    "back": "Back"
+  },
+  "jobDescription": {
+    "title": "Job Description",
+    "companyWebsite": "Company Website",
+    "fields": {
+      "title": "Title",
+      "language": "Language", 
+      "keywords": "Keywords",
+      "responsibilities": "Responsibilities",
+      "requiredQualifications": "Required Qualifications",
+      "preferredQualifications": "Preferred Qualifications"
+    }
+  },
+  "sections": {
+    "personalInfo": "Personal Information",
+    "professionalSummary": "Professional Summary",
+    "professionalExperience": "Professional Experience", 
+    "education": "Education",
+    "skills": "Skills",
+    "projects": "Projects",
+    "volunteerExperience": "Volunteer Experience",
+    "certifications": "Certifications"
+  },
+  "personalInfo": {
+    "firstName": "First Name",
+    "firstNamePlaceholder": "Enter your first name",
+    "lastName": "Last Name",
+    "lastNamePlaceholder": "Enter your last name",
+    "email": "Email",
+    "emailPlaceholder": "Enter your email",
+    "phone": "Phone",
+    "phonePlaceholder": "Enter your phone number",
+    "location": "Location",
+    "locationPlaceholder": "Enter your location",
+    "linkedIn": "LinkedIn",
+    "linkedInPlaceholder": "Enter your LinkedIn profile URL",
+    "website": "Website",
+    "websitePlaceholder": "Enter your website URL"
+  },
+  "professionalSummary": {
+    "title": "Professional Summary",
+    "placeholder": "Write a concise summary of your professional background, skills, and career objectives..."
+  },
+  "experience": {
+    "addExperience": "Add Experience",
+    "editExperience": "Edit Experience",
+    "position": "Position",
+    "company": "Company",
+    "duration": "Duration",
+    "actions": "Actions",
+    "edit": "Edit",
+    "jobTitle": "Job Title",
+    "location": "Location",
+    "companyIntroduction": "Company Introduction",
+    "companyIntroductionPlaceholder": "Briefly describe the company...",
+    "startDate": "Start Date (YYYY-MM)",
+    "startDatePlaceholder": "YYYY-MM",
+    "endDate": "End Date (YYYY-MM or blank for current)",
+    "endDatePlaceholder": "YYYY-MM",
+    "achievements": "Achievements",
+    "add": "Add",
+    "noAchievements": "No achievements added. Click \"Add\" to include achievements.",
+    "achievementPlaceholder": "Describe your achievement...",
+    "cancel": "Cancel",
+    "saveExperience": "Save Experience"
+  },
+  "aiChat": {
+    "greeting": "My tentacles sense there's still some hidden potential in your resume! Want to explore together!",
+    "suggestions": {
+      "highlights": "What are the most attractive highlights in this resume?",
+      "keywords": "Which keywords could we strengthen?",
+      "experience": "How can we make your experience more compelling?",
+      "interview": "What questions might interviewers ask?"
+    },
+    "placeholder": "Ask for resume optimization suggestions..."
+  },
+  "editor": {
+    "jsonEditor": "JSON Editor",
+    "save": "Save",
+    "finish": "Finish"
+  },
+  "unsavedChanges": {
+    "title": "Unsaved Changes",
+    "description": "You have unsaved changes. Are you sure you want to leave without saving?",
+    "cancel": "Cancel",
+    "leave": "Leave without saving"
+  },
+  "education": {
+    "title": "Education",
+    "addEducation": "Add Education",
+    "editEducation": "Edit Education",
+    "degree": "Degree",
+    "institution": "Institution",
+    "dates": "Dates",
+    "actions": "Actions",
+    "edit": "Edit",
+    "degreeName": "Degree Name",
+    "enrollmentDate": "Enrollment Date (YYYY-MM)",
+    "enrollmentDatePlaceholder": "YYYY-MM",
+    "graduationDate": "Graduation Date (YYYY-MM)",
+    "graduationDatePlaceholder": "YYYY-MM",
+    "gpa": "GPA (Optional)",
+    "gpaPlaceholder": "e.g. 3.8",
+    "cancel": "Cancel",
+    "saveEducation": "Save Education",
+    "noEducation": "No education entries yet. Click \"Add Education\" to get started."
+  },
+  "skills": {
+    "title": "Skills",
+    "technicalSkills": "Technical Skills",
+    "softSkills": "Soft Skills",
+    "addTechnicalSkill": "Add a technical skill...",
+    "addSoftSkill": "Add a soft skill...",
+    "add": "Add"
+  },
+  "projects": {
+    "title": "Projects",
+    "addProject": "Add Project",
+    "editProject": "Edit Project",
+    "projectName": "Project Name",
+    "duration": "Duration",
+    "actions": "Actions",
+    "edit": "Edit",
+    "name": "Project Name",
+    "startDate": "Start Date (YYYY-MM)",
+    "startDatePlaceholder": "YYYY-MM",
+    "endDate": "End Date (YYYY-MM or blank for current)",
+    "endDatePlaceholder": "YYYY-MM",
+    "achievements": "Achievements",
+    "achievementPlaceholder": "Describe your achievement...",
+    "noAchievements": "No achievements added. Click \"Add\" to include achievements.",
+    "cancel": "Cancel",
+    "saveProject": "Save Project",
+    "noProjects": "No projects added yet. Click \"Add Project\" to get started."
+  },
+  "volunteer": {
+    "title": "Volunteer Experience",
+    "addVolunteer": "Add Volunteer Experience",
+    "editVolunteer": "Edit Volunteer Experience",
+    "organization": "Organization",
+    "duration": "Duration",
+    "actions": "Actions",
+    "edit": "Edit",
+    "organizationName": "Organization Name",
+    "startDate": "Start Date (YYYY-MM)",
+    "startDatePlaceholder": "YYYY-MM",
+    "endDate": "End Date (YYYY-MM or blank for current)",
+    "endDatePlaceholder": "YYYY-MM",
+    "achievements": "Achievements",
+    "achievementPlaceholder": "Describe your achievement...",
+    "noAchievements": "No achievements added. Click \"Add\" to include achievements.",
+    "cancel": "Cancel",
+    "saveVolunteer": "Save Volunteer Experience",
+    "noVolunteer": "No volunteer experience added yet. Click \"Add Volunteer Experience\" to get started."
+  },
+  "certifications": {
+    "title": "Certifications",
+    "addCertification": "Add Certification",
+    "editCertification": "Edit Certification",
+    "certificationName": "Certification Name",
+    "dateAchieved": "Date Achieved",
+    "expirationDate": "Expiration Date",
+    "actions": "Actions",
+    "edit": "Edit",
+    "name": "Certification Name",
+    "dateAchievedInput": "Date Achieved (YYYY-MM)",
+    "dateAchievedPlaceholder": "YYYY-MM",
+    "expirationDateInput": "Expiration Date (YYYY-MM)",
+    "expirationDatePlaceholder": "YYYY-MM",
+    "cancel": "Cancel",
+    "saveCertification": "Save Certification",
+    "noCertifications": "No certifications added yet. Click \"Add Certification\" to get started."
+  },
+  "toolbar": {
+    "unsavedChanges": "You have unsaved changes"
+  }
+}

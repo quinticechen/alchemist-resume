@@ -1,0 +1,47 @@
+{
+  "navigation": {
+    "workshop": "工作坊",
+    "records": "記錄", 
+    "pricing": "價格",
+    "faq": "常見問題",
+    "supportedWebsites": "支援的網站"
+  },
+  "auth": {
+    "signIn": "登入",
+    "signOut": "登出",
+    "signUp": "註冊",
+    "email": "電子郵件",
+    "password": "密碼",
+    "forgotPassword": "忘記密碼？",
+    "createAccount": "建立帳戶",
+    "alreadyHaveAccount": "已有帳戶？",
+    "dontHaveAccount": "沒有帳戶？"
+  },
+  "actions": {
+    "save": "儲存",
+    "cancel": "取消",
+    "delete": "刪除",
+    "edit": "編輯",
+    "upload": "上傳",
+    "download": "下載",
+    "submit": "提交",
+    "continue": "繼續",
+    "back": "返回",
+    "next": "下一步"
+  },
+  "status": {
+    "loading": "載入中...",
+    "saving": "儲存中...",
+    "success": "成功",
+    "error": "錯誤",
+    "pending": "等待中",
+    "complete": "完成"
+  },
+  "subscription": {
+    "usesLeft": "剩餘 {{count}} 次使用",
+    "startFreeTrial": "開始免費試用",
+    "upgradeNow": "立即升級",
+    "currentPlan": "目前方案"
+  },
+  "goBack": "返回"
+}

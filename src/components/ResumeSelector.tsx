@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { FileText, Upload, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTranslation } from "react-i18next";
 
 interface ResumeSelectorProps {
   onSelect: (resumeId: string, resumeName: string, resumePath: string, resumeContent: string) => void;
@@ -23,6 +24,7 @@ const ResumeSelector: React.FC<ResumeSelectorProps> = ({
   className = "",
 }) => {
   const { session } = useAuth();
+  const { t } = useTranslation('workshop');
   const [resumes, setResumes] = useState<
     Array<{
       id: string;
@@ -146,7 +148,7 @@ const ResumeSelector: React.FC<ResumeSelectorProps> = ({
   return (
     <div>
       {isLoading ? (
-        <div className="text-center py-4">Loading your resumes...</div>
+        <div className="text-center py-4">{t('resumeUpload.loading')}</div>
       ) : resumes.length === 0 ? (
         <div className="text-center py-4 text-neutral-600">
           <FileText className="h-12 w-12 mx-auto text-neutral-400 mb-2" />
@@ -156,7 +158,7 @@ const ResumeSelector: React.FC<ResumeSelectorProps> = ({
         <>
           <Select value={selectedResumeId} onValueChange={setSelectedResumeId}>
             <SelectTrigger className="w-full bg-white">
-              <SelectValue placeholder="Select a resume" />
+              <SelectValue placeholder={t('resumeUpload.selectResume')} />
             </SelectTrigger>
             <SelectContent className="bg-white">
               {resumes.map((resume) => (
@@ -179,7 +181,7 @@ const ResumeSelector: React.FC<ResumeSelectorProps> = ({
                 className="flex items-center justify-center gap-2"
               >
                 <Eye className="h-4 w-4" />
-                Preview Resume
+                {t('resumeUpload.previewResume')}
               </Button>
             )}
 
@@ -189,7 +191,7 @@ const ResumeSelector: React.FC<ResumeSelectorProps> = ({
               disabled={!selectedResumeId}
             >
               <FileText className="h-4 w-4" />
-              Use Selected Resume
+              {t('resumeUpload.useSelected')}
             </Button>
           </div>
         </>

@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "title": "公司研究 - AI驅動的公司洞察",
+    "description": "獲得由AI驅動的全面公司研究和洞察，提升您的求職申請策略。",
+    "keywords": "公司研究, 公司分析, 求職申請, 職涯洞察, 商業情報"
+  },
+  "title": "公司研究",
+  "employees": "員工",
+  "ceo": "執行長",
+  "visitWebsite": "訪問網站",
+  "readMore": "閱讀更多",
+  "unknown": {
+    "company": "未知公司"
+  },
+  "sections": {
+    "businessOverview": "業務概覽",
+    "keyProducts": "主要產品與服務",
+    "swotAnalysis": "SWOT分析",
+    "recentNews": "最新消息"
+  },
+  "swot": {
+    "strengths": "優勢",
+    "weaknesses": "劣勢",
+    "opportunities": "機會",
+    "threats": "威脅"
+  },
+  "pending": {
+    "title": "正在研究公司...",
+    "description": "我們的AI正在分析公司資訊並為您收集全面的洞察。",
+    "waitTime": "這通常需要2-3分鐘。請耐心等待我們編譯研究報告。"
+  },
+  "error": {
+    "title": "研究錯誤",
+    "fetchFailed": "無法獲取公司研究數據。請稍後重試。"
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "title": "Company Research - AI-Powered Company Insights",
+    "description": "Get comprehensive company research and insights powered by AI to enhance your job application strategy.",
+    "keywords": "company research, company analysis, job application, career insights, business intelligence"
+  },
+  "title": "Company Research",
+  "employees": "employees",
+  "ceo": "CEO",
+  "visitWebsite": "Visit Website",
+  "readMore": "Read More",
+  "unknown": {
+    "company": "Unknown Company"
+  },
+  "sections": {
+    "businessOverview": "Business Overview",
+    "keyProducts": "Key Products & Services",
+    "swotAnalysis": "SWOT Analysis",
+    "recentNews": "Recent News"
+  },
+  "swot": {
+    "strengths": "Strengths",
+    "weaknesses": "Weaknesses",
+    "opportunities": "Opportunities",
+    "threats": "Threats"
+  },
+  "pending": {
+    "title": "Researching Company...",
+    "description": "Our AI is analyzing the company information and gathering comprehensive insights for you.",
+    "waitTime": "This usually takes 2-3 minutes. Please wait while we compile the research."
+  },
+  "error": {
+    "title": "Research Error",
+    "fetchFailed": "Failed to fetch company research data. Please try again later."
+  }
+}

@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { PlusCircle, MinusCircle, MoveUp, MoveDown } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { useTranslation } from "react-i18next";
 
 interface ProjectsSectionProps {
   data: any;
@@ -14,6 +15,7 @@ interface ProjectsSectionProps {
 }
 
 const ProjectsSection = ({ data, onChange, showAddForm = true }: ProjectsSectionProps) => {
+  const { t } = useTranslation(['resume-refine']);
   const [activeProjectIndex, setActiveProjectIndex] = useState<number | null>(null);
   const [editing, setEditing] = useState({ name: '', startDate: '', endDate: '' });
   const [achievements, setAchievements] = useState<string[]>([]);
@@ -151,7 +153,7 @@ const ProjectsSection = ({ data, onChange, showAddForm = true }: ProjectsSection
               variant="outline"
               type="button"
             >
-              <PlusCircle className="h-4 w-4 mr-2" />Add Project
+              <PlusCircle className="h-4 w-4 mr-2" />{t('resume-refine:projects.addProject')}
             </Button>
           )}
           
@@ -159,9 +161,9 @@ const ProjectsSection = ({ data, onChange, showAddForm = true }: ProjectsSection
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Project Name</TableHead>
-                  <TableHead>Duration</TableHead>
-                  <TableHead>Actions</TableHead>
+                  <TableHead>{t('resume-refine:projects.projectName')}</TableHead>
+                  <TableHead>{t('resume-refine:projects.duration')}</TableHead>
+                  <TableHead>{t('resume-refine:projects.actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -179,7 +181,7 @@ const ProjectsSection = ({ data, onChange, showAddForm = true }: ProjectsSection
                           onClick={() => initEditForm(idx)}
                           type="button"
                         >
-                          Edit
+                          {t('resume-refine:projects.edit')}
                         </Button>
                         <Button 
                           variant="ghost" 
@@ -215,7 +217,7 @@ const ProjectsSection = ({ data, onChange, showAddForm = true }: ProjectsSection
             </Table>
           ) : (
             <div className="text-center p-4 bg-gray-50 rounded-md">
-              No projects added yet. Click "Add Project" to get started.
+              {t('resume-refine:projects.noProjects')}
             </div>
           )}
         </>
@@ -223,12 +225,12 @@ const ProjectsSection = ({ data, onChange, showAddForm = true }: ProjectsSection
         <Card>
           <CardHeader>
             <CardTitle>
-              {activeProjectIndex >= 0 ? 'Edit Project' : 'Add Project'}
+              {activeProjectIndex >= 0 ? t('resume-refine:projects.editProject') : t('resume-refine:projects.addProject')}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Project Name</Label>
+              <Label htmlFor="name">{t('resume-refine:projects.name')}</Label>
               <Input 
                 id="name" 
                 value={editing.name} 
@@ -238,35 +240,35 @@ const ProjectsSection = ({ data, onChange, showAddForm = true }: ProjectsSection
             
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="startDate">Start Date (YYYY-MM)</Label>
+                <Label htmlFor="startDate">{t('resume-refine:projects.startDate')}</Label>
                 <Input 
                   id="startDate" 
                   value={editing.startDate} 
                   onChange={(e) => handleEditingChange('startDate', e.target.value)}
-                  placeholder="YYYY-MM"
+                  placeholder={t('resume-refine:projects.startDatePlaceholder')}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="endDate">End Date (YYYY-MM or blank for current)</Label>
+                <Label htmlFor="endDate">{t('resume-refine:projects.endDate')}</Label>
                 <Input 
                   id="endDate" 
                   value={editing.endDate} 
                   onChange={(e) => handleEditingChange('endDate', e.target.value)}
-                  placeholder="YYYY-MM"
+                  placeholder={t('resume-refine:projects.endDatePlaceholder')}
                 />
               </div>
             </div>
             
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label>Achievements</Label>
+                <Label>{t('resume-refine:projects.achievements')}</Label>
                 <Button 
                   onClick={handleAddAchievement} 
                   variant="outline" 
                   size="sm"
                   type="button"
                 >
-                  <PlusCircle className="h-4 w-4 mr-1" /> Add
+                  <PlusCircle className="h-4 w-4 mr-1" /> {t('resume-refine:skills.add')}
                 </Button>
               </div>
               
@@ -278,7 +280,7 @@ const ProjectsSection = ({ data, onChange, showAddForm = true }: ProjectsSection
                         value={achievement}
                         onChange={(e) => handleUpdateAchievement(idx, e.target.value)}
                         className="flex-1"
-                        placeholder="Describe your achievement..."
+                        placeholder={t('resume-refine:projects.achievementPlaceholder')}
                       />
                       <Button 
                         variant="ghost" 
@@ -294,7 +296,7 @@ const ProjectsSection = ({ data, onChange, showAddForm = true }: ProjectsSection
                 </div>
               ) : (
                 <div className="text-center p-4 bg-gray-50 rounded-md">
-                  No achievements added. Click "Add" to include achievements.
+                  {t('resume-refine:projects.noAchievements')}
                 </div>
               )}
             </div>
@@ -305,13 +307,13 @@ const ProjectsSection = ({ data, onChange, showAddForm = true }: ProjectsSection
               onClick={() => setActiveProjectIndex(null)}
               type="button"
             >
-              Cancel
+              {t('resume-refine:projects.cancel')}
             </Button>
             <Button 
               onClick={handleSaveProject}
               type="button"
             >
-              Save Project
+              {t('resume-refine:projects.saveProject')}
             </Button>
           </CardFooter>
         </Card>

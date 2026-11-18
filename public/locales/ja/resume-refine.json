@@ -1,0 +1,185 @@
+{
+  "meta": {
+    "title": "履歴書の改善 - Resume Alchemist",
+    "description": "AIによる提案で履歴書を改善・最適化しましょう。",
+    "keywords": "履歴書改善, AI提案, 履歴書最適化, 履歴書エディター"
+  },
+  "navigation": {
+    "back": "戻る"
+  },
+  "jobDescription": {
+    "title": "職務内容",
+    "companyWebsite": "会社ウェブサイト",
+    "fields": {
+      "title": "タイトル",
+      "language": "言語",
+      "keywords": "キーワード",
+      "responsibilities": "職務",
+      "requiredQualifications": "必須資格",
+      "preferredQualifications": "歓迎資格"
+    }
+  },
+  "sections": {
+    "personalInfo": "個人情報",
+    "professionalSummary": "職務経歴要約",
+    "professionalExperience": "職務経験",
+    "education": "学歴",
+    "skills": "スキル",
+    "projects": "プロジェクト",
+    "volunteerExperience": "ボランティア経験",
+    "certifications": "資格"
+  },
+  "personalInfo": {
+    "firstName": "名",
+    "firstNamePlaceholder": "名を入力してください",
+    "lastName": "姓",
+    "lastNamePlaceholder": "姓を入力してください",
+    "email": "メールアドレス",
+    "emailPlaceholder": "メールアドレスを入力してください",
+    "phone": "電話番号",
+    "phonePlaceholder": "電話番号を入力してください",
+    "location": "所在地",
+    "locationPlaceholder": "所在地を入力してください",
+    "linkedIn": "LinkedIn",
+    "linkedInPlaceholder": "LinkedInプロフィールURLを入力してください",
+    "website": "ウェブサイト",
+    "websitePlaceholder": "ウェブサイトURLを入力してください"
+  },
+  "professionalSummary": {
+    "title": "職務経歴要約",
+    "placeholder": "あなたの職務経歴、スキル、キャリア目標を簡潔にまとめてください..."
+  },
+  "experience": {
+    "addExperience": "職務経験を追加",
+    "editExperience": "職務経験を編集",
+    "position": "役職",
+    "company": "会社名",
+    "duration": "期間",
+    "actions": "操作",
+    "edit": "編集",
+    "jobTitle": "役職",
+    "location": "所在地",
+    "companyIntroduction": "会社紹介",
+    "companyIntroductionPlaceholder": "会社について簡単に説明してください...",
+    "startDate": "開始日 (YYYY-MM)",
+    "startDatePlaceholder": "YYYY-MM",
+    "endDate": "終了日 (YYYY-MM または現在)",
+    "endDatePlaceholder": "YYYY-MM",
+    "achievements": "実績",
+    "add": "追加",
+    "noAchievements": "実績が追加されていません。「追加」をクリックして実績を記入してください。",
+    "achievementPlaceholder": "あなたの実績を説明してください...",
+    "cancel": "キャンセル",
+    "saveExperience": "職務経験を保存"
+  },
+  "aiChat": {
+    "greeting": "私の触手は、あなたの履歴書にまだ隠されたポテンシャルがあることを感じています！一緒に探求しませんか！",
+    "suggestions": {
+      "highlights": "この履歴書で最も魅力的なハイライトは何ですか？",
+      "keywords": "どのキーワードを強化できますか？",
+      "experience": "経験をどのように魅力的にできますか？",
+      "interview": "面接官はどのような質問をする可能性がありますか？"
+    },
+    "placeholder": "履歴書の最適化の提案を尋ねる..."
+  },
+  "editor": {
+    "jsonEditor": "JSONエディター",
+    "save": "保存",
+    "finish": "完了"
+  },
+  "unsavedChanges": {
+    "title": "未保存の変更",
+    "description": "未保存の変更があります。保存せずに終了しますか？",
+    "cancel": "キャンセル",
+    "leave": "保存せずに終了"
+  },
+  "education": {
+    "title": "学歴",
+    "addEducation": "学歴を追加",
+    "editEducation": "学歴を編集",
+    "degree": "学位",
+    "institution": "機関名",
+    "dates": "期間",
+    "actions": "操作",
+    "edit": "編集",
+    "degreeName": "学位名",
+    "enrollmentDate": "入学日 (YYYY-MM)",
+    "enrollmentDatePlaceholder": "YYYY-MM",
+    "graduationDate": "卒業日 (YYYY-MM)",
+    "graduationDatePlaceholder": "YYYY-MM",
+    "gpa": "GPA (任意)",
+    "gpaPlaceholder": "例：3.8",
+    "cancel": "キャンセル",
+    "saveEducation": "学歴を保存",
+    "noEducation": "学歴はまだ登録されていません。「学歴を追加」をクリックして開始してください。"
+  },
+  "skills": {
+    "title": "スキル",
+    "technicalSkills": "技術スキル",
+    "softSkills": "ソフトスキル",
+    "addTechnicalSkill": "技術スキルを追加...",
+    "addSoftSkill": "ソフトスキルを追加...",
+    "add": "追加"
+  },
+  "projects": {
+    "title": "プロジェクト",
+    "addProject": "プロジェクトを追加",
+    "editProject": "プロジェクトを編集",
+    "projectName": "プロジェクト名",
+    "duration": "期間",
+    "actions": "操作",
+    "edit": "編集",
+    "name": "プロジェクト名",
+    "startDate": "開始日 (YYYY-MM)",
+    "startDatePlaceholder": "YYYY-MM",
+    "endDate": "終了日 (YYYY-MM または現在)",
+    "endDatePlaceholder": "YYYY-MM",
+    "achievements": "実績",
+    "achievementPlaceholder": "あなたの実績を説明してください...",
+    "noAchievements": "実績が追加されていません。「追加」をクリックして実績を記入してください。",
+    "cancel": "キャンセル",
+    "saveProject": "プロジェクトを保存",
+    "noProjects": "プロジェクトはまだ登録されていません。「プロジェクトを追加」をクリックして開始してください。"
+  },
+  "volunteer": {
+    "title": "ボランティア経験",
+    "addVolunteer": "ボランティア経験を追加",
+    "editVolunteer": "ボランティア経験を編集",
+    "organization": "組織名",
+    "duration": "期間",
+    "actions": "操作",
+    "edit": "編集",
+    "organizationName": "組織名",
+    "startDate": "開始日 (YYYY-MM)",
+    "startDatePlaceholder": "YYYY-MM",
+    "endDate": "終了日 (YYYY-MM または現在)",
+    "endDatePlaceholder": "YYYY-MM",
+    "achievements": "実績",
+    "achievementPlaceholder": "あなたの実績を説明してください...",
+    "noAchievements": "実績が追加されていません。「追加」をクリックして実績を記入してください。",
+    "cancel": "キャンセル",
+    "saveVolunteer": "ボランティア経験を保存",
+    "noVolunteer": "ボランティア経験はまだ登録されていません。「ボランティア経験を追加」をクリックして開始してください。"
+  },
+  "certifications": {
+    "title": "資格",
+    "addCertification": "資格を追加",
+    "editCertification": "資格を編集",
+    "certificationName": "資格名",
+    "dateAchieved": "取得日",
+    "expirationDate": "有効期限",
+    "actions": "操作",
+    "edit": "編集",
+    "name": "資格名",
+    "dateAchievedInput": "取得日 (YYYY-MM)",
+    "dateAchievedPlaceholder": "YYYY-MM",
+    "expirationDateInput": "有効期限 (YYYY-MM)",
+    "expirationDatePlaceholder": "YYYY-MM",
+    "cancel": "キャンセル",
+    "saveCertification": "資格を保存",
+    "noCertifications": "資格はまだ登録されていません。「資格を追加」をクリックして開始してください。"
+  },
+  "toolbar": {
+    "unsavedChanges": "未保存の変更があります"
+  }
+}

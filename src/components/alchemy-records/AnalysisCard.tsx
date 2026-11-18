@@ -3,13 +3,16 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Link as LinkIcon, Crown, FileEdit, ExternalLink } from "lucide-react";
+import { Link as LinkIcon, Crown, FileEdit, ExternalLink, Building2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import AnalysisTitle from "./AnalysisTitle";
 import StatusSelector from "../cover-letter/StatusSelector";
 import { useCoverLetter } from "@/hooks/use-cover-letter";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useTranslation } from "react-i18next";
+import { useLanguage } from "@/hooks/useLanguage";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Resume {
   file_name: string;
@@ -59,6 +62,9 @@ const AnalysisCard = ({
   const companyName = job?.company_name || "Unknown Company";
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t } = useTranslation('records');
+  const { currentLanguage } = useLanguage();
+  const { session } = useAuth();
   
   const { jobApplication, updateStatus } = useCoverLetter(id);
   const currentStatus = jobApplication?.status || "resume";
@@ -66,9 +72,10 @@ const AnalysisCard = ({
   const [isAddingJobUrl, setIsAddingJobUrl] = useState(false);
   const [jobUrl, setJobUrl] = useState("");
   const [isSavingJobUrl, setIsSavingJobUrl] = useState(false);
+  const [isResearchingCompany, setIsResearchingCompany] = useState(false);
 
   const handleCreateCoverLetter = () => {
-    navigate("/cover-letter", {
+    navigate(`/${currentLanguage}/cover-letter`, {
       state: { analysisId: id }
     });
   };
@@ -147,6 +154,99 @@ const AnalysisCard = ({
     setJobUrl("");
   };
 
+  const handleCompanyResearch = async () => {
+    // Prevent multiple simultaneous research requests
+    if (isResearchingCompany) return;
+    
+    try {
+      setIsResearchingCompany(true);
+      
+      // Get the job_id from the resume_analyses table
+      const { data: analysisData, error: analysisError } = await supabase
+        .from('resume_analyses')
+        .select('job_id')
+        .eq('id', id)
+        .single();
+
+      if (analysisError) {
+        throw analysisError;
+      }
+
+      if (!analysisData.job_id) {
+        toast({
+          title: "Error",
+          description: "No job information found for this analysis",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // First check if company data already exists
+      const { data: existingCompany, error: companyError } = await supabase
+        .from('companies')
+        .select('*')
+        .eq('job_id', analysisData.job_id)
+        .maybeSingle();
+
+      if (companyError && companyError.code !== 'PGRST116') {
+        throw companyError;
+      }
+
+      // If company data exists and is completed, navigate directly
+      if (existingCompany && existingCompany.status === 'completed') {
+        navigate(`/${currentLanguage}/company-research/${analysisData.job_id}`);
+        return;
+      }
+
+      // If pending data exists, just navigate to the page
+      if (existingCompany && existingCompany.status === 'pending') {
+        navigate(`/${currentLanguage}/company-research/${analysisData.job_id}`);
+        return;
+      }
+
+      // If no data exists, trigger the research and create pending record
+      const { error: insertError } = await supabase
+        .from('companies')
+        .upsert({
+          job_id: analysisData.job_id,
+          status: 'pending'
+        }, {
+          onConflict: 'job_id'
+        });
+
+      if (insertError) {
+        throw insertError;
+      }
+
+      // Trigger the research
+      const { error } = await supabase.functions.invoke('trigger-company-research', {
+        body: { jobId: analysisData.job_id }
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Company Research Started",
+        description: "We're analyzing the company information. You'll be redirected to the results page.",
+      });
+
+      // Navigate to company research page
+      navigate(`/${currentLanguage}/company-research/${analysisData.job_id}`);
+
+    } catch (error) {
+      console.error('Company research error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to start company research. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsResearchingCompany(false);
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "resume":
@@ -171,21 +271,21 @@ const AnalysisCard = ({
   const getStatusLabel = (status: string) => {
     switch (status) {
       case "resume":
-        return "Resume";
+        return t('status.resume');
       case "cover_letter":
-        return "Cover Letter";
+        return t('status.coverLetter');
       case "application_submitted":
-        return "Application Submitted";
+        return t('status.applicationSubmitted');
       case "following_up":
-        return "Following Up";
+        return t('status.followingUp');
       case "interview":
-        return "Interview";
+        return t('status.interview');
       case "rejected":
-        return "Rejected";
+        return t('status.rejected');
       case "accepted":
-        return "Accepted";
+        return t('status.accepted');
       default:
-        return "Resume";
+        return t('status.resume');
     }
   };
 
@@ -250,11 +350,11 @@ const AnalysisCard = ({
         <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
           <div className="mb-2">
             <p className="text-sm text-yellow-800 font-medium mb-2">
-              The job URL cannot be changed after saving.
+              {t('jobUrl.cannotChange')}
             </p>
             <Input
               type="url"
-              placeholder="Enter job posting URL"
+              placeholder={t('jobUrl.enterUrl')}
               value={jobUrl}
               onChange={(e) => setJobUrl(e.target.value)}
               className="mb-3"
@@ -266,7 +366,7 @@ const AnalysisCard = ({
               onClick={handleSaveJobUrl}
               disabled={isSavingJobUrl || !jobUrl.trim()}
             >
-              {isSavingJobUrl ? "Saving..." : "Save"}
+              {isSavingJobUrl ? t('jobUrl.saving') : t('jobUrl.save')}
             </Button>
             <Button
               size="sm"
@@ -274,7 +374,7 @@ const AnalysisCard = ({
               onClick={handleCancelJobUrl}
               disabled={isSavingJobUrl}
             >
-              Cancel
+              {t('jobUrl.cancel')}
             </Button>
           </div>
         </div>
@@ -285,7 +385,7 @@ const AnalysisCard = ({
           variant={getButtonVariant("golden")}
           size="sm"
           onClick={() =>
-            navigate("/resume-preview", {
+            navigate(`/${currentLanguage}/resume-preview`, {
               state: {
                 analysisId: id,
               },
@@ -294,7 +394,7 @@ const AnalysisCard = ({
           className={getButtonClassName("golden")}
         >
           <Crown className="h-4 w-4 mr-2" />
-          View Golden Resume
+          {t('actions.viewGoldenResume')}
         </Button>
 
         <Button
@@ -304,7 +404,18 @@ const AnalysisCard = ({
           className={getButtonClassName("cover")}
         >
           <FileEdit className="h-4 w-4 mr-2" />
-          Create Cover Letter
+          {t('actions.createCoverLetter')}
+        </Button>
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleCompanyResearch}
+          disabled={isResearchingCompany}
+          className="flex items-center gap-2"
+        >
+          <Building2 className="h-4 w-4" />
+          {isResearchingCompany ? t('actions.researching') : t('actions.companyResearch')}
         </Button>
 
         {job?.job_url ? (
@@ -315,7 +426,7 @@ const AnalysisCard = ({
             className="flex items-center gap-2"
           >
             <LinkIcon className="h-4 w-4" />
-            Apply Job
+            {t('actions.applyJob')}
           </Button>
         ) : (
           !isAddingJobUrl && (
@@ -326,7 +437,7 @@ const AnalysisCard = ({
               className="flex items-center gap-2"
             >
               <ExternalLink className="h-4 w-4" />
-              Link JD
+              {t('actions.linkJD')}
             </Button>
           )
         )}

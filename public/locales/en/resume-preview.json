@@ -1,0 +1,31 @@
+{
+  "meta": {
+    "title": "Resume Preview - Resume Alchemist",
+    "description": "Preview your optimized golden resume with AI-powered enhancements.",
+    "keywords": "resume preview, golden resume, AI optimization, resume viewer"
+  },
+  "buttons": {
+    "editResume": "Edit Resume",
+    "changeStyle": "Change Style",
+    "exportPDF": "Export PDF",
+    "originalResume": "Original Resume",
+    "editWithGoogleDoc": "Edit with Google Doc"
+  },
+  "sections": {
+    "personalInfo": "Personal Information",
+    "professionalSummary": "Professional Summary", 
+    "professionalExperience": "Professional Experience",
+    "education": "Education",
+    "skills": "Skills",
+    "projects": "Projects",
+    "volunteerExperience": "Volunteer Experience",
+    "certifications": "Certifications"
+  },
+  "styles": {
+    "classic": "Classic",
+    "modern": "Modern",
+    "minimal": "Minimal",
+    "professional": "Professional",
+    "creative": "Creative"
+  }
+}

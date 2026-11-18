@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { PlusCircle, MinusCircle, MoveUp, MoveDown } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { useTranslation } from "react-i18next";
 
 interface ExperienceSectionProps {
   data: any;
@@ -14,6 +15,7 @@ interface ExperienceSectionProps {
 }
 
 const ExperienceSection = ({ data, onChange, showAddForm = true }: ExperienceSectionProps) => {
+  const { t } = useTranslation(['resume-refine']);
   const [activeExpIndex, setActiveExpIndex] = useState<number | null>(null);
   const [editing, setEditing] = useState<{ [key: string]: string }>({
     companyName: '',
@@ -185,7 +187,7 @@ const ExperienceSection = ({ data, onChange, showAddForm = true }: ExperienceSec
               variant="outline"
               type="button"
             >
-              <PlusCircle className="h-4 w-4 mr-2" />Add Experience
+              <PlusCircle className="h-4 w-4 mr-2" />{t('experience.addExperience')}
             </Button>
           )}
           
@@ -193,10 +195,10 @@ const ExperienceSection = ({ data, onChange, showAddForm = true }: ExperienceSec
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Position</TableHead>
-                  <TableHead>Company</TableHead>
-                  <TableHead>Duration</TableHead>
-                  <TableHead>Actions</TableHead>
+                  <TableHead>{t('experience.position')}</TableHead>
+                  <TableHead>{t('experience.company')}</TableHead>
+                  <TableHead>{t('experience.duration')}</TableHead>
+                  <TableHead>{t('experience.actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -215,7 +217,7 @@ const ExperienceSection = ({ data, onChange, showAddForm = true }: ExperienceSec
                           onClick={() => initEditForm(idx)}
                           type="button"
                         >
-                          Edit
+                          {t('experience.edit')}
                         </Button>
                         <Button 
                           variant="ghost" 
@@ -259,13 +261,13 @@ const ExperienceSection = ({ data, onChange, showAddForm = true }: ExperienceSec
         <Card>
           <CardHeader>
             <CardTitle>
-              {activeExpIndex >= 0 ? 'Edit Experience' : 'Add Experience'}
+              {activeExpIndex >= 0 ? t('experience.editExperience') : t('experience.addExperience')}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="jobTitle">Job Title</Label>
+                <Label htmlFor="jobTitle">{t('experience.jobTitle')}</Label>
                 <Input 
                   id="jobTitle" 
                   value={editing.jobTitle} 
@@ -273,7 +275,7 @@ const ExperienceSection = ({ data, onChange, showAddForm = true }: ExperienceSec
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="companyName">Company</Label>
+                <Label htmlFor="companyName">{t('experience.company')}</Label>
                 <Input 
                   id="companyName" 
                   value={editing.companyName} 
@@ -283,7 +285,7 @@ const ExperienceSection = ({ data, onChange, showAddForm = true }: ExperienceSec
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="location">Location</Label>
+              <Label htmlFor="location">{t('experience.location')}</Label>
               <Input 
                 id="location" 
                 value={editing.location} 
@@ -292,47 +294,47 @@ const ExperienceSection = ({ data, onChange, showAddForm = true }: ExperienceSec
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="companyIntroduction">Company Introduction</Label>
+              <Label htmlFor="companyIntroduction">{t('experience.companyIntroduction')}</Label>
               <Textarea 
                 id="companyIntroduction"
                 value={editing.companyIntroduction} 
                 onChange={(e) => handleEditingChange('companyIntroduction', e.target.value)}
-                placeholder="Briefly describe the company..."
+                placeholder={t('experience.companyIntroductionPlaceholder')}
                 className="min-h-[100px]"
               />
             </div>
             
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="startDate">Start Date (YYYY-MM)</Label>
+                <Label htmlFor="startDate">{t('experience.startDate')}</Label>
                 <Input 
                   id="startDate" 
                   value={editing.startDate} 
                   onChange={(e) => handleEditingChange('startDate', e.target.value)}
-                  placeholder="YYYY-MM"
+                  placeholder={t('experience.startDatePlaceholder')}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="endDate">End Date (YYYY-MM or blank for current)</Label>
+                <Label htmlFor="endDate">{t('experience.endDate')}</Label>
                 <Input 
                   id="endDate" 
                   value={editing.endDate} 
                   onChange={(e) => handleEditingChange('endDate', e.target.value)}
-                  placeholder="YYYY-MM"
+                  placeholder={t('experience.endDatePlaceholder')}
                 />
               </div>
             </div>
             
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label>Achievements</Label>
+                <Label>{t('experience.achievements')}</Label>
                 <Button 
                   onClick={handleAddAchievement} 
                   variant="outline" 
                   size="sm"
                   type="button"
                 >
-                  <PlusCircle className="h-4 w-4 mr-1" /> Add
+                  <PlusCircle className="h-4 w-4 mr-1" /> {t('experience.add')}
                 </Button>
               </div>
               
@@ -344,7 +346,7 @@ const ExperienceSection = ({ data, onChange, showAddForm = true }: ExperienceSec
                         value={achievement}
                         onChange={(e) => handleUpdateAchievement(idx, e.target.value)}
                         className="flex-1"
-                        placeholder="Describe your achievement..."
+                        placeholder={t('experience.achievementPlaceholder')}
                       />
                       <Button 
                         variant="ghost" 
@@ -360,7 +362,7 @@ const ExperienceSection = ({ data, onChange, showAddForm = true }: ExperienceSec
                 </div>
               ) : (
                 <div className="text-center p-4 bg-gray-50 rounded-md">
-                  No achievements added. Click "Add" to include achievements.
+                  {t('experience.noAchievements')}
                 </div>
               )}
             </div>
@@ -371,13 +373,13 @@ const ExperienceSection = ({ data, onChange, showAddForm = true }: ExperienceSec
               onClick={() => setActiveExpIndex(null)}
               type="button"
             >
-              Cancel
+              {t('experience.cancel')}
             </Button>
             <Button 
               onClick={handleSaveExperience}
               type="button"
             >
-              Save Experience
+              {t('experience.saveExperience')}
             </Button>
           </CardFooter>
         </Card>

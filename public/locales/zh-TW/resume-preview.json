@@ -1,0 +1,31 @@
+{
+  "meta": {
+    "title": "履歷預覽 - 履歷煉金師",
+    "description": "預覽您經過AI優化的黃金履歷。",
+    "keywords": "履歷預覽, 黃金履歷, AI優化, 履歷檢視器"
+  },
+  "buttons": {
+    "editResume": "編輯履歷",
+    "changeStyle": "更改樣式",
+    "exportPDF": "匯出PDF",
+    "originalResume": "原始履歷",
+    "editWithGoogleDoc": "使用Google文件編輯"
+  },
+  "sections": {
+    "personalInfo": "個人資訊",
+    "professionalSummary": "專業摘要",
+    "professionalExperience": "專業經歷",
+    "education": "教育背景",
+    "skills": "技能",
+    "projects": "專案",
+    "volunteerExperience": "志工經驗",
+    "certifications": "證書"
+  },
+  "styles": {
+    "classic": "經典",
+    "modern": "現代",
+    "minimal": "簡約",
+    "professional": "專業",
+    "creative": "創意"
+  }
+}

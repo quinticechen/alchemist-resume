@@ -1,0 +1,36 @@
+{
+  "meta": {
+    "title": "企業調査 - AI搭載の企業インサイト",
+    "description": "包括的な企業調査とAIによるインサイトを活用し、応募戦略を強化しましょう。",
+    "keywords": "企業調査, 企業分析, 応募, キャリアインサイト, ビジネスインテリジェンス"
+  },
+  "title": "企業調査",
+  "employees": "従業員",
+  "ceo": "CEO",
+  "visitWebsite": "ウェブサイトを訪問",
+  "readMore": "続きを読む",
+  "unknown": {
+    "company": "不明な企業"
+  },
+  "sections": {
+    "businessOverview": "事業概要",
+    "keyProducts": "主要製品・サービス",
+    "swotAnalysis": "SWOT分析",
+    "recentNews": "最新ニュース"
+  },
+  "swot": {
+    "strengths": "強み",
+    "weaknesses": "弱み",
+    "opportunities": "機会",
+    "threats": "脅威"
+  },
+  "pending": {
+    "title": "企業を調査中...",
+    "description": "AIが企業情報を分析し、包括的なインサイトを収集しています。",
+    "waitTime": "通常2〜3分かかります。調査結果をまとめている間、しばらくお待ちください。"
+  },
+  "error": {
+    "title": "調査エラー",
+    "fetchFailed": "企業調査データの取得に失敗しました。後でもう一度お試しください。"
+  }
+}

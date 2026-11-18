@@ -1,0 +1,107 @@
+{
+  "hero": {
+    "title": "用AI炼金术改造您的简历",
+    "subtitle": "使用我们的AI驱动优化技术，将您的普通简历转变为理想工作的完美匹配。",
+    "learnMore": "了解更多",
+    "startFreeTrial": "开始免费试用",
+    "goToWorkshop": "前往工作坊"
+  },
+  "cta": {
+    "title": "从3次免费使用开始",
+    "subtitle": "无需承诺，尝试我们的AI驱动简历优化。"
+  },
+  "faq": {
+    "title": "常见问题",
+    "more": "更多",
+    "questions": [
+      {
+        "question": "我可以获得多少次免费使用？",
+        "answer": "新用户可获得3次免费使用来试用我们的服务。"
+      },
+      {
+        "question": "支持哪些文件格式？",
+        "answer": "目前，我们支持PDF格式的简历上传。"
+      },
+      {
+        "question": "处理过程需要多长时间？",
+        "answer": "优化过程通常需要2-3分钟。"
+      }
+    ]
+  },
+  "features": {
+    "title": "构建简历的新方式",
+    "subtitle": "我们理解创建出色简历的挑战。这就是为什么我们构建了简历炼金术师，这个AI驱动的简历构建器帮助您制作能让您被录用的简历。",
+    "items": {
+      "aiPowered": {
+        "title": "AI驱动",
+        "description": "我们的AI分析您的经验和技能，制作突出您优势的简历。"
+      },
+      "atsOptimized": {
+        "title": "ATS优化",
+        "description": "我们确保您的简历针对申请人跟踪系统(ATS)进行优化，提高您获得面试的机会。"
+      },
+      "jobSpecific": {
+        "title": "职位特定",
+        "description": "我们根据特定职位发布定制您的简历，突出与职位描述匹配的技能和经验。"
+      },
+      "easyToUse": {
+        "title": "易于使用",
+        "description": "我们直观的界面让您在几分钟内轻松创建专业简历。"
+      }
+    }
+  },
+  "howItWorks": {
+    "title": "工作原理",
+    "subtitle": "三个简单步骤创建让您被录用的简历。",
+    "steps": {
+      "upload": {
+        "title": "上传您的简历",
+        "description": "以PDF格式上传您现有的简历。"
+      },
+      "enterJob": {
+        "title": "输入职位发布URL",
+        "description": "粘贴您申请职位的URL。"
+      },
+      "getOptimized": {
+        "title": "获取优化简历",
+        "description": "我们的AI将分析您的简历和职位发布，创建突出您技能和经验的定制简历。"
+      }
+    }
+  },
+  "companies": {
+    "title": "为顶级公司优化您的简历"
+  },
+  "testimonials": {
+    "title": "用户评价",
+    "subtitle": "不要只听我们的话，看看其他人对简历炼金术师的评价。",
+    "items": [
+      {
+        "quote": "\"简历炼金术师帮助我找到了理想工作。AI驱动的简历构建器让我轻松创建了突出我技能和经验的简历。\"",
+        "name": "张小华",
+        "title": "软件工程师"
+      },
+      {
+        "quote": "\"我一直在努力创建一份出色的简历。简历炼金术师让我轻松创建了突出我技能和经验的专业简历。\"",
+        "name": "李明",
+        "title": "市场经理"
+      },
+      {
+        "quote": "\"我对使用AI驱动的简历构建器持怀疑态度，但简历炼金术师超出了我的期望。AI驱动的简历构建器让我轻松创建了突出我技能和经验的简历。\"",
+        "name": "王丽",
+        "title": "产品经理"
+      }
+    ]
+  },
+  "footer": {
+    "company": "简历炼金术师",
+    "quickLinks": "快速链接",
+    "contact": "联系我们",
+    "followUs": "关注我们",
+    "links": {
+      "terms": "服务条款",
+      "privacy": "隐私政策",
+      "faq": "常见问题",
+      "pricing": "价格方案"
+    }
+  }
+}

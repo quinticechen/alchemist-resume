@@ -8,6 +8,7 @@ import UploadZone from "@/components/upload/UploadZone";
 import ResumeSelector from "@/components/ResumeSelector";
 import { useResumeUpload } from "@/components/upload/useResumeUpload";
 import { supabase } from "@/integrations/supabase/client";
+import { useTranslation } from "react-i18next";
 
 interface ResumeUploaderProps {
   onUploadSuccess: (file: File, path: string, url: string, id: string) => void;
@@ -24,6 +25,7 @@ const ResumeUploader: React.FC<ResumeUploaderProps> = ({
   onTabChange,
   onRemove,
 }) => {
+  const { t } = useTranslation('workshop');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [selectedResumeName, setSelectedResumeName] = useState<string>("");
   const [selectedResumeId, setSelectedResumeId] = useState<string>("");
@@ -104,7 +106,7 @@ const ResumeUploader: React.FC<ResumeUploaderProps> = ({
     <Card className="w-full">
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
-          Resume Upload
+          {t('resumeUpload.title')}
           {hasSelectedResume && (
             <Button variant="ghost" size="sm" onClick={handleRemove}>
               <X className="h-4 w-4" />
@@ -120,7 +122,7 @@ const ResumeUploader: React.FC<ResumeUploaderProps> = ({
                 <FileText className="h-5 w-5 text-green-600" />
                 <div className="flex-1">
                   <p className="text-green-800 font-medium">
-                    {selectedFile && isUploaded ? "Resume uploaded successfully" : "Previous resume selected"}
+                    {selectedFile && isUploaded ? "Resume uploaded successfully" : t('resumeUpload.previousSelected')}
                   </p>
                   <p className="text-green-600 text-sm">
                     {currentFileName}
@@ -142,7 +144,7 @@ const ResumeUploader: React.FC<ResumeUploaderProps> = ({
                   disabled={!selectedResumePath}
                 >
                   <Eye className="h-4 w-4" />
-                  Preview Resume
+                  {t('resumeUpload.previewResume')}
                 </Button>
                 <Button
                   variant="outline"
@@ -151,7 +153,7 @@ const ResumeUploader: React.FC<ResumeUploaderProps> = ({
                   className="flex items-center gap-2"
                 >
                   <X className="h-4 w-4" />
-                  Remove
+                    {t('resumeUpload.remove')}
                 </Button>
               </div>
             </div>
@@ -159,8 +161,8 @@ const ResumeUploader: React.FC<ResumeUploaderProps> = ({
         ) : (
           <Tabs value={activeTab} onValueChange={onTabChange}>
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="upload">Upload New Resume</TabsTrigger>
-              <TabsTrigger value="select">Select Previous Resume</TabsTrigger>
+              <TabsTrigger value="upload">{t('resumeUpload.uploadNew')}</TabsTrigger>
+              <TabsTrigger value="select">{t('resumeUpload.selectPrevious')}</TabsTrigger>
             </TabsList>
 
             <TabsContent value="upload" className="space-y-4">

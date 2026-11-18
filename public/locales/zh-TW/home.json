@@ -1,0 +1,107 @@
+{
+  "hero": {
+    "title": "用AI煉金術改造您的履歷",
+    "subtitle": "使用我們的AI驅動優化技術，將您的普通履歷轉變為理想工作的完美匹配。",
+    "learnMore": "了解更多",
+    "startFreeTrial": "開始免費試用",
+    "goToWorkshop": "前往工作坊"
+  },
+  "cta": {
+    "title": "從3次免費使用開始",
+    "subtitle": "無需承諾，嘗試我們的AI驅動履歷優化。"
+  },
+  "faq": {
+    "title": "常見問題",
+    "more": "更多",
+    "questions": [
+      {
+        "question": "我可以獲得多少次免費使用？",
+        "answer": "新用戶可獲得3次免費使用來試用我們的服務。"
+      },
+      {
+        "question": "支援哪些檔案格式？",
+        "answer": "目前，我們支援PDF格式的履歷上傳。"
+      },
+      {
+        "question": "處理過程需要多長時間？",
+        "answer": "優化過程通常需要2-3分鐘。"
+      }
+    ]
+  },
+  "features": {
+    "title": "構建履歷的新方式",
+    "subtitle": "我們理解創建出色履歷的挑戰。這就是為什麼我們構建了履歷煉金術師，這個AI驅動的履歷構建器幫助您製作能讓您被錄用的履歷。",
+    "items": {
+      "aiPowered": {
+        "title": "AI驅動",
+        "description": "我們的AI分析您的經驗和技能，製作突出您優勢的履歷。"
+      },
+      "atsOptimized": {
+        "title": "ATS優化",
+        "description": "我們確保您的履歷針對申請人追蹤系統(ATS)進行優化，提高您獲得面試的機會。"
+      },
+      "jobSpecific": {
+        "title": "職位特定",
+        "description": "我們根據特定職位發佈定製您的履歷，突出與職位描述匹配的技能和經驗。"
+      },
+      "easyToUse": {
+        "title": "易於使用",
+        "description": "我們直觀的界面讓您在幾分鐘內輕鬆創建專業履歷。"
+      }
+    }
+  },
+  "howItWorks": {
+    "title": "工作原理",
+    "subtitle": "三個簡單步驟創建讓您被錄用的履歷。",
+    "steps": {
+      "upload": {
+        "title": "上傳您的履歷",
+        "description": "以PDF格式上傳您現有的履歷。"
+      },
+      "enterJob": {
+        "title": "輸入職位發佈URL",
+        "description": "貼上您申請職位的URL。"
+      },
+      "getOptimized": {
+        "title": "獲取優化履歷",
+        "description": "我們的AI將分析您的履歷和職位發佈，創建突出您技能和經驗的定製履歷。"
+      }
+    }
+  },
+  "companies": {
+    "title": "為頂級公司優化您的履歷"
+  },
+  "testimonials": {
+    "title": "用戶評價",
+    "subtitle": "不要只聽我們的話，看看其他人對履歷煉金術師的評價。",
+    "items": [
+      {
+        "quote": "\"履歷煉金術師幫助我找到了理想工作。AI驅動的履歷構建器讓我輕鬆創建了突出我技能和經驗的履歷。\"",
+        "name": "張小華",
+        "title": "軟體工程師"
+      },
+      {
+        "quote": "\"我一直在努力創建一份出色的履歷。履歷煉金術師讓我輕鬆創建了突出我技能和經驗的專業履歷。\"",
+        "name": "李明",
+        "title": "行銷經理"
+      },
+      {
+        "quote": "\"我對使用AI驅動的履歷構建器持懷疑態度，但履歷煉金術師超出了我的期望。AI驅動的履歷構建器讓我輕鬆創建了突出我技能和經驗的履歷。\"",
+        "name": "王麗",
+        "title": "產品經理"
+      }
+    ]
+  },
+  "footer": {
+    "company": "履歷煉金術師",
+    "quickLinks": "快速連結",
+    "contact": "聯繫我們",
+    "followUs": "關注我們",
+    "links": {
+      "terms": "服務條款",
+      "privacy": "隱私政策",
+      "faq": "常見問題",
+      "pricing": "價格方案"
+    }
+  }
+}

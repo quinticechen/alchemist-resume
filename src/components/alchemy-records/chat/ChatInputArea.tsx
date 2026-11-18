@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2, Send } from "lucide-react";
 import PromptGuides from './PromptGuides';
+import { useTranslation } from "react-i18next";
 
 interface ChatInputAreaProps {
   input: string;
@@ -24,6 +25,8 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
   threadId,
   isDisabled
 }) => {
+  const { t } = useTranslation(['resume-refine']);
+  
   return (
     <div className="pt-3 border-t mt-auto">
       <PromptGuides 
@@ -36,7 +39,7 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Ask for resume optimization suggestions..."
+          placeholder={t('aiChat.placeholder')}
           className="resize-none text-sm"
           rows={2}
           disabled={isDisabled}

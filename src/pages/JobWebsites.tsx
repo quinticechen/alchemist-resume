@@ -9,6 +9,7 @@ import ErrorMessage from "@/components/seeker/ErrorMessage";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { SEO } from "@/components/SEO";
 import { H1, H2, H3 } from "@/components/seo/StructuredHeadings";
+import { useTranslation } from "react-i18next";
 
 interface Platform {
   id: string;
@@ -36,6 +37,7 @@ interface SyncResult {
 }
 
 const JobWebsites = () => {
+  const { t } = useTranslation(['common', 'job-websites']);
   const [platforms, setPlatforms] = useState<Platform[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -177,15 +179,16 @@ const JobWebsites = () => {
   return (
     <>
       <SEO
-        title="Job Websites - Resume Alchemist"
-        description="Explore supported job platforms and websites for resume optimization. Find the best job boards to apply with your AI-optimized resume."
-        keywords="job websites, job boards, career platforms, job search sites, LinkedIn, Indeed, Glassdoor"
-        canonicalUrl="https://resumealchemist.qwizai.com/job-websites"
+        title={t('job-websites:meta.title')}
+        description={t('job-websites:meta.description')}
+        keywords={t('job-websites:meta.keywords')}
       />
       
       <div className="container mx-auto p-8">
         <div className="flex justify-between items-center mb-8">
-          <H1>Job Websites</H1>
+          <h1 className="text-center text-4xl font-bold mb-4 bg-gradient-primary text-transparent bg-clip-text">
+              {t('job-websites:title', 'Supported Job Websites')}
+          </h1>
           {shouldShowSyncControls && (
             <Button
               onClick={triggerSync}
@@ -299,7 +302,6 @@ const JobWebsites = () => {
           </div>
         ) : platforms.length > 0 ? (
           <>
-            <H2 className="mb-6">Available Job Platforms</H2>
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {platforms.map((platform) => (
                 <PlatformCard

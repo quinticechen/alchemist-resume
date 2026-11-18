@@ -1,12 +1,14 @@
 
 import React from 'react';
 import { Helmet } from 'react-helmet-async';
+import { generateHreflangUrls } from '@/utils/languageRouting';
+import { useLocation } from 'react-router-dom';
 
 interface SEOProps {
   title: string;
   description: string;
   keywords?: string;
-  canonicalUrl: string;
+  canonicalUrl?: string;
   ogImage?: string;
   ogType?: string;
   hreflang?: Array<{ lang: string; url: string }>;
@@ -20,13 +22,15 @@ export const SEO: React.FC<SEOProps> = ({
   canonicalUrl,
   ogImage = "https://resumealchemist.qwizai.com/og-image.png",
   ogType = "website",
-  hreflang = [
-    { lang: "en", url: canonicalUrl },
-    { lang: "zh", url: canonicalUrl.replace('.com', '.com/zh') }
-  ],
+  hreflang,
   noIndex = false
 }) => {
+  const location = useLocation();
   const fullTitle = title.includes('Resume Alchemist') ? title : `${title} | Resume Alchemist`;
+  
+  // Auto-generate canonical URL and hreflang if not provided
+  const finalCanonicalUrl = canonicalUrl || `https://resumealchemist.qwizai.com${location.pathname}`;
+  const finalHreflang = hreflang || generateHreflangUrls(location.pathname);
   
   return (
     <Helmet>
@@ -34,13 +38,13 @@ export const SEO: React.FC<SEOProps> = ({
       <title>{fullTitle}</title>
       <meta name="description" content={description} />
       {keywords && <meta name="keywords" content={keywords} />}
-      <link rel="canonical" href={canonicalUrl} />
+      <link rel="canonical" href={finalCanonicalUrl} />
       
       {/* Robots Meta */}
       {noIndex && <meta name="robots" content="noindex,nofollow" />}
       
       {/* Hreflang Tags */}
-      {hreflang.map(({ lang, url }) => (
+      {finalHreflang.map(({ lang, url }) => (
         <link key={lang} rel="alternate" hrefLang={lang} href={url} />
       ))}
       
@@ -48,7 +52,7 @@ export const SEO: React.FC<SEOProps> = ({
       <meta property="og:title" content={fullTitle} />
       <meta property="og:description" content={description} />
       <meta property="og:image" content={ogImage} />
-      <meta property="og:url" content={canonicalUrl} />
+      <meta property="og:url" content={finalCanonicalUrl} />
       <meta property="og:type" content={ogType} />
       <meta property="og:site_name" content="Resume Alchemist" />
       
