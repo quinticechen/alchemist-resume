@@ -62,7 +62,7 @@ const AnalysisCard = ({
   const companyName = job?.company_name || "Unknown Company";
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { t } = useTranslation('records');
+  const { t, ready } = useTranslation('records');
   const { currentLanguage } = useLanguage();
   const { session } = useAuth();
   
@@ -198,10 +198,22 @@ const AnalysisCard = ({
         return;
       }
 
-      // If pending data exists, just navigate to the page
+      // If pending data exists, allow retrigger after 30 seconds to handle n8n failures
       if (existingCompany && existingCompany.status === 'pending') {
-        navigate(`/${currentLanguage}/company-research/${analysisData.job_id}`);
-        return;
+        const timeDiff = new Date().getTime() - new Date(existingCompany.updated_at || existingCompany.created_at).getTime();
+        const thirtySeconds = 30 * 1000;
+        
+        if (timeDiff < thirtySeconds) {
+          // Too recent, just navigate
+          navigate(`/${currentLanguage}/company-research/${analysisData.job_id}`);
+          return;
+        } else {
+          // It's been more than 30 seconds, allow retrigger in case n8n failed
+          toast({
+            title: "Retrying Company Research",
+            description: "Previous request may have failed. Triggering research again.",
+          });
+        }
       }
 
       // If no data exists, trigger the research and create pending record
@@ -415,7 +427,10 @@ const AnalysisCard = ({
           className="flex items-center gap-2"
         >
           <Building2 className="h-4 w-4" />
-          {isResearchingCompany ? t('actions.researching') : t('actions.companyResearch')}
+          {isResearchingCompany 
+            ? (ready ? t('actions.researching') : 'Researching...') 
+            : (ready ? t('actions.companyResearch') : 'Company Research')
+          }
         </Button>
 
         {job?.job_url ? (

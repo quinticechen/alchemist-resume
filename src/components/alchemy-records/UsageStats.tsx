@@ -9,7 +9,7 @@ interface UsageStatsProps {
 }
 
 const UsageStats = ({ usageCount }: UsageStatsProps) => {
-  const { t } = useTranslation('records');
+  const { t, ready } = useTranslation('records');
   const [subscriptionStatus, setSubscriptionStatus] = useState<string>('apprentice');
   const [remainingUses, setRemainingUses] = useState<string | number>(0);
   const [totalResumes, setTotalResumes] = useState<number>(0);
